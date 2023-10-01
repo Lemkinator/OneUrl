@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dev.oneuiproject.oneui.layout.ToolbarLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/toolbar_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:expanded="false"
+    app:navigationIcon="@drawable/ic_oui_back"
+    app:title="@string/settings"
+    app:subtitle="@string/app_name"
+    >
+
+    <FrameLayout
+        android:id="@+id/settings"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</dev.oneuiproject.oneui.layout.ToolbarLayout>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dev.oneuiproject.oneui.layout.ToolbarLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/toolbar_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:expanded="false"
+    app:navigationIcon="@drawable/ic_oui_back"
+    app:subtitle="@string/app_name"
+    app:title="@string/help">
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_location="main_content">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:scrollbars="vertical"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_text"
+                    android:textColor="@color/primary_text_icon_color_themed"
+                    android:layout_margin="10dp"
+                    android:textSize="17sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="?android:listSeparatorTextViewStyle"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/contact" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/contactMeButton"
+                    style="@style/ButtonStyle.Transparent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="7dp"
+                    android:layout_marginBottom="15dp"
+                    android:drawableStart="@drawable/ic_oui_email_outline"
+                    android:text="@string/contact_me" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </FrameLayout>
+
+</dev.oneuiproject.oneui.layout.ToolbarLayout>
+
+

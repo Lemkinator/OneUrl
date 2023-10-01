@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/design">
+        <dev.oneuiproject.oneui.preference.HorizontalRadioPreference
+            android:key="dark_mode_pref"
+            app:entries="@array/preferences_darkmode_entries"
+            app:entriesImage="@array/preferences_darkmode_entries_image"
+            app:entryValues="@array/preferences_darkmode_values"
+            app:viewType="image" />
+        <SwitchPreferenceCompat
+            android:key="dark_mode_auto_pref"
+            android:title="@string/system_default" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="general_pref_cat"
+        android:title="@string/general"
+        app:isPreferenceVisible="false">
+
+        <PreferenceScreen
+            android:key="language_pref"
+            android:title="@string/language"
+            android:summary="@string/change_language"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="dev_options"
+        android:title="@string/dev_options"
+        app:isPreferenceVisible="false">
+        <PreferenceScreen
+            android:key="delete_app_data_pref"
+            android:title="@string/delete_appdata_and_exit" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/more_information">
+        <PreferenceScreen
+            android:key="tos_pref"
+            android:title="@string/tos" />
+
+        <PreferenceScreen
+            android:key="privacy_pref"
+            android:title="@string/privacy_information" />
+
+        <PreferenceScreen
+            android:key="report_bug_pref"
+            android:title="@string/report_bug" />
+
+        <PreferenceScreen
+            android:key="about_app_pref"
+            android:title="@string/about_app">
+            <intent
+                android:targetClass="de.lemke.oneurl.ui.AboutActivity"
+                android:targetPackage="de.lemke.oneurl" />
+        </PreferenceScreen>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

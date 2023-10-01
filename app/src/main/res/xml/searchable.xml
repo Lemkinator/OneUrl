@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<searchable xmlns:android="http://schemas.android.com/apk/res/android"
+    android:hint="@string/search"
+    android:label="@string/app_name"
+    android:voiceSearchMode="showVoiceSearchButton|launchRecognizer"/>
+<!--searchable xmlns:android="http://schemas.android.com/apk/res/android"
+    android:hint="@string/search"
+    android:label="@string/app_name"
+    android:searchMode=["queryRewriteFromData" | "queryRewriteFromText"]
+    android:searchButtonText="string resource"
+    android:inputType="inputType"
+    android:imeOptions="imeOptions"
+    android:searchSuggestAuthority="string"
+    android:searchSuggestPath="string"
+    android:searchSuggestSelection="string"
+    android:searchSuggestIntentAction="string"
+    android:searchSuggestIntentData="string"
+    android:searchSuggestThreshold="int"
+    android:includeInGlobalSearch=["true" | "false"]
+    android:searchSettingsDescription="string resource"
+    android:queryAfterZeroResults=["true" | "false"]
+    android:voiceSearchMode=["showVoiceSearchButton" | "launchWebSearch" | "launchRecognizer"]
+    android:voiceLanguageModel=["free-form" | "web_search"]
+    android:voicePromptText="string resource"
+    android:voiceLanguage="string"
+    android:voiceMaxResults="int"
+    >
+    <actionkey
+        android:keycode="KEYCODE"
+        android:queryActionMsg="string"
+        android:suggestActionMsg="string"
+        android:suggestActionMsgColumn="string" />
+    </searchable-->

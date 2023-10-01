@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="AppCompatResource">
+
+    <item
+        android:id="@+id/addToFav"
+        android:icon="@drawable/ic_oui_heart"
+        android:title="@string/add_to_fav"
+        tools:ignore="AlwaysShowAction,AppCompatResource"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/removeFromFav"
+        android:icon="@drawable/ic_oui_heart_outline"
+        android:title="@string/remove_from_fav"
+        app:showAsAction="always"
+        tools:ignore="AppCompatResource" />
+</menu>

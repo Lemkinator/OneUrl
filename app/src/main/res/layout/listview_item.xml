@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
+    android:background="?listChoiceBackgroundIndicator"
+    android:gravity="center_vertical"
+    android:paddingStart="?android:listPreferredItemPaddingStart"
+    android:paddingEnd="?android:listPreferredItemPaddingEnd">
+
+    <ImageView
+        android:id="@+id/listview_item_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="?android:listPreferredItemPaddingStart"
+        android:contentDescription="QR Code"
+        tools:ignore="HardcodedText" />
+
+    <LinearLayout
+        android:layout_width="0.0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.0"
+        android:orientation="vertical"
+        android:paddingVertical="14.0dip">
+
+        <TextView
+            android:id="@+id/list_item_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:maxLines="1"
+            android:textAppearance="?textAppearanceListItem" />
+
+        <TextView
+            android:id="@+id/list_item_subtitle1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:maxLines="1"
+            android:textAppearance="?textAppearanceListItemSecondary"
+            tools:ignore="RtlSymmetry" />
+
+        <TextView
+            android:id="@+id/list_item_subtitle2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:maxLines="1"
+            android:textAppearance="?textAppearanceListItemSecondary"
+            tools:ignore="RtlSymmetry" />
+
+    </LinearLayout>
+
+</LinearLayout>

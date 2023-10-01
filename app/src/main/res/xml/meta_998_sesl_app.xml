@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ThemeMetaData FormatVersion="1.3" GuideVersion="1.4">
+    <AppMetaData Name="SeslTester" TargetApi="21" TargetPackageName="de.lemke.oneurl" VersionCode="1" VersionName="">
+        <Include RefName="SESL" />
+        <Property Comment="Primary Color - Dummy" DefaultValue="074d4" DestAttribName="dummy_primary_color" UID="998-1" ValueRef="1-A" ValueType="Color" />
+        <Property Comment="Main Text Color - Dummy" DefaultValue="ff252525" DestAttribName="dummy_primary_text_color" UID="998-2" ValueRef="24-A" ValueType="TextColor" />
+        <Property Comment="Themed Primary Color" DefaultValue="074d4" DestAttribName="primary_color_themed, primary_dark_color_themed" UID="5" ValueRef="1-A" ValueType="Color" />
+        <Property Comment="Icon or Text Color" DefaultValue="074d4" DestAttribName="oui_primary_text_color, oui_primary_icon_color, oui_appinfolayout_info_text_color, oui_drawerlayout_header_icon_color" UID="55" ValueRef="1-11-3" ValueType="Color" />
+        <Property Comment="Themed Background Fill Color" DefaultValue="#fffcfcfc" DestAttribName="filled_background_color, oui_appinfolayout_button_bg_color, oui_relative_link_background_color, sesl_dialog_window_background_color_material_dark, sesl_dialog_window_background_color_material_light" UID="555" ValueRef="1-18-1" ValueType="Color" />
+        <Property Comment="Selected Tab Text Color" DefaultValue="074d4" DestAttribName="sesl_tablayout_selected_indicator_color_dark, sesl_tablayout_selected_indicator_color_light, sesl_tablayout_selected_text_color_dark, sesl_tablayout_selected_text_color_light" UID="55555" ValueRef="1-11-3" ValueType="Color" />
+    </AppMetaData>
+</ThemeMetaData>

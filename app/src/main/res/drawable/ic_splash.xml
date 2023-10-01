@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <group
+        android:name="squircle"
+        android:pivotX="6.8"
+        android:pivotY="6.8"
+        android:scaleX="0.12"
+        android:scaleY="0.12">
+
+        <path
+            android:fillColor="@color/primary_color_themed"
+            android:pathData="M99,50C99,6.935,77.063,1,50,1 C22.935,1,1,6.935,1,50c0,43.063,21.935,49,49,49C77.063,99,99,93.063,99,50z" />
+
+    </group>
+
+    <group
+        android:name="main"
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="0"
+        android:scaleX="0.65"
+        android:scaleY="0.65"
+        android:translateX="-0.3"
+        android:translateY="-0.3">
+
+        <group
+            android:name="main1"
+            android:pivotX="12"
+            android:pivotY="12"
+            android:rotation="0"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:translateX="0"
+            android:translateY="0">
+
+            <path
+                android:fillColor="#00000000"
+                android:pathData="M 12.434000000000001 9.2282 L 13.1632 8.4979 C 14.078800000000001 7.5802 15.579799999999999 7.5792 16.4975 8.4948 C 17.4163 9.4115 17.4173 10.9115 16.5007 11.830200000000001 L 15.043399999999998 13.290700000000001 C 14.1267 14.208400000000001 12.6267 14.209399999999999 11.707899999999999 13.293800000000001 "
+                android:strokeWidth="1.5"
+                android:strokeColor="#ffffff"
+                android:strokeLineCap="round" />
+
+        </group>
+
+        <group
+            android:name="main2"
+            android:pivotX="12"
+            android:pivotY="12"
+            android:rotation="0"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:translateX="0"
+            android:translateY="0">
+
+            <path
+                android:fillColor="#00000000"
+                android:pathData="M 12.5671 15.7717 L 11.837900000000001 16.5019 C 10.9223 17.4196 9.4213 17.4207 8.5036 16.505 C 7.5847999999999995 15.5884 7.5838 14.0884 8.5004 13.169599999999999 L 9.9577 11.7092 C 10.874400000000001 10.7915 12.374400000000001 10.790400000000002 13.293199999999999 11.7061 "
+                android:strokeWidth="1.5"
+                android:strokeColor="#ffffff"
+                android:strokeLineCap="round" />
+        </group>
+    </group>
+</vector>

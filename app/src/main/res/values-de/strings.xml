@@ -1,0 +1,72 @@
+<resources>
+    <!--Help-->
+    <string name="help">Hilfe</string>
+    <string name="contact">Kontakt</string>
+    <string name="contact_me">Kontaktier mich (E-Mail)</string>
+    <string name="help_text">Ich brauche Hilfe.</string>
+
+    <!--About-->
+    <string name="about_page_optional_text">Ein URL-Shortener im schönen OneUI Design.</string>
+    <string name="about_app">Über OneUrl</string>
+    <string name="open_in_playstore">In Play Store öffnen</string>
+
+    <!--AboutMe-->
+    <string name="about_me">Über mich</string>
+    <string name="write_email">E-Mail schreiben</string>
+    <string name="website">Webseite</string>
+    <string name="support_me_text">Falls du mich in irgendeiner Weise unterstützen möchtest, dann sende mir gerne eine E-Mail</string>
+    <string name="support_me">Unterstütz mich</string>
+    <string name="rate_app">App im Play-Store Bewerten</string>
+    <string name="write_review">Bewertung schreiben</string>
+    <string name="share">Teilen</string>
+    <string name="share_app">OneUrl teilen</string>
+    <string name="useful_links">Nützliche Links</string>
+
+    <!--Settings-->
+    <string name="design">Design</string>
+    <string name="system_default">Systemeinstellung</string>
+    <string name="general">Allgemein</string>
+    <string name="language">Sprache</string>
+    <string name="change_language">App Sprache ändern</string>
+    <string name="change_language_not_supported_by_device">Das Ändern der Sprache wird von diesem Gerät nicht unterstützt.</string>
+    <string name="press_again_to_exit">Zurück-Taste erneut drücken um zu Beenden.</string>
+    <string name="delete_appdata_and_exit">App-Daten löschen und Beenden</string>
+    <string name="delete_appdata_and_exit_warning">Achtung: Dadurch werden alle persönlichen Daten gelöscht. Fortfahren? </string>
+    <string name="dev_options">Developer options</string>
+    <string name="more_information">Mehr Informationen</string>
+    <string name="privacy_information">Informationen zum Datenschutz</string>
+    <string name="report_bug">Bug oder Verbesserung melden</string>
+
+    <!--OOBE-->
+    <string name="oobe_onboard_msg1_title">Schönes Design</string>
+    <string name="oobe_onboard_msg2_title">Kostenlos</string>
+    <string name="oobe_onboard_msg3_title">Keine Werbung</string>
+    <string name="oobe_onboard_msg1_summary">Ein URL-Shortener mit OneUI-Design.</string>
+    <string name="oobe_onboard_msg2_summary">Keine Abos, keine In-App-Käufe, keinerlei Kosten.</string>
+    <string name="oobe_onboard_msg3_summary">Keine nervige Werbung.</string>
+    <string name="tos">Nutzungsbedingungen</string>
+    <string name="tos_content">Es ist nicht gestattet, diese App entgegen den guten Sitten oder den geltenden Gesetzen zu verwenden. \n\nSie verpflichten sich außerdem, diese App nicht für Zwecke zu verwenden, die nach dem Recht der Vereinigten Staaten verboten sind, insbesondere nicht für die Entwicklung, Konstruktion, Herstellung oder Produktion von Raketen, chemischen oder biologischen Waffen. \nDiese Einschränkung gilt jedoch nicht für den Fall, dass eine weit verbreitete Virusinfektion auftritt (die von den United States Centers for Disease Control oder einer Nachfolgeorganisation bestätigt wurde), die durch Bisse oder Kontakt mit Körperflüssigkeiten übertragen wird und dazu führt, dass menschliche Leichen wiederbelebt werden und versuchen, lebendes menschliches Fleisch, Blut, Gehirn oder Nervengewebe zu verzehren, und die wahrscheinlich zum Untergang der organisierten Zivilisation führen wird. \n\nEine besondere Gegenleistung, die eine finanzielle Entschädigung beinhalten kann, wird einer begrenzten Anzahl von Nutzern angeboten, die diesen Abschnitt der Nutzungsbedingungen lesen und mich unter eine-email-an-diese-adresse-zu-schreiben-wird-sie-10-euro-kosten@leonard-lemke.com kontaktieren. Dieses Angebot kann jederzeit und ohne Vorankündigung zurückgezogen werden. \n\nWeitere Fragen werden unter diese-email-ist-viel-zu-lang-und-hoffentlich-koennen-sie-nicht-kopieren-und-einfuegen@leonard-lemke.com beantwortet.</string>
+    <string name="oobe_tos_text">Durch die Nutzung der App stimmen Sie den %1$s zu.</string>
+    <string name="continue_button_text">Weiter</string>
+
+    <!--General-->
+    <string name="no_email_app_installed">Keine E-Mail-App installiert…</string>
+    <string name="error">Fehler</string>
+    <string name="no_entry">Keine Urls</string>
+
+    <!--sesl???-->
+    <string name="search">Suche</string>
+    <string name="settings">Einstellungen</string>
+    <string name="sesl_cancel">Abbrechen</string>
+    <string name="sesl_navigate_up">Zurück</string>
+
+    <!--Others-->
+    <string name="favorite">Favorit</string>
+    <string name="remove_from_fav">Aus Favoriten löschen</string>
+    <string name="add_to_fav">Zu Favoriten hinzufügen</string>
+    <string name="no_internet">Keine Internetverbindung verfügbar…</string>
+    <string name="add_url">URL hinzufügen</string>
+    <string name="url">URL</string>
+    <string name="enter_url">URL eingeben</string>
+
+</resources>

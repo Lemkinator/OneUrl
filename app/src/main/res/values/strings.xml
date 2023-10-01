@@ -1,0 +1,92 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--General-->
+    <string name="app_name" translatable="false">OneUrl</string>
+    <string name="leo" translatable="false">Leonard Lemke</string>
+    <string name="leo_job" translatable="false">Study Plus Mathem.-Tech. Softwaredeveloper</string>
+    <string name="email" translatable="false">oneurl@leonard-lemke.com</string>
+    <string name="my_website" translatable="false">https://www.leonard-lemke.com</string>
+    <string name="my_insta" translatable="false">https://www.instagram.com/lemkinator5/</string>
+    <string name="my_github" translatable="false">https://github.com/Lemkinator</string>
+    <string name="github" translatable="false">Github</string>
+    <string name="privacy_website" translatable="false">https://www.leonard-lemke.com/apps/oneurl/privacy-policy</string>
+    <string name="playstore" translatable="false">Play Store</string>
+    <string name="playstore_developer_page_link" translatable="false">https://play.google.com/store/apps/dev?id=4759149701353957861</string>
+    <string name="playstore_app_link" translatable="false">market://details?id=</string>
+    <string name="playstore_link" translatable="false">https://play.google.com/store/apps/details?id=</string>
+    <string name="oneui_library_github" translatable="false">OneUI-Project Github</string>
+    <string name="oneui_github_link" translatable="false">https://github.com/OneUIProject</string>
+    <string name="rick_roll_troll_link" translatable="false">https://www.leonard-lemke.com/rr</string>
+
+    <!--Help-->
+    <string name="help">Help</string>
+    <string name="contact">Contact</string>
+    <string name="contact_me">Contact me (e-mail)</string>
+    <string name="help_text">I need help.</string>
+
+    <!--About-->
+    <string name="about_page_optional_text">A URL-Shortener with OneUI-Design.</string>
+    <string name="about_app">About OneUrl</string>
+    <string name="open_in_playstore">Open in Play Store</string>
+
+    <!--AboutMe-->
+    <string name="about_me">About me</string>
+    <string name="write_email">Write an e-mail</string>
+    <string name="tiktok" translatable="false">TikTok</string>
+    <string name="website">Website</string>
+    <string name="support_me_text">If you want to support me in any way, feel free to send me an e-mail</string>
+    <string name="support_me">Support me</string>
+    <string name="rate_app">Rate app in Play Store</string>
+    <string name="write_review">Write a review</string>
+    <string name="share">Share</string>
+    <string name="share_app">Share this app</string>
+    <string name="useful_links">Useful links</string>
+
+    <!--Settings-->
+    <string name="design">Design</string>
+    <string name="system_default">System default</string>
+    <string name="general">General</string>
+    <string name="language">Language</string>
+    <string name="change_language">Change app language</string>
+    <string name="change_language_not_supported_by_device">Change language is not supported by your device.</string>
+    <string name="press_again_to_exit">Press again to exit.</string>
+    <string name="delete_appdata_and_exit">Delete App-Data and exit</string>
+    <string name="delete_appdata_and_exit_warning">Attention: This will delete all personal data. Continue? </string>
+    <string name="dev_options">Developer options</string>
+    <string name="more_information">More Information</string>
+    <string name="privacy_information">Privacy information</string>
+    <string name="report_bug">Report bug or improvement</string>
+
+    <!--OOBE-->
+    <string name="oobe_onboard_msg1_title">Beautiful design</string>.
+    <string name="oobe_onboard_msg2_title">Free</string>
+    <string name="oobe_onboard_msg3_title">No ads</string>
+    <string name="oobe_onboard_msg1_summary">A URL-Shortener with OneUI-Design.</string>
+    <string name="oobe_onboard_msg2_summary">No subscriptions, no in-app purchases, no costs at all.</string>
+    <string name="oobe_onboard_msg3_summary">No annoying ads.</string>
+    <string name="tos">Terms of Service</string>
+    <string name="tos_content">It is not permitted to use this app contrary to morality or the laws in force. \n\nYou also agree that you will not use this app for any purposes prohibited by United States law, including, without limitation, the development, design, manufacture, or production of missile, chemical or biological weapons. \nHowever, this restriction will not apply in the event of the occurrence (certified by the United States Centers for Disease Control or successor body) of a widespread viral infection transmitted via bites or contact with bodily fluids that causes human corpses to reanimate and seek to consume living human flesh, blood, brain or nerve tissue and is likely to result in the fall of organized civilization. \n\nA special consideration, which may include monetary compensation, will be provided to a limited number of users who read this section of the Terms and Services and contact me at writing-an-email-to-this-address-will-cost-you-10-euro@leonard-lemke.com. This offer may be withdrawn at any time without any notice. \n\nAdditional questions will be answered at this-email-is-way-too-long-and-hopefully-you-cannot-copy-paste@leonard-lemke.com.</string>
+    <string name="oobe_tos_text">By continuing, you agree to the %1$s.</string>
+    <string name="continue_button_text">Continue</string>
+
+    <!--General-->
+    <string name="ok" translatable="false" tools:ignore="ButtonCase,Typos">Ok</string>
+    <string name="no_email_app_installed">No e-mail app installed…</string>
+    <string name="error">Error</string>
+    <string name="no_entry">No urls</string>
+
+    <!--sesl???-->
+    <string name="search">Search</string>
+    <string name="settings">Settings</string>
+    <string name="sesl_cancel">Cancel</string>
+    <string name="sesl_navigate_up">Back</string>
+
+    <!--Others-->
+    <string name="remove_from_fav">Remove from favorites</string>
+    <string name="favorite">Favorite</string>
+    <string name="add_to_fav">Add to favorites</string>
+    <string name="no_internet">No internet connection available…</string>
+    <string name="add_url">Add url</string>
+    <string name="url">URL</string>
+    <string name="enter_url">Enter URL</string>
+
+</resources>
