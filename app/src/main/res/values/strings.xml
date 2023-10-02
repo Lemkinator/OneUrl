@@ -88,5 +88,10 @@
     <string name="add_url">Add url</string>
     <string name="url">URL</string>
     <string name="enter_url">Enter URL</string>
+    <string name="add">Add</string>
+    <string name="url_added">URL added</string>
+    <string name="url_already_exists">URL already shortened</string>
+    <string name="error_unknown">Unknown error… :/</string>
+    <string name="delete">Delete</string>
 
 </resources>

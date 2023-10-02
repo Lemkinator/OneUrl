@@ -10,7 +10,7 @@ import javax.inject.Inject
 class AddUrlUseCase @Inject constructor(
     private val urlRepository: UrlRepository,
 ) {
-    suspend operator fun invoke(url: Url) = withContext(Dispatchers.Default) {
+    suspend operator fun invoke(url: Url): Unit = withContext(Dispatchers.Default) {
         urlRepository.addUrl(url)
     }
 }

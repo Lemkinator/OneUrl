@@ -1,4 +1,4 @@
-package de.lemke.oneurl.domain
+package de.lemke.oneurl.domain.utils
 
 import android.os.Build
 import android.window.OnBackInvokedCallback

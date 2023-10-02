@@ -5,15 +5,22 @@
     tools:ignore="AppCompatResource">
 
     <item
-        android:id="@+id/addToFav"
-        android:icon="@drawable/ic_oui_heart"
+        android:id="@+id/menu_item_delete"
+        android:icon="@drawable/ic_oui_delete_outline"
+        android:title="@string/delete"
+        tools:ignore="AlwaysShowAction,AppCompatResource"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_item_select_add_to_favorites"
+        android:icon="@drawable/ic_oui_favorite_on"
         android:title="@string/add_to_fav"
         tools:ignore="AlwaysShowAction,AppCompatResource"
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/removeFromFav"
-        android:icon="@drawable/ic_oui_heart_outline"
+        android:id="@+id/menu_item_select_remove_from_favorites"
+        android:icon="@drawable/ic_oui_favorite_off"
         android:title="@string/remove_from_fav"
         app:showAsAction="always"
         tools:ignore="AppCompatResource" />

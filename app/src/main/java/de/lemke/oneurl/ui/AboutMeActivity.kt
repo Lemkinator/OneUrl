@@ -17,7 +17,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAboutMeBinding
 import de.lemke.oneurl.databinding.ActivityAboutMeContentBinding
 import de.lemke.oneurl.domain.OpenAppUseCase
-import de.lemke.oneurl.domain.setCustomOnBackPressedLogic
+import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import dev.oneuiproject.oneui.utils.ViewUtils
 import dev.oneuiproject.oneui.utils.internal.ToolbarLayoutUtils
 import dev.oneuiproject.oneui.widget.Toast

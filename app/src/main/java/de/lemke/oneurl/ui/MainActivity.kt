@@ -22,6 +22,8 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -39,7 +41,8 @@ import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.*
 import de.lemke.oneurl.domain.model.Url
-import de.lemke.oneurl.ui.dialog.AddUrlDialog
+import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
+import dev.oneuiproject.oneui.dialog.ProgressDialog
 import dev.oneuiproject.oneui.layout.DrawerLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.utils.internal.ReflectUtils
@@ -47,7 +50,10 @@ import dev.oneuiproject.oneui.widget.Separator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import javax.inject.Inject
 import kotlin.math.abs
 
@@ -56,11 +62,13 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: UrlAdapter
     private lateinit var urls: List<Url>
+    private lateinit var searchUrls: List<Url>
+    private val currentList get() = if (isSearching) searchUrls else urls
     private val backPressEnabled = MutableStateFlow(false)
     private var selected = HashMap<Int, Boolean>()
     private var selecting = false
     private var checkAllListening = true
-    private var isSearchUserInputEnabled = false
+    private var isSearching = false
     private var time: Long = 0
     private var initListJob: Job? = null
     private var isUIReady = false
@@ -78,10 +86,16 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     lateinit var getUrls: GetUrlsUseCase
 
     @Inject
+    lateinit var observeUrls: ObserveUrlsUseCase
+
+    @Inject
     lateinit var getSearchList: GetSearchListUseCase
 
     @Inject
     lateinit var addUrl: AddUrlUseCase
+
+    @Inject
+    lateinit var deleteUrl: DeleteUrlUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         /*  Note: https://stackoverflow.com/a/69831106/18332741
@@ -157,17 +171,16 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         lifecycleScope.launch {
             setCustomOnBackPressedLogic(triggerStateFlow = backPressEnabled, onBackPressedLogic = { checkBackPressed() })
             initDrawer()
-            initList()
-            binding.addFab.setOnClickListener {
-                val dialog = AddUrlDialog()
-                dialog.show(supportFragmentManager, "addUrlDialog")
-
-                /*DialogUtils.setDialogProgressForButton(dialog, DialogInterface.BUTTON_POSITIVE) {
-                    lifecycleScope.launch {
-                        delay(500)
-                        dialog.dismiss()
-                    }
-                }*/
+            urls = getUrls()
+            initRecycler()
+            binding.addFab.setOnClickListener {startActivity(
+                Intent(this@MainActivity, AddUrlActivity::class.java)
+            )}
+            lifecycleScope.launch {
+                observeUrls().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
+                    urls = it
+                    updateRecyclerView()
+                }
             }
             //manually waiting for the animation to finish :/
             delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
@@ -185,6 +198,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private fun checkBackPressed() {
         when {
+            selecting -> setSelecting(false)
             binding.drawerLayoutMain.isSearchMode -> {
                 if (ViewCompat.getRootWindowInsets(binding.root)!!.isVisible(WindowInsetsCompat.Type.ime())) {
                     (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
@@ -192,7 +206,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                         InputMethodManager.HIDE_NOT_ALWAYS
                     )
                 } else {
-                    isSearchUserInputEnabled = false
+                    isSearching = false
                     binding.drawerLayoutMain.dismissSearchMode()
                 }
             }
@@ -238,7 +252,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     inner class SearchModeListener : ToolbarLayout.SearchModeListener {
         override fun onQueryTextSubmit(query: String?): Boolean {
-            if (!isSearchUserInputEnabled) return false
+            if (!isSearching) return false
             lifecycleScope.launch {
                 updateUserSettings { it.copy(search = query ?: "") }
                 setSearchList(query ?: "")
@@ -247,7 +261,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         }
 
         override fun onQueryTextChange(query: String?): Boolean {
-            if (!isSearchUserInputEnabled) return false
+            if (!isSearching) return false
             lifecycleScope.launch {
                 updateUserSettings { it.copy(search = query ?: "") }
                 setSearchList(query ?: "")
@@ -258,8 +272,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         override fun onSearchModeToggle(searchView: SearchView, visible: Boolean) {
             lifecycleScope.launch {
                 if (visible) {
+                    isSearching = true
+                    binding.addFab.hide()
                     backPressEnabled.value = true
-                    isSearchUserInputEnabled = true
                     val search = getUserSettings().search
                     searchView.setQuery(search, false)
                     val autoCompleteTextView = searchView.seslGetAutoCompleteView()
@@ -267,10 +282,10 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                     autoCompleteTextView.setSelection(autoCompleteTextView.text.length)
                     setSearchList(search)
                 } else {
+                    isSearching = false
+                    binding.addFab.show()
                     backPressEnabled.value = false
-                    isSearchUserInputEnabled = false
-                    urls = getUrls()
-                    initList()
+                    updateRecyclerView()
                 }
             }
         }
@@ -324,10 +339,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                     override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
                     override fun onDrawerOpened(drawerView: View) {
                         backPressEnabled.value = true
+                        binding.addFab.hide()
                     }
 
                     override fun onDrawerClosed(drawerView: View) {
                         backPressEnabled.value = false
+                        binding.addFab.show()
                     }
 
                     override fun onDrawerStateChanged(newState: Int) {}
@@ -337,24 +354,35 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     fun setSearchList(search: String?) {
         initListJob?.cancel()
-        initListJob = lifecycleScope.launch { initList(search = search) }
-    }
-
-    private suspend fun initList(newUrls: List<Url>? = null, search: String? = null) {
         if (!this::binding.isInitialized) return
-        urls = if (search == null) newUrls ?: getUrls()
-        else getSearchList(search)
-        initRecycler()
+        initListJob = lifecycleScope.launch {
+            searchUrls = getSearchList(search, urls)
+            updateRecyclerView()
+        }
     }
 
     fun setSelecting(enabled: Boolean) {
         if (enabled) {
             selecting = true
+            backPressEnabled.value = true
+            binding.addFab.hide()
             adapter.notifyItemRangeChanged(0, adapter.itemCount)
             binding.drawerLayoutMain.actionModeBottomMenu.clear()
             binding.drawerLayoutMain.setActionModeMenu(R.menu.menu_select)
             binding.drawerLayoutMain.setActionModeMenuListener { item: MenuItem ->
-                Toast.makeText(this, item.title, Toast.LENGTH_SHORT).show()
+                when (item.itemId) {
+                    R.id.menu_item_delete -> {
+                        val dialog = ProgressDialog(this)
+                        dialog.setProgressStyle(ProgressDialog.STYLE_CIRCLE)
+                        dialog.setCancelable(false)
+                        dialog.show()
+                        lifecycleScope.launch {
+                            deleteUrl(currentList.filterIndexed { index, _ -> selected[index] ?: false })
+                            updateRecyclerView()
+                            dialog.dismiss()
+                        }
+                    }
+                }
                 setSelecting(false)
                 true
             }
@@ -367,7 +395,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 val count = selected.values.count { it }
                 binding.drawerLayoutMain.setActionModeAllSelector(count, true, count == urls.size)
             }
-            backPressEnabled.value = true
         } else {
             selecting = false
             for (i in 0 until adapter.itemCount) selected[i] = false
@@ -375,6 +402,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             binding.drawerLayoutMain.setActionModeAllSelector(0, true, false)
             binding.drawerLayoutMain.dismissActionMode()
             backPressEnabled.value = false
+            binding.addFab.show()
         }
     }
 
@@ -388,7 +416,22 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     }
 
     private fun initRecycler() {
-        if (urls.isEmpty()) {
+        binding.urlList.layoutManager = LinearLayoutManager(this)
+        adapter = UrlAdapter()
+        binding.urlList.adapter = adapter
+        binding.urlList.itemAnimator = null
+        binding.urlList.addItemDecoration(ItemDecoration(this))
+        binding.urlList.seslSetFastScrollerEnabled(true)
+        binding.urlList.seslSetFillBottomEnabled(true)
+        binding.urlList.seslSetGoToTopEnabled(true)
+        binding.urlList.seslSetLastRoundedCorner(true)
+        binding.urlList.seslSetSmoothScrollEnabled(true)
+        updateRecyclerView()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun updateRecyclerView() {
+        if (!isSearching && urls.isEmpty() || isSearching && searchUrls.isEmpty()) {
             binding.urlList.visibility = View.GONE
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
@@ -402,21 +445,14 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         } else {
             binding.urlNoEntryScrollView.visibility = View.GONE
             binding.urlList.visibility = View.VISIBLE
+            selected = HashMap()
+            currentList.indices.forEach { i -> selected[i] = false }
+            adapter.notifyDataSetChanged()
         }
-        binding.urlList.layoutManager = LinearLayoutManager(this)
-        adapter = UrlAdapter()
-        binding.urlList.adapter = adapter
-        binding.urlList.itemAnimator = null
-        binding.urlList.addItemDecoration(ItemDecoration(this))
-        binding.urlList.seslSetFastScrollerEnabled(true)
-        binding.urlList.seslSetFillBottomEnabled(true)
-        binding.urlList.seslSetGoToTopEnabled(true)
-        binding.urlList.seslSetLastRoundedCorner(true)
-        binding.urlList.seslSetSmoothScrollEnabled(true)
     }
 
     inner class UrlAdapter internal constructor() : RecyclerView.Adapter<UrlAdapter.ViewHolder>() {
-        override fun getItemCount(): Int = urls.size
+        override fun getItemCount(): Int = currentList.size
         override fun getItemViewType(position: Int): Int = 0
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = if (viewType == 0) {
             val inflater = LayoutInflater.from(this@MainActivity)
@@ -425,9 +461,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         } else ViewHolder(Separator(this@MainActivity), true)
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.listItemTitle.text = urls[position].shortUrl
-            holder.listItemSubtitle1.text = urls[position].longUrl
-            holder.listItemSubtitle2.text = urls[position].added.toString()
+            holder.listItemTitle.text = currentList[position].shortUrl
+            holder.listItemSubtitle1.text = currentList[position].longUrl
+            holder.listItemSubtitle2.text = currentList[position].added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
             holder.listItemImg.setImageResource(dev.oneuiproject.oneui.R.drawable.ic_oui_qr_code)
             holder.parentView.setOnClickListener {
                 if (selecting) toggleItemSelected(position)

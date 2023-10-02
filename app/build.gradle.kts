@@ -125,6 +125,7 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.core:core-animation:1.0.0-rc01")
     implementation("com.google.android.play:core-ktx:1.8.1")
+    implementation("com.android.volley:volley:1.2.1")
 
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     val roomVersion = "2.5.2"

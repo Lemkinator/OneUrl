@@ -24,7 +24,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityOobeBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.setCustomOnBackPressedLogic
+import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import de.lemke.oneurl.domain.utils.TipsItemView
 import kotlinx.coroutines.launch
 import java.util.*
