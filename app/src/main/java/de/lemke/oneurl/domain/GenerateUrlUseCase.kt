@@ -19,11 +19,13 @@ import de.lemke.oneurl.domain.model.Url
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.UnsupportedEncodingException
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.CookiePolicy
 import java.time.ZonedDateTime
 import javax.inject.Inject
+
 
 class GenerateUrlUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -36,10 +38,13 @@ class GenerateUrlUseCase @Inject constructor(
         favorite: Boolean,
         successCallback: (url: Url) -> Unit = { },
         errorCallback: (message: String) -> Unit = { },
+        alreadyShortenedCallback: (url:Url) -> Unit = { },
     ) = withContext(Dispatchers.Default) {
-        if (getUrl(provider, longUrl) != null) {
-            errorCallback(context.getString(R.string.url_already_exists))
-            return@withContext
+        with(getUrl(provider, longUrl)) {
+            if (this != null) {
+                alreadyShortenedCallback(this)
+                return@withContext
+            }
         }
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
@@ -72,24 +77,36 @@ class GenerateUrlUseCase @Inject constructor(
         successCallback: (url: Url) -> Unit,
         errorCallback: (message: String) -> Unit
     ) {
+        val apiUrl = provider.getApiUrl(longUrl, alias)
+        Log.d("GenerateUrlUseCase", "apiurl: $apiUrl")
         requestQueue.add(
             when (provider) {
                 ShortUrlProvider.VGD, ShortUrlProvider.ISGD -> {
+                    val tag = "GenerateUrlUseCase_VGD_ISGD"
                     JsonObjectRequest(
                         Request.Method.GET,
                         provider.getApiUrl(longUrl, alias),
                         null,
                         { response ->
-                            Log.d("GenerateUrlUseCase", "response: $response")
-                            val shortUrl: String = if (response.has("errorcode") && response.getInt("errorcode") == 1) {
-                                errorCallback(response.getString("errormessage"))
+                            Log.d(tag, "response: $response")
+                            if (response.has("errorcode")) {
+                                /*
+                                Error code 1 - there was a problem with the original long URL provided
+                                Error code 2 - there was a problem with the short URL provided (for custom short URLs)
+                                Error code 3 - our rate limit was exceeded (your app should wait before trying again)
+                                Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
+                                 */
+                                Log.e(tag, "errorcode: ${response.getString("errorcode")}, errormessage: ${response.optString("errormessage")}")
+                                errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
                                 return@JsonObjectRequest
-                            } else if (response.has("shorturl")) {
-                                response.getString("shorturl")
-                            } else {
+                            }
+                            if (!response.has("shorturl")) {
+                                Log.e(tag, "error, response does not contain shorturl, response: $response")
                                 errorCallback(context.getString(R.string.error_unknown))
                                 return@JsonObjectRequest
                             }
+                            val shortUrl = response.getString("shorturl")
+                            Log.d(tag, "shortUrl: $shortUrl")
                             val url = Url(
                                 shortUrl = shortUrl,
                                 longUrl = longUrl,
@@ -103,20 +120,34 @@ class GenerateUrlUseCase @Inject constructor(
                             successCallback(url)
                         },
                         { error ->
-                            Log.e("GenerateUrlUseCase", "error: $error")
-                            errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                            val statusCode = java.lang.String.valueOf(error.networkResponse.statusCode)
+                            Log.e(tag, "statusCode: $statusCode")
+                            if (error.networkResponse.data != null) {
+                                try {
+                                    val body = error.networkResponse.data.toString(charset("UTF-8"))
+                                    Log.e(tag, "error: body: $body")
+                                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                                } catch (e: UnsupportedEncodingException) {
+                                    e.printStackTrace()
+                                    Log.e(tag, "error: UnsupportedEncodingException: $e")
+                                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                                }
+                            } else {
+                                Log.e(tag, "error.networkResponse.data == null")
+                                errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                            }
                         })
                 }
 
                 ShortUrlProvider.DAGD -> {
+                    val tag = "GenerateUrlUseCase_DAGD"
                     val request = object : StringRequest(
                         Method.GET,
                         provider.getApiUrl(longUrl, alias),
                         { response ->
-                            Log.d("test", "apiurl: ${provider.getApiUrl(longUrl, alias)}")
-                            Log.d("test", "response: $response")
                             if (response.contains("https://da.gd/")) {
                                 val shortUrl: String = "https://da.gd/" + response.substringAfter("https://da.gd/").substringBefore("</a>")
+                                Log.d(tag, "shortUrl: $shortUrl")
                                 val url = Url(
                                     shortUrl = shortUrl,
                                     longUrl = longUrl,
@@ -129,13 +160,28 @@ class GenerateUrlUseCase @Inject constructor(
                                 )
                                 successCallback(url)
                             } else {
+                                Log.e(tag, "error, response does not contain https://da.gd/, response: $response")
                                 errorCallback(context.getString(R.string.error_unknown))
                             }
-
                         },
                         { error ->
-                            Log.e("GenerateUrlUseCase", "error: $error")
-                            errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                            val statusCode = java.lang.String.valueOf(error.networkResponse.statusCode)
+                            Log.e(tag, "statusCode: $statusCode")
+                            if (error.networkResponse.data != null) {
+                                try {
+                                    val body = error.networkResponse.data.toString(charset("UTF-8"))
+                                    val h1Message = body.substringAfter("<h1>").substringBefore("</h1>")
+                                    Log.e(tag, "error: h1Message: $h1Message")
+                                    errorCallback(h1Message)
+                                } catch (e: UnsupportedEncodingException) {
+                                    e.printStackTrace()
+                                    Log.e(tag, "error: UnsupportedEncodingException: $e")
+                                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                                }
+                            } else {
+                                Log.e(tag, "error.networkResponse.data == null")
+                                errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                            }
                         }) {
                         override fun getHeaders(): Map<String, String> = with(HashMap<String, String>()) {
                             this["User-Agent"] =

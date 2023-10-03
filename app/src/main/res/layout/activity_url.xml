@@ -25,8 +25,9 @@
                 android:id="@+id/url_qr_imageview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="16dp"
+                android:layout_marginTop="16dp"
                 android:contentDescription="QR Code"
+                android:transitionName="qr"
                 tools:ignore="HardcodedText" />
 
             <LinearLayout
@@ -34,6 +35,30 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
                 android:layout_marginBottom="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/url_qr_copy_button"
+                    style="@style/ButtonStyle.Transparent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableEnd="@drawable/ic_oui_copy_outline" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/url_qr_share_button"
+                    style="@style/ButtonStyle.Transparent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableEnd="@drawable/ic_oui_share_outline"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:gravity="center"
                 android:orientation="horizontal">
 
                 <androidx.appcompat.widget.AppCompatButton
@@ -42,23 +67,22 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="18sp" />
+                    android:textSize="18sp"
+                    android:transitionName="shorturl" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/url_short_copy_button"
                     style="@style/ButtonStyle.Transparent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableEnd="@drawable/ic_oui_copy_outline"
-                    android:textSize="18sp" />
+                    android:drawableEnd="@drawable/ic_oui_copy_outline" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/url_short_share_button"
                     style="@style/ButtonStyle.Transparent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableEnd="@drawable/ic_oui_share_outline"
-                    android:textSize="18sp" />
+                    android:drawableEnd="@drawable/ic_oui_share_outline" />
 
             </LinearLayout>
 
@@ -66,7 +90,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="24dp"
+                android:gravity="center"
                 android:orientation="horizontal">
 
                 <androidx.appcompat.widget.AppCompatButton
@@ -75,23 +100,23 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="18sp" />
+                    android:maxLines="10"
+                    android:textSize="18sp"
+                    android:transitionName="longurl" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/url_long_copy_button"
                     style="@style/ButtonStyle.Transparent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableEnd="@drawable/ic_oui_copy_outline"
-                    android:textSize="18sp" />
+                    android:drawableEnd="@drawable/ic_oui_copy_outline" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/url_long_share_button"
                     style="@style/ButtonStyle.Transparent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableEnd="@drawable/ic_oui_share_outline"
-                    android:textSize="18sp" />
+                    android:drawableEnd="@drawable/ic_oui_share_outline" />
 
             </LinearLayout>
 
@@ -102,7 +127,8 @@
                 android:layout_marginHorizontal="24dp"
                 android:layout_marginBottom="16dp"
                 android:gravity="center"
-                android:textSize="18sp" />
+                android:textSize="18sp"
+                android:transitionName="added" />
 
 
         </dev.oneuiproject.oneui.widget.RoundLinearLayout>

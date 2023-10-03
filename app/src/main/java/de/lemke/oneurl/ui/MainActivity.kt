@@ -1,6 +1,8 @@
 package de.lemke.oneurl.ui
 
+import android.util.Pair as UtilPair
 import android.annotation.SuppressLint
+import android.app.ActivityOptions
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
@@ -56,12 +58,13 @@ import java.time.format.FormatStyle
 import javax.inject.Inject
 import kotlin.math.abs
 
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: UrlAdapter
-    private lateinit var urls: List<Url>
-    private lateinit var searchUrls: List<Url>
+    private var urls: List<Url> = emptyList()
+    private var searchUrls: List<Url> = emptyList()
     private val backPressEnabled = MutableStateFlow(false)
     private var search: String? = null
     private val currentList get() = if (search == null) urls else searchUrls
@@ -175,7 +178,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             urls = getUrls()
             initRecycler()
             binding.addFab.setOnClickListener {
-                startActivity(Intent(this@MainActivity, AddUrlActivity::class.java))
+                startActivity(
+                    Intent(this@MainActivity, AddUrlActivity::class.java),
+                    ActivityOptions
+                        .makeSceneTransitionAnimation(this@MainActivity, binding.addFab, "transition_fab")
+                        .toBundle()
+                )
             }
             lifecycleScope.launch {
                 observeUrls().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
@@ -524,7 +532,17 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                     startActivity(
                         Intent(this@MainActivity, UrlActivity::class.java)
                             .putExtra("shortUrl", currentList[position].shortUrl)
-                            .putExtra("boldText", search)
+                            .putExtra("boldText", search),
+
+                        ActivityOptions
+                            .makeSceneTransitionAnimation(
+                                this@MainActivity,
+                                UtilPair.create(holder.listItemImg, "qr"),
+                                //UtilPair.create(holder.listItemTitle, "shorturl"), buggy :/
+                                //UtilPair.create(holder.listItemSubtitle1, "longurl"),
+                                //UtilPair.create(holder.listItemSubtitle2, "added"),
+                            )
+                            .toBundle()
                     )
                 }
             }

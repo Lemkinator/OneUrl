@@ -4,12 +4,18 @@ import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.MaterialColors
 import com.google.android.play.core.review.ReviewManagerFactory
@@ -25,6 +31,8 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.Url
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -34,6 +42,7 @@ class UrlActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUrlBinding
     private lateinit var url: Url
     private lateinit var boldText: String
+    private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri>
     private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
 
     @Inject
@@ -65,6 +74,11 @@ class UrlActivity : AppCompatActivity() {
             finish()
             return
         }
+        pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
+            if (uri == null)
+                Toast.makeText(this@UrlActivity, getString(R.string.error_no_folder_selected), Toast.LENGTH_LONG).show()
+            else lifecycleScope.launch { exportQR(uri) }
+        }
         lifecycleScope.launch {
             val nullableUrl = getUrl(shortUrl)
             if (nullableUrl == null) {
@@ -75,6 +89,7 @@ class UrlActivity : AppCompatActivity() {
             url = nullableUrl
             binding.root.setTitle(url.shortUrl)
             initViews()
+
         }
         setCustomOnBackPressedLogic { showInAppReviewOrFinish() }
     }
@@ -85,7 +100,7 @@ class UrlActivity : AppCompatActivity() {
                 val lastInAppReviewRequest = getUserSettings().lastInAppReviewRequest
                 val daysSinceLastRequest = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastInAppReviewRequest)
                 if (daysSinceLastRequest < 14) {
-                    finish()
+                    finishAfterTransition()
                     return@launch
                 }
                 updateUserSettings { it.copy(lastInAppReviewRequest = System.currentTimeMillis()) }
@@ -96,16 +111,16 @@ class UrlActivity : AppCompatActivity() {
                     if (task.isSuccessful) {
                         val reviewInfo = task.result
                         val flow = manager.launchReviewFlow(this@UrlActivity, reviewInfo)
-                        flow.addOnCompleteListener { finish() }
+                        flow.addOnCompleteListener { finishAfterTransition() }
                     } else {
                         // There was some problem, log or handle the error code.
                         Log.e("InAppReview", "Review task failed: ${task.exception?.message}")
-                        finish()
+                        finishAfterTransition()
                     }
                 }
             } catch (e: Exception) {
                 Log.e("InAppReview", "Error: ${e.message}")
-                finish()
+                finishAfterTransition()
             }
         }
     }
@@ -155,7 +170,34 @@ class UrlActivity : AppCompatActivity() {
         }
         binding.urlAddedTextview.text = makeSectionOfTextBold(url.addedFormatMedium, boldText, color)
         binding.urlQrImageview.setImageBitmap(url.qr)
+        binding.urlQrCopyButton.setOnClickListener {
+            val cacheFile = File(cacheDir, "qr.png")
+            url.qr.compress(Bitmap.CompressFormat.PNG, 100, cacheFile.outputStream())
+            val uri = FileProvider.getUriForFile(this, "de.lemke.oneurl.fileprovider", cacheFile)
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newUri(contentResolver, "qr-code", uri)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
+        }
+        binding.urlQrShareButton.setOnClickListener {
+            val cacheFile = File(cacheDir, "qr.png")
+            url.qr.compress(Bitmap.CompressFormat.PNG, 100, cacheFile.outputStream())
+            val uri = FileProvider.getUriForFile(this, "de.lemke.oneurl.fileprovider", cacheFile)
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, uri)
+                type = "image/png"
+            }
+            startActivity(Intent.createChooser(sendIntent, null))
+        }
         initBNV()
+    }
+
+    private fun exportQR(uri: Uri) {
+        val timestamp = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.GERMANY).format(Date())
+        val pngFile = DocumentFile.fromTreeUri(this, uri)!!.createFile("image/png", "${url.shortUrl}_$timestamp")
+        url.qr.compress(Bitmap.CompressFormat.PNG, 100, contentResolver.openOutputStream(pngFile!!.uri)!!)
+        Toast.makeText(this, R.string.qr_saved, Toast.LENGTH_LONG).show()
     }
 
     private fun initBNV() {
@@ -198,9 +240,7 @@ class UrlActivity : AppCompatActivity() {
                 }
 
                 R.id.url_bnv_save_as_image -> {
-                    lifecycleScope.launch {
-
-                    }
+                    pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
                     return@setOnItemSelectedListener true
                 }
 

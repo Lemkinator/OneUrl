@@ -4,6 +4,7 @@ enum class ShortUrlProvider {
     VGD,
     ISGD,
     DAGD,
+
     //URLDAY,
     TINYURL,
     ;
@@ -26,10 +27,13 @@ enum class ShortUrlProvider {
     fun getApiUrl(longUrl: String, alias: String? = null): String = when (this) {
         VGD -> "https://v.gd/create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
         ISGD -> "https://is.gd/create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        DAGD -> "https://da.gd/?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        DAGD -> "https://da.gd/?url=" + addHTTPSIfMissing(longUrl) + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
         //URLDAY -> ""
         TINYURL -> "https://tinyurl.com/api-create.php?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
     }
+
+    private fun addHTTPSIfMissing(url: String): String =
+        if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
 
     companion object {
         private val default = VGD

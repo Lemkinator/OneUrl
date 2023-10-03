@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:transitionName="transition_fab"
     app:expanded="false"
     app:navigationIcon="@drawable/ic_oui_back"
     app:subtitle="@string/app_name"
@@ -20,38 +21,66 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <com.google.android.material.textview.MaterialTextView
+                style="?android:listSeparatorTextViewStyle"
+                android:text="@string/provider" />
+
             <androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/provider_spinner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="8dp" />
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginBottom="10dp" />
 
-            <EditText
-                android:id="@+id/editTextAlias"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="24dp"
-                android:autofillHints="@string/enter_alias"
-                android:hint="@string/enter_alias"
-                android:inputType="text" />
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="16dp"
+                android:hint="@string/url"
+                app:endIconMode="clear_text"
+                app:hintTextColor="@color/secondary_text_icon_color_themed">
 
-            <EditText
-                android:id="@+id/editTextUrl"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="24dp"
-                android:autofillHints="@string/enter_url"
-                android:hint="@string/enter_url"
-                android:inputType="textUri" />
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="16dp"
+                android:hint="@string/alias"
+                app:endIconMode="clear_text"
+                app:hintTextColor="@color/secondary_text_icon_color_themed"
+                app:placeholderText="@string/alias_hint">
 
-            <View
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextAlias"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="24dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="16dp"
+                android:hint="@string/description"
+                app:endIconMode="clear_text"
+                app:hintTextColor="@color/secondary_text_icon_color_themed"
+                app:placeholderText="@string/description_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
 
@@ -65,21 +94,21 @@
         android:orientation="vertical"
         app:layout_location="footer">
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/oobe_intro_footer_button"
-                style="@style/OOBE.Button"
-                android:layout_width="296.0dp"
-                android:layout_height="44.0dp"
-                android:layout_gravity="center"
-                android:text="@string/add" />
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/oobe_intro_footer_button"
+            style="@style/OOBE.Button"
+            android:layout_width="296.0dp"
+            android:layout_height="44.0dp"
+            android:layout_gravity="center"
+            android:text="@string/add" />
 
-            <androidx.appcompat.widget.SeslProgressBar
-                android:id="@+id/oobe_intro_footer_button_progress"
-                style="@style/Widget.AppCompat.ProgressBar"
-                android:layout_width="32.0dp"
-                android:layout_height="32.0dp"
-                android:layout_gravity="center"
-                android:visibility="gone" />
+        <androidx.appcompat.widget.SeslProgressBar
+            android:id="@+id/oobe_intro_footer_button_progress"
+            style="@style/Widget.AppCompat.ProgressBar"
+            android:layout_width="32.0dp"
+            android:layout_height="32.0dp"
+            android:layout_gravity="center"
+            android:visibility="gone" />
 
     </LinearLayout>
 

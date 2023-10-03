@@ -3,6 +3,7 @@
     <style name="Theme.OneUrl" parent="OneUITheme">
         <item name="colorPrimary">@color/primary_color_themed</item>
         <item name="colorPrimaryDark">@color/primary_dark_color_themed</item>
+        <item name="android:windowContentTransitions">true</item>
     </style>
 
     <style name="Theme.OneUrl.Splash" parent="Theme.SplashScreen">

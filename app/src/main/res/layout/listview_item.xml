@@ -15,6 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:contentDescription="QR Code"
+        android:transitionName="qr"
         tools:ignore="HardcodedText" />
 
     <LinearLayout
@@ -28,13 +29,19 @@
             android:id="@+id/list_item_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?textAppearanceListItem" />
+            android:ellipsize="marquee"
+            android:maxLines="1"
+            android:textAppearance="?textAppearanceListItem"
+            android:transitionName="shorturl" />
 
         <TextView
             android:id="@+id/list_item_subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:maxLines="1"
             android:textAppearance="?textAppearanceListItemSecondary"
+            android:transitionName="longurl"
             tools:ignore="RtlSymmetry" />
 
         <TextView
@@ -44,6 +51,7 @@
             android:ellipsize="marquee"
             android:maxLines="1"
             android:textAppearance="?textAppearanceListItemSecondary"
+            android:transitionName="added"
             tools:ignore="RtlSymmetry" />
 
     </LinearLayout>

@@ -1,16 +1,20 @@
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
@@ -48,23 +52,15 @@ class AddUrlActivity : AppCompatActivity() {
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.editTextUrl.requestFocus()
-        binding.root.setNavigationButtonOnClickListener { finish() }
-        binding.root.tooltipText = getString(R.string.sesl_navigate_up)
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, ShortUrlProvider.values().map { it.toString() })
-        adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
-        binding.providerSpinner.adapter = adapter
-        lifecycleScope.launch {
-            binding.providerSpinner.setSelection(getUserSettings().selectedShortUrlProvider.ordinal)
-            binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                    lifecycleScope.launch {
-                        updateUserSettings { it.copy(selectedShortUrlProvider = ShortUrlProvider.values()[p2]) }
-                    }
-                }
-
-                override fun onNothingSelected(p0: AdapterView<*>?) {}
-            }
+        binding.root.setNavigationButtonOnClickListener {
+            (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
+                currentFocus!!.windowToken,
+                InputMethodManager.HIDE_NOT_ALWAYS
+            )
+            finishAfterTransition()
         }
+        binding.root.tooltipText = getString(R.string.sesl_navigate_up)
+        lifecycleScope.launch { initViews() }
         initFooterButton()
     }
 
@@ -91,6 +87,36 @@ class AddUrlActivity : AppCompatActivity() {
 
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private suspend fun initViews() {
+        val adapter =
+            ArrayAdapter(this@AddUrlActivity, android.R.layout.simple_spinner_item, ShortUrlProvider.values().map { it.toString() })
+        adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
+        binding.providerSpinner.adapter = adapter
+        val userSettings = getUserSettings()
+        binding.providerSpinner.setSelection(userSettings.selectedShortUrlProvider.ordinal)
+        binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                lifecycleScope.launch {
+                    updateUserSettings { it.copy(selectedShortUrlProvider = ShortUrlProvider.values()[p2]) }
+                }
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+        }
+        binding.editTextUrl.setText(userSettings.lastUrl)
+        binding.editTextAlias.setText(userSettings.lastAlias)
+        binding.editTextDescription.setText(userSettings.lastDescription)
+        binding.editTextUrl.addTextChangedListener { text ->
+            lifecycleScope.launch { updateUserSettings { it.copy(lastUrl = text.toString()) } }
+        }
+        binding.editTextAlias.addTextChangedListener { text ->
+            lifecycleScope.launch { updateUserSettings { it.copy(lastAlias = text.toString()) } }
+        }
+        binding.editTextDescription.addTextChangedListener { text ->
+            lifecycleScope.launch { updateUserSettings { it.copy(lastDescription = text.toString()) } }
+        }
     }
 
     private fun initFooterButton() {
@@ -122,8 +148,26 @@ class AddUrlActivity : AppCompatActivity() {
                         lifecycleScope.launch {
                             addUrl(it)
                             setLoading(false)
-                            Toast.makeText(this@AddUrlActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
                             finish()
+                            Toast.makeText(this@AddUrlActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    alreadyShortenedCallback = {
+                        lifecycleScope.launch {
+                            setLoading(false)
+                            AlertDialog.Builder(this@AddUrlActivity)
+                                .setTitle(R.string.error)
+                                .setMessage(R.string.url_already_exists)
+                                .setNeutralButton(R.string.ok, null)
+                                .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
+                                    finish()
+                                    startActivity(
+                                        Intent(this@AddUrlActivity, UrlActivity::class.java)
+                                            .putExtra("shortUrl", it.shortUrl)
+                                    )
+                                }
+                                .create()
+                                .show()
                         }
                     }
                 )
@@ -137,6 +181,7 @@ class AddUrlActivity : AppCompatActivity() {
         binding.providerSpinner.isEnabled = !loading
         binding.editTextUrl.isEnabled = !loading
         binding.editTextAlias.isEnabled = !loading
+        binding.editTextDescription.isEnabled = !loading
         binding.root.toolbar.menu.findItem(R.id.menu_item_add_to_favorites).isEnabled = !loading
         binding.root.toolbar.menu.findItem(R.id.menu_item_remove_from_favorites).isEnabled = !loading
     }
