@@ -13,13 +13,20 @@ class UrlRepository @Inject constructor(
     private val urlDao: UrlDao
 ) {
 
-    suspend fun getUrls(): List<Url> = urlDao.getAll().map { urlFromDb(it) }
+    suspend fun getUrls(): List<Url> = urlDao.getAll().asReversed().map { urlFromDb(it) }
 
-    fun observeUrls(): Flow<List<Url>> = urlDao.observeAll().mapNotNull { it.map(::urlFromDb) }
+    //get reversed flow
+    fun observeUrls(): Flow<List<Url>> = urlDao.observeAll().mapNotNull { it.asReversed().map(::urlFromDb) }
 
-    suspend fun getUrl(provider: ShortUrlProvider, longUrl: String): Url? = urlDao.getUrl(provider, longUrl)?.let(::urlFromDb)
+    suspend fun getUrl(shortUrl: String): Url? = urlDao.getUrl(shortUrl)?.let(::urlFromDb)
+
+    suspend fun getUrl(provider: ShortUrlProvider, longUrl: String): Url? = urlDao.getUrl(provider.toString(), longUrl)?.let(::urlFromDb)
 
     suspend fun addUrl(url: Url) = urlDao.insert(urlToDb(url))
+
+    suspend fun updateUrl(url: Url) = urlDao.update(urlToDb(url))
+
+    suspend fun updateUrls(urls: List<Url>) = urlDao.updateMultiple(urls.map(::urlToDb))
 
     suspend fun deleteUrl(url: Url) = urlDao.delete(url.shortUrl)
 

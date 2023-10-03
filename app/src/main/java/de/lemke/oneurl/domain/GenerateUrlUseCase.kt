@@ -11,6 +11,7 @@ import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.HurlStack
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortUrlProvider
@@ -31,6 +32,7 @@ class GenerateUrlUseCase @Inject constructor(
     suspend operator fun invoke(
         provider: ShortUrlProvider,
         longUrl: String,
+        alias: String? = null,
         favorite: Boolean,
         successCallback: (url: Url) -> Unit = { },
         errorCallback: (message: String) -> Unit = { },
@@ -58,27 +60,28 @@ class GenerateUrlUseCase @Inject constructor(
         val requestQueue = RequestQueue(cache, network).apply {
             start()
         }
-        generate(provider, longUrl, favorite, requestQueue, successCallback, errorCallback)
+        generate(provider, longUrl, alias, favorite, requestQueue, successCallback, errorCallback)
     }
 
     private fun generate(
         provider: ShortUrlProvider,
         longUrl: String,
+        alias: String?,
         favorite: Boolean,
         requestQueue: RequestQueue,
         successCallback: (url: Url) -> Unit,
         errorCallback: (message: String) -> Unit
     ) {
         requestQueue.add(
-            JsonObjectRequest(
-                Request.Method.POST,
-                provider.getApiUrl(longUrl),
-                null,
-                { response ->
-                    Log.d("GenerateUrlUseCase", "response: $response")
-                    val shortUrl: String = when (provider) {
-                        ShortUrlProvider.VGD, ShortUrlProvider.ISGD -> {
-                            if (response.has("errorcode") && response.getInt("errorcode") == 1) {
+            when (provider) {
+                ShortUrlProvider.VGD, ShortUrlProvider.ISGD -> {
+                    JsonObjectRequest(
+                        Request.Method.GET,
+                        provider.getApiUrl(longUrl, alias),
+                        null,
+                        { response ->
+                            Log.d("GenerateUrlUseCase", "response: $response")
+                            val shortUrl: String = if (response.has("errorcode") && response.getInt("errorcode") == 1) {
                                 errorCallback(response.getString("errormessage"))
                                 return@JsonObjectRequest
                             } else if (response.has("shorturl")) {
@@ -87,27 +90,65 @@ class GenerateUrlUseCase @Inject constructor(
                                 errorCallback(context.getString(R.string.error_unknown))
                                 return@JsonObjectRequest
                             }
-                        }
+                            val url = Url(
+                                shortUrl = shortUrl,
+                                longUrl = longUrl,
+                                shortUrlProvider = provider,
+                                qr = QREncoder(context, shortUrl)
+                                    .setIcon(R.drawable.ic_launcher_themed)
+                                    .generate(),
+                                favorite = favorite,
+                                added = ZonedDateTime.now()
+                            )
+                            successCallback(url)
+                        },
+                        { error ->
+                            Log.e("GenerateUrlUseCase", "error: $error")
+                            errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        })
+                }
 
-                        ShortUrlProvider.DAGD -> response.getString("shorturl")
-                        ShortUrlProvider.TINYURL -> response.getString("shorturl")
+                ShortUrlProvider.DAGD -> {
+                    val request = object : StringRequest(
+                        Method.GET,
+                        provider.getApiUrl(longUrl, alias),
+                        { response ->
+                            Log.d("test", "apiurl: ${provider.getApiUrl(longUrl, alias)}")
+                            Log.d("test", "response: $response")
+                            if (response.contains("https://da.gd/")) {
+                                val shortUrl: String = "https://da.gd/" + response.substringAfter("https://da.gd/").substringBefore("</a>")
+                                val url = Url(
+                                    shortUrl = shortUrl,
+                                    longUrl = longUrl,
+                                    shortUrlProvider = provider,
+                                    qr = QREncoder(context, shortUrl)
+                                        .setIcon(R.drawable.ic_launcher_themed)
+                                        .generate(),
+                                    favorite = favorite,
+                                    added = ZonedDateTime.now()
+                                )
+                                successCallback(url)
+                            } else {
+                                errorCallback(context.getString(R.string.error_unknown))
+                            }
+
+                        },
+                        { error ->
+                            Log.e("GenerateUrlUseCase", "error: $error")
+                            errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        }) {
+                        override fun getHeaders(): Map<String, String> = with(HashMap<String, String>()) {
+                            this["User-Agent"] =
+                                "Mozilla/5.0 (Linux; Android 6.0.1; Moto G (4)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36"
+                            this["Accept"] = "text/html"
+                            this
+                        }
                     }
-                    val url = Url(
-                        shortUrl = shortUrl,
-                        longUrl = longUrl,
-                        shortUrlProvider = provider,
-                        qr = QREncoder(context, shortUrl)
-                            .setIcon(R.drawable.ic_launcher)
-                            .generate(),
-                        favorite = favorite,
-                        added = ZonedDateTime.now()
-                    )
-                    successCallback(url)
-                },
-                { error ->
-                    Log.e("GenerateUrlUseCase", "error: $error")
-                    errorCallback(error.localizedMessage)
-                })
+                    request
+                }
+
+                ShortUrlProvider.TINYURL -> TODO()
+            }
         )
     }
 

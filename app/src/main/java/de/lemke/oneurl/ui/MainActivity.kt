@@ -14,7 +14,6 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.util.SeslRoundedCorner
 import androidx.appcompat.util.SeslSubheaderRoundedCorner
@@ -32,6 +31,7 @@ import com.airbnb.lottie.SimpleColorFilter
 import com.airbnb.lottie.model.KeyPath
 import com.airbnb.lottie.value.LottieValueCallback
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.color.MaterialColors
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.UpdateAvailability
@@ -42,7 +42,6 @@ import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.*
 import de.lemke.oneurl.domain.model.Url
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
-import dev.oneuiproject.oneui.dialog.ProgressDialog
 import dev.oneuiproject.oneui.layout.DrawerLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.utils.internal.ReflectUtils
@@ -63,15 +62,17 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private lateinit var adapter: UrlAdapter
     private lateinit var urls: List<Url>
     private lateinit var searchUrls: List<Url>
-    private val currentList get() = if (isSearching) searchUrls else urls
     private val backPressEnabled = MutableStateFlow(false)
+    private var search: String? = null
+    private val currentList get() = if (search == null) urls else searchUrls
     private var selected = HashMap<Int, Boolean>()
     private var selecting = false
     private var checkAllListening = true
-    private var isSearching = false
     private var time: Long = 0
     private var initListJob: Job? = null
     private var isUIReady = false
+    private var filterFavorite = false
+    private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -92,10 +93,10 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     lateinit var getSearchList: GetSearchListUseCase
 
     @Inject
-    lateinit var addUrl: AddUrlUseCase
+    lateinit var deleteUrl: DeleteUrlUseCase
 
     @Inject
-    lateinit var deleteUrl: DeleteUrlUseCase
+    lateinit var updateUrl: UpdateUrlUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         /*  Note: https://stackoverflow.com/a/69831106/18332741
@@ -173,12 +174,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             initDrawer()
             urls = getUrls()
             initRecycler()
-            binding.addFab.setOnClickListener {startActivity(
-                Intent(this@MainActivity, AddUrlActivity::class.java)
-            )}
+            binding.addFab.setOnClickListener {
+                startActivity(Intent(this@MainActivity, AddUrlActivity::class.java))
+            }
             lifecycleScope.launch {
                 observeUrls().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
-                    urls = it
+                    urls = if (filterFavorite) it.filter { url -> url.favorite } else it
                     updateRecyclerView()
                 }
             }
@@ -206,7 +207,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                         InputMethodManager.HIDE_NOT_ALWAYS
                     )
                 } else {
-                    isSearching = false
+                    search = null
                     binding.drawerLayoutMain.dismissSearchMode()
                 }
             }
@@ -246,25 +247,48 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 return true
             }
 
+            R.id.menu_item_show_all -> {
+                filterFavorite = false
+                item.isVisible = false
+                binding.root.toolbar.menu.findItem(R.id.menu_item_only_show_favorites).isVisible = true
+                lifecycleScope.launch {
+                    urls = getUrls()
+                    updateRecyclerView()
+                }
+                return true
+            }
+
+            R.id.menu_item_only_show_favorites -> {
+                filterFavorite = true
+                item.isVisible = false
+                binding.root.toolbar.menu.findItem(R.id.menu_item_show_all).isVisible = true
+                lifecycleScope.launch {
+                    urls = urls.filter { url -> url.favorite }
+                    updateRecyclerView()
+                }
+                return true
+            }
         }
         return super.onOptionsItemSelected(item)
     }
 
     inner class SearchModeListener : ToolbarLayout.SearchModeListener {
         override fun onQueryTextSubmit(query: String?): Boolean {
-            if (!isSearching) return false
+            if (search == null) return false
             lifecycleScope.launch {
+                search = query ?: ""
                 updateUserSettings { it.copy(search = query ?: "") }
-                setSearchList(query ?: "")
+                setSearchList()
             }
             return true
         }
 
         override fun onQueryTextChange(query: String?): Boolean {
-            if (!isSearching) return false
+            if (search == null) return false
             lifecycleScope.launch {
+                search = query ?: ""
                 updateUserSettings { it.copy(search = query ?: "") }
-                setSearchList(query ?: "")
+                setSearchList()
             }
             return true
         }
@@ -272,17 +296,16 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         override fun onSearchModeToggle(searchView: SearchView, visible: Boolean) {
             lifecycleScope.launch {
                 if (visible) {
-                    isSearching = true
+                    search = getUserSettings().search
                     binding.addFab.hide()
                     backPressEnabled.value = true
-                    val search = getUserSettings().search
                     searchView.setQuery(search, false)
                     val autoCompleteTextView = searchView.seslGetAutoCompleteView()
                     autoCompleteTextView.setText(search)
                     autoCompleteTextView.setSelection(autoCompleteTextView.text.length)
-                    setSearchList(search)
+                    setSearchList()
                 } else {
-                    isSearching = false
+                    search = null
                     binding.addFab.show()
                     backPressEnabled.value = false
                     updateRecyclerView()
@@ -352,11 +375,11 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             )
     }
 
-    fun setSearchList(search: String?) {
+    fun setSearchList() {
         initListJob?.cancel()
         if (!this::binding.isInitialized) return
         initListJob = lifecycleScope.launch {
-            searchUrls = getSearchList(search, urls)
+            searchUrls = getSearchList(search)
             updateRecyclerView()
         }
     }
@@ -370,16 +393,18 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             binding.drawerLayoutMain.actionModeBottomMenu.clear()
             binding.drawerLayoutMain.setActionModeMenu(R.menu.menu_select)
             binding.drawerLayoutMain.setActionModeMenuListener { item: MenuItem ->
-                when (item.itemId) {
-                    R.id.menu_item_delete -> {
-                        val dialog = ProgressDialog(this)
-                        dialog.setProgressStyle(ProgressDialog.STYLE_CIRCLE)
-                        dialog.setCancelable(false)
-                        dialog.show()
-                        lifecycleScope.launch {
+                lifecycleScope.launch {
+                    when (item.itemId) {
+                        R.id.menu_item_delete -> {
                             deleteUrl(currentList.filterIndexed { index, _ -> selected[index] ?: false })
-                            updateRecyclerView()
-                            dialog.dismiss()
+                        }
+
+                        R.id.menu_item_add_to_favorites -> {
+                            updateUrl(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = true) })
+                        }
+
+                        R.id.menu_item_remove_from_favorites -> {
+                            updateUrl(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = false) })
                         }
                     }
                 }
@@ -426,15 +451,28 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         binding.urlList.seslSetGoToTopEnabled(true)
         binding.urlList.seslSetLastRoundedCorner(true)
         binding.urlList.seslSetSmoothScrollEnabled(true)
+        binding.urlList.seslSetLongPressMultiSelectionListener(object : RecyclerView.SeslLongPressMultiSelectionListener {
+            override fun onItemSelected(view: RecyclerView, child: View, position: Int, id: Long) {
+                if (adapter.getItemViewType(position) == 0) toggleItemSelected(position)
+            }
+
+            override fun onLongPressMultiSelectionStarted(x: Int, y: Int) {}
+            override fun onLongPressMultiSelectionEnded(x: Int, y: Int) {}
+        })
         updateRecyclerView()
     }
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
-        if (!isSearching && urls.isEmpty() || isSearching && searchUrls.isEmpty()) {
+        if (search == null && urls.isEmpty() || search != null && searchUrls.isEmpty()) {
             binding.urlList.visibility = View.GONE
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
+            binding.urlNoEntryText.text = when {
+                search != null -> getString(R.string.no_search_results)
+                filterFavorite -> getString(R.string.no_favorite_urls)
+                else -> getString(R.string.no_urls)
+            }
             binding.urlNoEntryScrollView.visibility = View.VISIBLE
             binding.urlListLottie.addValueCallback(
                 KeyPath("**"),
@@ -460,18 +498,38 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             ViewHolder(view, false)
         } else ViewHolder(Separator(this@MainActivity), true)
 
+
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.listItemTitle.text = currentList[position].shortUrl
-            holder.listItemSubtitle1.text = currentList[position].longUrl
-            holder.listItemSubtitle2.text = currentList[position].added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
-            holder.listItemImg.setImageResource(dev.oneuiproject.oneui.R.drawable.ic_oui_qr_code)
+            val color = MaterialColors.getColor(
+                this@MainActivity,
+                androidx.appcompat.R.attr.colorPrimary,
+                this@MainActivity.getColor(R.color.primary_color_themed)
+            )
+            holder.listItemTitle.text =
+                if (search != null) makeSectionOfTextBold(currentList[position].shortUrl, search, color) else currentList[position].shortUrl
+            holder.listItemSubtitle1.text =
+                if (search != null) makeSectionOfTextBold(currentList[position].longUrl, search, color) else currentList[position].longUrl
+            holder.listItemSubtitle2.text =
+                if (search != null) makeSectionOfTextBold(currentList[position].addedFormatMedium, search, color)
+                else currentList[position].added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
+            if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
+            else holder.listItemImg.setImageBitmap(currentList[position].getResizedQr(150))
+            holder.listItemFav.setImageResource(
+                if (currentList[position].favorite) dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on
+                else dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off
+            )
             holder.parentView.setOnClickListener {
                 if (selecting) toggleItemSelected(position)
                 else {
-                    Toast.makeText(this@MainActivity, holder.listItemTitle.text, Toast.LENGTH_SHORT).show()
+                    startActivity(
+                        Intent(this@MainActivity, UrlActivity::class.java)
+                            .putExtra("shortUrl", currentList[position].shortUrl)
+                            .putExtra("boldText", search)
+                    )
                 }
             }
             holder.parentView.setOnLongClickListener {
+                if (search != null) return@setOnLongClickListener false
                 if (!selecting) setSelecting(true)
                 toggleItemSelected(position)
                 binding.urlList.seslStartLongPressMultiSelection()
@@ -485,13 +543,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             var listItemTitle: TextView
             var listItemSubtitle1: TextView
             var listItemSubtitle2: TextView
+            var listItemFav: ImageView
 
             init {
                 parentView = itemView as LinearLayout
-                listItemImg = itemView.findViewById(R.id.listview_item_img)
+                listItemImg = itemView.findViewById(R.id.list_item_img)
                 listItemTitle = parentView.findViewById(R.id.list_item_title)
                 listItemSubtitle1 = parentView.findViewById(R.id.list_item_subtitle1)
                 listItemSubtitle2 = parentView.findViewById(R.id.list_item_subtitle2)
+                listItemFav = parentView.findViewById(R.id.list_item_fav)
             }
         }
     }

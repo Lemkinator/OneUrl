@@ -57,9 +57,10 @@
                 </FrameLayout>
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/url_no_entry_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/no_entry"
+                    android:text="@string/no_urls"
                     android:textColor="@color/primary_text_icon_color_themed"
                     android:textSize="17.0sp" />
 

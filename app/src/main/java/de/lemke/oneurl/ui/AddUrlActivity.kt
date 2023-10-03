@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -46,11 +47,24 @@ class AddUrlActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.editTextUrl.requestFocus()
         binding.root.setNavigationButtonOnClickListener { finish() }
         binding.root.tooltipText = getString(R.string.sesl_navigate_up)
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, ShortUrlProvider.values().map { it.toString() })
         adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
         binding.providerSpinner.adapter = adapter
+        lifecycleScope.launch {
+            binding.providerSpinner.setSelection(getUserSettings().selectedShortUrlProvider.ordinal)
+            binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                    lifecycleScope.launch {
+                        updateUserSettings { it.copy(selectedShortUrlProvider = ShortUrlProvider.values()[p2]) }
+                    }
+                }
+
+                override fun onNothingSelected(p0: AdapterView<*>?) {}
+            }
+        }
         initFooterButton()
     }
 
@@ -63,14 +77,15 @@ class AddUrlActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.menu_item_add_to_favorites -> {
                 addToFavorites = true
-                binding.root.toolbar.menu.setGroupVisible(R.id.menu_group_add_to_favorites, false)
-                binding.root.toolbar.menu.setGroupVisible(R.id.menu_group_remove_from_favorites, true)
+                item.isVisible = false
+                binding.root.toolbar.menu.findItem(R.id.menu_item_remove_from_favorites).isVisible = true
                 return true
             }
+
             R.id.menu_item_remove_from_favorites -> {
                 addToFavorites = false
-                binding.root.toolbar.menu.setGroupVisible(R.id.menu_group_add_to_favorites, true)
-                binding.root.toolbar.menu.setGroupVisible(R.id.menu_group_remove_from_favorites, false)
+                item.isVisible = false
+                binding.root.toolbar.menu.findItem(R.id.menu_item_add_to_favorites).isVisible = true
                 return true
             }
 
@@ -87,17 +102,20 @@ class AddUrlActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 delay(1000)
                 generateUrl(
-                    ShortUrlProvider.values()[binding.providerSpinner.selectedItemPosition],
-                    binding.editTextUrl.text.toString(),
+                    provider = ShortUrlProvider.values()[binding.providerSpinner.selectedItemPosition],
+                    longUrl = binding.editTextUrl.text.toString(),
+                    alias = binding.editTextAlias.text.toString(),
                     favorite = addToFavorites,
                     errorCallback = {
-                        setLoading(false)
-                        AlertDialog.Builder(this@AddUrlActivity)
-                            .setTitle(R.string.error)
-                            .setMessage(it)
-                            .setPositiveButton(R.string.ok, null)
-                            .create()
-                            .show()
+                        lifecycleScope.launch {
+                            setLoading(false)
+                            AlertDialog.Builder(this@AddUrlActivity)
+                                .setTitle(R.string.error)
+                                .setMessage(it)
+                                .setPositiveButton(R.string.ok, null)
+                                .create()
+                                .show()
+                        }
 
                     },
                     successCallback = {
@@ -118,7 +136,8 @@ class AddUrlActivity : AppCompatActivity() {
         binding.oobeIntroFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
         binding.providerSpinner.isEnabled = !loading
         binding.editTextUrl.isEnabled = !loading
-        binding.root.toolbar.menu.setGroupEnabled(R.id.menu_group_add_to_favorites, !loading)
-        binding.root.toolbar.menu.setGroupEnabled(R.id.menu_group_remove_from_favorites, !loading)
+        binding.editTextAlias.isEnabled = !loading
+        binding.root.toolbar.menu.findItem(R.id.menu_item_add_to_favorites).isEnabled = !loading
+        binding.root.toolbar.menu.findItem(R.id.menu_item_remove_from_favorites).isEnabled = !loading
     }
 }

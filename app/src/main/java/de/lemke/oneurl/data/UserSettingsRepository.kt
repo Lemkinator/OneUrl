@@ -39,7 +39,7 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_DEV_MODE_ENABLED] = newSettings.devModeEnabled
             it[KEY_SEARCH] = newSettings.search
             it[KEY_SHOW_ONLY_FAVORITES] = newSettings.showOnlyFavorites
-            it[KEY_SELECTED_SHORT_URL_PROVIDER] = newSettings.shortUrlProvider.toString()
+            it[KEY_SELECTED_SHORT_URL_PROVIDER] = newSettings.selectedShortUrlProvider.toString()
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
         }
         return settingsFromPreferences(prefs)
@@ -55,7 +55,7 @@ class UserSettingsRepository @Inject constructor(
         devModeEnabled = prefs[KEY_DEV_MODE_ENABLED] ?: false,
         search = prefs[KEY_SEARCH] ?: "",
         showOnlyFavorites = prefs[KEY_SHOW_ONLY_FAVORITES] ?: false,
-        shortUrlProvider = ShortUrlProvider.fromStringOrDefault(prefs[KEY_SELECTED_SHORT_URL_PROVIDER]),
+        selectedShortUrlProvider = ShortUrlProvider.fromStringOrDefault(prefs[KEY_SELECTED_SHORT_URL_PROVIDER]),
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
 
@@ -92,7 +92,7 @@ data class UserSettings(
     /** show only favorites */
     val showOnlyFavorites: Boolean,
     /** selected ShortUrlProvider */
-    val shortUrlProvider: ShortUrlProvider,
+    val selectedShortUrlProvider: ShortUrlProvider,
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
 )

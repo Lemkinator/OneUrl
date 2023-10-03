@@ -11,7 +11,7 @@ enum class ShortUrlProvider {
     override fun toString(): String = when (this) {
         VGD -> "v.gd"
         ISGD -> "is.gd"
-        DAGD -> "dagd.it"
+        DAGD -> "da.gd"
         //URLDAY -> "urlday.com"
         TINYURL -> "tinyurl.com"
     }
@@ -24,11 +24,11 @@ enum class ShortUrlProvider {
     https://tinyurl.com/api-create.php?url=https://example.com&alias=example // json body: https://api.tinyurl.com/create
      */
     fun getApiUrl(longUrl: String, alias: String? = null): String = when (this) {
-        VGD -> "https://v.gd/create.php?format=json&url=" + longUrl + (if (alias != null) "&shorturl=$alias" else "")
-        ISGD -> "https://is.gd/create.php?format=json&url=" + longUrl + (if (alias != null) "&shorturl=$alias" else "")
-        DAGD -> "https://da.gd/?url=" + longUrl + (if (alias != null) "&shorturl=$alias" else "")
+        VGD -> "https://v.gd/create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        ISGD -> "https://is.gd/create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        DAGD -> "https://da.gd/?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
         //URLDAY -> ""
-        TINYURL -> "https://tinyurl.com/api-create.php?url=" + longUrl + (if (alias != null) "&alias=$alias" else "")
+        TINYURL -> "https://tinyurl.com/api-create.php?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
     }
 
     companion object {
@@ -37,7 +37,7 @@ enum class ShortUrlProvider {
         private fun fromStringOrNull(string: String?): ShortUrlProvider? = when (string) {
             "v.gd" -> VGD
             "is.gd" -> ISGD
-            "dagd.it" -> DAGD
+            "da.gd" -> DAGD
             //"urlday.com" -> URLDAY
             "tinyurl.com" -> TINYURL
             else -> null

@@ -8,5 +8,18 @@
             app:showAsAction="always"
             android:title="@string/search"
             tools:ignore="AlwaysShowAction,AppCompatResource" />
-
+        <item
+            android:id="@+id/menu_item_show_all"
+            android:icon="@drawable/ic_oui_favorite_on"
+            android:title="@string/show_all"
+            android:visible="false"
+            app:showAsAction="always"
+            tools:ignore="AlwaysShowAction,AppCompatResource" />
+        <item
+            android:id="@+id/menu_item_only_show_favorites"
+            android:icon="@drawable/ic_oui_favorite_off"
+            android:title="@string/only_show_favorites"
+            android:visible="true"
+            app:showAsAction="always"
+            tools:ignore="AppCompatResource" />
 </menu>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <item
+        android:id="@+id/url_bnv_delete"
+        android:icon="@drawable/ic_oui_delete_outline"
+        android:title="@string/delete"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction,AppCompatResource" />
+
+    <item
+        android:id="@+id/url_bnv_add_to_fav"
+        android:icon="@drawable/ic_oui_favorite_off"
+        android:title="@string/add_to_fav"
+        app:showAsAction="always"
+        android:visible="false"
+        tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/url_bnv_remove_from_fav"
+        android:icon="@drawable/ic_oui_favorite_on"
+        android:title="@string/remove_from_fav"
+        app:showAsAction="always"
+        android:visible="false"
+        tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/url_bnv_save_as_image"
+        android:icon="@drawable/ic_oui_save_outline"
+        android:title="@string/save_as_image"
+        app:showAsAction="always"
+        tools:ignore="AppCompatResource" />
+</menu>

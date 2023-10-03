@@ -11,6 +11,10 @@ import javax.inject.Inject
 class GetUrlUseCase @Inject constructor(
     private val urlRepository: UrlRepository,
 ) {
+    suspend operator fun invoke(shortUrl: String): Url? = withContext(Dispatchers.Default) {
+        urlRepository.getUrl(shortUrl)
+    }
+
     suspend operator fun invoke(shortUrlProvider: ShortUrlProvider, longUrl: String): Url? = withContext(Dispatchers.Default) {
         urlRepository.getUrl(shortUrlProvider, longUrl)
     }

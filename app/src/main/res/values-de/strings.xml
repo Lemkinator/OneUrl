@@ -52,7 +52,6 @@
     <!--General-->
     <string name="no_email_app_installed">Keine E-Mail-App installiert…</string>
     <string name="error">Fehler</string>
-    <string name="no_entry">Keine Urls</string>
 
     <!--sesl???-->
     <string name="search">Suche</string>
@@ -68,10 +67,22 @@
     <string name="add_url">URL hinzufügen</string>
     <string name="url">URL</string>
     <string name="enter_url">URL eingeben</string>
+    <string name="enter_alias">Alias eingeben (optional)</string>
     <string name="add">Hinzufügen</string>
     <string name="url_added">URL hinzugefügt</string>
     <string name="url_already_exists">URL bereits gekürzt</string>
     <string name="error_unknown">Unknown error… :/</string>
     <string name="delete">Löschen</string>
+    <string name="show_all">Alle anzeigen</string>
+    <string name="only_show_favorites">Nur Favoriten anzeigen</string>
+
+
+    <string name="no_urls">Keine URLs</string>
+    <string name="no_search_results">Keine Suchergebnisse</string>
+    <string name="no_favorite_urls">Keine Favoriten</string>
+    <string name="url_not_found">URL nicht gefunden</string>
+    <string name="save_as_image">Als Bild speichern</string>
+    <string name="delete_url_message">Möchtest du diese URL wirklich löschen?</string>
+    <string name="copied_to_clipboard">In Zwischenablage kopiert</string>
 
 </resources>

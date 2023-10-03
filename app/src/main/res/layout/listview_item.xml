@@ -10,10 +10,10 @@
     android:paddingEnd="?android:listPreferredItemPaddingEnd">
 
     <ImageView
-        android:id="@+id/listview_item_img"
+        android:id="@+id/list_item_img"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="?android:listPreferredItemPaddingStart"
+        android:layout_marginEnd="16dp"
         android:contentDescription="QR Code"
         tools:ignore="HardcodedText" />
 
@@ -28,16 +28,12 @@
             android:id="@+id/list_item_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="marquee"
-            android:maxLines="1"
             android:textAppearance="?textAppearanceListItem" />
 
         <TextView
             android:id="@+id/list_item_subtitle1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="marquee"
-            android:maxLines="1"
             android:textAppearance="?textAppearanceListItemSecondary"
             tools:ignore="RtlSymmetry" />
 
@@ -51,5 +47,13 @@
             tools:ignore="RtlSymmetry" />
 
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/list_item_fav"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:contentDescription="QR Code"
+        tools:ignore="HardcodedText" />
 
 </LinearLayout>

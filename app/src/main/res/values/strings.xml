@@ -72,7 +72,6 @@
     <string name="ok" translatable="false" tools:ignore="ButtonCase,Typos">Ok</string>
     <string name="no_email_app_installed">No e-mail app installed…</string>
     <string name="error">Error</string>
-    <string name="no_entry">No urls</string>
 
     <!--sesl???-->
     <string name="search">Search</string>
@@ -88,10 +87,21 @@
     <string name="add_url">Add url</string>
     <string name="url">URL</string>
     <string name="enter_url">Enter URL</string>
+    <string name="enter_alias">Enter alias (optional)</string>
     <string name="add">Add</string>
     <string name="url_added">URL added</string>
     <string name="url_already_exists">URL already shortened</string>
     <string name="error_unknown">Unknown error… :/</string>
     <string name="delete">Delete</string>
+    <string name="show_all">Show all</string>
+    <string name="only_show_favorites">Only show favorites</string>
+
+    <string name="no_urls">No URLs</string>
+    <string name="no_search_results">No search results</string>
+    <string name="no_favorite_urls">No favorite URLs</string>
+    <string name="url_not_found">URL not found</string>
+    <string name="save_as_image">Save as image</string>
+    <string name="delete_url_message">Do you really want to delete this URL?</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
 
 </resources>

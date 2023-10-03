@@ -28,6 +28,17 @@
                 android:layout_marginTop="8dp" />
 
             <EditText
+                android:id="@+id/editTextAlias"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp"
+                android:autofillHints="@string/enter_alias"
+                android:hint="@string/enter_alias"
+                android:inputType="text" />
+
+            <EditText
                 android:id="@+id/editTextUrl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

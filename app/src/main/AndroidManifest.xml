@@ -46,6 +46,7 @@
         <activity android:name=".ui.AboutActivity" />
         <activity android:name=".ui.OOBEActivity" />
         <activity android:name=".ui.AddUrlActivity" />
+        <activity android:name=".ui.UrlActivity" />
         <activity
             android:name=".ui.MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
