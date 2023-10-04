@@ -133,7 +133,15 @@ class UrlActivity : AppCompatActivity() {
             this
         }
         binding.urlShortButton.text = shortUrl
-        binding.urlShortButton.setOnClickListener { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(shortUrl.toString()))) }
+        binding.urlShortButton.setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.shortUrl)))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("UrlActivity", "Error: ${e.message}")
+                Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show()
+            }
+        }
         val longUrl = with(makeSectionOfTextBold(url.longUrl, boldText, color)) {
             setSpan(android.text.style.UnderlineSpan(), 0, url.longUrl.length, 0)
             this
@@ -153,7 +161,15 @@ class UrlActivity : AppCompatActivity() {
             startActivity(Intent.createChooser(sendIntent, null))
         }
         binding.urlLongButton.text = longUrl
-        binding.urlLongButton.setOnClickListener { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(longUrl.toString()))) }
+        binding.urlLongButton.setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(longUrl.toString())))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("UrlActivity", "Error: ${e.message}")
+                Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show()
+            }
+        }
         binding.urlLongCopyButton.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("long-url", url.longUrl)

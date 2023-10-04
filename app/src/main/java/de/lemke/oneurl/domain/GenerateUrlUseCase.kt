@@ -65,8 +65,11 @@ class GenerateUrlUseCase @Inject constructor(
         val requestQueue = RequestQueue(cache, network).apply {
             start()
         }
-        generate(provider, longUrl, alias, favorite, requestQueue, successCallback, errorCallback)
+        generate(provider, addHTTPSIfMissing(longUrl), alias, favorite, requestQueue, successCallback, errorCallback)
     }
+
+    private fun addHTTPSIfMissing(url: String): String =
+        if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
 
     private fun generate(
         provider: ShortUrlProvider,

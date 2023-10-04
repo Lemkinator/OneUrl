@@ -54,7 +54,7 @@ class AddUrlActivity : AppCompatActivity() {
         binding.editTextUrl.requestFocus()
         binding.root.setNavigationButtonOnClickListener {
             (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
-                currentFocus!!.windowToken,
+                currentFocus?.windowToken,
                 InputMethodManager.HIDE_NOT_ALWAYS
             )
             finishAfterTransition()
