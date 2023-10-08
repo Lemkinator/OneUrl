@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.RequestQueue
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.HurlStack
@@ -15,6 +16,10 @@ import com.android.volley.toolbox.StringRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortUrlProvider
+import de.lemke.oneurl.domain.model.ShortUrlProvider.DAGD
+import de.lemke.oneurl.domain.model.ShortUrlProvider.ISGD
+import de.lemke.oneurl.domain.model.ShortUrlProvider.VGD
+import de.lemke.oneurl.domain.model.ShortUrlProvider.TINYURL
 import de.lemke.oneurl.domain.model.Url
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.Dispatchers
@@ -36,14 +41,22 @@ class GenerateUrlUseCase @Inject constructor(
         longUrl: String,
         alias: String? = null,
         favorite: Boolean,
+        description: String,
         successCallback: (url: Url) -> Unit = { },
         errorCallback: (message: String) -> Unit = { },
-        alreadyShortenedCallback: (url:Url) -> Unit = { },
+        alreadyShortenedCallback: (url: Url) -> Unit = { },
     ) = withContext(Dispatchers.Default) {
-        with(getUrl(provider, longUrl)) {
-            if (this != null) {
-                alreadyShortenedCallback(this)
+        val existingURL = getUrl(provider, addHTTPSIfMissing(longUrl))
+        if (existingURL.isNotEmpty()) {
+            if (alias.isNullOrBlank()) {
+                alreadyShortenedCallback(existingURL.first())
                 return@withContext
+            }
+            for (url in existingURL) {
+                if (url.shortUrl == provider.baseUrl + alias) {
+                    alreadyShortenedCallback(url)
+                    return@withContext
+                }
             }
         }
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -65,7 +78,7 @@ class GenerateUrlUseCase @Inject constructor(
         val requestQueue = RequestQueue(cache, network).apply {
             start()
         }
-        generate(provider, addHTTPSIfMissing(longUrl), alias, favorite, requestQueue, successCallback, errorCallback)
+        generate(provider, addHTTPSIfMissing(longUrl), alias, favorite, description, requestQueue, successCallback, errorCallback)
     }
 
     private fun addHTTPSIfMissing(url: String): String =
@@ -76,129 +89,232 @@ class GenerateUrlUseCase @Inject constructor(
         longUrl: String,
         alias: String?,
         favorite: Boolean,
+        description: String,
         requestQueue: RequestQueue,
         successCallback: (url: Url) -> Unit,
         errorCallback: (message: String) -> Unit
     ) {
-        val apiUrl = provider.getApiUrl(longUrl, alias)
-        Log.d("GenerateUrlUseCase", "apiurl: $apiUrl")
         requestQueue.add(
             when (provider) {
-                ShortUrlProvider.VGD, ShortUrlProvider.ISGD -> {
-                    val tag = "GenerateUrlUseCase_VGD_ISGD"
-                    JsonObjectRequest(
-                        Request.Method.GET,
-                        provider.getApiUrl(longUrl, alias),
-                        null,
-                        { response ->
-                            Log.d(tag, "response: $response")
-                            if (response.has("errorcode")) {
-                                /*
-                                Error code 1 - there was a problem with the original long URL provided
-                                Error code 2 - there was a problem with the short URL provided (for custom short URLs)
-                                Error code 3 - our rate limit was exceeded (your app should wait before trying again)
-                                Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
-                                 */
-                                Log.e(tag, "errorcode: ${response.getString("errorcode")}, errormessage: ${response.optString("errormessage")}")
-                                errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
-                                return@JsonObjectRequest
-                            }
-                            if (!response.has("shorturl")) {
-                                Log.e(tag, "error, response does not contain shorturl, response: $response")
-                                errorCallback(context.getString(R.string.error_unknown))
-                                return@JsonObjectRequest
-                            }
-                            val shortUrl = response.getString("shorturl")
-                            Log.d(tag, "shortUrl: $shortUrl")
-                            val url = Url(
-                                shortUrl = shortUrl,
-                                longUrl = longUrl,
-                                shortUrlProvider = provider,
-                                qr = QREncoder(context, shortUrl)
-                                    .setIcon(R.drawable.ic_launcher_themed)
-                                    .generate(),
-                                favorite = favorite,
-                                added = ZonedDateTime.now()
-                            )
-                            successCallback(url)
-                        },
-                        { error ->
-                            val statusCode = java.lang.String.valueOf(error.networkResponse.statusCode)
-                            Log.e(tag, "statusCode: $statusCode")
-                            if (error.networkResponse.data != null) {
-                                try {
-                                    val body = error.networkResponse.data.toString(charset("UTF-8"))
-                                    Log.e(tag, "error: body: $body")
-                                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
-                                } catch (e: UnsupportedEncodingException) {
-                                    e.printStackTrace()
-                                    Log.e(tag, "error: UnsupportedEncodingException: $e")
-                                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
-                                }
-                            } else {
-                                Log.e(tag, "error.networkResponse.data == null")
-                                errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
-                            }
-                        })
-                }
-
-                ShortUrlProvider.DAGD -> {
-                    val tag = "GenerateUrlUseCase_DAGD"
-                    val request = object : StringRequest(
-                        Method.GET,
-                        provider.getApiUrl(longUrl, alias),
-                        { response ->
-                            if (response.contains("https://da.gd/")) {
-                                val shortUrl: String = "https://da.gd/" + response.substringAfter("https://da.gd/").substringBefore("</a>")
-                                Log.d(tag, "shortUrl: $shortUrl")
-                                val url = Url(
-                                    shortUrl = shortUrl,
-                                    longUrl = longUrl,
-                                    shortUrlProvider = provider,
-                                    qr = QREncoder(context, shortUrl)
-                                        .setIcon(R.drawable.ic_launcher_themed)
-                                        .generate(),
-                                    favorite = favorite,
-                                    added = ZonedDateTime.now()
-                                )
-                                successCallback(url)
-                            } else {
-                                Log.e(tag, "error, response does not contain https://da.gd/, response: $response")
-                                errorCallback(context.getString(R.string.error_unknown))
-                            }
-                        },
-                        { error ->
-                            val statusCode = java.lang.String.valueOf(error.networkResponse.statusCode)
-                            Log.e(tag, "statusCode: $statusCode")
-                            if (error.networkResponse.data != null) {
-                                try {
-                                    val body = error.networkResponse.data.toString(charset("UTF-8"))
-                                    val h1Message = body.substringAfter("<h1>").substringBefore("</h1>")
-                                    Log.e(tag, "error: h1Message: $h1Message")
-                                    errorCallback(h1Message)
-                                } catch (e: UnsupportedEncodingException) {
-                                    e.printStackTrace()
-                                    Log.e(tag, "error: UnsupportedEncodingException: $e")
-                                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
-                                }
-                            } else {
-                                Log.e(tag, "error.networkResponse.data == null")
-                                errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
-                            }
-                        }) {
-                        override fun getHeaders(): Map<String, String> = with(HashMap<String, String>()) {
-                            this["User-Agent"] =
-                                "Mozilla/5.0 (Linux; Android 6.0.1; Moto G (4)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36"
-                            this["Accept"] = "text/html"
-                            this
-                        }
-                    }
-                    request
-                }
-
-                ShortUrlProvider.TINYURL -> TODO()
+                VGD, ISGD -> requestVGDOrISGD(provider, longUrl, alias, errorCallback, favorite, description, successCallback)
+                DAGD -> requestDAGD(requestQueue, provider, longUrl, alias, favorite, description, successCallback, errorCallback)
+                TINYURL -> requestTINYURL(provider, longUrl, alias, favorite, description, successCallback, errorCallback)
             }
         )
     }
 
+    private fun requestVGDOrISGD(
+        provider: ShortUrlProvider,
+        longUrl: String,
+        alias: String?,
+        errorCallback: (message: String) -> Unit,
+        favorite: Boolean,
+        description: String,
+        successCallback: (url: Url) -> Unit
+    ): JsonObjectRequest {
+        val tag = "GenerateUrlUseCase_VGD_ISGD"
+        val apiUrl = provider.getCreateUrlApi(longUrl, alias)
+        Log.d(tag, "start request: $apiUrl")
+        return JsonObjectRequest(
+            Request.Method.GET,
+            apiUrl,
+            null,
+            { response ->
+                Log.d(tag, "response: $response")
+                if (response.has("errorcode")) {
+                    /*
+                    Error code 1 - there was a problem with the original long URL provided
+                    Error code 2 - there was a problem with the short URL provided (for custom short URLs)
+                    Error code 3 - our rate limit was exceeded (your app should wait before trying again)
+                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
+                     */
+                    Log.e(tag, "errorcode: ${response.getString("errorcode")}")
+                    Log.e(tag, "errormessage: ${response.optString("errormessage")}")
+                    errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
+                    return@JsonObjectRequest
+                }
+                if (!response.has("shorturl")) {
+                    Log.e(tag, "error, response does not contain shorturl, response: $response")
+                    errorCallback(context.getString(R.string.error_unknown))
+                    return@JsonObjectRequest
+                }
+                val shortUrl = response.getString("shorturl").trim()
+                Log.d(tag, "shortUrl: $shortUrl")
+                successCallback(
+                    Url(
+                        shortUrl = shortUrl,
+                        longUrl = longUrl,
+                        shortUrlProvider = provider,
+                        qr = QREncoder(context, shortUrl)
+                            .setIcon(R.drawable.ic_launcher_themed)
+                            .generate(),
+                        favorite = favorite,
+                        description = description,
+                        added = ZonedDateTime.now()
+                    )
+                )
+            },
+            { error -> handlePlainTextError(VGD, tag, error, errorCallback) }
+        )
+    }
+
+    private fun requestDAGD(
+        requestQueue: RequestQueue,
+        provider: ShortUrlProvider,
+        longUrl: String,
+        alias: String?,
+        favorite: Boolean,
+        description: String,
+        successCallback: (url: Url) -> Unit,
+        errorCallback: (message: String) -> Unit
+    ): StringRequest {
+        val tag = "GenerateUrlUseCase_DAGD"
+        if (alias == null) return requestCreateDAGD(provider, longUrl, null, favorite, description, successCallback, errorCallback)
+        val apiUrl = provider.getCheckUrlApi(alias)
+        Log.d(tag, "start request: $apiUrl")
+        return StringRequest(
+            Request.Method.GET,
+            provider.getCheckUrlApi(alias),
+            { response ->
+                if (response.trim() != longUrl) {
+                    Log.e(tag, "error, shortUrl already exists, but has different longUrl, longUrl: $longUrl, response: $response")
+                    errorCallback(context.getString(R.string.alias_already_exists))
+                    return@StringRequest
+                }
+                Log.d(tag, "shortUrl already exists (but is not in local db): $response")
+                val shortUrl = DAGD.baseUrl + alias
+                successCallback(
+                    Url(
+                        shortUrl = shortUrl,
+                        longUrl = longUrl,
+                        shortUrlProvider = provider,
+                        qr = QREncoder(context, shortUrl)
+                            .setIcon(R.drawable.ic_launcher_themed)
+                            .generate(),
+                        favorite = favorite,
+                        description = description,
+                        added = ZonedDateTime.now()
+                    )
+                )
+            },
+            { error ->
+                if (error.networkResponse.statusCode == 404) {
+                    Log.d(tag, "shortUrl does not exist yet, creating it")
+                    requestQueue.add(requestCreateDAGD(provider, longUrl, alias, favorite, description, successCallback, errorCallback))
+                } else {
+                    Log.w(tag, "error, statusCode: ${error.networkResponse.statusCode}, trying to create it anyway")
+                    requestQueue.add(requestCreateDAGD(provider, longUrl, alias, favorite, description, successCallback, errorCallback))
+                }
+            }
+        )
+    }
+
+    private fun requestCreateDAGD(
+        provider: ShortUrlProvider,
+        longUrl: String,
+        alias: String?,
+        favorite: Boolean,
+        description: String,
+        successCallback: (url: Url) -> Unit,
+        errorCallback: (message: String) -> Unit
+    ): StringRequest {
+        val tag = "GenerateUrlUseCase_DAGD"
+        val apiUrl = provider.getCreateUrlApi(longUrl, alias)
+        Log.d(tag, "start request: $apiUrl")
+        return StringRequest(
+            Request.Method.GET,
+            provider.getCreateUrlApi(longUrl, alias),
+            { response ->
+                Log.d(tag, "response: $response")
+                if (response.startsWith("https://da.gd")) {
+                    successCallback(
+                        Url(
+                            shortUrl = response.trim(),
+                            longUrl = longUrl,
+                            shortUrlProvider = provider,
+                            qr = QREncoder(context, response.trim())
+                                .setIcon(R.drawable.ic_launcher_themed)
+                                .generate(),
+                            favorite = favorite,
+                            description = description,
+                            added = ZonedDateTime.now()
+                        )
+                    )
+                } else {
+                    Log.e(tag, "error, response does not start with https://da.gd, response: $response")
+                    errorCallback(context.getString(R.string.error_unknown))
+                }
+            },
+            { error -> handlePlainTextError(DAGD, tag, error, errorCallback) }
+        )
+    }
+
+    private fun requestTINYURL(
+        provider: ShortUrlProvider,
+        longUrl: String,
+        alias: String?,
+        favorite: Boolean,
+        description: String,
+        successCallback: (url: Url) -> Unit,
+        errorCallback: (message: String) -> Unit
+    ): StringRequest {
+        val tag = "GenerateUrlUseCase_TINYURL"
+        val apiUrl = provider.getCreateUrlApi(longUrl, alias)
+        Log.d(tag, "start request: $apiUrl")
+        return StringRequest(
+            Request.Method.GET,
+            provider.getCreateUrlApi(longUrl, alias),
+            { response ->
+                Log.d(tag, "response: $response")
+                if (response.startsWith("https://tinyurl.com/")) {
+                    successCallback(
+                        Url(
+                            shortUrl = response.trim(),
+                            longUrl = longUrl,
+                            shortUrlProvider = provider,
+                            qr = QREncoder(context, response.trim())
+                                .setIcon(R.drawable.ic_launcher_themed)
+                                .generate(),
+                            favorite = favorite,
+                            description = description,
+                            added = ZonedDateTime.now()
+                        )
+                    )
+                } else {
+                    Log.e(tag, "error, response does not start with https://tinyurl.com/, response: $response")
+                    errorCallback(context.getString(R.string.error_unknown))
+                }
+            },
+            { error -> handlePlainTextError(TINYURL, tag, error, errorCallback) }
+        )
+    }
+
+    private fun handlePlainTextError(
+        provider: ShortUrlProvider,
+        tag: String,
+        error: VolleyError,
+        errorCallback: (message: String) -> Unit
+    ) {
+        val statusCode = error.networkResponse.statusCode
+        Log.e(tag, "statusCode: $statusCode")
+        if (provider == TINYURL && statusCode == 422) {
+            Log.e(tag, "error: 422, probably already existing url or alias")
+            errorCallback(context.getString(R.string.error_probably_existing_url_or_alias))
+            return
+        }
+        if (error.networkResponse.data != null) {
+            try {
+                val message = error.networkResponse.data.toString(charset("UTF-8"))
+                Log.e(tag, "error: $message ($statusCode)")
+                errorCallback("$message ($statusCode)")
+            } catch (e: UnsupportedEncodingException) {
+                e.printStackTrace()
+                Log.e(tag, "error: UnsupportedEncodingException: $e")
+                errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+            }
+        } else {
+            Log.e(tag, "error.networkResponse.data == null")
+            errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+        }
+    }
 }

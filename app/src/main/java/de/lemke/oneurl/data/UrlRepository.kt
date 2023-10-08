@@ -20,7 +20,7 @@ class UrlRepository @Inject constructor(
 
     suspend fun getUrl(shortUrl: String): Url? = urlDao.getUrl(shortUrl)?.let(::urlFromDb)
 
-    suspend fun getUrl(provider: ShortUrlProvider, longUrl: String): Url? = urlDao.getUrl(provider.toString(), longUrl)?.let(::urlFromDb)
+    suspend fun getUrl(provider: ShortUrlProvider, longUrl: String): List<Url> = urlDao.getUrl(provider.toString(), longUrl).asReversed().map { urlFromDb(it) }
 
     suspend fun addUrl(url: Url) = urlDao.insert(urlToDb(url))
 

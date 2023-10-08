@@ -11,6 +11,7 @@ data class Url(
     val shortUrlProvider: ShortUrlProvider,
     val qr: Bitmap,
     val favorite: Boolean,
+    val description: String,
     val added: ZonedDateTime,
 ) {
     override fun equals(other: Any?): Boolean {

@@ -51,7 +51,6 @@ class AddUrlActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.editTextUrl.requestFocus()
         binding.root.setNavigationButtonOnClickListener {
             (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
                 currentFocus?.windowToken,
@@ -106,6 +105,8 @@ class AddUrlActivity : AppCompatActivity() {
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
         binding.editTextUrl.setText(userSettings.lastUrl)
+        binding.editTextUrl.requestFocus()
+        binding.editTextUrl.text?.let { binding.editTextUrl.setSelection(0, it.length) }
         binding.editTextAlias.setText(userSettings.lastAlias)
         binding.editTextDescription.setText(userSettings.lastDescription)
         binding.editTextUrl.addTextChangedListener { text ->
@@ -124,6 +125,10 @@ class AddUrlActivity : AppCompatActivity() {
             binding.oobeIntroFooterButton.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         }
         binding.oobeIntroFooterButton.setOnClickListener {
+            if (binding.editTextUrl.text.isNullOrBlank()) {
+                binding.editTextUrl.error = getString(R.string.error_empty_url)
+                return@setOnClickListener
+            }
             setLoading(true)
             lifecycleScope.launch {
                 delay(1000)
@@ -132,6 +137,7 @@ class AddUrlActivity : AppCompatActivity() {
                     longUrl = binding.editTextUrl.text.toString(),
                     alias = binding.editTextAlias.text.toString(),
                     favorite = addToFavorites,
+                    description = binding.editTextDescription.text.toString(),
                     errorCallback = {
                         lifecycleScope.launch {
                             setLoading(false)

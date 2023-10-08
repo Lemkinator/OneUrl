@@ -56,12 +56,12 @@
 
     </LinearLayout>
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/list_item_fav"
+        style="@style/ButtonStyle.Transparent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:contentDescription="QR Code"
-        tools:ignore="HardcodedText" />
+        android:drawableEnd="@drawable/ic_oui_favorite_off"
+        android:layout_marginStart="16dp" />
 
 </LinearLayout>

@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -183,6 +184,10 @@ class UrlActivity : AppCompatActivity() {
                 type = "text/plain"
             }
             startActivity(Intent.createChooser(sendIntent, null))
+        }
+        if (url.description.isNotBlank()) {
+            binding.urlDescriptionTextview.text = makeSectionOfTextBold(url.description, boldText, color)
+            binding.urlDescriptionTextview.visibility = View.VISIBLE
         }
         binding.urlAddedTextview.text = makeSectionOfTextBold(url.addedFormatMedium, boldText, color)
         binding.urlQrImageview.setImageBitmap(url.qr)

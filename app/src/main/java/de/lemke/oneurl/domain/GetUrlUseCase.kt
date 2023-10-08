@@ -15,7 +15,7 @@ class GetUrlUseCase @Inject constructor(
         urlRepository.getUrl(shortUrl)
     }
 
-    suspend operator fun invoke(shortUrlProvider: ShortUrlProvider, longUrl: String): Url? = withContext(Dispatchers.Default) {
+    suspend operator fun invoke(shortUrlProvider: ShortUrlProvider, longUrl: String): List<Url> = withContext(Dispatchers.Default) {
         urlRepository.getUrl(shortUrlProvider, longUrl)
     }
 }

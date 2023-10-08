@@ -19,6 +19,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.util.SeslRoundedCorner
 import androidx.appcompat.util.SeslSubheaderRoundedCorner
+import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -53,8 +54,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import javax.inject.Inject
 import kotlin.math.abs
 
@@ -517,15 +516,19 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 if (search != null) makeSectionOfTextBold(currentList[position].shortUrl, search, color) else currentList[position].shortUrl
             holder.listItemSubtitle1.text =
                 if (search != null) makeSectionOfTextBold(currentList[position].longUrl, search, color) else currentList[position].longUrl
-            holder.listItemSubtitle2.text =
-                if (search != null) makeSectionOfTextBold(currentList[position].addedFormatMedium, search, color)
-                else currentList[position].added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
+            val subtitle2 = currentList[position].description.ifBlank { currentList[position].addedFormatMedium }
+            holder.listItemSubtitle2.text = if (search != null) makeSectionOfTextBold(subtitle2, search, color) else subtitle2
             if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
             else holder.listItemImg.setImageBitmap(currentList[position].getResizedQr(150))
-            holder.listItemFav.setImageResource(
-                if (currentList[position].favorite) dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on
-                else dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off
+            holder.listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                null, null, if (currentList[position].favorite) getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
+                else getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off), null
             )
+            holder.listItemFav.setOnClickListener {
+                lifecycleScope.launch {
+                    updateUrl(currentList[position].copy(favorite = !currentList[position].favorite))
+                }
+            }
             holder.parentView.setOnClickListener {
                 if (selecting) toggleItemSelected(position)
                 else {
@@ -561,7 +564,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             var listItemTitle: TextView
             var listItemSubtitle1: TextView
             var listItemSubtitle2: TextView
-            var listItemFav: ImageView
+            var listItemFav: AppCompatButton
 
             init {
                 parentView = itemView as LinearLayout

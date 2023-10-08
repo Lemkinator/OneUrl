@@ -121,6 +121,17 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/url_description_textview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="16dp"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:visibility="gone"
+                android:transitionName="description" />
+
+            <TextView
                 android:id="@+id/url_added_textview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

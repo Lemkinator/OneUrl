@@ -6,6 +6,7 @@ enum class ShortUrlProvider {
     DAGD,
 
     //URLDAY,
+    //CHILPIT,
     TINYURL,
     ;
 
@@ -14,6 +15,7 @@ enum class ShortUrlProvider {
         ISGD -> "is.gd"
         DAGD -> "da.gd"
         //URLDAY -> "urlday.com"
+        //CHILPIT -> "chilp.it"
         TINYURL -> "tinyurl.com"
     }
 
@@ -24,12 +26,33 @@ enum class ShortUrlProvider {
 
     https://tinyurl.com/api-create.php?url=https://example.com&alias=example // json body: https://api.tinyurl.com/create
      */
-    fun getApiUrl(longUrl: String, alias: String? = null): String = when (this) {
-        VGD -> "https://v.gd/create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        ISGD -> "https://is.gd/create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        DAGD -> "https://da.gd/?url=" + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        //URLDAY -> ""
-        TINYURL -> "https://tinyurl.com/api-create.php?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
+
+    val baseUrl: String
+        get() = when (this) {
+            VGD -> "https://v.gd/"
+            ISGD -> "https://is.gd/"
+            DAGD -> "https://da.gd/"
+            //URLDAY -> "https://urlday.com/"
+            //CHILPIT -> "http://chilp.it/"
+            TINYURL -> "https://tinyurl.com/"
+        }
+
+    fun getCreateUrlApi(longUrl: String, alias: String? = null): String = when (this) {
+        VGD -> "${baseUrl}create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        ISGD -> "${baseUrl}create.php?format=json&url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        DAGD -> "${baseUrl}shorten?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        //URLDAY -> "${baseUrl}"
+        //CHILPIT -> "${baseUrl}api.php?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
+        TINYURL -> "${baseUrl}api-create.php?url=" + longUrl + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
+    }
+
+    fun getCheckUrlApi(alias: String): String = when (this) {
+        VGD -> "${baseUrl}x"
+        ISGD -> "${baseUrl}x"
+        DAGD -> "${baseUrl}coshorten/$alias"
+        //URLDAY -> "${baseUrl}"
+        //CHILPIT -> "${baseUrl}"
+        TINYURL -> "${baseUrl}x"
     }
 
     companion object {

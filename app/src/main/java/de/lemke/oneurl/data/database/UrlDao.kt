@@ -13,7 +13,7 @@ interface UrlDao {
     suspend fun getUrl(shortUrl: String): UrlDb?
 
     @Query("SELECT * FROM url WHERE shortUrlProvider = :shortUrlProvider AND longUrl = :longUrl")
-    suspend fun getUrl(shortUrlProvider: String, longUrl: String): UrlDb?
+    suspend fun getUrl(shortUrlProvider: String, longUrl: String): List<UrlDb>
 
     @Query("SELECT * FROM url;")
     suspend fun getAll(): List<UrlDb>

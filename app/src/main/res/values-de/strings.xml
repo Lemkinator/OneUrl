@@ -72,8 +72,11 @@
     <string name="no_internet">No internet connection available…</string>
     <string name="error_unknown">Unbekannter Fehler…</string>
     <string name="url_already_exists">URL bereits gekürzt</string>
+    <string name="alias_already_exists">Kürzel existiert bereits</string>
     <string name="url_not_found">URL nicht gefunden</string>
     <string name="error_no_folder_selected">Fehler: Kein Ordner ausgewählt</string>
+    <string name="error_empty_url">Keine URL eingegeben</string>
+    <string name="error_probably_existing_url_or_alias">URL oder Kürzel existiert eventuell bereits</string>
 
     <string name="no_urls">Keine URLs</string>
     <string name="no_search_results">Keine Suchergebnisse</string>
