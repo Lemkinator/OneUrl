@@ -1,19 +1,18 @@
 package de.lemke.oneurl.domain.model
 
 enum class ShortURLProvider {
+    DAGD,
     VGD,
     ISGD,
-    DAGD,
-
     //URLDAY,
     //CHILPIT,
     TINYURL,
     ;
 
     override fun toString(): String = when (this) {
+        DAGD -> "da.gd"
         VGD -> "v.gd"
         ISGD -> "is.gd"
-        DAGD -> "da.gd"
         //URLDAY -> "urlday.com"
         //CHILPIT -> "chilp.it"
         TINYURL -> "tinyurl.com"
