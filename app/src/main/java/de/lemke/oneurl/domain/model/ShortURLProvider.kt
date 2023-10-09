@@ -29,39 +29,39 @@ enum class ShortURLProvider {
 
     val baseURL: String
         get() = when (this) {
+            DAGD -> "https://da.gd/"
             VGD -> "https://v.gd/"
             ISGD -> "https://is.gd/"
-            DAGD -> "https://da.gd/"
             //URLDAY -> "https://urlday.com/"
             //CHILPIT -> "http://chilp.it/"
             TINYURL -> "https://tinyurl.com/"
         }
 
     fun getCreateURLApi(longURL: String, alias: String? = null): String = when (this) {
+        DAGD -> "${baseURL}shorten?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
         VGD -> "${baseURL}create.php?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
         ISGD -> "${baseURL}create.php?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        DAGD -> "${baseURL}shorten?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
         //URLDAY -> "${baseURL}"
         //CHILPIT -> "${baseURL}api.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
         TINYURL -> "${baseURL}api-create.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
     }
 
     fun getCheckURLApi(alias: String): String = when (this) {
+        DAGD -> "${baseURL}coshorten/$alias"
         VGD -> "${baseURL}x"
         ISGD -> "${baseURL}x"
-        DAGD -> "${baseURL}coshorten/$alias"
         //URLDAY -> "${baseURL}"
         //CHILPIT -> "${baseURL}"
         TINYURL -> "${baseURL}x"
     }
 
     companion object {
-        private val default = VGD
+        private val default = DAGD
 
         private fun fromStringOrNull(string: String?): ShortURLProvider? = when (string) {
+            "da.gd" -> DAGD
             "v.gd" -> VGD
             "is.gd" -> ISGD
-            "da.gd" -> DAGD
             //"urlday.com" -> URLDAY
             "tinyurl.com" -> TINYURL
             else -> null

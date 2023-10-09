@@ -103,61 +103,6 @@ class GenerateURLUseCase @Inject constructor(
         )
     }
 
-    private fun requestVGDOrISGD(
-        provider: ShortURLProvider,
-        longURL: String,
-        alias: String?,
-        errorCallback: (message: String) -> Unit,
-        favorite: Boolean,
-        description: String,
-        successCallback: (url: URL) -> Unit
-    ): JsonObjectRequest {
-        val tag = "GenerateURLUseCase_VGD_ISGD"
-        val apiURL = provider.getCreateURLApi(longURL, alias)
-        Log.d(tag, "start request: $apiURL")
-        return JsonObjectRequest(
-            Request.Method.GET,
-            apiURL,
-            null,
-            { response ->
-                Log.d(tag, "response: $response")
-                if (response.has("errorcode")) {
-                    /*
-                    Error code 1 - there was a problem with the original long URL provided
-                    Error code 2 - there was a problem with the short URL provided (for custom short URLs)
-                    Error code 3 - our rate limit was exceeded (your app should wait before trying again)
-                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
-                     */
-                    Log.e(tag, "errorcode: ${response.getString("errorcode")}")
-                    Log.e(tag, "errormessage: ${response.optString("errormessage")}")
-                    errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
-                    return@JsonObjectRequest
-                }
-                if (!response.has("shorturl")) {
-                    Log.e(tag, "error, response does not contain shorturl, response: $response")
-                    errorCallback(context.getString(R.string.error_unknown))
-                    return@JsonObjectRequest
-                }
-                val shortURL = response.getString("shorturl").trim()
-                Log.d(tag, "shortURL: $shortURL")
-                successCallback(
-                    URL(
-                        shortURL = shortURL,
-                        longURL = longURL,
-                        shortURLProvider = provider,
-                        qr = QREncoder(context, shortURL)
-                            .setIcon(R.drawable.ic_launcher_themed)
-                            .generate(),
-                        favorite = favorite,
-                        description = description,
-                        added = ZonedDateTime.now()
-                    )
-                )
-            },
-            { error -> handlePlainTextError(VGD, tag, error, errorCallback) }
-        )
-    }
-
     private fun requestDAGD(
         requestQueue: RequestQueue,
         provider: ShortURLProvider,
@@ -246,6 +191,61 @@ class GenerateURLUseCase @Inject constructor(
                 }
             },
             { error -> handlePlainTextError(DAGD, tag, error, errorCallback) }
+        )
+    }
+
+    private fun requestVGDOrISGD(
+        provider: ShortURLProvider,
+        longURL: String,
+        alias: String?,
+        errorCallback: (message: String) -> Unit,
+        favorite: Boolean,
+        description: String,
+        successCallback: (url: URL) -> Unit
+    ): JsonObjectRequest {
+        val tag = "GenerateURLUseCase_VGD_ISGD"
+        val apiURL = provider.getCreateURLApi(longURL, alias)
+        Log.d(tag, "start request: $apiURL")
+        return JsonObjectRequest(
+            Request.Method.GET,
+            apiURL,
+            null,
+            { response ->
+                Log.d(tag, "response: $response")
+                if (response.has("errorcode")) {
+                    /*
+                    Error code 1 - there was a problem with the original long URL provided
+                    Error code 2 - there was a problem with the short URL provided (for custom short URLs)
+                    Error code 3 - our rate limit was exceeded (your app should wait before trying again)
+                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
+                     */
+                    Log.e(tag, "errorcode: ${response.getString("errorcode")}")
+                    Log.e(tag, "errormessage: ${response.optString("errormessage")}")
+                    errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
+                    return@JsonObjectRequest
+                }
+                if (!response.has("shorturl")) {
+                    Log.e(tag, "error, response does not contain shorturl, response: $response")
+                    errorCallback(context.getString(R.string.error_unknown))
+                    return@JsonObjectRequest
+                }
+                val shortURL = response.getString("shorturl").trim()
+                Log.d(tag, "shortURL: $shortURL")
+                successCallback(
+                    URL(
+                        shortURL = shortURL,
+                        longURL = longURL,
+                        shortURLProvider = provider,
+                        qr = QREncoder(context, shortURL)
+                            .setIcon(R.drawable.ic_launcher_themed)
+                            .generate(),
+                        favorite = favorite,
+                        description = description,
+                        added = ZonedDateTime.now()
+                    )
+                )
+            },
+            { error -> handlePlainTextError(VGD, tag, error, errorCallback) }
         )
     }
 

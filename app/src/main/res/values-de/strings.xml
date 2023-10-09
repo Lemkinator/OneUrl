@@ -6,7 +6,7 @@
     <string name="help_text">Ich brauche Hilfe.</string>
 
     <!--About-->
-    <string name="about_page_optional_text">Ein URL-Shortener im schönen OneUI Design.</string>
+    <string name="about_page_optional_text">Ein URL-Verkürzer mit OneUI-Design.</string>
     <string name="about_app">Über OneURL</string>
     <string name="open_in_playstore">In Play Store öffnen</string>
 
@@ -41,7 +41,7 @@
     <string name="oobe_onboard_msg1_title">Schönes Design</string>
     <string name="oobe_onboard_msg2_title">Kostenlos</string>
     <string name="oobe_onboard_msg3_title">Keine Werbung</string>
-    <string name="oobe_onboard_msg1_summary">Ein URL-Shortener mit OneUI-Design.</string>
+    <string name="oobe_onboard_msg1_summary">Ein URL-Verkürzer mit OneUI-Design.</string>
     <string name="oobe_onboard_msg2_summary">Keine Abos, keine In-App-Käufe, keinerlei Kosten.</string>
     <string name="oobe_onboard_msg3_summary">Keine nervige Werbung.</string>
     <string name="tos">Nutzungsbedingungen</string>
