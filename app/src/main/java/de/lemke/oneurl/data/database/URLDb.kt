@@ -6,11 +6,11 @@ import androidx.room.PrimaryKey
 import java.time.ZonedDateTime
 
 @Entity(tableName = "url")
-data class UrlDb(
+data class URLDb(
     @PrimaryKey
-    val shortUrl: String,
-    val longUrl: String,
-    val shortUrlProvider: String,
+    val shortURL: String,
+    val longURL: String,
+    val shortURLProvider: String,
     val qr: Bitmap,
     val favorite: Boolean,
     val description: String,
@@ -20,14 +20,14 @@ data class UrlDb(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as UrlDb
+        other as URLDb
 
-        if (shortUrl != other.shortUrl) return false
+        if (shortURL != other.shortURL) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return shortUrl.hashCode()
+        return shortURL.hashCode()
     }
 }

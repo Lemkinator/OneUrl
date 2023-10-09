@@ -35,7 +35,7 @@ PersistenceModule : Application() {
         .build()
 
     @Provides
-    fun provideUrlDao(database: AppDatabase): UrlDao = database.urlDao()
+    fun provideURLDao(database: AppDatabase): URLDao = database.urlDao()
 
 }
 

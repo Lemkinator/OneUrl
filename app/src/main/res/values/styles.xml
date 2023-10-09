@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.OneUrl" parent="OneUITheme">
+    <style name="Theme.OneURL" parent="OneUITheme">
         <item name="colorPrimary">@color/primary_color_themed</item>
         <item name="colorPrimaryDark">@color/primary_dark_color_themed</item>
         <item name="android:windowContentTransitions">true</item>
     </style>
 
-    <style name="Theme.OneUrl.Splash" parent="Theme.SplashScreen">
+    <style name="Theme.OneURL.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/oui_round_and_bgcolor</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
         <item name="windowSplashScreenAnimationDuration">700</item>
         <!--item name="windowSplashScreenIconBackgroundColor">@color/oui_background_color</item-->
-        <item name="postSplashScreenTheme">@style/Theme.OneUrl</item>
+        <item name="postSplashScreenTheme">@style/Theme.OneURL</item>
     </style>
 
     <style name="ButtonStyle.Colored" parent="OneUI.ButtonStyleColored">

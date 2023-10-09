@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!--General-->
-    <string name="app_name" translatable="false">OneUrl</string>
+    <string name="app_name" translatable="false">OneURL</string>
     <string name="leo" translatable="false">Leonard Lemke</string>
     <string name="leo_job" translatable="false">Study Plus Mathem.-Tech. Softwaredeveloper</string>
     <string name="email" translatable="false">oneurl@leonard-lemke.com</string>
@@ -25,7 +25,7 @@
 
     <!--About-->
     <string name="about_page_optional_text">A URL-Shortener with OneUI-Design.</string>
-    <string name="about_app">About OneUrl</string>
+    <string name="about_app">About OneURL</string>
     <string name="open_in_playstore">Open in Play Store</string>
 
     <!--AboutMe-->
@@ -78,7 +78,7 @@
     <string name="sesl_cancel">Cancel</string>
     <string name="sesl_navigate_up">Back</string>
 
-    <!--Add Url-->
+    <!--Add URL-->
     <string name="add_url">Add url</string>
     <string name="provider">Provider</string>
     <string name="alias">Custom alias (Optional)</string>

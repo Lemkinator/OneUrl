@@ -2,27 +2,27 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b5130c9a84c5c2297999bdf7e889414b",
+    "identityHash": "e391e6edf552e60bd2561e2187493ba8",
     "entities": [
       {
         "tableName": "url",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shortUrl` TEXT NOT NULL, `longUrl` TEXT NOT NULL, `shortUrlProvider` TEXT NOT NULL, `qr` BLOB NOT NULL, `favorite` INTEGER NOT NULL, `description` TEXT NOT NULL, `added` TEXT NOT NULL, PRIMARY KEY(`shortUrl`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shortURL` TEXT NOT NULL, `longURL` TEXT NOT NULL, `shortURLProvider` TEXT NOT NULL, `qr` BLOB NOT NULL, `favorite` INTEGER NOT NULL, `description` TEXT NOT NULL, `added` TEXT NOT NULL, PRIMARY KEY(`shortURL`))",
         "fields": [
           {
-            "fieldPath": "shortUrl",
-            "columnName": "shortUrl",
+            "fieldPath": "shortURL",
+            "columnName": "shortURL",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "longUrl",
-            "columnName": "longUrl",
+            "fieldPath": "longURL",
+            "columnName": "longURL",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "shortUrlProvider",
-            "columnName": "shortUrlProvider",
+            "fieldPath": "shortURLProvider",
+            "columnName": "shortURLProvider",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -54,7 +54,7 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "shortUrl"
+            "shortURL"
           ]
         },
         "indices": [],
@@ -64,7 +64,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b5130c9a84c5c2297999bdf7e889414b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e391e6edf552e60bd2561e2187493ba8')"
     ]
   }
 }

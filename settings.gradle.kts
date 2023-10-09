@@ -6,6 +6,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = "OneUrl"
+rootProject.name = "OneURL"
 include(":app")
  

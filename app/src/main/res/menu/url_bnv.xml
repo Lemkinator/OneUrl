@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
     <item
-        android:id="@+id/url_bnv_delete"
-        android:icon="@drawable/ic_oui_delete_outline"
-        android:title="@string/delete"
+        android:id="@+id/url_bnv_save_as_image"
+        android:icon="@drawable/ic_oui_save_outline"
+        android:title="@string/save_as_image"
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction,AppCompatResource" />
 
@@ -26,9 +26,9 @@
         tools:ignore="AppCompatResource" />
 
     <item
-        android:id="@+id/url_bnv_save_as_image"
-        android:icon="@drawable/ic_oui_save_outline"
-        android:title="@string/save_as_image"
+        android:id="@+id/url_bnv_delete"
+        android:icon="@drawable/ic_oui_delete_outline"
+        android:title="@string/delete"
         app:showAsAction="always"
         tools:ignore="AppCompatResource" />
 </menu>

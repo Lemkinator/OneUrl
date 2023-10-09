@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import de.lemke.oneurl.domain.model.ShortUrlProvider
+import de.lemke.oneurl.domain.model.ShortURLProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -39,9 +39,9 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_DEV_MODE_ENABLED] = newSettings.devModeEnabled
             it[KEY_SEARCH] = newSettings.search
             it[KEY_SHOW_ONLY_FAVORITES] = newSettings.showOnlyFavorites
-            it[KEY_SELECTED_SHORT_URL_PROVIDER] = newSettings.selectedShortUrlProvider.toString()
+            it[KEY_SELECTED_SHORT_URL_PROVIDER] = newSettings.selectedShortURLProvider.toString()
             it[KEY_LAST_ALIAS] = newSettings.lastAlias
-            it[KEY_LAST_URL] = newSettings.lastUrl
+            it[KEY_LAST_URL] = newSettings.lastURL
             it[KEY_LAST_DESCRIPTION] = newSettings.lastDescription
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
         }
@@ -58,9 +58,9 @@ class UserSettingsRepository @Inject constructor(
         devModeEnabled = prefs[KEY_DEV_MODE_ENABLED] ?: false,
         search = prefs[KEY_SEARCH] ?: "",
         showOnlyFavorites = prefs[KEY_SHOW_ONLY_FAVORITES] ?: false,
-        selectedShortUrlProvider = ShortUrlProvider.fromStringOrDefault(prefs[KEY_SELECTED_SHORT_URL_PROVIDER]),
+        selectedShortURLProvider = ShortURLProvider.fromStringOrDefault(prefs[KEY_SELECTED_SHORT_URL_PROVIDER]),
         lastAlias = prefs[KEY_LAST_ALIAS] ?: "",
-        lastUrl = prefs[KEY_LAST_URL] ?: "",
+        lastURL = prefs[KEY_LAST_URL] ?: "",
         lastDescription = prefs[KEY_LAST_DESCRIPTION] ?: "",
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
@@ -74,9 +74,9 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_DEV_MODE_ENABLED = booleanPreferencesKey("devModeEnabled")
         private val KEY_SEARCH = stringPreferencesKey("search")
         private val KEY_SHOW_ONLY_FAVORITES = booleanPreferencesKey("showOnlyFavorites")
-        private val KEY_SELECTED_SHORT_URL_PROVIDER = stringPreferencesKey("selectedShortUrlProvider")
+        private val KEY_SELECTED_SHORT_URL_PROVIDER = stringPreferencesKey("selectedShortURLProvider")
         private val KEY_LAST_ALIAS = stringPreferencesKey("lastAlias")
-        private val KEY_LAST_URL = stringPreferencesKey("lastUrl")
+        private val KEY_LAST_URL = stringPreferencesKey("lastURL")
         private val KEY_LAST_DESCRIPTION = stringPreferencesKey("lastDescription")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
     }
@@ -100,12 +100,12 @@ data class UserSettings(
     val search: String,
     /** show only favorites */
     val showOnlyFavorites: Boolean,
-    /** selected ShortUrlProvider */
-    val selectedShortUrlProvider: ShortUrlProvider,
+    /** selected ShortURLProvider */
+    val selectedShortURLProvider: ShortURLProvider,
     /** last alias */
     val lastAlias: String,
     /** last url */
-    val lastUrl: String,
+    val lastURL: String,
     /** last description */
     val lastDescription: String,
     /** last time in app review was requested */

@@ -43,7 +43,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.*
-import de.lemke.oneurl.domain.model.Url
+import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import dev.oneuiproject.oneui.layout.DrawerLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout
@@ -61,12 +61,12 @@ import kotlin.math.abs
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter: UrlAdapter
-    private var urls: List<Url> = emptyList()
-    private var searchUrls: List<Url> = emptyList()
+    private lateinit var adapter: URLAdapter
+    private var urls: List<URL> = emptyList()
+    private var searchURLs: List<URL> = emptyList()
     private val backPressEnabled = MutableStateFlow(false)
     private var search: String? = null
-    private val currentList get() = if (search == null) urls else searchUrls
+    private val currentList get() = if (search == null) urls else searchURLs
     private var selected = HashMap<Int, Boolean>()
     private var selecting = false
     private var checkAllListening = true
@@ -86,19 +86,19 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     lateinit var checkAppStart: CheckAppStartUseCase
 
     @Inject
-    lateinit var getUrls: GetUrlsUseCase
+    lateinit var getURLs: GetURLsUseCase
 
     @Inject
-    lateinit var observeUrls: ObserveUrlsUseCase
+    lateinit var observeURLs: ObserveURLsUseCase
 
     @Inject
     lateinit var getSearchList: GetSearchListUseCase
 
     @Inject
-    lateinit var deleteUrl: DeleteUrlUseCase
+    lateinit var deleteURL: DeleteURLUseCase
 
     @Inject
-    lateinit var updateUrl: UpdateUrlUseCase
+    lateinit var updateURL: UpdateURLUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         /*  Note: https://stackoverflow.com/a/69831106/18332741
@@ -174,18 +174,18 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         lifecycleScope.launch {
             setCustomOnBackPressedLogic(triggerStateFlow = backPressEnabled, onBackPressedLogic = { checkBackPressed() })
             initDrawer()
-            urls = getUrls()
+            urls = getURLs()
             initRecycler()
             binding.addFab.setOnClickListener {
                 startActivity(
-                    Intent(this@MainActivity, AddUrlActivity::class.java),
+                    Intent(this@MainActivity, AddURLActivity::class.java),
                     ActivityOptions
                         .makeSceneTransitionAnimation(this@MainActivity, binding.addFab, "transition_fab")
                         .toBundle()
                 )
             }
             lifecycleScope.launch {
-                observeUrls().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
+                observeURLs().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
                     urls = if (filterFavorite) it.filter { url -> url.favorite } else it
                     updateRecyclerView()
                 }
@@ -259,7 +259,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 item.isVisible = false
                 binding.root.toolbar.menu.findItem(R.id.menu_item_only_show_favorites).isVisible = true
                 lifecycleScope.launch {
-                    urls = getUrls()
+                    urls = getURLs()
                     updateRecyclerView()
                 }
                 return true
@@ -386,7 +386,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         initListJob?.cancel()
         if (!this::binding.isInitialized) return
         initListJob = lifecycleScope.launch {
-            searchUrls = getSearchList(search)
+            searchURLs = getSearchList(search)
             updateRecyclerView()
         }
     }
@@ -403,15 +403,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 lifecycleScope.launch {
                     when (item.itemId) {
                         R.id.menu_item_delete -> {
-                            deleteUrl(currentList.filterIndexed { index, _ -> selected[index] ?: false })
+                            deleteURL(currentList.filterIndexed { index, _ -> selected[index] ?: false })
                         }
 
                         R.id.menu_item_add_to_favorites -> {
-                            updateUrl(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = true) })
+                            updateURL(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = true) })
                         }
 
                         R.id.menu_item_remove_from_favorites -> {
-                            updateUrl(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = false) })
+                            updateURL(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = false) })
                         }
                     }
                 }
@@ -449,7 +449,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private fun initRecycler() {
         binding.urlList.layoutManager = LinearLayoutManager(this)
-        adapter = UrlAdapter()
+        adapter = URLAdapter()
         binding.urlList.adapter = adapter
         binding.urlList.itemAnimator = null
         binding.urlList.addItemDecoration(ItemDecoration(this))
@@ -471,7 +471,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
-        if (search == null && urls.isEmpty() || search != null && searchUrls.isEmpty()) {
+        if (search == null && urls.isEmpty() || search != null && searchURLs.isEmpty()) {
             binding.urlList.visibility = View.GONE
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
@@ -496,7 +496,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         }
     }
 
-    inner class UrlAdapter internal constructor() : RecyclerView.Adapter<UrlAdapter.ViewHolder>() {
+    inner class URLAdapter internal constructor() : RecyclerView.Adapter<URLAdapter.ViewHolder>() {
         override fun getItemCount(): Int = currentList.size
         override fun getItemViewType(position: Int): Int = 0
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = if (viewType == 0) {
@@ -513,9 +513,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 this@MainActivity.getColor(R.color.primary_color_themed)
             )
             holder.listItemTitle.text =
-                if (search != null) makeSectionOfTextBold(currentList[position].shortUrl, search, color) else currentList[position].shortUrl
+                if (search != null) makeSectionOfTextBold(currentList[position].shortURL, search, color) else currentList[position].shortURL
             holder.listItemSubtitle1.text =
-                if (search != null) makeSectionOfTextBold(currentList[position].longUrl, search, color) else currentList[position].longUrl
+                if (search != null) makeSectionOfTextBold(currentList[position].longURL, search, color) else currentList[position].longURL
             val subtitle2 = currentList[position].description.ifBlank { currentList[position].addedFormatMedium }
             holder.listItemSubtitle2.text = if (search != null) makeSectionOfTextBold(subtitle2, search, color) else subtitle2
             if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
@@ -526,15 +526,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             )
             holder.listItemFav.setOnClickListener {
                 lifecycleScope.launch {
-                    updateUrl(currentList[position].copy(favorite = !currentList[position].favorite))
+                    updateURL(currentList[position].copy(favorite = !currentList[position].favorite))
                 }
             }
             holder.parentView.setOnClickListener {
                 if (selecting) toggleItemSelected(position)
                 else {
                     startActivity(
-                        Intent(this@MainActivity, UrlActivity::class.java)
-                            .putExtra("shortUrl", currentList[position].shortUrl)
+                        Intent(this@MainActivity, URLActivity::class.java)
+                            .putExtra("shortURL", currentList[position].shortURL)
                             .putExtra("boldText", search),
 
                         ActivityOptions
@@ -596,7 +596,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             super.onDraw(c, parent, state)
             for (i in 0 until parent.childCount) {
                 val child = parent.getChildAt(i)
-                val holder = binding.urlList.getChildViewHolder(child) as UrlAdapter.ViewHolder
+                val holder = binding.urlList.getChildViewHolder(child) as URLAdapter.ViewHolder
                 if (!holder.isSeparator) {
                     val top = (child.bottom + (child.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin)
                     val bottom = divider!!.intrinsicHeight + top
@@ -609,7 +609,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         override fun seslOnDispatchDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
             for (i in 0 until parent.childCount) {
                 val child = parent.getChildAt(i)
-                val holder = binding.urlList.getChildViewHolder(child) as UrlAdapter.ViewHolder
+                val holder = binding.urlList.getChildViewHolder(child) as URLAdapter.ViewHolder
                 if (holder.isSeparator) roundedCorner.drawRoundedCorner(child, c)
             }
         }

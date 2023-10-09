@@ -23,13 +23,13 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityUrlBinding
-import de.lemke.oneurl.domain.DeleteUrlUseCase
-import de.lemke.oneurl.domain.GetUrlUseCase
+import de.lemke.oneurl.domain.DeleteURLUseCase
+import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
-import de.lemke.oneurl.domain.UpdateUrlUseCase
+import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.model.Url
+import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import kotlinx.coroutines.launch
 import java.io.File
@@ -39,21 +39,21 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class UrlActivity : AppCompatActivity() {
+class URLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUrlBinding
-    private lateinit var url: Url
+    private lateinit var url: URL
     private lateinit var boldText: String
     private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri>
     private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
 
     @Inject
-    lateinit var getUrl: GetUrlUseCase
+    lateinit var getURL: GetURLUseCase
 
     @Inject
-    lateinit var updateUrl: UpdateUrlUseCase
+    lateinit var updateURL: UpdateURLUseCase
 
     @Inject
-    lateinit var deleteUrl: DeleteUrlUseCase
+    lateinit var deleteURL: DeleteURLUseCase
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -68,27 +68,27 @@ class UrlActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.root.setNavigationButtonOnClickListener { showInAppReviewOrFinish() }
         binding.root.tooltipText = getString(R.string.sesl_navigate_up)
-        val shortUrl = intent.getStringExtra("shortUrl")
+        val shortURL = intent.getStringExtra("shortURL")
         boldText = intent.getStringExtra("boldText") ?: ""
-        if (shortUrl == null) {
+        if (shortURL == null) {
             Toast.makeText(this, getString(R.string.url_not_found), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
         pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
             if (uri == null)
-                Toast.makeText(this@UrlActivity, getString(R.string.error_no_folder_selected), Toast.LENGTH_LONG).show()
+                Toast.makeText(this@URLActivity, getString(R.string.error_no_folder_selected), Toast.LENGTH_LONG).show()
             else lifecycleScope.launch { exportQR(uri) }
         }
         lifecycleScope.launch {
-            val nullableUrl = getUrl(shortUrl)
-            if (nullableUrl == null) {
-                Toast.makeText(this@UrlActivity, getString(R.string.url_not_found), Toast.LENGTH_SHORT).show()
+            val nullableURL = getURL(shortURL)
+            if (nullableURL == null) {
+                Toast.makeText(this@URLActivity, getString(R.string.url_not_found), Toast.LENGTH_SHORT).show()
                 finish()
                 return@launch
             }
-            url = nullableUrl
-            binding.root.setTitle(url.shortUrl)
+            url = nullableURL
+            binding.root.setTitle(url.shortURL)
             initViews()
 
         }
@@ -105,13 +105,13 @@ class UrlActivity : AppCompatActivity() {
                     return@launch
                 }
                 updateUserSettings { it.copy(lastInAppReviewRequest = System.currentTimeMillis()) }
-                val manager = ReviewManagerFactory.create(this@UrlActivity)
+                val manager = ReviewManagerFactory.create(this@URLActivity)
                 //val manager = FakeReviewManager(context);
                 val request = manager.requestReviewFlow()
                 request.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val reviewInfo = task.result
-                        val flow = manager.launchReviewFlow(this@UrlActivity, reviewInfo)
+                        val flow = manager.launchReviewFlow(this@URLActivity, reviewInfo)
                         flow.addOnCompleteListener { finishAfterTransition() }
                     } else {
                         // There was some problem, log or handle the error code.
@@ -129,58 +129,58 @@ class UrlActivity : AppCompatActivity() {
     private fun initViews() {
         val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
         //underline text
-        val shortUrl = with(makeSectionOfTextBold(url.shortUrl, boldText, color)) {
-            setSpan(android.text.style.UnderlineSpan(), 0, url.shortUrl.length, 0)
+        val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {
+            setSpan(android.text.style.UnderlineSpan(), 0, url.shortURL.length, 0)
             this
         }
-        binding.urlShortButton.text = shortUrl
+        binding.urlShortButton.text = shortURL
         binding.urlShortButton.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.shortUrl)))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.shortURL)))
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e("UrlActivity", "Error: ${e.message}")
+                Log.e("URLActivity", "Error: ${e.message}")
                 Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show()
             }
         }
-        val longUrl = with(makeSectionOfTextBold(url.longUrl, boldText, color)) {
-            setSpan(android.text.style.UnderlineSpan(), 0, url.longUrl.length, 0)
+        val longURL = with(makeSectionOfTextBold(url.longURL, boldText, color)) {
+            setSpan(android.text.style.UnderlineSpan(), 0, url.longURL.length, 0)
             this
         }
         binding.urlShortCopyButton.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("short-url", url.shortUrl)
+            val clip = ClipData.newPlainText("short-url", url.shortURL)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
         }
         binding.urlShortShareButton.setOnClickListener {
             val sendIntent = Intent().apply {
                 action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, url.shortUrl)
+                putExtra(Intent.EXTRA_TEXT, url.shortURL)
                 type = "text/plain"
             }
             startActivity(Intent.createChooser(sendIntent, null))
         }
-        binding.urlLongButton.text = longUrl
+        binding.urlLongButton.text = longURL
         binding.urlLongButton.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(longUrl.toString())))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(longURL.toString())))
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e("UrlActivity", "Error: ${e.message}")
+                Log.e("URLActivity", "Error: ${e.message}")
                 Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show()
             }
         }
         binding.urlLongCopyButton.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("long-url", url.longUrl)
+            val clip = ClipData.newPlainText("long-url", url.longURL)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
         }
         binding.urlLongShareButton.setOnClickListener {
             val sendIntent = Intent().apply {
                 action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, url.longUrl)
+                putExtra(Intent.EXTRA_TEXT, url.longURL)
                 type = "text/plain"
             }
             startActivity(Intent.createChooser(sendIntent, null))
@@ -216,7 +216,7 @@ class UrlActivity : AppCompatActivity() {
 
     private fun exportQR(uri: Uri) {
         val timestamp = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.GERMANY).format(Date())
-        val pngFile = DocumentFile.fromTreeUri(this, uri)!!.createFile("image/png", "${url.shortUrl}_$timestamp")
+        val pngFile = DocumentFile.fromTreeUri(this, uri)!!.createFile("image/png", "${url.shortURL}_$timestamp")
         url.qr.compress(Bitmap.CompressFormat.PNG, 100, contentResolver.openOutputStream(pngFile!!.uri)!!)
         Toast.makeText(this, R.string.qr_saved, Toast.LENGTH_LONG).show()
     }
@@ -228,12 +228,12 @@ class UrlActivity : AppCompatActivity() {
             when (it.itemId) {
                 R.id.url_bnv_delete -> {
                     lifecycleScope.launch {
-                        AlertDialog.Builder(this@UrlActivity)
+                        AlertDialog.Builder(this@URLActivity)
                             .setTitle(R.string.delete)
                             .setMessage(R.string.delete_url_message)
                             .setPositiveButton(R.string.delete) { _, _ ->
                                 lifecycleScope.launch {
-                                    deleteUrl(url)
+                                    deleteURL(url)
                                     showInAppReviewOrFinish()
                                 }
                             }
@@ -248,7 +248,7 @@ class UrlActivity : AppCompatActivity() {
                     it.isVisible = false
                     binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav).isVisible = true
                     url = url.copy(favorite = true)
-                    lifecycleScope.launch { updateUrl(url) }
+                    lifecycleScope.launch { updateURL(url) }
                     return@setOnItemSelectedListener true
                 }
 
@@ -256,7 +256,7 @@ class UrlActivity : AppCompatActivity() {
                     it.isVisible = false
                     binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav).isVisible = true
                     url = url.copy(favorite = false)
-                    lifecycleScope.launch { updateUrl(url) }
+                    lifecycleScope.launch { updateURL(url) }
                     return@setOnItemSelectedListener true
                 }
 

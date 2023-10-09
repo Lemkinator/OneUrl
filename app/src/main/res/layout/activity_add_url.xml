@@ -42,7 +42,7 @@
                 app:hintTextColor="@color/secondary_text_icon_color_themed">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextUrl"
+                    android:id="@+id/editTextURL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 

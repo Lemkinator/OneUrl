@@ -3,14 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="AppCompatResource">
-
-    <item
-        android:id="@+id/menu_item_delete"
-        android:icon="@drawable/ic_oui_delete_outline"
-        android:title="@string/delete"
-        tools:ignore="AlwaysShowAction,AppCompatResource"
-        app:showAsAction="always" />
-
     <item
         android:id="@+id/menu_item_add_to_favorites"
         android:icon="@drawable/ic_oui_favorite_on"
@@ -24,4 +16,11 @@
         android:title="@string/remove_from_fav"
         app:showAsAction="always"
         tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/menu_item_delete"
+        android:icon="@drawable/ic_oui_delete_outline"
+        android:title="@string/delete"
+        tools:ignore="AlwaysShowAction,AppCompatResource"
+        app:showAsAction="always" />
 </menu>

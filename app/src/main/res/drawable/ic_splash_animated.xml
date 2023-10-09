@@ -141,10 +141,32 @@
     <target android:name="main">
         <aapt:attr name="android:animation">
             <objectAnimator
-                android:duration="500"
+                android:duration="100"
                 android:startOffset="0"
                 android:propertyName="scaleX"
-                android:valueFrom="0.0"
+                android:valueFrom="0.1"
+                android:valueTo="0.2" />
+        </aapt:attr>
+    </target>
+
+    <target android:name="main">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="100"
+                android:startOffset="0"
+                android:propertyName="scaleY"
+                android:valueFrom="0.1"
+                android:valueTo="0.2" />
+        </aapt:attr>
+    </target>
+
+    <target android:name="main">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="500"
+                android:startOffset="100"
+                android:propertyName="scaleX"
+                android:valueFrom="0.2"
                 android:valueTo="0.65" />
         </aapt:attr>
     </target>
@@ -153,9 +175,9 @@
         <aapt:attr name="android:animation">
             <objectAnimator
                 android:duration="500"
-                android:startOffset="0"
+                android:startOffset="100"
                 android:propertyName="scaleY"
-                android:valueFrom="0.0"
+                android:valueFrom="0.2"
                 android:valueTo="0.65" />
         </aapt:attr>
     </target>

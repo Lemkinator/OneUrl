@@ -16,7 +16,7 @@
         android:localeConfig="@xml/locale_config"
         android:resizeableActivity="true"
         android:supportsRtl="true"
-        android:theme="@style/Theme.OneUrl"
+        android:theme="@style/Theme.OneURL"
         tools:targetApi="34">
 
         <meta-data
@@ -45,14 +45,14 @@
         <activity android:name=".ui.AboutMeActivity" />
         <activity android:name=".ui.AboutActivity" />
         <activity android:name=".ui.OOBEActivity" />
-        <activity android:name=".ui.AddUrlActivity" />
-        <activity android:name=".ui.UrlActivity" />
+        <activity android:name=".ui.AddURLActivity" />
+        <activity android:name=".ui.URLActivity" />
         <activity
             android:name=".ui.MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.OneUrl.Splash">
+            android:theme="@style/Theme.OneURL.Splash">
             <meta-data
                 android:name="com.sec.android.app.launcher.icon_theme"
                 android:value="themeColor" />

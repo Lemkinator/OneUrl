@@ -1,15 +1,15 @@
 package de.lemke.oneurl.domain
 
-import de.lemke.oneurl.domain.model.Url
+import de.lemke.oneurl.domain.model.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class GetSearchListUseCase @Inject constructor(
-    private val getUrls: GetUrlsUseCase,
+    private val getURLs: GetURLsUseCase,
 ) {
-    suspend operator fun invoke(search: String?, urls: List<Url>? = null): List<Url> = withContext(Dispatchers.Default) {
-        val result = urls ?: getUrls()
+    suspend operator fun invoke(search: String?, urls: List<URL>? = null): List<URL> = withContext(Dispatchers.Default) {
+        val result = urls ?: getURLs()
         when {
             search.isNullOrBlank() -> return@withContext emptyList()
             else -> return@withContext result.filter {

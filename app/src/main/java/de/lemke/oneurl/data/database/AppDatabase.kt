@@ -7,12 +7,12 @@ import androidx.room.TypeConverters
 @Database(
     version = 1,
     entities = [
-        UrlDb::class,
+        URLDb::class,
     ],
     exportSchema = true,
     autoMigrations = [],
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun urlDao(): UrlDao
+    abstract fun urlDao(): URLDao
 }

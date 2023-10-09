@@ -19,18 +19,18 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
-import de.lemke.oneurl.domain.AddUrlUseCase
-import de.lemke.oneurl.domain.GenerateUrlUseCase
+import de.lemke.oneurl.domain.AddURLUseCase
+import de.lemke.oneurl.domain.GenerateURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.model.ShortUrlProvider
+import de.lemke.oneurl.domain.model.ShortURLProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class AddUrlActivity : AppCompatActivity() {
+class AddURLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddUrlBinding
     private var addToFavorites = false
 
@@ -41,10 +41,10 @@ class AddUrlActivity : AppCompatActivity() {
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
     @Inject
-    lateinit var generateUrl: GenerateUrlUseCase
+    lateinit var generateURL: GenerateURLUseCase
 
     @Inject
-    lateinit var addUrl: AddUrlUseCase
+    lateinit var addURL: AddURLUseCase
 
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,27 +90,27 @@ class AddUrlActivity : AppCompatActivity() {
 
     private suspend fun initViews() {
         val adapter =
-            ArrayAdapter(this@AddUrlActivity, android.R.layout.simple_spinner_item, ShortUrlProvider.values().map { it.toString() })
+            ArrayAdapter(this@AddURLActivity, android.R.layout.simple_spinner_item, ShortURLProvider.values().map { it.toString() })
         adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
         binding.providerSpinner.adapter = adapter
         val userSettings = getUserSettings()
-        binding.providerSpinner.setSelection(userSettings.selectedShortUrlProvider.ordinal)
+        binding.providerSpinner.setSelection(userSettings.selectedShortURLProvider.ordinal)
         binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 lifecycleScope.launch {
-                    updateUserSettings { it.copy(selectedShortUrlProvider = ShortUrlProvider.values()[p2]) }
+                    updateUserSettings { it.copy(selectedShortURLProvider = ShortURLProvider.values()[p2]) }
                 }
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
-        binding.editTextUrl.setText(userSettings.lastUrl)
-        binding.editTextUrl.requestFocus()
-        binding.editTextUrl.text?.let { binding.editTextUrl.setSelection(0, it.length) }
+        binding.editTextURL.setText(userSettings.lastURL)
+        binding.editTextURL.requestFocus()
+        binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
         binding.editTextAlias.setText(userSettings.lastAlias)
         binding.editTextDescription.setText(userSettings.lastDescription)
-        binding.editTextUrl.addTextChangedListener { text ->
-            lifecycleScope.launch { updateUserSettings { it.copy(lastUrl = text.toString()) } }
+        binding.editTextURL.addTextChangedListener { text ->
+            lifecycleScope.launch { updateUserSettings { it.copy(lastURL = text.toString()) } }
         }
         binding.editTextAlias.addTextChangedListener { text ->
             lifecycleScope.launch { updateUserSettings { it.copy(lastAlias = text.toString()) } }
@@ -125,23 +125,23 @@ class AddUrlActivity : AppCompatActivity() {
             binding.oobeIntroFooterButton.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         }
         binding.oobeIntroFooterButton.setOnClickListener {
-            if (binding.editTextUrl.text.isNullOrBlank()) {
-                binding.editTextUrl.error = getString(R.string.error_empty_url)
+            if (binding.editTextURL.text.isNullOrBlank()) {
+                binding.editTextURL.error = getString(R.string.error_empty_url)
                 return@setOnClickListener
             }
             setLoading(true)
             lifecycleScope.launch {
                 delay(1000)
-                generateUrl(
-                    provider = ShortUrlProvider.values()[binding.providerSpinner.selectedItemPosition],
-                    longUrl = binding.editTextUrl.text.toString(),
+                generateURL(
+                    provider = ShortURLProvider.values()[binding.providerSpinner.selectedItemPosition],
+                    longURL = binding.editTextURL.text.toString(),
                     alias = binding.editTextAlias.text.toString(),
                     favorite = addToFavorites,
                     description = binding.editTextDescription.text.toString(),
                     errorCallback = {
                         lifecycleScope.launch {
                             setLoading(false)
-                            AlertDialog.Builder(this@AddUrlActivity)
+                            AlertDialog.Builder(this@AddURLActivity)
                                 .setTitle(R.string.error)
                                 .setMessage(it)
                                 .setPositiveButton(R.string.ok, null)
@@ -152,24 +152,24 @@ class AddUrlActivity : AppCompatActivity() {
                     },
                     successCallback = {
                         lifecycleScope.launch {
-                            addUrl(it)
+                            addURL(it)
                             setLoading(false)
                             finish()
-                            Toast.makeText(this@AddUrlActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
                         }
                     },
                     alreadyShortenedCallback = {
                         lifecycleScope.launch {
                             setLoading(false)
-                            AlertDialog.Builder(this@AddUrlActivity)
+                            AlertDialog.Builder(this@AddURLActivity)
                                 .setTitle(R.string.error)
                                 .setMessage(R.string.url_already_exists)
                                 .setNeutralButton(R.string.ok, null)
                                 .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
                                     finish()
                                     startActivity(
-                                        Intent(this@AddUrlActivity, UrlActivity::class.java)
-                                            .putExtra("shortUrl", it.shortUrl)
+                                        Intent(this@AddURLActivity, URLActivity::class.java)
+                                            .putExtra("shortURL", it.shortURL)
                                     )
                                 }
                                 .create()
@@ -185,7 +185,7 @@ class AddUrlActivity : AppCompatActivity() {
         binding.oobeIntroFooterButtonProgress.visibility = if (loading) View.VISIBLE else View.GONE
         binding.oobeIntroFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
         binding.providerSpinner.isEnabled = !loading
-        binding.editTextUrl.isEnabled = !loading
+        binding.editTextURL.isEnabled = !loading
         binding.editTextAlias.isEnabled = !loading
         binding.editTextDescription.isEnabled = !loading
         binding.root.toolbar.menu.findItem(R.id.menu_item_add_to_favorites).isEnabled = !loading

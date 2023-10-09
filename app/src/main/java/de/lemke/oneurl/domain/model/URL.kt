@@ -5,10 +5,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-data class Url(
-    val shortUrl: String,
-    val longUrl: String,
-    val shortUrlProvider: ShortUrlProvider,
+data class URL(
+    val shortURL: String,
+    val longURL: String,
+    val shortURLProvider: ShortURLProvider,
     val qr: Bitmap,
     val favorite: Boolean,
     val description: String,
@@ -17,12 +17,12 @@ data class Url(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as Url
-        if (shortUrl != other.shortUrl) return false
+        other as URL
+        if (shortURL != other.shortURL) return false
         return true
     }
 
-    override fun hashCode(): Int = shortUrl.hashCode()
+    override fun hashCode(): Int = shortURL.hashCode()
 
     val addedFormatMedium: String
         get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
@@ -31,9 +31,9 @@ data class Url(
 
     fun containsKeywords(keywords: Set<String>): Boolean =
         keywords.any {
-            shortUrl.contains(it, ignoreCase = true) ||
-                    longUrl.contains(it, ignoreCase = true) ||
-                    shortUrlProvider.toString().contains(it, ignoreCase = true) ||
+            shortURL.contains(it, ignoreCase = true) ||
+                    longURL.contains(it, ignoreCase = true) ||
+                    shortURLProvider.toString().contains(it, ignoreCase = true) ||
                     added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)).contains(it, ignoreCase = true)
         }
 }

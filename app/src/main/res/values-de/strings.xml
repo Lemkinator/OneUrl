@@ -7,7 +7,7 @@
 
     <!--About-->
     <string name="about_page_optional_text">Ein URL-Shortener im schönen OneUI Design.</string>
-    <string name="about_app">Über OneUrl</string>
+    <string name="about_app">Über OneURL</string>
     <string name="open_in_playstore">In Play Store öffnen</string>
 
     <!--AboutMe-->
@@ -19,7 +19,7 @@
     <string name="rate_app">App im Play-Store Bewerten</string>
     <string name="write_review">Bewertung schreiben</string>
     <string name="share">Teilen</string>
-    <string name="share_app">OneUrl teilen</string>
+    <string name="share_app">OneURL teilen</string>
     <string name="useful_links">Nützliche Links</string>
 
     <!--Settings-->
@@ -58,7 +58,7 @@
     <string name="sesl_cancel">Abbrechen</string>
     <string name="sesl_navigate_up">Zurück</string>
 
-    <!--Add Url-->
+    <!--Add URL-->
     <string name="add_url">URL hinzufügen</string>
     <string name="provider">Anbieter</string>
     <string name="alias">Benutzerdefiniertes Kürzel (Optional)</string>
