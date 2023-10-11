@@ -21,7 +21,7 @@
     <string name="help">Help</string>
     <string name="contact">Contact</string>
     <string name="contact_me">Contact me (e-mail)</string>
-    <string name="help_text">I need help.</string>
+    <string name="help_text">OneURL respects your privacy and does not store any personal information. For more information, please refer to our Privacy Policy. \nThe use of OneURL to shorten URLs is subject to the terms of use of the respective services provided by third-party providers. Please consult the terms and conditions of each service provider to learn more about their policies and restrictions.\n\nLink shortening providers:\nThere are several providers to choose from when shortening links. These are similar in principle, but differ in some respects.\nFor example, \"is.gd\" and \"v.gd\" display a hint before redirecting to the target URL. Anyone accessing the link can then select on the hint page to not display it in the future and instead be redirected directly to the destination URL. \n\nCosts and Rate Limits:\nThe providers available in the app are free of charge. Some providers therefore have rate limits (e.g. maximum 200 shortened links per hour).\nExceeding the rate limit can lead to temporary or permanent blocking of your IP address with a provider. Please note that this blocking is managed by the service providers themselves.\nNormally, these limits should not be reached as a normal user. We recommend to respect the rate limits of the service providers and not to exceed them intentionally to ensure a seamless usage.</string>
 
     <!--About-->
     <string name="about_page_optional_text">A URL-Shortener with OneUI-Design.</string>
