@@ -1,0 +1,104 @@
+package de.lemke.oneurl.domain
+
+
+import android.content.Context
+import android.util.Log
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import dagger.hilt.android.qualifiers.ApplicationContext
+import de.lemke.oneurl.R
+import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.URL
+import dev.oneuiproject.oneui.qr.QREncoder
+import java.io.UnsupportedEncodingException
+import java.time.ZonedDateTime
+import javax.inject.Inject
+
+
+class GenerateVGDISGDUseCase @Inject constructor(
+    @ApplicationContext private val context: Context,
+) {
+    operator fun invoke(
+        provider: ShortURLProvider,
+        longURL: String,
+        alias: String?,
+        errorCallback: (message: String) -> Unit,
+        favorite: Boolean,
+        description: String,
+        successCallback: (url: URL) -> Unit
+    ): JsonObjectRequest {
+        val tag = "GenerateURLUseCase_VGD_ISGD"
+        val apiURL = provider.getCreateURLApi(longURL, alias)
+        Log.d(tag, "start request: $apiURL")
+        return JsonObjectRequest(
+            Request.Method.GET,
+            apiURL,
+            null,
+            { response ->
+                Log.d(tag, "response: $response")
+                if (response.has("errorcode")) {
+                    Log.e(tag, "errorcode: ${response.getString("errorcode")}")
+                    Log.e(tag, "errormessage: ${response.optString("errormessage")}")
+                    /*
+                    Error code 1 - there was a problem with the original long URL provided
+                    Please specify a URL to shorten.
+                    Please enter a valid URL to shorten
+                    Error code 2 - there was a problem with the short URL provided (for custom short URLs)
+                    Short URLs must be at least 5 characters long
+                    Short URLs may only contain the characters a-z, 0-9 and underscore
+                    The shortened URL you picked already exists, please choose another.
+                    Error code 3 - our rate limit was exceeded (your app should wait before trying again)
+                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
+                     */
+                    when (response.getString("errorcode")) {
+                        "1" -> errorCallback(context.getString(R.string.error_invalid_url))
+                        "2" -> errorCallback(context.getString(R.string.error_invalid_alias))
+                        "3" -> errorCallback(context.getString(R.string.error_rate_limit_exceeded))
+                        "4" -> errorCallback(context.getString(R.string.error_service_unavailable))
+                        else -> errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
+                    }
+                    return@JsonObjectRequest
+                }
+                if (!response.has("shorturl")) {
+                    Log.e(tag, "error, response does not contain shorturl, response: $response")
+                    errorCallback(context.getString(R.string.error_unknown))
+                    return@JsonObjectRequest
+                }
+                val shortURL = response.getString("shorturl").trim()
+                Log.d(tag, "shortURL: $shortURL")
+                successCallback(
+                    URL(
+                        shortURL = shortURL,
+                        longURL = longURL,
+                        shortURLProvider = provider,
+                        qr = QREncoder(context, shortURL)
+                            .setIcon(R.drawable.ic_launcher_themed)
+                            .generate(),
+                        favorite = favorite,
+                        description = description,
+                        added = ZonedDateTime.now()
+                    )
+                )
+            },
+            { error ->
+                val statusCode = error.networkResponse.statusCode
+                Log.e(tag, "statusCode: $statusCode")
+                if (error.networkResponse.data != null) {
+                    try {
+                        val message = error.networkResponse.data.toString(charset("UTF-8"))
+                        Log.e(tag, "error: $message ($statusCode)")
+                        errorCallback("$message ($statusCode)")
+                    } catch (e: UnsupportedEncodingException) {
+                        e.printStackTrace()
+                        Log.e(tag, "error: UnsupportedEncodingException: $e")
+                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                    }
+                } else {
+                    Log.e(tag, "error.networkResponse.data == null")
+                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                }
+            }
+        )
+    }
+
+}

@@ -91,12 +91,18 @@
     <string name="error">Error</string>
     <string name="no_internet">No internet connection available…</string>
     <string name="error_unknown">Unknown error…</string>
-    <string name="url_already_exists">URL already shortened</string>
-    <string name="alias_already_exists">Alias already exists</string>
-    <string name="url_not_found">URL not found</string>
+    <string name="error_url_not_found">URL not found</string>
     <string name="error_no_folder_selected">Error: No folder selected</string>
-    <string name="error_empty_url">Empty URL</string>
-    <string name="error_probably_existing_url_or_alias">URL or alias probably already exists</string>
+    <string name="error_empty_url">Empty URL.</string>
+    <string name="error_url_already_exists">URL already shortened</string>
+    <string name="error_alias_already_exists">Alias already exists.</string>
+    <string name="error_alias_too_short">Alias too short (min. 5 characters).</string>
+    <string name="error_alias_too_long">Alias too long (max. %1$d characters).</string>
+    <string name="error_invalid_url">Invalid URL.</string>
+    <string name="error_invalid_alias">Invalid alias (allowed characters: a–z, A–Z, 0–9 and underscore).</string>
+    <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
+    <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>
+    <string name="error_service_unavailable">Service currently unavailable.</string>
 
     <string name="no_urls">No URLs</string>
     <string name="no_search_results">No search results</string>
@@ -116,5 +122,6 @@
     <string name="qr_saved">QR-Code saved</string>
     <string name="description">Description</string>
     <string name="description_hint">e.g.: My website</string>
+    <string name="generate_qr_code">Generate QR-Code</string>
 
 </resources>

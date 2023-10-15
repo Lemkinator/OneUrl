@@ -21,10 +21,30 @@ enum class ShortURLProvider {
     /* Examples
     https://v.gd/create.php?format=json&url=www.example.com&shorturl=example
     https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
-    https://da.gd/?url=http://some_long_url&shorturl=slug
+    https://da.gd/shorten?url=http://some_long_url&shorturl=slug
 
     https://tinyurl.com/api-create.php?url=https://example.com&alias=example // json body: https://api.tinyurl.com/create
      */
+
+    val minAliasLength: Int?
+        get() = when (this) {
+            DAGD -> null
+            VGD -> 5
+            ISGD -> 5
+            //URLDAY -> null
+            //CHILPIT -> null
+            TINYURL -> 5
+        }
+
+    val maxAliasLength: Int
+        get() = when (this) {
+            DAGD -> 10
+            VGD -> 30
+            ISGD -> 30
+            //URLDAY -> null
+            //CHILPIT -> null
+            TINYURL -> 30
+        }
 
     val baseURL: String
         get() = when (this) {

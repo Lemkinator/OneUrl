@@ -43,6 +43,7 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_LAST_ALIAS] = newSettings.lastAlias
             it[KEY_LAST_URL] = newSettings.lastURL
             it[KEY_LAST_DESCRIPTION] = newSettings.lastDescription
+            it[KEY_LAST_GENERATED_QR_URL] = newSettings.lastGeneratedQRURL
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
         }
         return settingsFromPreferences(prefs)
@@ -62,6 +63,7 @@ class UserSettingsRepository @Inject constructor(
         lastAlias = prefs[KEY_LAST_ALIAS] ?: "",
         lastURL = prefs[KEY_LAST_URL] ?: "",
         lastDescription = prefs[KEY_LAST_DESCRIPTION] ?: "",
+        lastGeneratedQRURL = prefs[KEY_LAST_GENERATED_QR_URL] ?: "",
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
 
@@ -78,6 +80,7 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_LAST_ALIAS = stringPreferencesKey("lastAlias")
         private val KEY_LAST_URL = stringPreferencesKey("lastURL")
         private val KEY_LAST_DESCRIPTION = stringPreferencesKey("lastDescription")
+        private val KEY_LAST_GENERATED_QR_URL = stringPreferencesKey("lastGeneratedQRURL")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
     }
 }
@@ -108,6 +111,8 @@ data class UserSettings(
     val lastURL: String,
     /** last description */
     val lastDescription: String,
+    /** last generated QR URL */
+    val lastGeneratedQRURL: String,
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
 )

@@ -323,11 +323,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
+        val qrOption = findViewById<LinearLayout>(R.id.draweritem_generate_qr_code)
         val helpOption = findViewById<LinearLayout>(R.id.draweritem_help)
         val aboutAppOption = findViewById<LinearLayout>(R.id.draweritem_about_app)
         val aboutMeOption = findViewById<LinearLayout>(R.id.draweritem_about_me)
         val settingsOption = findViewById<LinearLayout>(R.id.draweritem_settings)
 
+        qrOption.setOnClickListener {
+            startActivity(Intent(this@MainActivity, GenerateQRCodeActivity::class.java))
+        }
         helpOption.setOnClickListener {
             startActivity(Intent(this@MainActivity, HelpActivity::class.java))
         }

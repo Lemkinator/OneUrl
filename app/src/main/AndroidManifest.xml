@@ -45,6 +45,7 @@
         <activity android:name=".ui.AboutMeActivity" />
         <activity android:name=".ui.AboutActivity" />
         <activity android:name=".ui.OOBEActivity" />
+        <activity android:name=".ui.GenerateQRCodeActivity" />
         <activity android:name=".ui.AddURLActivity" />
         <activity android:name=".ui.URLActivity" />
         <activity

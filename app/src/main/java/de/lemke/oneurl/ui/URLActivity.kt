@@ -71,7 +71,7 @@ class URLActivity : AppCompatActivity() {
         val shortURL = intent.getStringExtra("shortURL")
         boldText = intent.getStringExtra("boldText") ?: ""
         if (shortURL == null) {
-            Toast.makeText(this, getString(R.string.url_not_found), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_url_not_found), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -83,7 +83,7 @@ class URLActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val nullableURL = getURL(shortURL)
             if (nullableURL == null) {
-                Toast.makeText(this@URLActivity, getString(R.string.url_not_found), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@URLActivity, getString(R.string.error_url_not_found), Toast.LENGTH_SHORT).show()
                 finish()
                 return@launch
             }

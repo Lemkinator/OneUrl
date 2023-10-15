@@ -125,17 +125,36 @@ class AddURLActivity : AppCompatActivity() {
             binding.oobeIntroFooterButton.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         }
         binding.oobeIntroFooterButton.setOnClickListener {
-            if (binding.editTextURL.text.isNullOrBlank()) {
+            val provider = ShortURLProvider.values()[binding.providerSpinner.selectedItemPosition]
+            val url = if (binding.editTextURL.text.isNullOrBlank()) null else binding.editTextURL.text.toString()
+            val alias = if (binding.editTextAlias.text.isNullOrBlank()) null else binding.editTextAlias.text.toString()
+            if (url.isNullOrBlank()) {
                 binding.editTextURL.error = getString(R.string.error_empty_url)
                 return@setOnClickListener
+            }
+            if (!alias.isNullOrBlank()) {
+                //check if alias is valid: only a-z, A-Z, 0-9 and underscore
+                if (!alias.matches(Regex("[a-zA-Z0-9_]+"))) {
+                    binding.editTextAlias.error = getString(R.string.error_invalid_alias)
+                    return@setOnClickListener
+                }
+                if (provider.minAliasLength != null &&
+                    alias.length < provider.minAliasLength!!) {
+                    binding.editTextAlias.error = getString(R.string.error_alias_too_short)
+                    return@setOnClickListener
+                }
+                if (alias.length > provider.maxAliasLength) {
+                    binding.editTextAlias.error = getString(R.string.error_alias_too_long, provider.maxAliasLength)
+                    return@setOnClickListener
+                }
             }
             setLoading(true)
             lifecycleScope.launch {
                 delay(1000)
                 generateURL(
-                    provider = ShortURLProvider.values()[binding.providerSpinner.selectedItemPosition],
-                    longURL = binding.editTextURL.text.toString(),
-                    alias = binding.editTextAlias.text.toString(),
+                    provider = provider,
+                    longURL = url,
+                    alias = alias,
                     favorite = addToFavorites,
                     description = binding.editTextDescription.text.toString(),
                     errorCallback = {
@@ -163,7 +182,7 @@ class AddURLActivity : AppCompatActivity() {
                             setLoading(false)
                             AlertDialog.Builder(this@AddURLActivity)
                                 .setTitle(R.string.error)
-                                .setMessage(R.string.url_already_exists)
+                                .setMessage(R.string.error_url_already_exists)
                                 .setNeutralButton(R.string.ok, null)
                                 .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
                                     finish()

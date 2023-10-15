@@ -69,14 +69,20 @@
 
     <!--Error-->
     <string name="error">Fehler</string>
-    <string name="no_internet">No internet connection available…</string>
+    <string name="no_internet">Keine Internetverbindung verfügbar…</string>
     <string name="error_unknown">Unbekannter Fehler…</string>
-    <string name="url_already_exists">URL bereits gekürzt</string>
-    <string name="alias_already_exists">Kürzel existiert bereits</string>
-    <string name="url_not_found">URL nicht gefunden</string>
+    <string name="error_url_not_found">URL nicht gefunden</string>
     <string name="error_no_folder_selected">Fehler: Kein Ordner ausgewählt</string>
-    <string name="error_empty_url">Keine URL eingegeben</string>
-    <string name="error_probably_existing_url_or_alias">URL oder Kürzel existiert eventuell bereits</string>
+    <string name="error_empty_url">Keine URL eingegeben.</string>
+    <string name="error_url_already_exists">URL bereits gekürzt</string>
+    <string name="error_alias_already_exists">Kürzel existiert bereits.</string>
+    <string name="error_alias_too_short">Kürzel zu kurz (min. 5 Zeichen).</string>
+    <string name="error_alias_too_long">Kürzel zu lang (max. %1$d Zeichen).</string>
+    <string name="error_invalid_url">Ungültige URL.</string>
+    <string name="error_invalid_alias">Ungültiges Kürzel (erlaubte Zeichen: a–z, A–Z, 0–9 und Unterstrich).</string>
+    <string name="error_invalid_url_or_alias">Ungültige URL oder Kürzel.</string>
+    <string name="error_rate_limit_exceeded">Du hast zu viele Anfragen gestellt. Bitte verwende einen anderen Anbieter oder warte mindestens 5 Minuten, bevor du eine weitere Anfrage stellst. Andernfalls könntest du für die Nutzung dieses Dienstes gesperrt werden.</string>
+    <string name="error_service_unavailable">Dienst aktuell nicht verfügbar.</string>
 
     <string name="no_urls">Keine URLs</string>
     <string name="no_search_results">Keine Suchergebnisse</string>
@@ -96,5 +102,6 @@
     <string name="qr_saved">QR-Code gespeichert</string>
     <string name="description">Beschreibung</string>
     <string name="description_hint">z.B.: Meine Webseite</string>
+    <string name="generate_qr_code">QR-Code generieren</string>
 
 </resources>
