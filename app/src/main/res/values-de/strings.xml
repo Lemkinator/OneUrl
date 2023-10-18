@@ -88,20 +88,28 @@
     <string name="no_search_results">Keine Suchergebnisse</string>
     <string name="no_favorite_urls">Keine Favoriten</string>
 
+    <!--QR Code-->
+    <string name="qr_saved">QR-Code gespeichert</string>
+    <string name="save_as_image">Als Bild speichern</string>
+    <string name="generate_qr_code">QR-Code generieren</string>
+    <string name="size">Größe</string>
+    <string name="background">Hintergrund</string>
+    <string name="foreground">Vordergrund</string>
+    <string name="frame">Rahmen</string>
+    <string name="icon">Icon</string>
+    <string name="tint_border">Rahmen einfärben</string>
+    <string name="tint_anchor">Anker einfärben</string>
+
     <!--Others-->
     <string name="url">URL</string>
-    <string name="favorite">Favorit</string>
     <string name="remove_from_fav">Aus Favoriten löschen</string>
     <string name="add_to_fav">Zu Favoriten hinzufügen</string>
     <string name="delete">Löschen</string>
     <string name="show_all">Alle anzeigen</string>
     <string name="only_show_favorites">Nur Favoriten anzeigen</string>
-    <string name="save_as_image">Als Bild speichern</string>
     <string name="delete_url_message">Möchtest du diese URL wirklich löschen?</string>
     <string name="copied_to_clipboard">In Zwischenablage kopiert</string>
-    <string name="qr_saved">QR-Code gespeichert</string>
     <string name="description">Beschreibung</string>
     <string name="description_hint">z.B.: Meine Webseite</string>
-    <string name="generate_qr_code">QR-Code generieren</string>
 
 </resources>

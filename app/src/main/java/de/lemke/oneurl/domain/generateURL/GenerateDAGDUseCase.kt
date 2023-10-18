@@ -1,4 +1,4 @@
-package de.lemke.oneurl.domain
+package de.lemke.oneurl.domain.generateURL
 
 
 import android.content.Context

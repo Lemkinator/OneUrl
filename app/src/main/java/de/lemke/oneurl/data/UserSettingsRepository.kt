@@ -43,7 +43,14 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_LAST_ALIAS] = newSettings.lastAlias
             it[KEY_LAST_URL] = newSettings.lastURL
             it[KEY_LAST_DESCRIPTION] = newSettings.lastDescription
-            it[KEY_LAST_GENERATED_QR_URL] = newSettings.lastGeneratedQRURL
+            it[KEY_QR_URL] = newSettings.qrURL
+            it[KEY_QR_RECENT_BACKGROUND_COLORS] = newSettings.qrRecentBackgroundColors.joinToString(",")
+            it[KEY_QR_RECENT_FOREGROUND_COLORS] = newSettings.qrRecentForegroundColors.joinToString(",")
+            it[KEY_QR_SIZE] = newSettings.qrSize
+            it[KEY_QR_FRAME] = newSettings.qrFrame
+            it[KEY_QR_ICON] = newSettings.qrIcon
+            it[KEY_QR_TINT_ANCHOR] = newSettings.qrTintAnchor
+            it[KEY_QR_TINT_BORDER] = newSettings.qrTintBorder
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
         }
         return settingsFromPreferences(prefs)
@@ -63,7 +70,14 @@ class UserSettingsRepository @Inject constructor(
         lastAlias = prefs[KEY_LAST_ALIAS] ?: "",
         lastURL = prefs[KEY_LAST_URL] ?: "",
         lastDescription = prefs[KEY_LAST_DESCRIPTION] ?: "",
-        lastGeneratedQRURL = prefs[KEY_LAST_GENERATED_QR_URL] ?: "",
+        qrURL = prefs[KEY_QR_URL] ?: "",
+        qrRecentBackgroundColors = prefs[KEY_QR_RECENT_BACKGROUND_COLORS]?.split(",")?.map { it.toInt() } ?: listOf(-1),
+        qrRecentForegroundColors = prefs[KEY_QR_RECENT_FOREGROUND_COLORS]?.split(",")?.map { it.toInt() } ?: listOf(-16777216),
+        qrSize = prefs[KEY_QR_SIZE] ?: 512,
+        qrFrame = prefs[KEY_QR_FRAME] ?: true,
+        qrIcon = prefs[KEY_QR_ICON] ?: true,
+        qrTintAnchor = prefs[KEY_QR_TINT_ANCHOR] ?: false,
+        qrTintBorder = prefs[KEY_QR_TINT_BORDER] ?: false,
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
 
@@ -80,7 +94,14 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_LAST_ALIAS = stringPreferencesKey("lastAlias")
         private val KEY_LAST_URL = stringPreferencesKey("lastURL")
         private val KEY_LAST_DESCRIPTION = stringPreferencesKey("lastDescription")
-        private val KEY_LAST_GENERATED_QR_URL = stringPreferencesKey("lastGeneratedQRURL")
+        private val KEY_QR_URL = stringPreferencesKey("qrURL")
+        private val KEY_QR_RECENT_BACKGROUND_COLORS = stringPreferencesKey("qrRecentBackgroundColors")
+        private val KEY_QR_RECENT_FOREGROUND_COLORS = stringPreferencesKey("qrRecentForegroundColors")
+        private val KEY_QR_SIZE = intPreferencesKey("qrSize")
+        private val KEY_QR_FRAME = booleanPreferencesKey("qrFrame")
+        private val KEY_QR_ICON = booleanPreferencesKey("qrIcon")
+        private val KEY_QR_TINT_ANCHOR = booleanPreferencesKey("qrTintAnchor")
+        private val KEY_QR_TINT_BORDER = booleanPreferencesKey("qrTintBorder")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
     }
 }
@@ -112,7 +133,21 @@ data class UserSettings(
     /** last description */
     val lastDescription: String,
     /** last generated QR URL */
-    val lastGeneratedQRURL: String,
+    val qrURL: String,
+    /** recent background colors of qr code */
+    val qrRecentBackgroundColors: List<Int>,
+    /** recent foreground colors of qr */
+    val qrRecentForegroundColors: List<Int>,
+    /** qr code size */
+    val qrSize: Int,
+    /** qr code frame */
+    val qrFrame: Boolean,
+    /** qr code icon */
+    val qrIcon: Boolean,
+    /** qr code tint anchor */
+    val qrTintAnchor: Boolean,
+    /** qr code tint border */
+    val qrTintBorder: Boolean,
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
 )

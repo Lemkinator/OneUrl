@@ -1,6 +1,5 @@
 package de.lemke.oneurl.ui
 
-import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color
@@ -22,10 +21,9 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityOobeBinding
-import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import de.lemke.oneurl.domain.utils.TipsItemView
+import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -37,12 +35,8 @@ class OOBEActivity : AppCompatActivity() {
     private var time: Long = 0
 
     @Inject
-    lateinit var getUserSettings: GetUserSettingsUseCase
-
-    @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
-    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= 34) {

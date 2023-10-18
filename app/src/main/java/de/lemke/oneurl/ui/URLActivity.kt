@@ -1,10 +1,8 @@
 package de.lemke.oneurl.ui
 
-import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -15,8 +13,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.MaterialColors
 import com.google.android.play.core.review.ReviewManagerFactory
@@ -30,11 +26,12 @@ import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
+import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
+import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
+import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import kotlinx.coroutines.launch
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -61,7 +58,15 @@ class URLActivity : AppCompatActivity() {
     @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
-    @SuppressLint("SourceLockedOrientationActivity")
+    @Inject
+    lateinit var exportQRCode: ExportQRCodeUseCase
+
+    @Inject
+    lateinit var copyQRCode: CopyQRCodeUseCase
+
+    @Inject
+    lateinit var shareQRCode: ShareQRCodeUseCase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityUrlBinding.inflate(layoutInflater)
@@ -78,7 +83,7 @@ class URLActivity : AppCompatActivity() {
         pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
             if (uri == null)
                 Toast.makeText(this@URLActivity, getString(R.string.error_no_folder_selected), Toast.LENGTH_LONG).show()
-            else lifecycleScope.launch { exportQR(uri) }
+            else lifecycleScope.launch { exportQRCode(uri, url.qr, url.shortURL) }
         }
         lifecycleScope.launch {
             val nullableURL = getURL(shortURL)
@@ -191,34 +196,9 @@ class URLActivity : AppCompatActivity() {
         }
         binding.urlAddedTextview.text = makeSectionOfTextBold(url.addedFormatMedium, boldText, color)
         binding.urlQrImageview.setImageBitmap(url.qr)
-        binding.urlQrCopyButton.setOnClickListener {
-            val cacheFile = File(cacheDir, "qr.png")
-            url.qr.compress(Bitmap.CompressFormat.PNG, 100, cacheFile.outputStream())
-            val uri = FileProvider.getUriForFile(this, "de.lemke.oneurl.fileprovider", cacheFile)
-            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newUri(contentResolver, "qr-code", uri)
-            clipboard.setPrimaryClip(clip)
-            Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-        }
-        binding.urlQrShareButton.setOnClickListener {
-            val cacheFile = File(cacheDir, "qr.png")
-            url.qr.compress(Bitmap.CompressFormat.PNG, 100, cacheFile.outputStream())
-            val uri = FileProvider.getUriForFile(this, "de.lemke.oneurl.fileprovider", cacheFile)
-            val sendIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_STREAM, uri)
-                type = "image/png"
-            }
-            startActivity(Intent.createChooser(sendIntent, null))
-        }
+        binding.urlQrCopyButton.setOnClickListener { copyQRCode(url.qr) }
+        binding.urlQrShareButton.setOnClickListener { shareQRCode(url.qr) }
         initBNV()
-    }
-
-    private fun exportQR(uri: Uri) {
-        val timestamp = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.GERMANY).format(Date())
-        val pngFile = DocumentFile.fromTreeUri(this, uri)!!.createFile("image/png", "${url.shortURL}_$timestamp")
-        url.qr.compress(Bitmap.CompressFormat.PNG, 100, contentResolver.openOutputStream(pngFile!!.uri)!!)
-        Toast.makeText(this, R.string.qr_saved, Toast.LENGTH_LONG).show()
     }
 
     private fun initBNV() {

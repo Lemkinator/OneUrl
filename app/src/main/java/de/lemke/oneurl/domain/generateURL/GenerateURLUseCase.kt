@@ -1,4 +1,4 @@
-package de.lemke.oneurl.domain
+package de.lemke.oneurl.domain.generateURL
 
 
 import android.content.Context
@@ -10,6 +10,7 @@ import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.HurlStack
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
+import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProvider.DAGD
 import de.lemke.oneurl.domain.model.ShortURLProvider.ISGD

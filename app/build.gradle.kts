@@ -119,6 +119,7 @@ dependencies {
     implementation("io.github.oneuiproject.sesl:recyclerview:1.4.1")
     implementation("io.github.oneuiproject.sesl:indexscroll:1.0.3")
     implementation("io.github.oneuiproject.sesl:picker-basic:1.2.0")
+    implementation("io.github.oneuiproject.sesl:picker-color:1.1.0")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
     implementation("com.airbnb.android:lottie:6.1.0")
@@ -128,7 +129,7 @@ dependencies {
     implementation("com.android.volley:volley:1.2.1")
 
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-    val roomVersion = "2.5.2"
+    val roomVersion = "2.6.0"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     //noinspection KaptUsageInsteadOfKsp

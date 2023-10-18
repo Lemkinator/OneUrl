@@ -37,7 +37,6 @@
             android:name="theming-meta-xml"
             android:value="@xml/meta_998_sesl_app" />
 
-
         <activity
             android:name=".ui.SettingsActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />

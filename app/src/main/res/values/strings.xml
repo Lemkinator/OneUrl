@@ -108,20 +108,28 @@
     <string name="no_search_results">No search results</string>
     <string name="no_favorite_urls">No favorite URLs</string>
 
+    <!--QR Code-->
+    <string name="qr_saved">QR-Code saved</string>
+    <string name="save_as_image">Save as image</string>
+    <string name="generate_qr_code">Generate QR-Code</string>
+    <string name="size">Size</string>
+    <string name="background">Background</string>
+    <string name="foreground">Foreground</string>
+    <string name="frame">Frame</string>
+    <string name="icon">Icon</string>
+    <string name="tint_border">Tint border</string>
+    <string name="tint_anchor">Tint anchor</string>
+
     <!--Others-->
     <string name="url">URL</string>
-    <string name="favorite">Favorite</string>
     <string name="remove_from_fav">Remove from favorites</string>
     <string name="add_to_fav">Add to favorites</string>
     <string name="delete">Delete</string>
     <string name="show_all">Show all</string>
     <string name="only_show_favorites">Only show favorites</string>
-    <string name="save_as_image">Save as image</string>
     <string name="delete_url_message">Do you really want to delete this URL?</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
-    <string name="qr_saved">QR-Code saved</string>
     <string name="description">Description</string>
     <string name="description_hint">e.g.: My website</string>
-    <string name="generate_qr_code">Generate QR-Code</string>
 
 </resources>
