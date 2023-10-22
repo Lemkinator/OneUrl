@@ -1,6 +1,5 @@
 package de.lemke.oneurl.ui
 
-import android.util.Pair as UtilPair
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.app.SearchManager
@@ -56,6 +55,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.abs
+import android.util.Pair as UtilPair
 
 
 @AndroidEntryPoint
@@ -173,8 +173,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private fun openMain() {
         lifecycleScope.launch {
             setCustomOnBackPressedLogic(triggerStateFlow = backPressEnabled, onBackPressedLogic = { checkBackPressed() })
-            initDrawer()
             urls = getURLs()
+            initDrawer()
             initRecycler()
             binding.addFab.setOnClickListener {
                 startActivity(
@@ -208,9 +208,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         when {
             selecting -> setSelecting(false)
             binding.drawerLayoutMain.isSearchMode -> {
-                if (ViewCompat.getRootWindowInsets(binding.root)!!.isVisible(WindowInsetsCompat.Type.ime())) {
+                if (ViewCompat.getRootWindowInsets(binding.root)?.isVisible(WindowInsetsCompat.Type.ime()) == true) {
                     (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
-                        currentFocus!!.windowToken,
+                        currentFocus?.windowToken,
                         InputMethodManager.HIDE_NOT_ALWAYS
                     )
                 } else {
@@ -280,17 +280,11 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     }
 
     inner class SearchModeListener : ToolbarLayout.SearchModeListener {
-        override fun onQueryTextSubmit(query: String?): Boolean {
-            if (search == null) return false
-            lifecycleScope.launch {
-                search = query ?: ""
-                updateUserSettings { it.copy(search = query ?: "") }
-                setSearchList()
-            }
-            return true
-        }
+        override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query)
 
-        override fun onQueryTextChange(query: String?): Boolean {
+        override fun onQueryTextChange(query: String?): Boolean = setSearch(query)
+
+        private fun setSearch(query: String?): Boolean {
             if (search == null) return false
             lifecycleScope.launch {
                 search = query ?: ""

@@ -36,6 +36,8 @@
     <string name="more_information">Mehr Informationen</string>
     <string name="privacy_information">Informationen zum Datenschutz</string>
     <string name="report_bug">Bug oder Verbesserung melden</string>
+    <string name="save_location">Dateispeicherort</string>
+    <string name="custom">Benutzerdefiniert</string>
 
     <!--OOBE-->
     <string name="oobe_onboard_msg1_title">Schönes Design</string>
@@ -83,6 +85,7 @@
     <string name="error_invalid_url_or_alias">Ungültige URL oder Kürzel.</string>
     <string name="error_rate_limit_exceeded">Du hast zu viele Anfragen gestellt. Bitte verwende einen anderen Anbieter oder warte mindestens 5 Minuten, bevor du eine weitere Anfrage stellst. Andernfalls könntest du für die Nutzung dieses Dienstes gesperrt werden.</string>
     <string name="error_service_unavailable">Dienst aktuell nicht verfügbar.</string>
+    <string name="error_creating_file">Fehler beim Erstellen der Datei</string>
 
     <string name="no_urls">Keine URLs</string>
     <string name="no_search_results">Keine Suchergebnisse</string>

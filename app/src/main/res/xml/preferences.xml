@@ -24,6 +24,11 @@
             android:title="@string/language"
             android:summary="@string/change_language"/>
 
+        <DropDownPreference
+            android:key="save_location_pref"
+            android:title="@string/save_location"
+            app:useSimpleSummaryProvider="true" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

@@ -8,7 +8,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.HurlStack
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
@@ -26,7 +26,7 @@ import javax.inject.Inject
 
 
 class GenerateURLUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @ActivityContext private val context: Context,
     private val getURL: GetURLUseCase,
     private val generateDAGD: GenerateDAGDUseCase,
     private val generateVGDISGD: GenerateVGDISGDUseCase,

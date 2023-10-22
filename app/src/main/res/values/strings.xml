@@ -55,6 +55,8 @@
     <string name="more_information">More Information</string>
     <string name="privacy_information">Privacy information</string>
     <string name="report_bug">Report bug or improvement</string>
+    <string name="save_location">File storage location</string>
+    <string name="custom">Custom</string>
 
     <!--OOBE-->
     <string name="oobe_onboard_msg1_title">Beautiful design</string>.
@@ -103,6 +105,7 @@
     <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
     <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>
     <string name="error_service_unavailable">Service currently unavailable.</string>
+    <string name="error_creating_file">Error creating file</string>
 
     <string name="no_urls">No URLs</string>
     <string name="no_search_results">No search results</string>

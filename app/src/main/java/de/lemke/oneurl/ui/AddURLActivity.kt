@@ -19,11 +19,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.AddURLUseCase
-import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -119,92 +118,91 @@ class AddURLActivity : AppCompatActivity() {
 
     private fun initFooterButton() {
         if (resources.configuration.screenWidthDp < 360) {
-            binding.oobeIntroFooterButton.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            binding.addUrlFooterButton.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         }
-        binding.oobeIntroFooterButton.setOnClickListener {
-            val provider = ShortURLProvider.values()[binding.providerSpinner.selectedItemPosition]
-            val url = if (binding.editTextURL.text.isNullOrBlank()) null else binding.editTextURL.text.toString()
-            val alias = if (binding.editTextAlias.text.isNullOrBlank()) null else binding.editTextAlias.text.toString()
-            if (url.isNullOrBlank()) {
-                binding.editTextURL.error = getString(R.string.error_empty_url)
-                return@setOnClickListener
-            }
-            if (!alias.isNullOrBlank()) {
-                //check if alias is valid: only a-z, A-Z, 0-9 and underscore
-                if (!alias.matches(Regex("[a-zA-Z0-9_]+"))) {
-                    binding.editTextAlias.error = getString(R.string.error_invalid_alias)
-                    return@setOnClickListener
-                }
-                if (provider.minAliasLength != null &&
-                    alias.length < provider.minAliasLength!!) {
-                    binding.editTextAlias.error = getString(R.string.error_alias_too_short)
-                    return@setOnClickListener
-                }
-                if (alias.length > provider.maxAliasLength) {
-                    binding.editTextAlias.error = getString(R.string.error_alias_too_long, provider.maxAliasLength)
-                    return@setOnClickListener
-                }
-            }
-            setLoading(true)
-            lifecycleScope.launch {
-                delay(1000)
-                generateURL(
-                    provider = provider,
-                    longURL = url,
-                    alias = alias,
-                    favorite = addToFavorites,
-                    description = binding.editTextDescription.text.toString(),
-                    errorCallback = {
-                        lifecycleScope.launch {
-                            setLoading(false)
-                            AlertDialog.Builder(this@AddURLActivity)
-                                .setTitle(R.string.error)
-                                .setMessage(it)
-                                .setPositiveButton(R.string.ok, null)
-                                .create()
-                                .show()
-                        }
-
-                    },
-                    successCallback = {
-                        lifecycleScope.launch {
-                            addURL(it)
-                            setLoading(false)
-                            finish()
-                            Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    alreadyShortenedCallback = {
-                        lifecycleScope.launch {
-                            setLoading(false)
-                            AlertDialog.Builder(this@AddURLActivity)
-                                .setTitle(R.string.error)
-                                .setMessage(R.string.error_url_already_exists)
-                                .setNeutralButton(R.string.ok, null)
-                                .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
-                                    finish()
-                                    startActivity(
-                                        Intent(this@AddURLActivity, URLActivity::class.java)
-                                            .putExtra("shortURL", it.shortURL)
-                                    )
-                                }
-                                .create()
-                                .show()
-                        }
-                    }
-                )
-            }
-        }
+        binding.addUrlFooterButton.setOnClickListener { checkAndAddURL() }
     }
 
     private fun setLoading(loading: Boolean) {
-        binding.oobeIntroFooterButtonProgress.visibility = if (loading) View.VISIBLE else View.GONE
-        binding.oobeIntroFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
+        binding.addUrlFooterButtonProgress.visibility = if (loading) View.VISIBLE else View.GONE
+        binding.addUrlFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
         binding.providerSpinner.isEnabled = !loading
         binding.editTextURL.isEnabled = !loading
         binding.editTextAlias.isEnabled = !loading
         binding.editTextDescription.isEnabled = !loading
         binding.root.toolbar.menu.findItem(R.id.menu_item_add_to_favorites).isEnabled = !loading
         binding.root.toolbar.menu.findItem(R.id.menu_item_remove_from_favorites).isEnabled = !loading
+    }
+
+    private fun checkAndAddURL() {
+        val provider = ShortURLProvider.values()[binding.providerSpinner.selectedItemPosition]
+        val url = if (binding.editTextURL.text.isNullOrBlank()) null else binding.editTextURL.text.toString()
+        val alias = if (binding.editTextAlias.text.isNullOrBlank()) null else binding.editTextAlias.text.toString()
+        if (url.isNullOrBlank()) {
+            binding.editTextURL.error = getString(R.string.error_empty_url)
+            return
+        }
+        if (!alias.isNullOrBlank()) {
+            //check if alias is valid: only a-z, A-Z, 0-9 and underscore
+            if (!alias.matches(Regex("[a-zA-Z0-9_]+"))) {
+                binding.editTextAlias.error = getString(R.string.error_invalid_alias)
+                return
+            }
+            if (provider.minAliasLength != null && alias.length < provider.minAliasLength!!) {
+                binding.editTextAlias.error = getString(R.string.error_alias_too_short)
+                return
+            }
+            if (alias.length > provider.maxAliasLength) {
+                binding.editTextAlias.error = getString(R.string.error_alias_too_long, provider.maxAliasLength)
+                return
+            }
+        }
+        setLoading(true)
+        lifecycleScope.launch {
+            generateURL(
+                provider = provider,
+                longURL = url,
+                alias = alias,
+                favorite = addToFavorites,
+                description = binding.editTextDescription.text.toString(),
+                errorCallback = {
+                    lifecycleScope.launch {
+                        setLoading(false)
+                        AlertDialog.Builder(this@AddURLActivity)
+                            .setTitle(R.string.error)
+                            .setMessage(it)
+                            .setPositiveButton(R.string.ok, null)
+                            .create()
+                            .show()
+                    }
+                },
+                successCallback = {
+                    lifecycleScope.launch {
+                        addURL(it)
+                        setLoading(false)
+                        Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                },
+                alreadyShortenedCallback = {
+                    lifecycleScope.launch {
+                        setLoading(false)
+                        AlertDialog.Builder(this@AddURLActivity)
+                            .setTitle(R.string.error)
+                            .setMessage(R.string.error_url_already_exists)
+                            .setNeutralButton(R.string.ok, null)
+                            .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
+                                startActivity(
+                                    Intent(this@AddURLActivity, URLActivity::class.java)
+                                        .putExtra("shortURL", it.shortURL)
+                                )
+                                finish()
+                            }
+                            .create()
+                            .show()
+                    }
+                }
+            )
+        }
     }
 }

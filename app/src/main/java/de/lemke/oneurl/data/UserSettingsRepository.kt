@@ -1,5 +1,6 @@
 package de.lemke.oneurl.data
 
+import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -7,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -51,6 +53,7 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_QR_ICON] = newSettings.qrIcon
             it[KEY_QR_TINT_ANCHOR] = newSettings.qrTintAnchor
             it[KEY_QR_TINT_BORDER] = newSettings.qrTintBorder
+            it[KEY_SAVE_LOCATION] = newSettings.saveLocation.ordinal
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
         }
         return settingsFromPreferences(prefs)
@@ -78,6 +81,7 @@ class UserSettingsRepository @Inject constructor(
         qrIcon = prefs[KEY_QR_ICON] ?: true,
         qrTintAnchor = prefs[KEY_QR_TINT_ANCHOR] ?: false,
         qrTintBorder = prefs[KEY_QR_TINT_BORDER] ?: false,
+        saveLocation = SaveLocation.values()[prefs[KEY_SAVE_LOCATION] ?: SaveLocation.default.ordinal],
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
 
@@ -102,6 +106,7 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_QR_ICON = booleanPreferencesKey("qrIcon")
         private val KEY_QR_TINT_ANCHOR = booleanPreferencesKey("qrTintAnchor")
         private val KEY_QR_TINT_BORDER = booleanPreferencesKey("qrTintBorder")
+        private val KEY_SAVE_LOCATION = intPreferencesKey("saveLocation")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
     }
 }
@@ -148,6 +153,31 @@ data class UserSettings(
     val qrTintAnchor: Boolean,
     /** qr code tint border */
     val qrTintBorder: Boolean,
+    /** save location */
+    val saveLocation: SaveLocation,
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
 )
+
+enum class SaveLocation {
+    CUSTOM,
+    DOWNLOADS,
+    PICTURES,
+    DCIM,
+    ;
+
+    companion object {
+        val default = PICTURES
+
+        fun fromStringOrDefault(string: String?): SaveLocation = values().firstOrNull { it.toString() == string } ?: default
+    }
+
+    fun toLocalizedString(context: Context): String {
+        return when (this) {
+            CUSTOM -> context.getString(R.string.custom)
+            DOWNLOADS -> "Downloads"
+            PICTURES -> "Pictures"
+            DCIM -> "DCIM"
+        }
+    }
+}

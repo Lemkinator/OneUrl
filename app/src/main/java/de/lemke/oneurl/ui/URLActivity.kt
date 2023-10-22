@@ -15,24 +15,25 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.MaterialColors
-import com.google.android.play.core.review.ReviewManagerFactory
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.SaveLocation
 import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
+import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
+import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -40,6 +41,7 @@ class URLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUrlBinding
     private lateinit var url: URL
     private lateinit var boldText: String
+    private lateinit var saveLocation: SaveLocation
     private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri>
     private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
 
@@ -62,16 +64,22 @@ class URLActivity : AppCompatActivity() {
     lateinit var exportQRCode: ExportQRCodeUseCase
 
     @Inject
+    lateinit var exportQRCodeToSaveLocation: ExportQRCodeToSaveLocationUseCase
+
+    @Inject
     lateinit var copyQRCode: CopyQRCodeUseCase
 
     @Inject
     lateinit var shareQRCode: ShareQRCodeUseCase
 
+    @Inject
+    lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.root.setNavigationButtonOnClickListener { showInAppReviewOrFinish() }
+        binding.root.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
         binding.root.tooltipText = getString(R.string.sesl_navigate_up)
         val shortURL = intent.getStringExtra("shortURL")
         boldText = intent.getStringExtra("boldText") ?: ""
@@ -81,9 +89,7 @@ class URLActivity : AppCompatActivity() {
             return
         }
         pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-            if (uri == null)
-                Toast.makeText(this@URLActivity, getString(R.string.error_no_folder_selected), Toast.LENGTH_LONG).show()
-            else lifecycleScope.launch { exportQRCode(uri, url.qr, url.shortURL) }
+            lifecycleScope.launch { exportQRCode(uri, url.qr, url.shortURL) }
         }
         lifecycleScope.launch {
             val nullableURL = getURL(shortURL)
@@ -93,47 +99,16 @@ class URLActivity : AppCompatActivity() {
                 return@launch
             }
             url = nullableURL
+            saveLocation = getUserSettings().saveLocation
             binding.root.setTitle(url.shortURL)
             initViews()
 
         }
-        setCustomOnBackPressedLogic { showInAppReviewOrFinish() }
-    }
-
-    private fun showInAppReviewOrFinish() {
-        lifecycleScope.launch {
-            try {
-                val lastInAppReviewRequest = getUserSettings().lastInAppReviewRequest
-                val daysSinceLastRequest = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastInAppReviewRequest)
-                if (daysSinceLastRequest < 14) {
-                    finishAfterTransition()
-                    return@launch
-                }
-                updateUserSettings { it.copy(lastInAppReviewRequest = System.currentTimeMillis()) }
-                val manager = ReviewManagerFactory.create(this@URLActivity)
-                //val manager = FakeReviewManager(context);
-                val request = manager.requestReviewFlow()
-                request.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val reviewInfo = task.result
-                        val flow = manager.launchReviewFlow(this@URLActivity, reviewInfo)
-                        flow.addOnCompleteListener { finishAfterTransition() }
-                    } else {
-                        // There was some problem, log or handle the error code.
-                        Log.e("InAppReview", "Review task failed: ${task.exception?.message}")
-                        finishAfterTransition()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("InAppReview", "Error: ${e.message}")
-                finishAfterTransition()
-            }
-        }
+        setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
     }
 
     private fun initViews() {
         val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
-        //underline text
         val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {
             setSpan(android.text.style.UnderlineSpan(), 0, url.shortURL.length, 0)
             this
@@ -214,7 +189,7 @@ class URLActivity : AppCompatActivity() {
                             .setPositiveButton(R.string.delete) { _, _ ->
                                 lifecycleScope.launch {
                                     deleteURL(url)
-                                    showInAppReviewOrFinish()
+                                    showInAppReviewOrFinish(this@URLActivity)
                                 }
                             }
                             .setNegativeButton(R.string.sesl_cancel, null)
@@ -241,7 +216,11 @@ class URLActivity : AppCompatActivity() {
                 }
 
                 R.id.url_bnv_save_as_image -> {
-                    pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
+                    if (saveLocation == SaveLocation.CUSTOM)  {
+                        pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
+                    } else {
+                        exportQRCodeToSaveLocation(saveLocation, url.qr, url.shortURL)
+                    }
                     return@setOnItemSelectedListener true
                 }
 

@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.DropDownPreference
 import androidx.preference.Preference
 import androidx.preference.Preference.OnPreferenceClickListener
 import androidx.preference.PreferenceCategory
@@ -27,6 +28,7 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.UpdateAvailability
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.SaveLocation
 import de.lemke.oneurl.databinding.ActivitySettingsBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
@@ -53,6 +55,7 @@ class SettingsActivity : AppCompatActivity() {
         private lateinit var settingsActivity: SettingsActivity
         private lateinit var darkModePref: HorizontalRadioPreference
         private lateinit var autoDarkModePref: SwitchPreferenceCompat
+        private lateinit var saveLocationPref: DropDownPreference
         private var relatedCard: PreferenceRelatedCard? = null
 
         @Inject
@@ -79,8 +82,10 @@ class SettingsActivity : AppCompatActivity() {
             AppCompatDelegate.getDefaultNightMode()
             darkModePref = findPreference("dark_mode_pref")!!
             autoDarkModePref = findPreference("dark_mode_auto_pref")!!
+            saveLocationPref = findPreference("save_location_pref")!!
 
             autoDarkModePref.onPreferenceChangeListener = this
+            saveLocationPref.onPreferenceChangeListener = this
             darkModePref.onPreferenceChangeListener = this
             darkModePref.setDividerEnabled(false)
             darkModePref.setTouchEffectEnabled(false)
@@ -104,6 +109,9 @@ class SettingsActivity : AppCompatActivity() {
                 autoDarkModePref.isChecked = userSettings.autoDarkMode
                 darkModePref.isEnabled = !autoDarkModePref.isChecked
                 darkModePref.value = if (userSettings.darkMode) "1" else "0"
+                saveLocationPref.entries = SaveLocation.values().map { it.toLocalizedString(requireContext()) }.toTypedArray()
+                saveLocationPref.entryValues = SaveLocation.values().map { it.name }.toTypedArray()
+                saveLocationPref.value = userSettings.saveLocation.name
             }
 
             findPreference<PreferenceScreen>("privacy_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
@@ -190,6 +198,13 @@ class SettingsActivity : AppCompatActivity() {
                             else AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                         }
                         updateUserSettings { it.copy(autoDarkMode = newValue) }
+                    }
+                    return true
+                }
+                "save_location_pref" -> {
+                    val saveLocation = SaveLocation.fromStringOrDefault(newValue as String)
+                    lifecycleScope.launch {
+                        updateUserSettings { it.copy(saveLocation = saveLocation) }
                     }
                     return true
                 }

@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
@@ -19,21 +18,21 @@ import androidx.core.graphics.toColor
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.picker3.app.SeslColorPickerDialog
-import com.google.android.play.core.review.ReviewManagerFactory
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.SaveLocation
 import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
+import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
+import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import dev.oneuiproject.oneui.qr.QREncoder
-import dev.oneuiproject.oneui.widget.Toast
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -42,6 +41,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri>
     private lateinit var url: String
     private lateinit var qrCode: Bitmap
+    private lateinit var saveLocation: SaveLocation
     private var backgroundColor = 0
     private var foregroundColor = 0
     private var tintAnchor = false
@@ -63,16 +63,22 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     lateinit var exportQRCode: ExportQRCodeUseCase
 
     @Inject
+    lateinit var exportQRCodeToSaveLocation: ExportQRCodeToSaveLocationUseCase
+
+    @Inject
     lateinit var copyQRCode: CopyQRCodeUseCase
 
     @Inject
     lateinit var shareQRCode: ShareQRCodeUseCase
 
+    @Inject
+    lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGenerateQrCodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.toolbarLayout.setNavigationButtonOnClickListener { showInAppReviewOrFinish() }
+        binding.toolbarLayout.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
         binding.toolbarLayout.tooltipText = getString(R.string.sesl_navigate_up)
         lifecycleScope.launch {
             val userSettings = getUserSettings()
@@ -84,46 +90,13 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             tintAnchor = userSettings.qrTintAnchor
             backgroundColor = userSettings.qrRecentBackgroundColors.first()
             foregroundColor = userSettings.qrRecentForegroundColors.first()
+            saveLocation = userSettings.saveLocation
             initViews()
         }
         pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-            if (uri == null)
-                Toast.makeText(this@GenerateQRCodeActivity, getString(R.string.error_no_folder_selected), android.widget.Toast.LENGTH_LONG)
-                    .show()
-            else lifecycleScope.launch { exportQRCode(uri, qrCode, url) }
+            lifecycleScope.launch { exportQRCode(uri, qrCode, url) }
         }
-        setCustomOnBackPressedLogic { showInAppReviewOrFinish() }
-    }
-
-    private fun showInAppReviewOrFinish() {
-        lifecycleScope.launch {
-            try {
-                val lastInAppReviewRequest = getUserSettings().lastInAppReviewRequest
-                val daysSinceLastRequest = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastInAppReviewRequest)
-                if (daysSinceLastRequest < 14) {
-                    finishAfterTransition()
-                    return@launch
-                }
-                updateUserSettings { it.copy(lastInAppReviewRequest = System.currentTimeMillis()) }
-                val manager = ReviewManagerFactory.create(this@GenerateQRCodeActivity)
-                //val manager = FakeReviewManager(context);
-                val request = manager.requestReviewFlow()
-                request.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val reviewInfo = task.result
-                        val flow = manager.launchReviewFlow(this@GenerateQRCodeActivity, reviewInfo)
-                        flow.addOnCompleteListener { finishAfterTransition() }
-                    } else {
-                        // There was some problem, log or handle the error code.
-                        Log.e("InAppReview", "Review task failed: ${task.exception?.message}")
-                        finishAfterTransition()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("InAppReview", "Error: ${e.message}")
-                finishAfterTransition()
-            }
-        }
+        setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -134,7 +107,11 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
+                if (saveLocation == SaveLocation.CUSTOM)  {
+                    pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
+                } else {
+                    exportQRCodeToSaveLocation(saveLocation, qrCode, url)
+                }
                 return true
             }
 
@@ -203,8 +180,8 @@ class GenerateQRCodeActivity : AppCompatActivity() {
 
             true
         }
-        binding.sizeSeekbar.min = minSize
         binding.sizeSeekbar.max = maxSize
+        binding.sizeSeekbar.min = minSize
         binding.sizeSeekbar.progress = size
         binding.sizeSeekbar.setOnSeekBarChangeListener(object : SeslSeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeslSeekBar, progress: Int, fromUser: Boolean) {
