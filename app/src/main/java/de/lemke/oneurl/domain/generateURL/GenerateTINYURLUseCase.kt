@@ -3,6 +3,7 @@ package de.lemke.oneurl.domain.generateURL
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,23 +55,38 @@ class GenerateTINYURLUseCase @Inject constructor(
                 }
             },
             { error ->
-                val statusCode = error.networkResponse.statusCode
-                Log.e(tag, "error ($statusCode): $error")
-                when (statusCode) {
-                    422 -> {
-                        Log.e(tag, "error (422): alias already exists")
-                        errorCallback(context.getString(R.string.error_alias_already_exists))
+                try {
+                    Log.e(tag, "error: $error")
+                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val statusCode = networkResponse?.statusCode
+                    if (networkResponse == null || statusCode == null) {
+                        Log.e(tag, "error.networkResponse == null")
+                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        return@StringRequest
                     }
+                    Log.e(tag, "statusCode: $statusCode")
+                    when (statusCode) {
+                        422 -> {
+                            Log.e(tag, "error (422): alias already exists")
+                            errorCallback(context.getString(R.string.error_alias_already_exists))
+                        }
 
-                    400 -> {
-                        Log.e(tag, "error (400): invalid URL or alias")
-                        if (alias.isNullOrBlank()) errorCallback(context.getString(R.string.error_invalid_url))
-                        else errorCallback(context.getString(R.string.error_invalid_url_or_alias))
-                    }
+                        400 -> {
+                            if (alias.isNullOrBlank()) {
+                                Log.e(tag, "error (400): invalid URL")
+                                errorCallback(context.getString(R.string.error_invalid_url))
+                            } else {
+                                Log.e(tag, "error (400): invalid URL or alias")
+                                errorCallback(context.getString(R.string.error_invalid_url_or_alias))
+                            }
+                        }
 
-                    else -> {
-                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        else -> errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
                     }
+                } catch (e: Exception) {
+                    Log.e(tag, "error: $e")
+                    e.printStackTrace()
+                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
                 }
             }
         )

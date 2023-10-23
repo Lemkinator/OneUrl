@@ -3,6 +3,7 @@ package de.lemke.oneurl.domain.generateURL
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
@@ -12,7 +13,6 @@ import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProvider.DAGD
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.qr.QREncoder
-import java.io.UnsupportedEncodingException
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
@@ -60,12 +60,26 @@ class GenerateDAGDUseCase @Inject constructor(
                 )
             },
             { error ->
-                if (error.networkResponse.statusCode == 404) {
-                    Log.d(tag, "shortURL does not exist yet, creating it")
-                    requestQueue.add(requestCreateDAGD(provider, longURL, alias, favorite, description, successCallback, errorCallback))
-                } else {
-                    Log.w(tag, "error, statusCode: ${error.networkResponse.statusCode}, trying to create it anyway")
-                    requestQueue.add(requestCreateDAGD(provider, longURL, alias, favorite, description, successCallback, errorCallback))
+                try {
+                    Log.e(tag, "error: $error")
+                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val statusCode = networkResponse?.statusCode
+                    if (networkResponse == null || statusCode == null) {
+                        Log.e(tag, "error.networkResponse == null")
+                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        return@StringRequest
+                    }
+                    if (statusCode == 404) {
+                        Log.d(tag, "shortURL does not exist yet, creating it")
+                        requestQueue.add(requestCreateDAGD(provider, longURL, alias, favorite, description, successCallback, errorCallback))
+                    } else {
+                        Log.w(tag, "error, statusCode: ${error.networkResponse.statusCode}, trying to create it anyway")
+                        requestQueue.add(requestCreateDAGD(provider, longURL, alias, favorite, description, successCallback, errorCallback))
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Log.e(tag, "error: $e")
+                    errorCallback(context.getString(R.string.error_unknown))
                 }
             }
         )
@@ -108,35 +122,43 @@ class GenerateDAGDUseCase @Inject constructor(
                 }
             },
             { error ->
-                val statusCode = error.networkResponse.statusCode
-                Log.e(tag, "statusCode: $statusCode")
-                /* possible error messages:
-                400: Long URL cannot be empty                           //should not happen, checked before
-                400: Long URL must have http:// or https:// scheme.     //should not happen, checked before
-                400: Long URL is not a valid URL.
-                400: Short URL already taken. Pick a different one.
-                400: Custom short URL contained invalid characters.     //should not happen, checked before
-                 */
-                if (error.networkResponse.data != null) {
-                    try {
-                        val message = error.networkResponse.data.toString(charset("UTF-8"))
-                        Log.e(tag, "error: $message ($statusCode)")
-                        when {
-                            message.contains("Long URL cannot be empty") -> errorCallback(context.getString(R.string.error_invalid_url))
-                            message.contains("Long URL must have http:// or https:// scheme") -> errorCallback(context.getString(R.string.error_invalid_url))
-                            message.contains("Long URL is not a valid URL") -> errorCallback(context.getString(R.string.error_invalid_url))
-                            message.contains("Short URL already taken") -> errorCallback(context.getString(R.string.error_alias_already_exists))
-                            message.contains("Custom short URL contained invalid characters") -> errorCallback(context.getString(R.string.error_invalid_alias))
-                            else -> errorCallback("$message ($statusCode)")
-                        }
-                    } catch (e: UnsupportedEncodingException) {
-                        e.printStackTrace()
-                        Log.e(tag, "error: UnsupportedEncodingException: $e")
-                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                try {
+                    Log.e(tag, "error: $error")
+                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val statusCode = networkResponse?.statusCode
+                    if (networkResponse == null || statusCode == null) {
+                        Log.e(tag, "error.networkResponse == null")
+                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        return@StringRequest
                     }
-                } else {
-                    Log.e(tag, "error.networkResponse.data == null")
-                    errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                    Log.e(tag, "statusCode: $statusCode")
+                    val data = networkResponse.data
+                    if (data == null) {
+                        Log.e(tag, "error.networkResponse.data == null")
+                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        return@StringRequest
+                    }
+                    val message = data.toString(charset("UTF-8"))
+                    Log.e(tag, "error: $message ($statusCode)")
+                    /* possible error messages:
+                    400: Long URL cannot be empty                           //should not happen, checked before
+                    400: Long URL must have http:// or https:// scheme.     //should not happen, checked before
+                    400: Long URL is not a valid URL.
+                    400: Short URL already taken. Pick a different one.
+                    400: Custom short URL contained invalid characters.     //should not happen, checked before
+                     */
+                    when {
+                        message.contains("Long URL cannot be empty") -> errorCallback(context.getString(R.string.error_invalid_url))
+                        message.contains("Long URL must have http:// or https:// scheme") -> errorCallback(context.getString(R.string.error_invalid_url))
+                        message.contains("Long URL is not a valid URL") -> errorCallback(context.getString(R.string.error_invalid_url))
+                        message.contains("Short URL already taken") -> errorCallback(context.getString(R.string.error_alias_already_exists))
+                        message.contains("Custom short URL contained invalid characters") -> errorCallback(context.getString(R.string.error_invalid_alias))
+                        else -> errorCallback("$message ($statusCode)")
+                    }
+                } catch (e: Exception) {
+                    Log.e(tag, "error: $e")
+                    e.printStackTrace()
+                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
                 }
             }
         )
