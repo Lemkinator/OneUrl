@@ -101,10 +101,11 @@
     <string name="error_alias_too_short">Alias too short (min. 5 characters).</string>
     <string name="error_alias_too_long">Alias too long (max. %1$d characters).</string>
     <string name="error_invalid_url">Invalid URL.</string>
-    <string name="error_invalid_alias">Invalid alias (allowed characters: a–z, A–Z, 0–9 and underscore).</string>
+    <string name="error_invalid_alias">Invalid alias (allowed characters: %1$s).</string>
     <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
     <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>
     <string name="error_service_unavailable">Service currently unavailable.</string>
+    <string name="error_domain_not_allowed">Domain not allowed.</string>
     <string name="error_creating_file">Error creating file</string>
 
     <string name="no_urls">No URLs</string>

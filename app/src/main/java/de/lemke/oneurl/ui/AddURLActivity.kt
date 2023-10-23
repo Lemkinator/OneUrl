@@ -143,17 +143,16 @@ class AddURLActivity : AppCompatActivity() {
             return
         }
         if (!alias.isNullOrBlank()) {
-            //check if alias is valid: only a-z, A-Z, 0-9 and underscore
-            if (!alias.matches(Regex("[a-zA-Z0-9_]+"))) {
-                binding.editTextAlias.error = getString(R.string.error_invalid_alias)
-                return
-            }
             if (provider.minAliasLength != null && alias.length < provider.minAliasLength!!) {
                 binding.editTextAlias.error = getString(R.string.error_alias_too_short)
                 return
             }
-            if (alias.length > provider.maxAliasLength) {
+            if (provider.maxAliasLength != null && alias.length > provider.maxAliasLength!!) {
                 binding.editTextAlias.error = getString(R.string.error_alias_too_long, provider.maxAliasLength)
+                return
+            }
+            if (!provider.isAliasValid(alias)) {
+                binding.editTextAlias.error = getString(R.string.error_invalid_alias, provider.allowedAliasCharacters)
                 return
             }
         }

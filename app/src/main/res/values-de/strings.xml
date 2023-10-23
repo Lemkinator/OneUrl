@@ -81,10 +81,11 @@
     <string name="error_alias_too_short">Kürzel zu kurz (min. 5 Zeichen).</string>
     <string name="error_alias_too_long">Kürzel zu lang (max. %1$d Zeichen).</string>
     <string name="error_invalid_url">Ungültige URL.</string>
-    <string name="error_invalid_alias">Ungültiges Kürzel (erlaubte Zeichen: a–z, A–Z, 0–9 und Unterstrich).</string>
+    <string name="error_invalid_alias">Ungültiges Kürzel (erlaubte Zeichen: %1$s).</string>
     <string name="error_invalid_url_or_alias">Ungültige URL oder Kürzel.</string>
     <string name="error_rate_limit_exceeded">Du hast zu viele Anfragen gestellt. Bitte verwende einen anderen Anbieter oder warte mindestens 5 Minuten, bevor du eine weitere Anfrage stellst. Andernfalls könntest du für die Nutzung dieses Dienstes gesperrt werden.</string>
     <string name="error_service_unavailable">Dienst aktuell nicht verfügbar.</string>
+    <string name="error_domain_not_allowed">Diese Domain ist nicht erlaubt.</string>
     <string name="error_creating_file">Fehler beim Erstellen der Datei</string>
 
     <string name="no_urls">Keine URLs</string>

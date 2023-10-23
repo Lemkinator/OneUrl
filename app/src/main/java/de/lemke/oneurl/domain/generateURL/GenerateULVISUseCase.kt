@@ -15,7 +15,7 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 
 
-class GenerateVGDISGDUseCase @Inject constructor(
+class GenerateULVISUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     operator fun invoke(
@@ -27,44 +27,58 @@ class GenerateVGDISGDUseCase @Inject constructor(
         successCallback: (url: URL) -> Unit,
         errorCallback: (message: String) -> Unit,
     ): JsonObjectRequest {
-        val tag = "GenerateURLUseCase_VGD_ISGD"
+        val tag = "GenerateULVISUseCase"
         val apiURL = provider.getCreateURLApi(longURL, alias)
         Log.d(tag, "start request: $apiURL")
         return JsonObjectRequest(
-            Request.Method.GET,
+            Request.Method.POST,
             apiURL,
             null,
             { response ->
                 Log.d(tag, "response: $response")
-                if (response.has("errorcode")) {
-                    Log.e(tag, "errorcode: ${response.getString("errorcode")}")
-                    Log.e(tag, "errormessage: ${response.optString("errormessage")}")
-                    /*
-                    Error code 1 - there was a problem with the original long URL provided
-                    Please specify a URL to shorten.                                            //should not happen, checked before
-                    Please enter a valid URL to shorten
-                    Error code 2 - there was a problem with the short URL provided (for custom short URLs)
-                    Short URLs must be at least 5 characters long                               //should not happen, checked before
-                    Short URLs may only contain the characters a-z, 0-9 and underscore          //should not happen, checked before
-                    The shortened URL you picked already exists, please choose another.
-                    Error code 3 - our rate limit was exceeded (your app should wait before trying again)
-                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
-                     */
-                    when (response.getString("errorcode")) {
-                        "1" -> errorCallback(context.getString(R.string.error_invalid_url))
-                        "2" -> errorCallback(context.getString(R.string.error_alias_already_exists))
-                        "3" -> errorCallback(context.getString(R.string.error_rate_limit_exceeded))
-                        "4" -> errorCallback(context.getString(R.string.error_service_unavailable))
-                        else -> errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
+                /*
+                success: response: {"success":true,"data":{"id":"EAZe","url":"https:\/\/ulvis.net\/EAZe","full":"https:\/\/t.com"}}
+                alias already exists: response: {"success":true,"data":{"status":"custom-taken"}}
+                code 0:
+                {"success":false,"error":{"code":0,"msg":"domain not allowed"}}
+                code 1:
+                {"success":false,"error":{"code":1,"msg":"invalid url"}}
+                code 2:
+                {"success":false,"error":{"code":2,"msg":"custom name must be less than 60 chars"}}     //should not happen, checked before
+                 */
+                if (!response.optBoolean("success")) {
+                    Log.e(tag, "error: ${response.optJSONObject("error")}")
+                    val error = response.optJSONObject("error")
+                    if (error != null) {
+                        val code = error.optInt("code")
+                        val msg = error.optString("msg")
+                        when (code) {
+                            0 -> errorCallback(context.getString(R.string.error_domain_not_allowed))
+                            1 -> errorCallback(context.getString(R.string.error_invalid_url))
+                            else -> errorCallback("$msg ($code)")
+                        }
+                        return@JsonObjectRequest
                     }
-                    return@JsonObjectRequest
-                }
-                if (!response.has("shorturl")) {
-                    Log.e(tag, "error, response does not contain shorturl, response: $response")
                     errorCallback(context.getString(R.string.error_unknown))
                     return@JsonObjectRequest
                 }
-                val shortURL = response.getString("shorturl").trim()
+                val data = response.optJSONObject("data")
+                if (data == null) {
+                    Log.e(tag, "error, response does not contain data")
+                    errorCallback(context.getString(R.string.error_unknown))
+                    return@JsonObjectRequest
+                }
+                if (data.optString("status") == "custom-taken") {
+                    Log.e(tag, "error, alias already exists")
+                    errorCallback(context.getString(R.string.error_alias_already_exists))
+                    return@JsonObjectRequest
+                }
+                if (!data.has("url")) {
+                    Log.e(tag, "error, response does not contain url")
+                    errorCallback(context.getString(R.string.error_unknown))
+                    return@JsonObjectRequest
+                }
+                val shortURL = data.getString("url").trim()
                 Log.d(tag, "shortURL: $shortURL")
                 successCallback(
                     URL(

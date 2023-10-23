@@ -15,6 +15,7 @@ import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProvider.DAGD
 import de.lemke.oneurl.domain.model.ShortURLProvider.ISGD
 import de.lemke.oneurl.domain.model.ShortURLProvider.TINYURL
+import de.lemke.oneurl.domain.model.ShortURLProvider.ULVIS
 import de.lemke.oneurl.domain.model.ShortURLProvider.VGD
 import de.lemke.oneurl.domain.model.URL
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,7 @@ class GenerateURLUseCase @Inject constructor(
     private val generateDAGD: GenerateDAGDUseCase,
     private val generateVGDISGD: GenerateVGDISGDUseCase,
     private val generateTINYURL: GenerateTINYURLUseCase,
+    private val generateULVIS: GenerateULVISUseCase,
 ) {
     suspend operator fun invoke(
         provider: ShortURLProvider,
@@ -93,8 +95,9 @@ class GenerateURLUseCase @Inject constructor(
         requestQueue.add(
             when (provider) {
                 DAGD -> generateDAGD(requestQueue, provider, longURL, alias, favorite, description, successCallback, errorCallback)
-                VGD, ISGD -> generateVGDISGD(provider, longURL, alias, errorCallback, favorite, description, successCallback)
+                VGD, ISGD -> generateVGDISGD(provider, longURL, alias, favorite, description, successCallback, errorCallback)
                 TINYURL -> generateTINYURL(provider, longURL, alias, favorite, description, successCallback, errorCallback)
+                ULVIS -> generateULVIS(provider, longURL, alias, favorite, description, successCallback, errorCallback)
             }
         )
     }
