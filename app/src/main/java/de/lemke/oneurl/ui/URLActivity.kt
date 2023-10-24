@@ -26,6 +26,7 @@ import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import de.lemke.oneurl.domain.addHttpsIfMissing
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
@@ -116,7 +117,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlShortButton.text = shortURL
         binding.urlShortButton.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.shortURL)))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(addHttpsIfMissing(url.shortURL))))
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("URLActivity", "Error: ${e.message}")
@@ -144,7 +145,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlLongButton.text = longURL
         binding.urlLongButton.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(longURL.toString())))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(addHttpsIfMissing(longURL.toString()))))
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("URLActivity", "Error: ${e.message}")
