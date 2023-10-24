@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary_color">#7C58BD</color>
+    <color name="primary_color">#8766C5</color>
     <color name="primary_color_themed">@color/primary_color</color>
-    <color name="primary_dark_color">#643EAA</color>
+    <color name="primary_dark_color">#714ABA</color>
     <color name="primary_dark_color_themed">@color/primary_dark_color</color>
 
     <color name="primary_text_icon_color">#010101</color>
