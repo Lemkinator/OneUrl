@@ -30,7 +30,7 @@ class URLRepository @Inject constructor(
 
     suspend fun deleteURL(url: URL) = urlDao.delete(url.shortURL)
 
-    suspend fun deleteURLs(urls: List<URL>) = urls.forEach { deleteURL(it) }
+    suspend fun deleteURLs(urls: List<URL>) = urlDao.delete(urls.map(::urlToDb))
 
     suspend fun deleteAll() = urlDao.deleteAll()
 }

@@ -30,6 +30,9 @@ interface URLDao {
     @Query("DELETE FROM url WHERE shortURL = :shortURL")
     suspend fun delete(shortURL: String)
 
+    @Transaction
+    suspend fun delete(urls: List<URLDb>) = urls.forEach { delete(it.shortURL) }
+
     @Query("DELETE FROM url;")
     suspend fun deleteAll()
 }
