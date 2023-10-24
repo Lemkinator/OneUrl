@@ -19,6 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.AddURLUseCase
+import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
@@ -42,6 +43,9 @@ class AddURLActivity : AppCompatActivity() {
 
     @Inject
     lateinit var addURL: AddURLUseCase
+
+    @Inject
+    lateinit var getURL: GetURLUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,9 +95,11 @@ class AddURLActivity : AppCompatActivity() {
         binding.providerSpinner.adapter = adapter
         val userSettings = getUserSettings()
         binding.providerSpinner.setSelection(userSettings.selectedShortURLProvider.ordinal)
+        onProviderChanged(userSettings.selectedShortURLProvider)
         binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 lifecycleScope.launch {
+                    onProviderChanged(ShortURLProvider.values()[p2])
                     updateUserSettings { it.copy(selectedShortURLProvider = ShortURLProvider.values()[p2]) }
                 }
             }
@@ -116,6 +122,11 @@ class AddURLActivity : AppCompatActivity() {
         }
     }
 
+    private fun onProviderChanged(provider: ShortURLProvider) {
+        if (provider.aliasConfigurable) binding.textInputLayoutAlias.visibility = View.VISIBLE
+        else binding.textInputLayoutAlias.visibility = View.GONE
+    }
+
     private fun initFooterButton() {
         if (resources.configuration.screenWidthDp < 360) {
             binding.addUrlFooterButton.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -136,18 +147,18 @@ class AddURLActivity : AppCompatActivity() {
 
     private fun checkAndAddURL() {
         val provider = ShortURLProvider.values()[binding.providerSpinner.selectedItemPosition]
-        val url = if (binding.editTextURL.text.isNullOrBlank()) null else binding.editTextURL.text.toString()
-        val alias = if (binding.editTextAlias.text.isNullOrBlank()) null else binding.editTextAlias.text.toString()
-        if (url.isNullOrBlank()) {
+        val alias = (binding.editTextAlias.text ?: "").toString().trim()
+        if (binding.editTextURL.text.isNullOrBlank()) {
             binding.editTextURL.error = getString(R.string.error_empty_url)
             return
         }
-        if (!alias.isNullOrBlank()) {
-            if (provider.minAliasLength != null && alias.length < provider.minAliasLength!!) {
+        val longURL = provider.sanitizeURL(binding.editTextURL.text.toString())
+        if (provider.aliasConfigurable && alias.isNotBlank()) {
+            if (alias.length < provider.minAliasLength) {
                 binding.editTextAlias.error = getString(R.string.error_alias_too_short)
                 return
             }
-            if (provider.maxAliasLength != null && alias.length > provider.maxAliasLength!!) {
+            if (alias.length > provider.maxAliasLength) {
                 binding.editTextAlias.error = getString(R.string.error_alias_too_long, provider.maxAliasLength)
                 return
             }
@@ -158,21 +169,34 @@ class AddURLActivity : AppCompatActivity() {
         }
         setLoading(true)
         lifecycleScope.launch {
+            val existingURL = getURL(provider, longURL)
+            if (existingURL.isNotEmpty()) {
+                if (alias.isBlank()) {
+                    alreadyShortened(existingURL.first().shortURL)
+                    return@launch
+                }
+                for (url in existingURL) {
+                    if (url.shortURL == provider.baseURL + alias) {
+                        alreadyShortened(url.shortURL)
+                        return@launch
+                    }
+                }
+            }
             generateURL(
                 provider = provider,
-                longURL = url,
+                longURL = longURL,
                 alias = alias,
                 favorite = addToFavorites,
                 description = binding.editTextDescription.text.toString(),
                 errorCallback = {
                     lifecycleScope.launch {
-                        setLoading(false)
                         AlertDialog.Builder(this@AddURLActivity)
                             .setTitle(R.string.error)
                             .setMessage(it)
                             .setPositiveButton(R.string.ok, null)
                             .create()
                             .show()
+                        setLoading(false)
                     }
                 },
                 successCallback = {
@@ -183,25 +207,21 @@ class AddURLActivity : AppCompatActivity() {
                         finish()
                     }
                 },
-                alreadyShortenedCallback = {
-                    lifecycleScope.launch {
-                        setLoading(false)
-                        AlertDialog.Builder(this@AddURLActivity)
-                            .setTitle(R.string.error)
-                            .setMessage(R.string.error_url_already_exists)
-                            .setNeutralButton(R.string.ok, null)
-                            .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
-                                startActivity(
-                                    Intent(this@AddURLActivity, URLActivity::class.java)
-                                        .putExtra("shortURL", it.shortURL)
-                                )
-                                finish()
-                            }
-                            .create()
-                            .show()
-                    }
-                }
             )
         }
+    }
+
+    private fun alreadyShortened(shortURL: String){
+        AlertDialog.Builder(this@AddURLActivity)
+            .setTitle(R.string.error)
+            .setMessage(R.string.error_url_already_exists)
+            .setNeutralButton(R.string.ok, null)
+            .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
+                startActivity(Intent(this@AddURLActivity, URLActivity::class.java).putExtra("shortURL", shortURL))
+                finish()
+            }
+            .create()
+            .show()
+        setLoading(false)
     }
 }
