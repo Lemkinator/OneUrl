@@ -54,6 +54,8 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_QR_TINT_ANCHOR] = newSettings.qrTintAnchor
             it[KEY_QR_TINT_BORDER] = newSettings.qrTintBorder
             it[KEY_SAVE_LOCATION] = newSettings.saveLocation.ordinal
+            it[KEY_SHOW_OWOVCGAY_WARNING] = newSettings.showOWOVCGAYWarning
+            it[KEY_SHOW_OWOVCZWS_INFO] = newSettings.showOWOVCZWSInfo
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
         }
         return settingsFromPreferences(prefs)
@@ -82,6 +84,8 @@ class UserSettingsRepository @Inject constructor(
         qrTintAnchor = prefs[KEY_QR_TINT_ANCHOR] ?: false,
         qrTintBorder = prefs[KEY_QR_TINT_BORDER] ?: false,
         saveLocation = SaveLocation.values()[prefs[KEY_SAVE_LOCATION] ?: SaveLocation.default.ordinal],
+        showOWOVCGAYWarning = prefs[KEY_SHOW_OWOVCGAY_WARNING] ?: true,
+        showOWOVCZWSInfo = prefs[KEY_SHOW_OWOVCZWS_INFO] ?: true,
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
 
@@ -107,6 +111,8 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_QR_TINT_ANCHOR = booleanPreferencesKey("qrTintAnchor")
         private val KEY_QR_TINT_BORDER = booleanPreferencesKey("qrTintBorder")
         private val KEY_SAVE_LOCATION = intPreferencesKey("saveLocation")
+        private val KEY_SHOW_OWOVCGAY_WARNING = booleanPreferencesKey("showOWOVCGAYWarning")
+        private val KEY_SHOW_OWOVCZWS_INFO = booleanPreferencesKey("showOWOVCZWSInfo")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
     }
 }
@@ -155,6 +161,10 @@ data class UserSettings(
     val qrTintBorder: Boolean,
     /** save location */
     val saveLocation: SaveLocation,
+    /** show owovc gay warning */
+    val showOWOVCGAYWarning: Boolean,
+    /** show owovc zws info */
+    val showOWOVCZWSInfo: Boolean,
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
 )

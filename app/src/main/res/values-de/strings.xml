@@ -116,4 +116,10 @@
     <string name="description">Beschreibung</string>
     <string name="description_hint">z.B.: Meine Webseite</string>
 
+    <string name="warning">Warnung</string>
+    <string name="owovcgay_warning">Der URL-Verkürzer \"owo.vc (gay)\" verwendet anstößige und sexistische Wörter und kann für unangemessene oder beleidigende Inhalte stehen. Wenn du fortfährst, sei dir bewusst, dass die erstellten Links möglicherweise sexistische Begriffe enthalten und von anderen als beleidigend und respektlos empfunden werden könnten. Sei respektvoll und verantwortungsbewusst bei der Verwendung dieses Dienstes.</string>
+    <string name="info">Info</string>
+    <string name="owovczws_info">Der URL-Verkürzer \"owo.vc (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"owo.vc/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von owo.vc anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
+    <string name="dont_show_again">Nicht mehr anzeigen</string>
+
 </resources>

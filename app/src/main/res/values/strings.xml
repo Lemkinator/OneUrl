@@ -136,4 +136,10 @@
     <string name="description">Description</string>
     <string name="description_hint">e.g.: My website</string>
 
+    <string name="warning">Warning</string>
+    <string name="owovcgay_warning">The URL shortener \"owo.vc (gay)\" employs offensive and sexist language and may represent inappropriate or offensive content. If you proceed, be aware that the generated links may contain sexist terms and could be considered offensive and disrespectful by others. Use this service with respect and responsibility.</string>
+    <string name="info">Info</string>
+    <string name="owovczws_info">The URL shortener \"owo.vc (zws)\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"owo.vc/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard owo.vc page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
+    <string name="dont_show_again">Don\'t show again</string>
+
 </resources>

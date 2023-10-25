@@ -98,10 +98,7 @@ class AddURLActivity : AppCompatActivity() {
         onProviderChanged(userSettings.selectedShortURLProvider)
         binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                lifecycleScope.launch {
-                    onProviderChanged(ShortURLProvider.values()[p2])
-                    updateUserSettings { it.copy(selectedShortURLProvider = ShortURLProvider.values()[p2]) }
-                }
+                lifecycleScope.launch { onProviderChanged(ShortURLProvider.values()[p2]) }
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -122,9 +119,32 @@ class AddURLActivity : AppCompatActivity() {
         }
     }
 
-    private fun onProviderChanged(provider: ShortURLProvider) {
+    private suspend fun onProviderChanged(provider: ShortURLProvider) {
         if (provider.aliasConfigurable) binding.textInputLayoutAlias.visibility = View.VISIBLE
         else binding.textInputLayoutAlias.visibility = View.GONE
+        val userSettings = getUserSettings()
+        if (provider == ShortURLProvider.OWOVCGAY && userSettings.showOWOVCGAYWarning) {
+            AlertDialog.Builder(this@AddURLActivity)
+                .setTitle(R.string.warning)
+                .setMessage(R.string.owovcgay_warning)
+                .setPositiveButton(R.string.ok, null)
+                .setNegativeButton(R.string.dont_show_again) { _: DialogInterface, _: Int ->
+                    lifecycleScope.launch { updateUserSettings { it.copy(showOWOVCGAYWarning = false) } }
+                }
+                .create()
+                .show()
+        } else if (provider == ShortURLProvider.OWOVCZWS && userSettings.showOWOVCZWSInfo) {
+            AlertDialog.Builder(this@AddURLActivity)
+                .setTitle(R.string.info)
+                .setMessage(R.string.owovczws_info)
+                .setPositiveButton(R.string.ok, null)
+                .setNegativeButton(R.string.dont_show_again) { _: DialogInterface, _: Int ->
+                    lifecycleScope.launch { updateUserSettings { it.copy(showOWOVCZWSInfo = false) } }
+                }
+                .create()
+                .show()
+        }
+        updateUserSettings { it.copy(selectedShortURLProvider = provider) }
     }
 
     private fun initFooterButton() {
@@ -211,7 +231,7 @@ class AddURLActivity : AppCompatActivity() {
         }
     }
 
-    private fun alreadyShortened(shortURL: String){
+    private fun alreadyShortened(shortURL: String) {
         AlertDialog.Builder(this@AddURLActivity)
             .setTitle(R.string.error)
             .setMessage(R.string.error_url_already_exists)
