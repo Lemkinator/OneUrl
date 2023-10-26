@@ -56,6 +56,7 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_SAVE_LOCATION] = newSettings.saveLocation.ordinal
             it[KEY_SHOW_OWOVCGAY_WARNING] = newSettings.showOWOVCGAYWarning
             it[KEY_SHOW_OWOVCZWS_INFO] = newSettings.showOWOVCZWSInfo
+            it[KEY_CURRENT_CATEGORY] = newSettings.currentCategory
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
         }
         return settingsFromPreferences(prefs)
@@ -86,6 +87,7 @@ class UserSettingsRepository @Inject constructor(
         saveLocation = SaveLocation.values()[prefs[KEY_SAVE_LOCATION] ?: SaveLocation.default.ordinal],
         showOWOVCGAYWarning = prefs[KEY_SHOW_OWOVCGAY_WARNING] ?: true,
         showOWOVCZWSInfo = prefs[KEY_SHOW_OWOVCZWS_INFO] ?: true,
+        currentCategory = prefs[KEY_CURRENT_CATEGORY] ?: "",
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
 
@@ -113,6 +115,7 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_SAVE_LOCATION = intPreferencesKey("saveLocation")
         private val KEY_SHOW_OWOVCGAY_WARNING = booleanPreferencesKey("showOWOVCGAYWarning")
         private val KEY_SHOW_OWOVCZWS_INFO = booleanPreferencesKey("showOWOVCZWSInfo")
+        private val KEY_CURRENT_CATEGORY = stringPreferencesKey("currentCategory")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
     }
 }
@@ -165,6 +168,8 @@ data class UserSettings(
     val showOWOVCGAYWarning: Boolean,
     /** show owovc zws info */
     val showOWOVCZWSInfo: Boolean,
+    /** current category */
+    val currentCategory: String,
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
 )
