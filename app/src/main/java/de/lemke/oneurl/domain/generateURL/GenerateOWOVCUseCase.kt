@@ -8,24 +8,18 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.URL
 import org.json.JSONObject
-import java.time.ZonedDateTime
 import javax.inject.Inject
 
 
 class GenerateOWOVCUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val generateQRCode: GenerateQRCodeUseCase,
 ) {
     operator fun invoke(
         provider: ShortURLProvider,
         longURL: String,
-        favorite: Boolean,
-        description: String,
-        successCallback: (url: URL) -> Unit,
+        successCallback: (shortURL: String) -> Unit,
         errorCallback: (message: String) -> Unit,
     ): JsonObjectRequest {
         val generator = when (provider) {
@@ -78,17 +72,7 @@ class GenerateOWOVCUseCase @Inject constructor(
 
                 val shortURL = response.getString("id").trim()
                 Log.d(tag, "shortURL: $shortURL")
-                successCallback(
-                    URL(
-                        shortURL = shortURL,
-                        longURL = longURL,
-                        shortURLProvider = provider,
-                        qr = generateQRCode(shortURL),
-                        favorite = favorite,
-                        description = description,
-                        added = ZonedDateTime.now()
-                    )
-                )
+                successCallback(shortURL)
             },
             { error ->
                 try {

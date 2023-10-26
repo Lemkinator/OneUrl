@@ -9,9 +9,6 @@ import com.android.volley.toolbox.JsonObjectRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.URL
-import dev.oneuiproject.oneui.qr.QREncoder
-import java.time.ZonedDateTime
 import javax.inject.Inject
 
 
@@ -22,9 +19,7 @@ class GenerateULVISUseCase @Inject constructor(
         provider: ShortURLProvider,
         longURL: String,
         alias: String?,
-        favorite: Boolean,
-        description: String,
-        successCallback: (url: URL) -> Unit,
+        successCallback: (shortURL: String) -> Unit,
         errorCallback: (message: String) -> Unit,
     ): JsonObjectRequest {
         val tag = "GenerateULVISUseCase"
@@ -80,19 +75,7 @@ class GenerateULVISUseCase @Inject constructor(
                 }
                 val shortURL = data.getString("url").trim()
                 Log.d(tag, "shortURL: $shortURL")
-                successCallback(
-                    URL(
-                        shortURL = shortURL,
-                        longURL = longURL,
-                        shortURLProvider = provider,
-                        qr = QREncoder(context, shortURL)
-                            .setIcon(R.drawable.ic_launcher_themed)
-                            .generate(),
-                        favorite = favorite,
-                        description = description,
-                        added = ZonedDateTime.now()
-                    )
-                )
+                successCallback(shortURL)
             },
             { error ->
                 try {

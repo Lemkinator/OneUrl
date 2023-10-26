@@ -62,11 +62,13 @@ import android.util.Pair as UtilPair
 class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: URLAdapter
+    private val backPressEnabled = MutableStateFlow(false)
+    private var allURLs: List<URL> = emptyList()
     private var urls: List<URL> = emptyList()
     private var searchURLs: List<URL> = emptyList()
-    private val backPressEnabled = MutableStateFlow(false)
     private var search: String? = null
-    private val currentList get() = if (search == null) urls else searchURLs
+    private val isSearch get() = search != null
+    private val currentList get() = if (isSearch) searchURLs else urls
     private var selected = HashMap<Int, Boolean>()
     private var selecting = false
     private var checkAllListening = true
@@ -173,9 +175,20 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private fun openMain() {
         lifecycleScope.launch {
             setCustomOnBackPressedLogic(triggerStateFlow = backPressEnabled, onBackPressedLogic = { checkBackPressed() })
-            urls = getURLs()
+            allURLs = getURLs()
+            urls = if (filterFavorite) allURLs.filter { it.favorite } else allURLs
             initDrawer()
             initRecycler()
+            lifecycleScope.launch {
+                observeURLs().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
+                    allURLs = it
+                    if (isSearch) setSearchList()
+                    else {
+                        urls = if (filterFavorite) it.filter { url -> url.favorite } else it
+                        updateRecyclerView()
+                    }
+                }
+            }
             binding.addFab.setOnClickListener {
                 startActivity(
                     Intent(this@MainActivity, AddURLActivity::class.java),
@@ -183,12 +196,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                         .makeSceneTransitionAnimation(this@MainActivity, binding.addFab, "transition_fab")
                         .toBundle()
                 )
-            }
-            lifecycleScope.launch {
-                observeURLs().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
-                    urls = if (filterFavorite) it.filter { url -> url.favorite } else it
-                    updateRecyclerView()
-                }
             }
             //manually waiting for the animation to finish :/
             delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
@@ -259,7 +266,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 item.isVisible = false
                 binding.root.toolbar.menu.findItem(R.id.menu_item_only_show_favorites).isVisible = true
                 lifecycleScope.launch {
-                    urls = getURLs()
+                    urls = allURLs
                     updateRecyclerView()
                 }
                 return true
@@ -270,7 +277,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 item.isVisible = false
                 binding.root.toolbar.menu.findItem(R.id.menu_item_show_all).isVisible = true
                 lifecycleScope.launch {
-                    urls = urls.filter { url -> url.favorite }
+                    urls = allURLs.filter { it.favorite }
                     updateRecyclerView()
                 }
                 return true
@@ -384,7 +391,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         initListJob?.cancel()
         if (!this::binding.isInitialized) return
         initListJob = lifecycleScope.launch {
-            searchURLs = getSearchList(search)
+            searchURLs = getSearchList(search, allURLs)
             updateRecyclerView()
         }
     }
@@ -469,12 +476,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
-        if (search == null && urls.isEmpty() || search != null && searchURLs.isEmpty()) {
+        if (!isSearch && urls.isEmpty() || isSearch && searchURLs.isEmpty()) {
             binding.urlList.visibility = View.GONE
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
             binding.urlNoEntryText.text = when {
-                search != null -> getString(R.string.no_search_results)
+                isSearch -> getString(R.string.no_search_results)
                 filterFavorite -> getString(R.string.no_favorite_urls)
                 else -> getString(R.string.no_urls)
             }
@@ -511,11 +518,11 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 this@MainActivity.getColor(R.color.primary_color_themed)
             )
             holder.listItemTitle.text =
-                if (search != null) makeSectionOfTextBold(currentList[position].shortURL, search, color) else currentList[position].shortURL
+                if (isSearch) makeSectionOfTextBold(currentList[position].shortURL, search, color) else currentList[position].shortURL
             holder.listItemSubtitle1.text =
-                if (search != null) makeSectionOfTextBold(currentList[position].longURL, search, color) else currentList[position].longURL
+                if (isSearch) makeSectionOfTextBold(currentList[position].longURL, search, color) else currentList[position].longURL
             val subtitle2 = currentList[position].description.ifBlank { currentList[position].addedFormatMedium }
-            holder.listItemSubtitle2.text = if (search != null) makeSectionOfTextBold(subtitle2, search, color) else subtitle2
+            holder.listItemSubtitle2.text = if (isSearch) makeSectionOfTextBold(subtitle2, search, color) else subtitle2
             if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
             else holder.listItemImg.setImageBitmap(currentList[position].getResizedQr(150))
             holder.listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
@@ -548,7 +555,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 }
             }
             holder.parentView.setOnLongClickListener {
-                if (search != null) return@setOnLongClickListener false
+                if (isSearch) return@setOnLongClickListener false
                 if (!selecting) setSelecting(true)
                 toggleItemSelected(position)
                 binding.urlList.seslStartLongPressMultiSelection()

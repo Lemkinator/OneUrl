@@ -21,7 +21,6 @@ import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCZWS
 import de.lemke.oneurl.domain.model.ShortURLProvider.TINYURL
 import de.lemke.oneurl.domain.model.ShortURLProvider.ULVIS
 import de.lemke.oneurl.domain.model.ShortURLProvider.VGD
-import de.lemke.oneurl.domain.model.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.CookieHandler
@@ -43,9 +42,7 @@ class GenerateURLUseCase @Inject constructor(
         provider: ShortURLProvider,
         longURL: String,
         alias: String? = null,
-        favorite: Boolean,
-        description: String,
-        successCallback: (url: URL) -> Unit = { },
+        successCallback: (shortURL: String) -> Unit = { },
         errorCallback: (message: String) -> Unit = { },
     ) = withContext(Dispatchers.Default) {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -67,28 +64,25 @@ class GenerateURLUseCase @Inject constructor(
         val requestQueue = RequestQueue(cache, network).apply {
             start()
         }
-        generate(provider, longURL, alias, favorite, description, requestQueue, successCallback, errorCallback)
+        generate(requestQueue, provider, longURL, alias, successCallback, errorCallback)
     }
 
     private fun generate(
+        requestQueue: RequestQueue,
         provider: ShortURLProvider,
         longURL: String,
         alias: String?,
-        favorite: Boolean,
-        description: String,
-        requestQueue: RequestQueue,
-        successCallback: (url: URL) -> Unit,
-        errorCallback: (message: String) -> Unit
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (message: String) -> Unit,
     ) {
         requestQueue.add(
             when (provider) {
-                DAGD -> generateDAGD(requestQueue, provider, longURL, alias, favorite, description, successCallback, errorCallback)
-                VGD, ISGD -> generateVGDISGD(provider, longURL, alias, favorite, description, successCallback, errorCallback)
-                TINYURL -> generateTINYURL(provider, longURL, alias, favorite, description, successCallback, errorCallback)
-                ULVIS -> generateULVIS(provider, longURL, alias, favorite, description, successCallback, errorCallback)
-                ONEPTCO -> generateONEPTCOUseCase(provider, longURL, alias, favorite, description, successCallback, errorCallback)
-                OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY
-                -> generateOWOVCUseCase(provider, longURL, favorite, description, successCallback, errorCallback)
+                DAGD -> generateDAGD(requestQueue, provider, longURL, alias, successCallback, errorCallback)
+                VGD, ISGD -> generateVGDISGD(provider, longURL, alias, successCallback, errorCallback)
+                TINYURL -> generateTINYURL(provider, longURL, alias, successCallback, errorCallback)
+                ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
+                ONEPTCO -> generateONEPTCOUseCase(provider, longURL, alias, successCallback, errorCallback)
+                OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> generateOWOVCUseCase(provider, longURL, successCallback, errorCallback)
             }
         )
     }

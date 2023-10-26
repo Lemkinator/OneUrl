@@ -19,12 +19,15 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.AddURLUseCase
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.URL
 import kotlinx.coroutines.launch
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -46,6 +49,9 @@ class AddURLActivity : AppCompatActivity() {
 
     @Inject
     lateinit var getURL: GetURLUseCase
+
+    @Inject
+    lateinit var generateQRCode: GenerateQRCodeUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -206,8 +212,6 @@ class AddURLActivity : AppCompatActivity() {
                 provider = provider,
                 longURL = longURL,
                 alias = alias,
-                favorite = addToFavorites,
-                description = binding.editTextDescription.text.toString(),
                 errorCallback = {
                     lifecycleScope.launch {
                         AlertDialog.Builder(this@AddURLActivity)
@@ -221,7 +225,17 @@ class AddURLActivity : AppCompatActivity() {
                 },
                 successCallback = {
                     lifecycleScope.launch {
-                        addURL(it)
+                        addURL(
+                            URL(
+                                shortURL = it,
+                                longURL = longURL,
+                                shortURLProvider = provider,
+                                qr = generateQRCode(it),
+                                favorite = addToFavorites,
+                                description = binding.editTextDescription.text.toString(),
+                                added = ZonedDateTime.now()
+                            )
+                        )
                         setLoading(false)
                         Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
                         finish()

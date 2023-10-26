@@ -9,9 +9,6 @@ import com.android.volley.toolbox.StringRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.URL
-import dev.oneuiproject.oneui.qr.QREncoder
-import java.time.ZonedDateTime
 import javax.inject.Inject
 
 
@@ -22,10 +19,8 @@ class GenerateTINYURLUseCase @Inject constructor(
         provider: ShortURLProvider,
         longURL: String,
         alias: String?,
-        favorite: Boolean,
-        description: String,
-        successCallback: (url: URL) -> Unit,
-        errorCallback: (message: String) -> Unit
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (message: String) -> Unit,
     ): StringRequest {
         val tag = "GenerateURLUseCase_TINYURL"
         val apiURL = provider.getCreateURLApi(longURL, alias)
@@ -36,19 +31,9 @@ class GenerateTINYURLUseCase @Inject constructor(
             { response ->
                 Log.d(tag, "response: $response")
                 if (response.startsWith("https://tinyurl.com/")) {
-                    successCallback(
-                        URL(
-                            shortURL = response.trim(),
-                            longURL = longURL,
-                            shortURLProvider = provider,
-                            qr = QREncoder(context, response.trim())
-                                .setIcon(R.drawable.ic_launcher_themed)
-                                .generate(),
-                            favorite = favorite,
-                            description = description,
-                            added = ZonedDateTime.now()
-                        )
-                    )
+                    val shortURL = response.trim()
+                    Log.d(tag, "shortURL: $shortURL")
+                    successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with https://tinyurl.com/, response: $response")
                     errorCallback(context.getString(R.string.error_unknown))

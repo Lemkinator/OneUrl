@@ -11,9 +11,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProvider.DAGD
-import de.lemke.oneurl.domain.model.URL
-import dev.oneuiproject.oneui.qr.QREncoder
-import java.time.ZonedDateTime
 import javax.inject.Inject
 
 
@@ -25,13 +22,11 @@ class GenerateDAGDUseCase @Inject constructor(
         provider: ShortURLProvider,
         longURL: String,
         alias: String?,
-        favorite: Boolean,
-        description: String,
-        successCallback: (url: URL) -> Unit,
-        errorCallback: (message: String) -> Unit
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (message: String) -> Unit,
     ): StringRequest {
         val tag = "GenerateURLUseCase_DAGD"
-        if (alias == null) return requestCreateDAGD(provider, longURL, null, favorite, description, successCallback, errorCallback)
+        if (alias == null) return requestCreateDAGD(provider, longURL, null, successCallback, errorCallback)
         val apiURL = provider.getCheckURLApi(alias)
         Log.d(tag, "start request: $apiURL")
         return StringRequest(
@@ -45,19 +40,8 @@ class GenerateDAGDUseCase @Inject constructor(
                 }
                 Log.d(tag, "shortURL already exists (but is not in local db): $response")
                 val shortURL = DAGD.baseURL + alias
-                successCallback(
-                    URL(
-                        shortURL = shortURL,
-                        longURL = longURL,
-                        shortURLProvider = provider,
-                        qr = QREncoder(context, shortURL)
-                            .setIcon(R.drawable.ic_launcher_themed)
-                            .generate(),
-                        favorite = favorite,
-                        description = description,
-                        added = ZonedDateTime.now()
-                    )
-                )
+                Log.d(tag, "shortURL: $shortURL")
+                successCallback(shortURL)
             },
             { error ->
                 try {
@@ -71,11 +55,10 @@ class GenerateDAGDUseCase @Inject constructor(
                     }
                     if (statusCode == 404) {
                         Log.d(tag, "shortURL does not exist yet, creating it")
-                        requestQueue.add(requestCreateDAGD(provider, longURL, alias, favorite, description, successCallback, errorCallback))
                     } else {
                         Log.w(tag, "error, statusCode: ${error.networkResponse.statusCode}, trying to create it anyway")
-                        requestQueue.add(requestCreateDAGD(provider, longURL, alias, favorite, description, successCallback, errorCallback))
                     }
+                    requestQueue.add(requestCreateDAGD(provider, longURL, alias, successCallback, errorCallback))
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.e(tag, "error: $e")
@@ -89,10 +72,8 @@ class GenerateDAGDUseCase @Inject constructor(
         provider: ShortURLProvider,
         longURL: String,
         alias: String?,
-        favorite: Boolean,
-        description: String,
-        successCallback: (url: URL) -> Unit,
-        errorCallback: (message: String) -> Unit
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (message: String) -> Unit,
     ): StringRequest {
         val tag = "GenerateURLUseCase_DAGD"
         val apiURL = provider.getCreateURLApi(longURL, alias)
@@ -103,19 +84,9 @@ class GenerateDAGDUseCase @Inject constructor(
             { response ->
                 Log.d(tag, "response: $response")
                 if (response.startsWith("https://da.gd")) {
-                    successCallback(
-                        URL(
-                            shortURL = response.trim(),
-                            longURL = longURL,
-                            shortURLProvider = provider,
-                            qr = QREncoder(context, response.trim())
-                                .setIcon(R.drawable.ic_launcher_themed)
-                                .generate(),
-                            favorite = favorite,
-                            description = description,
-                            added = ZonedDateTime.now()
-                        )
-                    )
+                    val shortURL = response.trim()
+                    Log.d(tag, "shortURL: $shortURL")
+                    successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with https://da.gd, response: $response")
                     errorCallback(context.getString(R.string.error_unknown))
