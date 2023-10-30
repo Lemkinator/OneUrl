@@ -4,10 +4,10 @@ package de.lemke.oneurl.domain.qr
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.oneurl.R
-import dev.oneuiproject.oneui.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -21,7 +21,7 @@ class ExportQRCodeUseCase @Inject constructor(
             Toast.makeText(
                 context,
                 context.getString(R.string.error_no_folder_selected),
-                android.widget.Toast.LENGTH_LONG
+                Toast.LENGTH_LONG
             ).show()
             return
         }

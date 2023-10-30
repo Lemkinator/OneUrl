@@ -5,10 +5,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.Environment
 import android.util.Log
+import android.widget.Toast
 import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.SaveLocation
-import dev.oneuiproject.oneui.widget.Toast
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
