@@ -109,7 +109,7 @@ class AddURLActivity : AppCompatActivity() {
 
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
-        binding.editTextURL.setText(userSettings.lastURL)
+        binding.editTextURL.setText(intent.getStringExtra("url") ?: userSettings.lastURL)
         binding.editTextURL.requestFocus()
         binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
         binding.editTextAlias.setText(userSettings.lastAlias)

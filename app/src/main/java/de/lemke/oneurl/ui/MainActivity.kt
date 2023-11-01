@@ -179,6 +179,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             urls = if (filterFavorite) allURLs.filter { it.favorite } else allURLs
             initDrawer()
             initRecycler()
+            checkIntent()
             lifecycleScope.launch {
                 observeURLs().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
                     allURLs = it
@@ -200,6 +201,13 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             //manually waiting for the animation to finish :/
             delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
             isUIReady = true
+        }
+    }
+
+    private fun checkIntent() {
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+        if (intent?.action == Intent.ACTION_SEND && "text/plain" == intent.type && !text.isNullOrBlank()) {
+            startActivity(Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", text))
         }
     }
 
