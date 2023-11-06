@@ -53,6 +53,7 @@
 
     <!--General-->
     <string name="no_email_app_installed">Keine E-Mail-App installiert…</string>
+    <string name="no_browser_app_installed">Keine Browser-App installiert…</string>
 
     <!--sesl???-->
     <string name="search">Suche</string>

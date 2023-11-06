@@ -73,6 +73,7 @@
     <!--General-->
     <string name="ok" translatable="false" tools:ignore="ButtonCase,Typos">Ok</string>
     <string name="no_email_app_installed">No e-mail app installed…</string>
+    <string name="no_browser_app_installed">No browser app installed…</string>
 
     <!--sesl???-->
     <string name="search">Search</string>
