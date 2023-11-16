@@ -29,7 +29,7 @@ class ExportQRCodeToSaveLocationUseCase @Inject constructor(
                 SaveLocation.DCIM -> Environment.DIRECTORY_DCIM
                 SaveLocation.CUSTOM -> Environment.DIRECTORY_PICTURES // should never happen
             }
-            val fileName = "${name}_${SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.GERMANY).format(Date())}"
+            val fileName = "${name}_${SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault()).format(Date())}"
                 .replace("https://", "")
                 .replace("[^a-zA-Z0-9]+".toRegex(), "_")
                 .replace("_+".toRegex(), "_")
