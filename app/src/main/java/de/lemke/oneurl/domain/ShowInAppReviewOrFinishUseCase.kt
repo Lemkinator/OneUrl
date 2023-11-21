@@ -44,5 +44,11 @@ class ShowInAppReviewOrFinishUseCase @Inject constructor(
             activity.finishAfterTransition()
         }
     }
+
+    suspend fun canShowInAppReview(): Boolean {
+        val lastInAppReviewRequest = getUserSettings().lastInAppReviewRequest
+        val daysSinceLastRequest = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastInAppReviewRequest)
+        return daysSinceLastRequest >= 14
+    }
 }
 

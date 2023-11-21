@@ -103,9 +103,10 @@ class URLActivity : AppCompatActivity() {
             saveLocation = getUserSettings().saveLocation
             binding.root.setTitle(url.shortURL)
             initViews()
-
+            if (showInAppReviewOrFinish.canShowInAppReview()) {
+                setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
+            }
         }
-        setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
     }
 
     private fun initViews() {
@@ -217,7 +218,7 @@ class URLActivity : AppCompatActivity() {
                 }
 
                 R.id.url_bnv_save_as_image -> {
-                    if (saveLocation == SaveLocation.CUSTOM)  {
+                    if (saveLocation == SaveLocation.CUSTOM) {
                         pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
                     } else {
                         exportQRCodeToSaveLocation(saveLocation, url.qr, url.shortURL)

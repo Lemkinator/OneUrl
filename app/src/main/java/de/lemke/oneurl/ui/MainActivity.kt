@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private fun openMain() {
         lifecycleScope.launch {
-            setCustomOnBackPressedLogic(triggerStateFlow = backPressEnabled, onBackPressedLogic = { checkBackPressed() })
+            setCustomOnBackPressedLogic(backPressEnabled) { checkBackPressed() }
             allURLs = getURLs()
             urls = if (filterFavorite) allURLs.filter { it.favorite } else allURLs
             initDrawer()

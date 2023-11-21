@@ -92,11 +92,13 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             foregroundColor = userSettings.qrRecentForegroundColors.first()
             saveLocation = userSettings.saveLocation
             initViews()
+            if (showInAppReviewOrFinish.canShowInAppReview()) {
+                setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
+            }
         }
         pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
             lifecycleScope.launch { exportQRCode(uri, qrCode, url) }
         }
-        setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -107,7 +109,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                if (saveLocation == SaveLocation.CUSTOM)  {
+                if (saveLocation == SaveLocation.CUSTOM) {
                     pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
                 } else {
                     exportQRCodeToSaveLocation(saveLocation, qrCode, url)
