@@ -11,19 +11,20 @@
 
     <ImageView
         android:id="@+id/list_item_img"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginVertical="4dp"
         android:contentDescription="QR Code"
         android:transitionName="qr"
         tools:ignore="HardcodedText" />
 
     <LinearLayout
-        android:layout_width="0.0dip"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1.0"
         android:orientation="vertical"
-        android:paddingVertical="14.0dip">
+        android:paddingVertical="8dp">
 
         <TextView
             android:id="@+id/list_item_title"

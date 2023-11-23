@@ -27,8 +27,6 @@ data class URL(
     val addedFormatMedium: String
         get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
 
-    fun getResizedQr(size: Int): Bitmap = Bitmap.createScaledBitmap(qr, size, size, false)
-
     fun containsKeywords(keywords: Set<String>): Boolean =
         keywords.any {
             shortURL.contains(it, ignoreCase = true) ||

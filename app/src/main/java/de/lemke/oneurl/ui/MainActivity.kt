@@ -532,7 +532,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             val subtitle2 = currentList[position].description.ifBlank { currentList[position].addedFormatMedium }
             holder.listItemSubtitle2.text = if (isSearch) makeSectionOfTextBold(subtitle2, search, color) else subtitle2
             if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
-            else holder.listItemImg.setImageBitmap(currentList[position].getResizedQr(150))
+            else holder.listItemImg.setImageBitmap(currentList[position].qr)
             holder.listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
                 null, null, if (currentList[position].favorite) getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
                 else getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off), null

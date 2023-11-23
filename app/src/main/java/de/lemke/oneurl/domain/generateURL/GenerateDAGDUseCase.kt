@@ -45,7 +45,7 @@ class GenerateDAGDUseCase @Inject constructor(
             },
             { error ->
                 try {
-                    Log.e(tag, "error: $error")
+                    Log.w(tag, "error: $error")
                     val networkResponse: NetworkResponse? = error.networkResponse
                     val statusCode = networkResponse?.statusCode
                     if (networkResponse == null || statusCode == null) {
