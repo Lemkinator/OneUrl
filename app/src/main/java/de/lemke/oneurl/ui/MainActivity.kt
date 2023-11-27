@@ -526,11 +526,11 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 this@MainActivity.getColor(R.color.primary_color_themed)
             )
             holder.listItemTitle.text =
-                if (isSearch) makeSectionOfTextBold(currentList[position].shortURL, search, color) else currentList[position].shortURL
+                if (isSearch) makeSectionOfTextBold(currentList[position].shortURL, search, color, 20) else currentList[position].shortURL
             holder.listItemSubtitle1.text =
-                if (isSearch) makeSectionOfTextBold(currentList[position].longURL, search, color) else currentList[position].longURL
+                if (isSearch) makeSectionOfTextBold(currentList[position].longURL, search, color, 20) else currentList[position].longURL
             val subtitle2 = currentList[position].description.ifBlank { currentList[position].addedFormatMedium }
-            holder.listItemSubtitle2.text = if (isSearch) makeSectionOfTextBold(subtitle2, search, color) else subtitle2
+            holder.listItemSubtitle2.text = if (isSearch) makeSectionOfTextBold(subtitle2, search, color, 20) else subtitle2
             if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
             else holder.listItemImg.setImageBitmap(currentList[position].qr)
             holder.listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(

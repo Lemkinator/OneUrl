@@ -50,7 +50,7 @@ class AboutActivity : AppCompatActivity() {
         binding = ActivityAboutBinding.inflate(layoutInflater)
         setContentView(binding.root)
         appUpdateManager = AppUpdateManagerFactory.create(this)
-        binding.appInfoLayout.addOptionalText(getString(R.string.about_page_optional_text))
+        binding.appInfoLayout.addOptionalText(getString(R.string.app_description))
         binding.appInfoLayout.status = LOADING
         //status: LOADING NO_UPDATE UPDATE_AVAILABLE NOT_UPDATEABLE NO_CONNECTION
         binding.appInfoLayout.setMainButtonClickListener(object : OnClickListener {

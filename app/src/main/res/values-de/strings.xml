@@ -6,7 +6,7 @@
     <string name="help_text">OneURL respektiert Ihre Privatsphäre und speichert keine persönlichen Informationen. Weitere Informationen finden Sie in unserer Datenschutzrichtlinie. \nDie Verwendung von OneURL zum Verkürzen von URLs unterliegt den Nutzungsbedingungen der jeweiligen Dienste, die von Drittanbietern bereitgestellt werden. Bitte konsultieren Sie die Geschäftsbedingungen der jeweiligen Dienstanbieter, um mehr über deren Richtlinien und Einschränkungen zu erfahren.\n\nAnbieter zum Kürzen von Links:\nFür das Kürzen von Links stehen mehrere Anbieter zur Auswahl. Diese sind im Prinzip ähnlich, unterscheiden sich aber in einigen Punkten.\nZum Beispiel zeigen \"is.gd\" und \"v.gd\" einen Hinweis an, bevor sie auf die Ziel-URL weiterleiten.  Wer den Link aufruft, kann dann auf der Seite des Hinweises auswählen, dass dieser in Zukunft nicht mehr angezeigt wird und stattdessen direkt zur Ziel-URL weitergeleitet wird. \n\nKosten und Rate Limits:\nDie in der App verfügbaren Anbieter sind kostenlos. Bei einigen Anbietern gibt es daher sogenannte Rate Limits (z.B. maximal 200 verkürzte Links pro Stunde).\nDas Überschreiten des Rate Limits kann zur vorübergehenden oder dauerhaften Sperrung Ihrer IP-Adresse bei einem Anbieter führen. Bitte beachten Sie, dass diese Sperrung von den Dienstanbietern selbst verwaltet wird.\nIm Normalfall sollten diese Limits als normaler Nutzer nicht erreicht werden. Wir empfehlen, die Rate Limits der Dienstanbieter zu respektieren und sie nicht absichtlich zu überschreiten, um eine reibungslose Nutzung sicherzustellen.</string>
 
     <!--About-->
-    <string name="about_page_optional_text">Ein URL-Verkürzer mit OneUI-Design.</string>
+    <string name="app_description">Ein URL-Verkürzer und QR-Code Generator mit OneUI-Design.</string>
     <string name="about_app">Über OneURL</string>
     <string name="open_in_playstore">In Play Store öffnen</string>
 
@@ -43,7 +43,6 @@
     <string name="oobe_onboard_msg1_title">Schönes Design</string>
     <string name="oobe_onboard_msg2_title">Kostenlos</string>
     <string name="oobe_onboard_msg3_title">Keine Werbung</string>
-    <string name="oobe_onboard_msg1_summary">Ein URL-Verkürzer mit OneUI-Design.</string>
     <string name="oobe_onboard_msg2_summary">Keine Abos, keine In-App-Käufe, keinerlei Kosten.</string>
     <string name="oobe_onboard_msg3_summary">Keine nervige Werbung.</string>
     <string name="tos">Nutzungsbedingungen</string>

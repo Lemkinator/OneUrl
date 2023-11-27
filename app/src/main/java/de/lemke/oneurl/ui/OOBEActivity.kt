@@ -59,7 +59,7 @@ class OOBEActivity : AppCompatActivity() {
     private fun initTipsItems() {
         val defaultLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         val titles = arrayOf(R.string.oobe_onboard_msg1_title, R.string.oobe_onboard_msg2_title, R.string.oobe_onboard_msg3_title)
-        val summaries = arrayOf(R.string.oobe_onboard_msg1_summary, R.string.oobe_onboard_msg2_summary, R.string.oobe_onboard_msg3_summary)
+        val summaries = arrayOf(R.string.app_description, R.string.oobe_onboard_msg2_summary, R.string.oobe_onboard_msg3_summary)
         val icons = arrayOf(
             dev.oneuiproject.oneui.R.drawable.ic_oui_palette,
             dev.oneuiproject.oneui.R.drawable.ic_oui_credit_card_outline,

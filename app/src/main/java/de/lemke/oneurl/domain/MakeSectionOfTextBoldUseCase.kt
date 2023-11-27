@@ -63,8 +63,8 @@ class MakeSectionOfTextBoldUseCase {
                 builder = makeSectionOfTextBold(builder, textItem, color)
             }
         }
-        return if (firstSearchIndex != text.length && lengthBefore >= 0)
-            builder.delete(0, 0.coerceAtLeast(firstSearchIndex - lengthBefore))
+        val start = 0.coerceAtLeast(firstSearchIndex - lengthBefore)
+        return if (firstSearchIndex != text.length && lengthBefore >= 0 && start > 0) builder.replace(0, start, "...")
         else builder
     }
 }
