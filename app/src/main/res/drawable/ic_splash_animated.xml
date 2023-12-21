@@ -78,7 +78,7 @@
                 android:duration="700"
                 android:startOffset="0"
                 android:propertyName="translateX"
-                android:valueFrom="4"
+                android:valueFrom="8"
                 android:valueTo="0" />
         </aapt:attr>
     </target>
@@ -89,7 +89,7 @@
                 android:duration="700"
                 android:startOffset="0"
                 android:propertyName="translateY"
-                android:valueFrom="-0.5"
+                android:valueFrom="-2"
                 android:valueTo="0" />
         </aapt:attr>
     </target>
@@ -100,7 +100,7 @@
                 android:duration="700"
                 android:startOffset="0"
                 android:propertyName="translateX"
-                android:valueFrom="-4"
+                android:valueFrom="-8"
                 android:valueTo="0" />
         </aapt:attr>
     </target>
@@ -111,7 +111,7 @@
                 android:duration="700"
                 android:startOffset="0"
                 android:propertyName="translateY"
-                android:valueFrom="0.5"
+                android:valueFrom="2"
                 android:valueTo="0" />
         </aapt:attr>
     </target>
@@ -119,10 +119,32 @@
     <target android:name="main1">
         <aapt:attr name="android:animation">
             <objectAnimator
-                android:duration="700"
+                android:duration="400"
                 android:startOffset="0"
                 android:propertyName="rotation"
-                android:valueFrom="-60"
+                android:valueFrom="-80"
+                android:valueTo="-40" />
+        </aapt:attr>
+    </target>
+
+    <target android:name="main2">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:startOffset="0"
+                android:propertyName="rotation"
+                android:valueFrom="-80"
+                android:valueTo="-40" />
+        </aapt:attr>
+    </target>
+
+    <target android:name="main1">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="300"
+                android:startOffset="400"
+                android:propertyName="rotation"
+                android:valueFrom="-40"
                 android:valueTo="0" />
         </aapt:attr>
     </target>
@@ -130,10 +152,10 @@
     <target android:name="main2">
         <aapt:attr name="android:animation">
             <objectAnimator
-                android:duration="700"
-                android:startOffset="0"
+                android:duration="300"
+                android:startOffset="400"
                 android:propertyName="rotation"
-                android:valueFrom="-60"
+                android:valueFrom="-40"
                 android:valueTo="0" />
         </aapt:attr>
     </target>
