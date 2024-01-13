@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginBottom="16dp"
-                android:hint="@string/alias"
+                android:hint="@string/alias_optional"
                 app:endIconMode="clear_text"
                 app:hintTextColor="@color/secondary_text_icon_color_themed"
                 app:placeholderText="@string/alias_hint">

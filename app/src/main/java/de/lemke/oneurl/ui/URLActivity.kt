@@ -1,5 +1,6 @@
 package de.lemke.oneurl.ui
 
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -7,6 +8,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -109,7 +112,30 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_url, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.menu_item_url_favorite -> {
+                url = url.copy(favorite = !url.favorite)
+                item.title = getString(if (url.favorite) R.string.remove_from_fav else R.string.add_to_fav)
+                item.icon = if (url.favorite) getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
+                else getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off)
+                lifecycleScope.launch { updateURL(url) }
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun initViews() {
+        val menuItemFav = binding.root.toolbar.menu.findItem(R.id.menu_item_url_favorite)
+        menuItemFav.title = getString(if (url.favorite) R.string.remove_from_fav else R.string.add_to_fav)
+        menuItemFav.icon = if (url.favorite) getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
+        else getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off)
+
         val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
         val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {
             setSpan(android.text.style.UnderlineSpan(), 0, url.shortURL.length, 0)
@@ -169,20 +195,38 @@ class URLActivity : AppCompatActivity() {
         }
         if (url.description.isNotBlank()) {
             binding.urlDescriptionTextview.text = makeSectionOfTextBold(url.description, boldText, color)
-            binding.urlDescriptionTextview.visibility = View.VISIBLE
+            binding.urlDescriptionLayout.visibility = View.VISIBLE
+            binding.urlDescriptionDivider.visibility = View.VISIBLE
         }
         binding.urlAddedTextview.text = makeSectionOfTextBold(url.addedFormatMedium, boldText, color)
         binding.urlQrImageview.setImageBitmap(url.qr)
         binding.urlQrCopyButton.setOnClickListener { copyQRCode(url.qr) }
+        binding.urlQrSaveButton.setOnClickListener {
+            if (saveLocation == SaveLocation.CUSTOM) {
+                pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
+            } else {
+                exportQRCodeToSaveLocation(saveLocation, url.qr, url.shortURL)
+            }
+        }
         binding.urlQrShareButton.setOnClickListener { shareQRCode(url.qr) }
         initBNV()
     }
 
     private fun initBNV() {
-        binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav).isVisible = !url.favorite
-        binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav).isVisible = url.favorite
+        binding.urlBnv.menu.findItem(R.id.url_bnv_analytics).isVisible = url.shortURLProvider.getAnalyticsURL(url.shortURL) != null
         binding.urlBnv.setOnItemSelectedListener {
             when (it.itemId) {
+                R.id.url_bnv_analytics -> {
+                    try {
+                        val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return@setOnItemSelectedListener false
+                        Log.d("URLActivity", "analyticsURL: $analyticsURL")
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(analyticsURL)))
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
+                    }
+                    return@setOnItemSelectedListener true
+                }
+
                 R.id.url_bnv_delete -> {
                     lifecycleScope.launch {
                         AlertDialog.Builder(this@URLActivity)
@@ -197,31 +241,6 @@ class URLActivity : AppCompatActivity() {
                             .setNegativeButton(R.string.sesl_cancel, null)
                             .create()
                             .show()
-                    }
-                    return@setOnItemSelectedListener true
-                }
-
-                R.id.url_bnv_add_to_fav -> {
-                    it.isVisible = false
-                    binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav).isVisible = true
-                    url = url.copy(favorite = true)
-                    lifecycleScope.launch { updateURL(url) }
-                    return@setOnItemSelectedListener true
-                }
-
-                R.id.url_bnv_remove_from_fav -> {
-                    it.isVisible = false
-                    binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav).isVisible = true
-                    url = url.copy(favorite = false)
-                    lifecycleScope.launch { updateURL(url) }
-                    return@setOnItemSelectedListener true
-                }
-
-                R.id.url_bnv_save_as_image -> {
-                    if (saveLocation == SaveLocation.CUSTOM) {
-                        pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
-                    } else {
-                        exportQRCodeToSaveLocation(saveLocation, url.qr, url.shortURL)
                     }
                     return@setOnItemSelectedListener true
                 }

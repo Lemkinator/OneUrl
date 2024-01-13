@@ -64,4 +64,14 @@
         <item name="android:textColor">@color/primary_text_icon_color</item>
     </style>
 
+    <style name="ProviderInfoGroup">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/drawer_item_selector</item>
+        <item name="android:foreground">@drawable/drawer_item_list_ripple</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:padding">20dp</item>
+    </style>
+
 </resources>

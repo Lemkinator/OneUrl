@@ -68,12 +68,18 @@ class GenerateVGDISGDUseCase @Inject constructor(
                     Log.e(tag, "error: $error")
                     val networkResponse: NetworkResponse? = error.networkResponse
                     val statusCode = networkResponse?.statusCode
+                    Log.e(tag, "statusCode: $statusCode")
+                    if (error.message == "org.json.JSONException: Value Error of type java.lang.String cannot be converted to JSONObject") {
+                        //https://v.gd/create.php?format=json&url=exanple.com?test&shorturl=test21 -> Error, database insert failed
+                        Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
+                        errorCallback(context.getString(R.string.error_vgd_isgd))
+                        return@JsonObjectRequest
+                    }
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
                         errorCallback(error.message ?: context.getString(R.string.error_unknown))
                         return@JsonObjectRequest
                     }
-                    Log.e(tag, "statusCode: $statusCode")
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")

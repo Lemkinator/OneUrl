@@ -86,38 +86,35 @@ enum class ShortURLProvider {
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "https://owo.vc/"
         }
 
-    private val apiURL: String
-        get() = when (this) {
-            DAGD -> "${baseURL}shorten"
-            VGD -> "${baseURL}create.php"
-            ISGD -> "${baseURL}create.php"
-            TINYURL -> "${baseURL}api-create.php"
-            //ULVIS -> "${baseURL}api.php"
-            ULVIS -> "${baseURL}API/write/get"
-            ONEPTCO -> "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl"
-            OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link"
-            //CHILPIT -> "${baseURL}api.php"
-        }
-
     fun getCreateURLApi(longURL: String, alias: String? = null): String = when (this) {
-        DAGD -> "${apiURL}?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        VGD -> "${apiURL}?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        ISGD -> "${apiURL}?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
-        TINYURL -> "${apiURL}?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
-        ULVIS -> "${apiURL}?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&custom=$alias&private=1")
-        ONEPTCO -> "${apiURL}?long=$longURL" + (if (alias.isNullOrBlank()) "" else "&short=$alias")
-        OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> apiURL //{"link": "https://example.com", "generator": "owo", "metadata": "OWOIFY"}
-        //CHILPIT -> "${apiURL}?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
+        DAGD -> "${baseURL}shorten?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        VGD -> "${baseURL}create.php?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias&logstats=1")
+        ISGD -> "${baseURL}create.php?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias&logstats=1")
+        TINYURL -> "${baseURL}api-create.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
+        ULVIS -> "${baseURL}API/write/get?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&custom=$alias&private=1")
+        ONEPTCO -> "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl?long=$longURL" + (if (alias.isNullOrBlank()) "" else "&short=$alias")
+        OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link" //{"link": "https://example.com", "generator": "owo", "metadata": "OWOIFY"}
+        //CHILPIT -> "${baseURL}api.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
     }
 
     fun getCheckURLApi(alias: String): String = when (this) {
         DAGD -> "${baseURL}coshorten/$alias"
-        VGD -> "${baseURL}todo"
-        ISGD -> "${baseURL}todo"
-        TINYURL -> "${baseURL}todo"
-        ULVIS -> "${baseURL}todo"
-        ONEPTCO -> "${baseURL}todo"
+        VGD -> ""
+        ISGD -> ""
+        TINYURL -> ""
+        ULVIS -> ""
+        ONEPTCO -> ""
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link/$alias"
+    }
+
+    fun getAnalyticsURL(alias: String): String? = when (this) {
+        DAGD -> "${baseURL}stats/$alias"
+        VGD -> "${baseURL}stats.php?url=$alias"
+        ISGD -> "${baseURL}stats.php?url=$alias"
+        TINYURL -> null //requires api token
+        ULVIS -> null
+        ONEPTCO -> null
+        OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> null //TODO check when online again :D :/ "${baseURL}api/v2/link/$alias"
     }
 
     val aliasConfigurable: Boolean get() = this.allowedAliasCharacters.isNotBlank()

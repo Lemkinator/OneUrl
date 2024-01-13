@@ -30,17 +30,21 @@
                 android:textColor="@color/primary_text_icon_color_themed"
                 android:textSize="17sp" />
 
-            <com.google.android.material.textview.MaterialTextView
-                style="?android:listSeparatorTextViewStyle"
-                android:layout_marginTop="20dp"
-                android:text="@string/contact" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/privacyPolicyButton"
+                style="@style/ButtonStyle.Transparent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:drawableStart="@drawable/ic_oui_security_2"
+                android:text="@string/privacy_policy" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/contactMeButton"
                 style="@style/ButtonStyle.Transparent"
                 android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                android:layout_marginStart="7dp"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
                 android:drawableStart="@drawable/ic_oui_email_outline"
                 android:text="@string/contact_me" />

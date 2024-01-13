@@ -31,7 +31,7 @@ class GenerateDAGDUseCase @Inject constructor(
         Log.d(tag, "start request: $apiURL")
         return StringRequest(
             Request.Method.GET,
-            provider.getCheckURLApi(alias),
+            apiURL,
             { response ->
                 if (response.trim() != longURL) {
                     Log.e(tag, "error, shortURL already exists, but has different longURL, longURL: $longURL, response: $response")

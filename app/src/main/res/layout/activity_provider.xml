@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dev.oneuiproject.oneui.layout.ToolbarLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/toolbar_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:expanded="false"
+    app:navigationIcon="@drawable/ic_oui_back"
+    app:subtitle="@string/app_name"
+    app:title="@string/provider_info">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="15dp"
+            android:orientation="vertical">
+
+            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@color/background_color"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/dagd_group"
+                    style="@style/ProviderInfoGroup">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_oui_open_split_view"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/dagd_group_text_view"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:paddingHorizontal="15dp"
+                        android:singleLine="true"
+                        android:text="da.gd"
+                        android:textAlignment="viewStart"
+                        android:textSize="18sp"
+                        tools:ignore="HardcodedText,RtlSymmetry" />
+
+                    <LinearLayout
+                        android:id="@+id/dagd_group_icons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <!--ImageView
+                            android:id="@+id/dagd_group_icon_cost"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_oui_symbol_dollar"
+                            tools:ignore="ContentDescription" /-->
+
+                        <ImageView
+                            android:id="@+id/dagd_group_icon_analytics"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_report"
+                            tools:ignore="ContentDescription" />
+
+                        <ImageView
+                            android:id="@+id/dagd_group_icon_alias"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_tool_outline"
+                            tools:ignore="ContentDescription" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/dagd_group_arrow"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="15dp"
+                        android:src="@drawable/ic_oui_keyboard_arrow_down"
+                        tools:ignore="ContentDescription" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/dagd_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="20dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/dagd_content_button_analytics"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/ic_oui_report"
+                        android:padding="0dp"
+                        android:text="@string/analytics" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/analytics_dagd"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/dagd_content_button_alias"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_tool_outline"
+                        android:padding="0dp"
+                        android:text="@string/alias" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alias_dagd"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/dagd_content_button_more_information"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline" />
+
+                </LinearLayout>
+
+            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+
+            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@color/background_color"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/vgd_isgd_group"
+                    style="@style/ProviderInfoGroup">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_oui_list"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/vgd_isgd_group_text_view"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:paddingHorizontal="15dp"
+                        android:singleLine="true"
+                        android:text="v.gd, is.gd"
+                        android:textAlignment="viewStart"
+                        android:textSize="18sp"
+                        tools:ignore="HardcodedText,RtlSymmetry" />
+
+                    <LinearLayout
+                        android:id="@+id/vgd_isgd_group_icons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_confirm_before_next_action"
+                            tools:ignore="ContentDescription" />
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_report"
+                            tools:ignore="ContentDescription" />
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_tool_outline"
+                            tools:ignore="ContentDescription" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/vgd_isgd_group_arrow"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="15dp"
+                        android:src="@drawable/ic_oui_keyboard_arrow_down"
+                        tools:ignore="ContentDescription" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/vgd_isgd_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="20dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/vgd_isgd_content_button_redirect_hint"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/ic_oui_confirm_before_next_action"
+                        android:padding="0dp"
+                        android:text="@string/redirect_hint" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/redirect_hint_vgd_isgd"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/vgd_isgd_content_button_analytics"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_report"
+                        android:padding="0dp"
+                        android:text="@string/analytics" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/analytics_vgd_isgd"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/vgd_isgd_content_button_alias"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_tool_outline"
+                        android:padding="0dp"
+                        android:text="@string/alias" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alias_vgd_isgd"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/vgd_isgd_content_button_more_information"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/more_information"
+                    style="@style/ButtonStyle.Filled"
+                    android:layout_marginTop="10dp"
+                    android:drawableStart="@drawable/ic_oui_info_outline" />
+
+                </LinearLayout>
+
+            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+
+        </LinearLayout>
+        <!--
+         tinyurl.com
+         ulvis.net
+         1pt.co
+         owo.vc
+         owo.vc (zws)
+         owo.vc (sketchy)
+         owo.vc (gay)
+         -->
+
+    </androidx.core.widget.NestedScrollView>
+
+</dev.oneuiproject.oneui.layout.ToolbarLayout>
+
+

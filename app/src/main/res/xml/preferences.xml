@@ -47,7 +47,7 @@
 
         <PreferenceScreen
             android:key="privacy_pref"
-            android:title="@string/privacy_information" />
+            android:title="@string/privacy_policy" />
 
         <PreferenceScreen
             android:key="report_bug_pref"

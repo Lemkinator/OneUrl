@@ -24,6 +24,9 @@ data class URL(
 
     override fun hashCode(): Int = shortURL.hashCode()
 
+    val alias: String
+        get() = shortURL.substringAfterLast('/')
+
     val addedFormatMedium: String
         get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
 

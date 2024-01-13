@@ -21,7 +21,17 @@
     <string name="help">Help</string>
     <string name="contact">Contact</string>
     <string name="contact_me">Contact me (e-mail)</string>
-    <string name="help_text">OneURL respects your privacy and does not store any personal information. For more information, please refer to our Privacy Policy. \nThe use of OneURL to shorten URLs is subject to the terms of use of the respective services provided by third-party providers. Please consult the terms and conditions of each service provider to learn more about their policies and restrictions.\n\nLink shortening providers:\nThere are several providers to choose from when shortening links. These are similar in principle, but differ in some respects.\nFor example, \"is.gd\" and \"v.gd\" display a hint before redirecting to the target URL. Anyone accessing the link can then select on the hint page to not display it in the future and instead be redirected directly to the destination URL. \n\nCosts and Rate Limits:\nThe providers available in the app are free of charge. Some providers therefore have rate limits (e.g. maximum 200 shortened links per hour).\nExceeding the rate limit can lead to temporary or permanent blocking of your IP address with a provider. Please note that this blocking is managed by the service providers themselves.\nNormally, these limits should not be reached as a normal user. We recommend to respect the rate limits of the service providers and not to exceed them intentionally to ensure a seamless usage.</string>
+    <string name="help_text">OneURL respects your privacy and does not store any personal information. For more information, please refer to our Privacy Policy. \nThe use of OneURL to shorten URLs is subject to the terms of use of the respective services provided by third-party providers. Please consult the terms and conditions of each service provider to learn more about their policies and restrictions.\n\nCosts and Rate Limits:\nThe providers available in the app are free of charge. Some providers therefore have rate limits (e.g. maximum 200 shortened links per hour).\nExceeding the rate limit can lead to temporary or permanent blocking of your IP address with a provider. Please note that this blocking is managed by the service providers themselves.\nNormally, these limits should not be reached as a normal user. We recommend to respect the rate limits of the service providers and not to exceed them intentionally to ensure a seamless usage.</string>
+
+    <!--Provider info-->
+    <string name="provider_info">Provider info</string>
+    <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
+    <string name="alias_dagd">The individual aliases can have a length between 1 and 10 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
+    <string name="redirect_hint">Hint before redirecting</string>
+    <string name="redirect_hint_vgd_isgd">Before redirecting, v.gd and is.gd display a hint that informs the user about the destination URL. The user has the option to click on the displayed URL before the redirection takes place. The user has the option to skip this hint in the future.</string>
+    <string name="analytics_vgd_isgd">The providers v.gd and is.gd offer the possibility to use analytics to get insights into the performance of the shortened links.</string>
+    <string name="alias_vgd_isgd">The individual aliases can have a length between 5 and 30 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
+
 
     <!--About-->
     <string name="app_description">A URL-Shortener and QR code generator with OneUI-Design.</string>
@@ -53,7 +63,7 @@
     <string name="delete_appdata_and_exit_warning">Attention: This will delete all personal data. Continue? </string>
     <string name="dev_options">Developer options</string>
     <string name="more_information">More Information</string>
-    <string name="privacy_information">Privacy information</string>
+    <string name="privacy_policy">Privacy Policy</string>
     <string name="report_bug">Report bug or improvement</string>
     <string name="save_location">File storage location</string>
     <string name="custom">Custom</string>
@@ -83,7 +93,8 @@
     <!--Add URL-->
     <string name="add_url">Add url</string>
     <string name="provider">Provider</string>
-    <string name="alias">Custom alias (Optional)</string>
+    <string name="alias">Custom alias</string>
+    <string name="alias_optional">Custom alias (Optional)</string>
     <string name="alias_hint">e.g.: xyz123</string>
     <string name="add">Add</string>
     <string name="to_url">To URL</string>
@@ -95,6 +106,7 @@
     <string name="error_unknown">Unknown error…</string>
     <string name="error_url_not_found">URL not found</string>
     <string name="error_no_folder_selected">Error: No folder selected</string>
+    <string name="error_vgd_isgd">It seems that there is a problem with v.gd/is.gd. Please choose another provider.</string>
     <string name="error_empty_url">Empty URL.</string>
     <string name="error_url_already_exists">URL already shortened</string>
     <string name="error_alias_already_exists">Alias already exists.</string>
@@ -104,7 +116,7 @@
     <string name="error_invalid_alias">Invalid alias (allowed characters: %1$s).</string>
     <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
     <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>
-    <string name="error_service_unavailable">Service currently unavailable.</string>
+    <string name="error_service_unavailable">Service currently unavailable. Please try again later or use another provider.</string>
     <string name="error_domain_not_allowed">Domain not allowed.</string>
     <string name="error_creating_file">Error creating file</string>
 
@@ -126,6 +138,7 @@
 
     <!--Others-->
     <string name="url">URL</string>
+    <string name="analytics">Analytics</string>
     <string name="remove_from_fav">Remove from favorites</string>
     <string name="add_to_fav">Add to favorites</string>
     <string name="delete">Delete</string>
@@ -134,6 +147,8 @@
     <string name="delete_url_message">Do you really want to delete this URL?</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="description">Description</string>
+    <string name="description_">"Description: "</string>
+    <string name="created">"Created: "</string>
     <string name="description_hint">e.g.: My website</string>
 
     <string name="warning">Warning</string>
@@ -141,5 +156,6 @@
     <string name="info">Info</string>
     <string name="owovczws_info">The URL shortener \"owo.vc (zws)\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"owo.vc/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard owo.vc page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
     <string name="dont_show_again">Don\'t show again</string>
+
 
 </resources>

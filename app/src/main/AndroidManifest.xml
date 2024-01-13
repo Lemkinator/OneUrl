@@ -40,6 +40,7 @@
         <activity
             android:name=".ui.SettingsActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+        <activity android:name=".ui.ProviderActivity" />
         <activity android:name=".ui.HelpActivity" />
         <activity android:name=".ui.AboutMeActivity" />
         <activity android:name=".ui.AboutActivity" />

@@ -79,12 +79,12 @@ class GenerateOWOVCUseCase @Inject constructor(
                     Log.e(tag, "error: $error")
                     val networkResponse: NetworkResponse? = error.networkResponse
                     val statusCode = networkResponse?.statusCode
+                    Log.e(tag, "statusCode: $statusCode")
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
                         errorCallback(error.message ?: context.getString(R.string.error_unknown))
                         return@JsonObjectRequest
                     }
-                    Log.e(tag, "statusCode: $statusCode")
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
@@ -92,12 +92,14 @@ class GenerateOWOVCUseCase @Inject constructor(
                         return@JsonObjectRequest
                     }
                     val message = data.toString(charset("UTF-8"))
+                    Log.e(tag, "error: $message ($statusCode)")
                     if (statusCode == 400 && message.contains("link must match pattern")) {
-                        Log.e(tag, "error: $message ($statusCode)")
                         errorCallback(context.getString(R.string.error_invalid_url))
                         return@JsonObjectRequest
+                    } else if (statusCode == 503) {
+                        errorCallback(context.getString(R.string.error_service_unavailable))
+                        return@JsonObjectRequest
                     }
-                    Log.e(tag, "error: $message ($statusCode)")
                     errorCallback("$message ($statusCode)")
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
