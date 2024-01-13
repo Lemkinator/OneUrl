@@ -1,7 +1,6 @@
 <resources>
     <!--Help-->
     <string name="help">Hilfe</string>
-    <string name="contact">Kontakt</string>
     <string name="contact_me">Kontaktier mich (E-Mail)</string>
     <string name="help_text">OneURL respektiert Ihre Privatsphäre und speichert keine persönlichen Informationen. Weitere Informationen finden Sie in unserer Datenschutzrichtlinie. \nDie Verwendung von OneURL zum Verkürzen von URLs unterliegt den Nutzungsbedingungen der jeweiligen Dienste, die von Drittanbietern bereitgestellt werden. Bitte konsultieren Sie die Geschäftsbedingungen der jeweiligen Dienstanbieter, um mehr über deren Richtlinien und Einschränkungen zu erfahren.\n\nKosten und Rate Limits:\nDie in der App verfügbaren Anbieter sind kostenlos. Bei einigen Anbietern gibt es daher sogenannte Rate Limits (z.B. maximal 200 verkürzte Links pro Stunde).\nDas Überschreiten des Rate Limits kann zur vorübergehenden oder dauerhaften Sperrung Ihrer IP-Adresse bei einem Anbieter führen. Bitte beachten Sie, dass diese Sperrung von den Dienstanbietern selbst verwaltet wird.\nIm Normalfall sollten diese Limits als normaler Nutzer nicht erreicht werden. Wir empfehlen, die Rate Limits der Dienstanbieter zu respektieren und sie nicht absichtlich zu überschreiten, um eine reibungslose Nutzung sicherzustellen.</string>
 

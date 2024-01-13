@@ -18,8 +18,7 @@ data class URL(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as URL
-        if (shortURL != other.shortURL) return false
-        return true
+        return shortURL == other.shortURL
     }
 
     override fun hashCode(): Int = shortURL.hashCode()
