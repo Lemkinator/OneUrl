@@ -23,7 +23,7 @@ class GenerateDAGDUseCase @Inject constructor(
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (message: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit = { },
     ): StringRequest {
         val tag = "GenerateURLUseCase_DAGD"
         if (alias == null) return requestCreateDAGD(provider, longURL, null, successCallback, errorCallback)
@@ -35,7 +35,7 @@ class GenerateDAGDUseCase @Inject constructor(
             { response ->
                 if (response.trim() != longURL) {
                     Log.e(tag, "error, shortURL already exists, but has different longURL, longURL: $longURL, response: $response")
-                    errorCallback(context.getString(R.string.error_alias_already_exists))
+                    errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_alias_already_exists)))
                     return@StringRequest
                 }
                 Log.d(tag, "shortURL already exists (but is not in local db): $response")
@@ -50,7 +50,7 @@ class GenerateDAGDUseCase @Inject constructor(
                     val statusCode = networkResponse?.statusCode
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
-                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.Custom(context, error.message))
                         return@StringRequest
                     }
                     if (statusCode == 404) {
@@ -62,7 +62,7 @@ class GenerateDAGDUseCase @Inject constructor(
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.e(tag, "error: $e")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         )
@@ -73,7 +73,7 @@ class GenerateDAGDUseCase @Inject constructor(
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (message: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit = { },
     ): StringRequest {
         val tag = "GenerateURLUseCase_DAGD"
         val apiURL = provider.getCreateURLApi(longURL, alias)
@@ -89,7 +89,7 @@ class GenerateDAGDUseCase @Inject constructor(
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with https://da.gd, response: $response")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             },
             { error ->
@@ -97,16 +97,20 @@ class GenerateDAGDUseCase @Inject constructor(
                     Log.e(tag, "error: $error")
                     val networkResponse: NetworkResponse? = error.networkResponse
                     val statusCode = networkResponse?.statusCode
+                    Log.e(tag, "statusCode: $statusCode")
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
-                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.Custom(context, error.message))
                         return@StringRequest
                     }
-                    Log.e(tag, "statusCode: $statusCode")
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        errorCallback(
+                            GenerateURLError.Custom(
+                                context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
+                            )
+                        )
                         return@StringRequest
                     }
                     val message = data.toString(charset("UTF-8"))
@@ -119,17 +123,21 @@ class GenerateDAGDUseCase @Inject constructor(
                     400: Custom short URL contained invalid characters.     //should not happen, checked before
                      */
                     when {
-                        message.contains("Long URL cannot be empty") -> errorCallback(context.getString(R.string.error_invalid_url))
-                        message.contains("Long URL must have http:// or https:// scheme") -> errorCallback(context.getString(R.string.error_invalid_url))
-                        message.contains("Long URL is not a valid URL") -> errorCallback(context.getString(R.string.error_invalid_url))
-                        message.contains("Short URL already taken") -> errorCallback(context.getString(R.string.error_alias_already_exists))
-                        message.contains("Custom short URL contained invalid characters") -> errorCallback(context.getString(R.string.error_invalid_alias))
-                        else -> errorCallback("$message ($statusCode)")
+                        message.contains("Long URL cannot be empty") -> errorCallback(GenerateURLError.InvalidURL(context))
+                        message.contains("Long URL must have http:// or https:// scheme") ->
+                            errorCallback(GenerateURLError.InvalidURL(context))
+
+                        message.contains("Long URL is not a valid URL") -> errorCallback(GenerateURLError.InvalidURL(context))
+                        message.contains("Short URL already taken") -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        message.contains("Custom short URL contained invalid characters") ->
+                            errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_invalid_alias)))
+
+                        else -> errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
-                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         )

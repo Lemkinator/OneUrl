@@ -197,13 +197,13 @@ class AddURLActivity : AppCompatActivity() {
         }
         setLoading(true)
         lifecycleScope.launch {
-            val existingURL = getURL(provider, longURL)
-            if (existingURL.isNotEmpty()) {
+            val existingURLs = getURL(provider, longURL)
+            if (existingURLs.isNotEmpty()) {
                 if (alias.isBlank()) {
-                    alreadyShortened(existingURL.first().shortURL)
+                    alreadyShortened(existingURLs.first().shortURL)
                     return@launch
                 }
-                for (url in existingURL) {
+                for (url in existingURLs) {
                     if (url.shortURL == provider.baseURL + alias) {
                         alreadyShortened(url.shortURL)
                         return@launch
@@ -216,12 +216,17 @@ class AddURLActivity : AppCompatActivity() {
                 alias = alias,
                 errorCallback = {
                     lifecycleScope.launch {
-                        AlertDialog.Builder(this@AddURLActivity)
-                            .setTitle(R.string.error)
-                            .setMessage(it)
-                            .setPositiveButton(R.string.ok, null)
-                            .create()
-                            .show()
+                        AlertDialog.Builder(this@AddURLActivity).apply {
+                            setTitle(it.title)
+                            setMessage(it.message)
+                            if (it.action != null) {
+                                setNeutralButton(it.action.title) { _: DialogInterface, _: Int ->
+                                    it.action.action()
+                                }
+                            }
+                            setPositiveButton(R.string.ok, null)
+                            show()
+                        }
                         setLoading(false)
                     }
                 },

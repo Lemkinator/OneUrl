@@ -81,6 +81,7 @@
     <!--Error-->
     <string name="error">Fehler</string>
     <string name="no_internet">Keine Internetverbindung verfügbar…</string>
+    <string name="no_internet_text">Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
     <string name="error_unknown">Unbekannter Fehler…</string>
     <string name="error_url_not_found">URL nicht gefunden</string>
     <string name="error_no_folder_selected">Fehler: Kein Ordner ausgewählt</string>
@@ -94,8 +95,13 @@
     <string name="error_invalid_alias">Ungültiges Kürzel (erlaubte Zeichen: %1$s).</string>
     <string name="error_invalid_url_or_alias">Ungültige URL oder Kürzel.</string>
     <string name="error_rate_limit_exceeded">Du hast zu viele Anfragen gestellt. Bitte verwende einen anderen Anbieter oder warte mindestens 5 Minuten, bevor du eine weitere Anfrage stellst. Andernfalls könntest du für die Nutzung dieses Dienstes gesperrt werden.</string>
-    <string name="error_service_unavailable">Dienst aktuell nicht verfügbar. Bitte versuche es später erneut oder wähle einen anderen Anbieter.</string>
+    <string name="error_service_unavailable">Dienst nicht verfügbar.</string>
+    <string name="error_service_unavailable_text">Dienst aktuell nicht verfügbar. Bitte versuche es später erneut oder wähle einen anderen Anbieter.</string>
     <string name="error_domain_not_allowed">Diese Domain ist nicht erlaubt.</string>
+    <string name="error_human_verification">Verifizierung erforderlich</string>
+    <string name="error_human_verification_text">Beep Beep Boop?! Dieser Anbieter behauptet, du wärst ein Roboter! Beweis ihm das Gegenteil und verifiziere, dass du ein Mensch bist. Wenn das Problem weiterhin besteht, wähle bitte einen anderen Anbieter.</string>
+    <string name="error_verify">Verifizieren</string>
+    <string name="error_internal_server_error">Interner Serverfehler.</string>
     <string name="error_creating_file">Fehler beim Erstellen der Datei</string>
 
     <string name="no_urls">Keine URLs</string>

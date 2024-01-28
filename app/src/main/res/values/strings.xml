@@ -102,6 +102,7 @@
     <!--Error-->
     <string name="error">Error</string>
     <string name="no_internet">No internet connection available…</string>
+    <string name="no_internet_text">Please check your internet connection and try again.</string>
     <string name="error_unknown">Unknown error…</string>
     <string name="error_url_not_found">URL not found</string>
     <string name="error_no_folder_selected">Error: No folder selected</string>
@@ -115,8 +116,13 @@
     <string name="error_invalid_alias">Invalid alias (allowed characters: %1$s).</string>
     <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
     <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>
-    <string name="error_service_unavailable">Service currently unavailable. Please try again later or use another provider.</string>
+    <string name="error_service_unavailable">Service unavailable</string>
+    <string name="error_service_unavailable_text">Service currently unavailable. Please try again later or use another provider.</string>
     <string name="error_domain_not_allowed">Domain not allowed.</string>
+    <string name="error_human_verification">Human verification required</string>
+    <string name="error_human_verification_text">Boop Boop Beep?! This provider insists you\'re a robot! Strut your stuff and prove them wrong by verifying your human status. If the issue persists, consider using another provider.\n</string>
+    <string name="error_verify">Verify</string>
+    <string name="error_internal_server_error">Internal server error.</string>
     <string name="error_creating_file">Error creating file</string>
 
     <string name="no_urls">No URLs</string>

@@ -20,7 +20,7 @@ class GenerateTINYURLUseCase @Inject constructor(
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (message: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit = { },
     ): StringRequest {
         val tag = "GenerateURLUseCase_TINYURL"
         val apiURL = provider.getCreateURLApi(longURL, alias)
@@ -30,13 +30,13 @@ class GenerateTINYURLUseCase @Inject constructor(
             provider.getCreateURLApi(longURL, alias),
             { response ->
                 Log.d(tag, "response: $response")
-                if (response.startsWith("https://tinyurl.com/")) {
+                if (response.startsWith("https://tinyurl.com/") || response.startsWith("http://tinyurl.com/")) {
                     val shortURL = response.trim()
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
                 } else {
-                    Log.e(tag, "error, response does not start with https://tinyurl.com/, response: $response")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    Log.e(tag, "error, response does not start with http(s)://tinyurl.com/, response: $response")
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             },
             { error ->
@@ -46,32 +46,37 @@ class GenerateTINYURLUseCase @Inject constructor(
                     val statusCode = networkResponse?.statusCode
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
-                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.Custom(context, error.message))
                         return@StringRequest
                     }
                     Log.e(tag, "statusCode: $statusCode")
                     when (statusCode) {
                         422 -> {
                             Log.e(tag, "error (422): alias already exists")
-                            errorCallback(context.getString(R.string.error_alias_already_exists))
+                            errorCallback(GenerateURLError.AliasAlreadyExists(context))
                         }
 
                         400 -> {
                             if (alias.isNullOrBlank()) {
                                 Log.e(tag, "error (400): invalid URL")
-                                errorCallback(context.getString(R.string.error_invalid_url))
+                                errorCallback(GenerateURLError.InvalidURL(context))
                             } else {
                                 Log.e(tag, "error (400): invalid URL or alias")
-                                errorCallback(context.getString(R.string.error_invalid_url_or_alias))
+                                errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_invalid_url_or_alias)))
                             }
                         }
 
-                        else -> errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        else -> errorCallback(
+                            GenerateURLError.Custom(
+                                context,
+                                (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
+                            )
+                        )
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
-                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         )

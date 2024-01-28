@@ -20,7 +20,7 @@ class GenerateULVISUseCase @Inject constructor(
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (message: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit = { },
     ): JsonObjectRequest {
         val tag = "GenerateULVISUseCase"
         val apiURL = provider.getCreateURLApi(longURL, alias)
@@ -48,29 +48,29 @@ class GenerateULVISUseCase @Inject constructor(
                         val code = error.optInt("code")
                         val msg = error.optString("msg")
                         when (code) {
-                            0 -> errorCallback(context.getString(R.string.error_domain_not_allowed))
-                            1 -> errorCallback(context.getString(R.string.error_invalid_url))
-                            else -> errorCallback("$msg ($code)")
+                            0 -> errorCallback(GenerateURLError.DomainNotAllowed(context))
+                            1 -> errorCallback(GenerateURLError.InvalidURL(context))
+                            else -> errorCallback(GenerateURLError.Custom(context, "$msg ($code)"))
                         }
                         return@JsonObjectRequest
                     }
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                     return@JsonObjectRequest
                 }
                 val data = response.optJSONObject("data")
                 if (data == null) {
                     Log.e(tag, "error, response does not contain data")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                     return@JsonObjectRequest
                 }
                 if (data.optString("status") == "custom-taken") {
                     Log.e(tag, "error, alias already exists")
-                    errorCallback(context.getString(R.string.error_alias_already_exists))
+                    errorCallback(GenerateURLError.AliasAlreadyExists(context))
                     return@JsonObjectRequest
                 }
                 if (!data.has("url")) {
                     Log.e(tag, "error, response does not contain url")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                     return@JsonObjectRequest
                 }
                 val shortURL = data.getString("url").trim()
@@ -82,25 +82,31 @@ class GenerateULVISUseCase @Inject constructor(
                     Log.e(tag, "error: $error")
                     val networkResponse: NetworkResponse? = error.networkResponse
                     val statusCode = networkResponse?.statusCode
+                    Log.e(tag, "statusCode: $statusCode")
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
-                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.Custom(context, error.message))
                         return@JsonObjectRequest
                     }
-                    Log.e(tag, "statusCode: $statusCode")
+                    if (statusCode == 403) {
+                        Log.e(tag, "error: 403")
+                        //TODO bypass cloudflare?? fu** ulvis.net :/
+                        errorCallback(GenerateURLError.HumanVerificationRequired(context, provider))
+                        return@JsonObjectRequest
+                    }
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        errorCallback(GenerateURLError.Custom(context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"))
                         return@JsonObjectRequest
                     }
                     val message = data.toString(charset("UTF-8"))
                     Log.e(tag, "error: $message ($statusCode)")
-                    errorCallback("$message ($statusCode)")
+                    errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
-                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         )

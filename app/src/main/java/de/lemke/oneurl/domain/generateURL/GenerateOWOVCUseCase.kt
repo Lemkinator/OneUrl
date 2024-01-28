@@ -20,7 +20,7 @@ class GenerateOWOVCUseCase @Inject constructor(
         provider: ShortURLProvider,
         longURL: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (message: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit = { },
     ): JsonObjectRequest {
         val generator = when (provider) {
             ShortURLProvider.OWOVCZWS -> "zws"
@@ -66,7 +66,7 @@ class GenerateOWOVCUseCase @Inject constructor(
                  */
                 if (!response.has("id")) {
                     Log.e(tag, "error: no shortURL")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                     return@JsonObjectRequest
                 }
 
@@ -82,29 +82,29 @@ class GenerateOWOVCUseCase @Inject constructor(
                     Log.e(tag, "statusCode: $statusCode")
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
-                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.Custom(context, error.message))
                         return@JsonObjectRequest
                     }
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        errorCallback(GenerateURLError.Custom(context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"))
                         return@JsonObjectRequest
                     }
                     val message = data.toString(charset("UTF-8"))
                     Log.e(tag, "error: $message ($statusCode)")
                     if (statusCode == 400 && message.contains("link must match pattern")) {
-                        errorCallback(context.getString(R.string.error_invalid_url))
+                        errorCallback(GenerateURLError.InvalidURL(context))
                         return@JsonObjectRequest
                     } else if (statusCode == 503) {
-                        errorCallback(context.getString(R.string.error_service_unavailable))
+                        errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, provider))
                         return@JsonObjectRequest
                     }
-                    errorCallback("$message ($statusCode)")
+                    errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
-                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         )

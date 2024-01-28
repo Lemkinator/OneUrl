@@ -20,7 +20,7 @@ class GenerateVGDISGDUseCase @Inject constructor(
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (message: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit = { },
     ): JsonObjectRequest {
         val tag = "GenerateURLUseCase_VGD_ISGD"
         val apiURL = provider.getCreateURLApi(longURL, alias)
@@ -46,17 +46,22 @@ class GenerateVGDISGDUseCase @Inject constructor(
                     Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
                      */
                     when (response.getString("errorcode")) {
-                        "1" -> errorCallback(context.getString(R.string.error_invalid_url))
-                        "2" -> errorCallback(context.getString(R.string.error_alias_already_exists))
-                        "3" -> errorCallback(context.getString(R.string.error_rate_limit_exceeded))
-                        "4" -> errorCallback(context.getString(R.string.error_service_unavailable))
-                        else -> errorCallback(response.optString("errormessage") + " (${response.getString("errorcode")})")
+                        "1" -> errorCallback(GenerateURLError.InvalidURL(context))
+                        "2" -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        "3" -> errorCallback(GenerateURLError.RateLimitExceeded(context))
+                        "4" -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, provider))
+                        else -> errorCallback(
+                            GenerateURLError.Custom(
+                                context,
+                                response.optString("errormessage") + " (${response.getString("errorcode")})"
+                            )
+                        )
                     }
                     return@JsonObjectRequest
                 }
                 if (!response.has("shorturl")) {
                     Log.e(tag, "error, response does not contain shorturl, response: $response")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                     return@JsonObjectRequest
                 }
                 val shortURL = response.getString("shorturl").trim()
@@ -72,27 +77,31 @@ class GenerateVGDISGDUseCase @Inject constructor(
                     if (error.message == "org.json.JSONException: Value Error of type java.lang.String cannot be converted to JSONObject") {
                         //https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
                         Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
-                        errorCallback(context.getString(R.string.error_vgd_isgd))
+                        errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_vgd_isgd)))
                         return@JsonObjectRequest
                     }
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
-                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.Custom(context, error.message))
                         return@JsonObjectRequest
                     }
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        errorCallback(
+                            GenerateURLError.Custom(
+                                context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
+                            )
+                        )
                         return@JsonObjectRequest
                     }
                     val message = data.toString(charset("UTF-8"))
                     Log.e(tag, "error: $message ($statusCode)")
-                    errorCallback("$message ($statusCode)")
+                    errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
-                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         )

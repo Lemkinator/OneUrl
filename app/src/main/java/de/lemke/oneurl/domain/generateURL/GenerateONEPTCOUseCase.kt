@@ -20,7 +20,7 @@ class GenerateONEPTCOUseCase @Inject constructor(
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (message: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit = { },
     ): JsonObjectRequest {
         val tag = "GenerateONEPTCOUseCase"
         val apiURL = provider.getCreateURLApi(longURL, alias)
@@ -49,22 +49,19 @@ class GenerateONEPTCOUseCase @Inject constructor(
                 */
                 if (!response.has("message")) {
                     Log.e(tag, "error: no message")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                     return@JsonObjectRequest
-                }
-                if (response.getString("message") != "Added!") {
+                } else if (response.getString("message") != "Added!") {
                     Log.e(tag, "error: ${response.getString("message")}")
-                    errorCallback(response.getString("message"))
+                    errorCallback(GenerateURLError.Custom(context, response.getString("message")))
                     return@JsonObjectRequest
-                }
-                if (!response.has("short")) {
+                } else if (!response.has("short")) {
                     Log.e(tag, "error: no short")
-                    errorCallback(context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                     return@JsonObjectRequest
-                }
-                if (response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort")) {
+                } else if (response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort")) {
                     Log.e(tag, "error: alias already exists")
-                    errorCallback(context.getString(R.string.error_alias_already_exists))
+                    errorCallback(GenerateURLError.AliasAlreadyExists(context))
                     return@JsonObjectRequest
                 }
                 val shortURL = provider.baseURL + response.getString("short").trim()
@@ -78,28 +75,32 @@ class GenerateONEPTCOUseCase @Inject constructor(
                     val statusCode = networkResponse?.statusCode
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
-                        errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.Custom(context, error.message))
                         return@JsonObjectRequest
                     }
                     Log.e(tag, "statusCode: $statusCode")
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(error.message ?: (context.getString(R.string.error_unknown) + " ($statusCode)"))
+                        errorCallback(
+                            GenerateURLError.Custom(
+                                context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
+                            )
+                        )
                         return@JsonObjectRequest
                     }
                     val message = data.toString(charset("UTF-8"))
                     if (statusCode == 500 && message.contains("Internal server error")) {
                         Log.e(tag, "error: Internal server error ($statusCode)")
-                        errorCallback(context.getString(R.string.error_unknown))
+                        errorCallback(GenerateURLError.InternalServerError(context))
                         return@JsonObjectRequest
                     }
                     Log.e(tag, "error: $message ($statusCode)")
-                    errorCallback("$message ($statusCode)")
+                    errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
-                    errorCallback(error.message ?: context.getString(R.string.error_unknown))
+                    errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         )
