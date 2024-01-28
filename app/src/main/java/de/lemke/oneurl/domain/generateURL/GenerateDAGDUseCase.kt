@@ -35,7 +35,7 @@ class GenerateDAGDUseCase @Inject constructor(
             { response ->
                 if (response.trim() != longURL) {
                     Log.e(tag, "error, shortURL already exists, but has different longURL, longURL: $longURL, response: $response")
-                    errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_alias_already_exists)))
+                    errorCallback(GenerateURLError.AliasAlreadyExists(context))
                     return@StringRequest
                 }
                 Log.d(tag, "shortURL already exists (but is not in local db): $response")
@@ -107,9 +107,7 @@ class GenerateDAGDUseCase @Inject constructor(
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
                         errorCallback(
-                            GenerateURLError.Custom(
-                                context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
-                            )
+                            GenerateURLError.Custom(context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)")
                         )
                         return@StringRequest
                     }

@@ -9,6 +9,7 @@ fun urlFromDb(urlDb: URLDb): URL = URL(
     shortURLProvider = ShortURLProvider.fromString(urlDb.shortURLProvider),
     qr = urlDb.qr,
     favorite = urlDb.favorite,
+    title = urlDb.title,
     description = urlDb.description,
     added = urlDb.added,
 )
@@ -19,6 +20,7 @@ fun urlToDb(url: URL): URLDb = URLDb(
     shortURLProvider = url.shortURLProvider.toString(),
     qr = url.qr,
     favorite = url.favorite,
+    title = url.title,
     description = url.description,
     added = url.added,
 )

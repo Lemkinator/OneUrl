@@ -80,6 +80,7 @@
 
     <!--General-->
     <string name="ok" translatable="false" tools:ignore="ButtonCase,Typos">Ok</string>
+    <string name="shorten_url">Shorten URL (OneURL)</string>
     <string name="no_email_app_installed">No e-mail app installed…</string>
     <string name="no_browser_app_installed">No browser app installed…</string>
 
@@ -153,6 +154,7 @@
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="description">Description</string>
     <string name="description_">"Description: "</string>
+    <string name="title_">"Title: "</string>
     <string name="created">"Created: "</string>
     <string name="description_hint">e.g.: My website</string>
 

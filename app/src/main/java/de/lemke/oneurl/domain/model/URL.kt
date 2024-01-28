@@ -11,7 +11,8 @@ data class URL(
     val shortURLProvider: ShortURLProvider,
     val qr: Bitmap,
     val favorite: Boolean,
-    val description: String,
+    val title: String?,
+    val description: String?,
     val added: ZonedDateTime,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -34,7 +35,8 @@ data class URL(
             shortURL.contains(it, ignoreCase = true) ||
                     longURL.contains(it, ignoreCase = true) ||
                     shortURLProvider.toString().contains(it, ignoreCase = true) ||
-                    description.contains(it, ignoreCase = true) ||
+                    title?.contains(it, ignoreCase = true) == true ||
+                    description?.contains(it, ignoreCase = true) == true ||
                     added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)).contains(it, ignoreCase = true)
         }
 }

@@ -59,6 +59,7 @@
     <string name="continue_button_text">Weiter</string>
 
     <!--General-->
+    <string name="shorten_url">URL verkürzen (OneURL)</string>
     <string name="no_email_app_installed">Keine E-Mail-App installiert…</string>
     <string name="no_browser_app_installed">Keine Browser-App installiert…</string>
 
@@ -132,6 +133,7 @@
     <string name="copied_to_clipboard">In Zwischenablage kopiert</string>
     <string name="description">Beschreibung</string>
     <string name="description_">"Beschreibung: "</string>
+    <string name="title_">"Titel: "</string>
     <string name="created">"Erstellt: "</string>
     <string name="description_hint">z.B.: Meine Webseite</string>
 

@@ -40,7 +40,7 @@ class GenerateONEPTCOUseCase @Inject constructor(
                 alias already exists: {
                     "message": "Added!",
                     "short": "asdfg",
-                    "long": "test",
+                    "long": "asdfasdf",
                     "receivedRequestedShort": false
                 }
                 fail: {

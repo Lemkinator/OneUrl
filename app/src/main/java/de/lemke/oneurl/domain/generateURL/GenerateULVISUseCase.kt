@@ -90,7 +90,7 @@ class GenerateULVISUseCase @Inject constructor(
                     }
                     if (statusCode == 403) {
                         Log.e(tag, "error: 403")
-                        //TODO bypass cloudflare?? fu** ulvis.net :/
+                        //Doesn't work, different cookies
                         errorCallback(GenerateURLError.HumanVerificationRequired(context, provider))
                         return@JsonObjectRequest
                     }

@@ -23,7 +23,7 @@ import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCGAY
 import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCSKETCHY
 import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCZWS
 import de.lemke.oneurl.domain.model.ShortURLProvider.TINYURL
-import de.lemke.oneurl.domain.model.ShortURLProvider.ULVIS
+import de.lemke.oneurl.domain.model.ShortURLProvider.UNKNOWN
 import de.lemke.oneurl.domain.model.ShortURLProvider.VGD
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,7 +38,7 @@ class GenerateURLUseCase @Inject constructor(
     private val generateDAGD: GenerateDAGDUseCase,
     private val generateVGDISGD: GenerateVGDISGDUseCase,
     private val generateTINYURL: GenerateTINYURLUseCase,
-    private val generateULVIS: GenerateULVISUseCase,
+    //private val generateULVIS: GenerateULVISUseCase,
     private val generateONEPTCOUseCase: GenerateONEPTCOUseCase,
     private val generateOWOVCUseCase: GenerateOWOVCUseCase,
 ) {
@@ -81,10 +81,11 @@ class GenerateURLUseCase @Inject constructor(
     ) {
         requestQueue.add(
             when (provider) {
+                UNKNOWN -> null
                 DAGD -> generateDAGD(requestQueue, provider, longURL, alias, successCallback, errorCallback)
                 VGD, ISGD -> generateVGDISGD(provider, longURL, alias, successCallback, errorCallback)
                 TINYURL -> generateTINYURL(provider, longURL, alias, successCallback, errorCallback)
-                ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
+                //ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
                 ONEPTCO -> generateONEPTCOUseCase(provider, longURL, alias, successCallback, errorCallback)
                 OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> generateOWOVCUseCase(provider, longURL, successCallback, errorCallback)
             }
@@ -118,7 +119,7 @@ sealed class GenerateURLError(
         }
     )
 
-    class ServiceTemporarilyUnavailable (context: Context, provider: ShortURLProvider) :
+    class ServiceTemporarilyUnavailable(context: Context, provider: ShortURLProvider) :
         GenerateURLError(
             context.getString(R.string.error_service_unavailable),
             context.getString(R.string.error_service_unavailable_text),
@@ -133,32 +134,32 @@ sealed class GenerateURLError(
             }
         )
 
-    class DomainNotAllowed (context: Context) : GenerateURLError(
+    class DomainNotAllowed(context: Context) : GenerateURLError(
         context.getString(R.string.error_domain_not_allowed),
         context.getString(R.string.error_domain_not_allowed)
     )
 
-    class InvalidURL (context: Context) : GenerateURLError(
+    class InvalidURL(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_invalid_url)
     )
 
-    class AliasAlreadyExists (context: Context) : GenerateURLError(
+    class AliasAlreadyExists(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_alias_already_exists)
     )
 
-    class RateLimitExceeded (context: Context) : GenerateURLError(
+    class RateLimitExceeded(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_rate_limit_exceeded)
     )
 
-    class InternalServerError (context: Context) : GenerateURLError(
+    class InternalServerError(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_internal_server_error)
     )
 
-    class HumanVerificationRequired (context: Context, provider: ShortURLProvider) :
+    class HumanVerificationRequired(context: Context, provider: ShortURLProvider) :
         GenerateURLError(
             context.getString(R.string.error_human_verification),
             context.getString(R.string.error_human_verification_text),

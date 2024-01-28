@@ -13,7 +13,8 @@ data class URLDb(
     val shortURLProvider: String,
     val qr: Bitmap,
     val favorite: Boolean,
-    val description: String,
+    val title: String?,
+    val description: String?,
     val added: ZonedDateTime,
 ) {
     override fun equals(other: Any?): Boolean {

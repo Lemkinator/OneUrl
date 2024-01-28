@@ -193,8 +193,13 @@ class URLActivity : AppCompatActivity() {
             }
             startActivity(Intent.createChooser(sendIntent, null))
         }
-        if (url.description.isNotBlank()) {
-            binding.urlDescriptionTextview.text = makeSectionOfTextBold(url.description, boldText, color)
+        if (!url.title.isNullOrBlank()) {
+            binding.urlTitleTextview.text = makeSectionOfTextBold(url.title.toString(), boldText, color)
+            binding.urlTitleLayout.visibility = View.VISIBLE
+            binding.urlTitleDivider.visibility = View.VISIBLE
+        }
+        if (!url.description.isNullOrBlank()) {
+            binding.urlDescriptionTextview.text = makeSectionOfTextBold(url.description.toString(), boldText, color)
             binding.urlDescriptionLayout.visibility = View.VISIBLE
             binding.urlDescriptionDivider.visibility = View.VISIBLE
         }

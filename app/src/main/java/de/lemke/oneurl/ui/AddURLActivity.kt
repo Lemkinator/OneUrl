@@ -20,6 +20,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.AddURLUseCase
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
+import de.lemke.oneurl.domain.GetURLTitleUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
@@ -52,6 +53,9 @@ class AddURLActivity : AppCompatActivity() {
 
     @Inject
     lateinit var generateQRCode: GenerateQRCodeUseCase
+
+    @Inject
+    lateinit var getURLTitle: GetURLTitleUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,7 +100,7 @@ class AddURLActivity : AppCompatActivity() {
 
     private suspend fun initViews() {
         val adapter =
-            ArrayAdapter(this@AddURLActivity, android.R.layout.simple_spinner_item, ShortURLProvider.values().map { it.toString() })
+            ArrayAdapter(this@AddURLActivity, android.R.layout.simple_spinner_item, ShortURLProvider.all.map { it.toString() })
         adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
         binding.providerSpinner.adapter = adapter
         val userSettings = getUserSettings()
@@ -104,7 +108,7 @@ class AddURLActivity : AppCompatActivity() {
         onProviderChanged(userSettings.selectedShortURLProvider)
         binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                lifecycleScope.launch { onProviderChanged(ShortURLProvider.values()[p2]) }
+                lifecycleScope.launch { onProviderChanged(ShortURLProvider.all[p2]) }
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -174,7 +178,7 @@ class AddURLActivity : AppCompatActivity() {
     }
 
     private fun checkAndAddURL() {
-        val provider = ShortURLProvider.values()[binding.providerSpinner.selectedItemPosition]
+        val provider = ShortURLProvider.all[binding.providerSpinner.selectedItemPosition]
         val alias = (binding.editTextAlias.text ?: "").toString().trim()
         if (binding.editTextURL.text.isNullOrBlank()) {
             binding.editTextURL.error = getString(R.string.error_empty_url)
@@ -232,20 +236,25 @@ class AddURLActivity : AppCompatActivity() {
                 },
                 successCallback = {
                     lifecycleScope.launch {
-                        addURL(
-                            URL(
-                                shortURL = it,
-                                longURL = longURL,
-                                shortURLProvider = provider,
-                                qr = generateQRCode(it),
-                                favorite = addToFavorites,
-                                description = binding.editTextDescription.text.toString(),
-                                added = ZonedDateTime.now()
-                            )
-                        )
-                        setLoading(false)
-                        Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
-                        finish()
+                        getURLTitle(longURL) { title ->
+                            lifecycleScope.launch {
+                                addURL(
+                                    URL(
+                                        shortURL = it,
+                                        longURL = longURL,
+                                        shortURLProvider = provider,
+                                        qr = generateQRCode(it),
+                                        favorite = addToFavorites,
+                                        title = title,
+                                        description = binding.editTextDescription.text.toString(),
+                                        added = ZonedDateTime.now()
+                                    )
+                                )
+                                setLoading(false)
+                                Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
+                        }
                     }
                 },
             )

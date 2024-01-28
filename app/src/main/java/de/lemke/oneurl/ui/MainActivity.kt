@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.*
 import android.view.inputmethod.InputMethodManager
@@ -103,10 +104,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     lateinit var updateURL: UpdateURLUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        /*  Note: https://stackoverflow.com/a/69831106/18332741
-        On Android 12 just running the app via android studio doesn't show the full splash screen.
-        You have to kill it and open the app from the launcher.
-        */
         val splashScreen = installSplashScreen()
         time = System.currentTimeMillis()
         super.onCreate(savedInstanceState)
@@ -205,9 +202,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     }
 
     private fun checkIntent() {
-        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
-        if (intent?.action == Intent.ACTION_SEND && "text/plain" == intent.type && !text.isNullOrBlank()) {
-            startActivity(Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", text))
+        val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
+        if (intent?.action == Intent.ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
+            Log.d("MainActivity", "extraText: $extraText")
+            startActivity(Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", extraText))
+        }
+        val textFromSelectMenu = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
+        if (intent?.action == Intent.ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
+            Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
+            startActivity(Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()))
         }
     }
 
@@ -523,7 +526,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 if (isSearch) makeSectionOfTextBold(currentList[position].shortURL, search, color, 20) else currentList[position].shortURL
             holder.listItemSubtitle1.text =
                 if (isSearch) makeSectionOfTextBold(currentList[position].longURL, search, color, 20) else currentList[position].longURL
-            val subtitle2 = currentList[position].description.ifBlank { currentList[position].addedFormatMedium }
+            var subtitle2 = currentList[position].description
+            if (subtitle2.isNullOrBlank()) subtitle2 = currentList[position].title
+            if (subtitle2.isNullOrBlank()) subtitle2 = currentList[position].addedFormatMedium
             holder.listItemSubtitle2.text = if (isSearch) makeSectionOfTextBold(subtitle2, search, color, 20) else subtitle2
             if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
             else holder.listItemImg.setImageBitmap(currentList[position].qr)
