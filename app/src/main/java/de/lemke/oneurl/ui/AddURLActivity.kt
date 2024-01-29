@@ -104,7 +104,7 @@ class AddURLActivity : AppCompatActivity() {
         adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
         binding.providerSpinner.adapter = adapter
         val userSettings = getUserSettings()
-        binding.providerSpinner.setSelection(userSettings.selectedShortURLProvider.ordinal)
+        binding.providerSpinner.setSelection(userSettings.selectedShortURLProvider.position)
         onProviderChanged(userSettings.selectedShortURLProvider)
         binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
@@ -138,7 +138,7 @@ class AddURLActivity : AppCompatActivity() {
         if (provider == ShortURLProvider.OWOVCGAY && userSettings.showOWOVCGAYWarning) {
             AlertDialog.Builder(this@AddURLActivity)
                 .setTitle(R.string.warning)
-                .setMessage(R.string.owovcgay_warning)
+                .setMessage(R.string.owovc_gay)
                 .setPositiveButton(R.string.ok, null)
                 .setNegativeButton(R.string.dont_show_again) { _: DialogInterface, _: Int ->
                     lifecycleScope.launch { updateUserSettings { it.copy(showOWOVCGAYWarning = false) } }
@@ -148,7 +148,7 @@ class AddURLActivity : AppCompatActivity() {
         } else if (provider == ShortURLProvider.OWOVCZWS && userSettings.showOWOVCZWSInfo) {
             AlertDialog.Builder(this@AddURLActivity)
                 .setTitle(R.string.info)
-                .setMessage(R.string.owovczws_info)
+                .setMessage(R.string.owovc_zws)
                 .setPositiveButton(R.string.ok, null)
                 .setNegativeButton(R.string.dont_show_again) { _: DialogInterface, _: Int ->
                     lifecycleScope.launch { updateUserSettings { it.copy(showOWOVCZWSInfo = false) } }

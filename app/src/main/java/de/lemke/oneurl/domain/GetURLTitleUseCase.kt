@@ -24,14 +24,14 @@ class GetURLTitleUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         url: String,
-        callback: (title: String?) -> Unit = { },
+        callback: (title: String) -> Unit = { },
     ) = withContext(Dispatchers.Default) {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
         if (capabilities == null || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
             !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
         ) {
-            callback(null)
+            callback("")
             return@withContext
         }
         val cookieManager = CookieManager()
@@ -52,22 +52,22 @@ class GetURLTitleUseCase @Inject constructor(
                             try {
                                 val title = Regex("<title>(.*?)</title>").find(response)?.groupValues?.get(1)
                                 Log.d("GetURLTitleUseCase", "title: $title")
-                                callback(title)
+                                callback(title ?: "")
                             } catch (e: Exception) {
                                 e.printStackTrace()
-                                callback(null)
+                                callback("")
                             }
                         },
                         { error ->
                             error.printStackTrace()
-                            callback(null)
+                            callback("")
                         }
                     )
                 )
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            callback(null)
+            callback("")
         }
     }
 }

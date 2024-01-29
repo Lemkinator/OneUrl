@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "eca314eeed94771defa41eef64fe2385",
+    "identityHash": "907f55ca309aab6f89e45a2c51f7be18",
     "entities": [
       {
         "tableName": "url",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shortURL` TEXT NOT NULL, `longURL` TEXT NOT NULL, `shortURLProvider` TEXT NOT NULL, `qr` BLOB NOT NULL, `favorite` INTEGER NOT NULL, `title` TEXT, `description` TEXT, `added` TEXT NOT NULL, PRIMARY KEY(`shortURL`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shortURL` TEXT NOT NULL, `longURL` TEXT NOT NULL, `shortURLProvider` TEXT NOT NULL, `qr` BLOB NOT NULL, `favorite` INTEGER NOT NULL, `title` TEXT NOT NULL DEFAULT '', `description` TEXT NOT NULL, `added` TEXT NOT NULL, PRIMARY KEY(`shortURL`))",
         "fields": [
           {
             "fieldPath": "shortURL",
@@ -42,13 +42,14 @@
             "fieldPath": "title",
             "columnName": "title",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true,
+            "defaultValue": "''"
           },
           {
             "fieldPath": "description",
             "columnName": "description",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "added",
@@ -70,7 +71,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'eca314eeed94771defa41eef64fe2385')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '907f55ca309aab6f89e45a2c51f7be18')"
     ]
   }
 }

@@ -9,9 +9,22 @@
     <string name="analytics_dagd">Der Anbieter da.gd bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten. Bei da.gd müssen die Links innerhalb der letzten 60 Tage mindestens einmal aufgerufen worden sein, ansonsten wird ein Fehler angezeigt (404).</string>
     <string name="alias_dagd">Die individuellen Kürzel können eine Länge zwischen 1 und 10 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="redirect_hint">Hinweis vor Weiterleitung</string>
-    <string name="redirect_hint_vgd_isgd">Vor der Weiterleitung zeigen v.gd und is.gd einen Hinweis an, der dem Benutzer die Ziel-URL mitteilt. Der Nutzer hat die Option, auf die angezeigte URL zu klicken, bevor die Weiterleitung erfolgt. Der Nutzer hat die Möglichkeit, diesen Hinweis zukünftig zu überspringen.</string>
+    <string name="redirect_hint_vgd_isgd">Vor der Weiterleitung zeigen v.gd und is.gd einen Hinweis an, der dem Benutzer die Ziel-URL mitteilt. Der Nutzer hat die Option, auf die angezeigte URL zu klicken, bevor die Weiterleitung erfolgt. Zudem besteht die Möglichkeit, diesen Hinweis zukünftig zu überspringen.</string>
     <string name="analytics_vgd_isgd">Die Anbieter v.gd und is.gd bieten die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
-    <string name="alias_vgd_isgd">Die individuellen Kürzel können eine Länge zwischen 5 und 30 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <string name="alias_vgd_isgd_tinyurl">Die individuellen Kürzel können eine Länge zwischen 5 und 30 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <string name="alias_ulvis">Die individuellen Kürzel können eine Länge zwischen 1 und 60 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z und 0–9 bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <string name="alias_oneptco">Die individuellen Kürzel dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <string name="currently_disabled">Aktuell deaktiviert</string>
+    <string name="currently_disabled_ulvis">Der Anbieter ulvis.net ist derzeit deaktiviert, da eine Sicherheitsüberprüfung hinzugefügt wurde, welche die Nutzung erschwert.</string>
+    <string name="owovc_fun">Unterhaltung</string>
+    <string name="owovc_fun_text">Neben dem normalen URL-Verkürzer bietet owo.vc auch weitere URL-Verkürzer an. Diese sind für Unterhaltungszwecke gedacht und sollten respektvoll, verantwortungsbewusst und mit Vorsicht verwendet werden.</string>
+    <string name="owovc_zws">Der URL-Verkürzer \"owo.vc (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"owo.vc/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von owo.vc anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
+    <string name="owovc_sketchy">Der URL-Verkürzer \"owo.vc (sketchy)\" generiert verdächtig aussehende URLs, die Schlüsselwörter wie \"bank-login\", \"password\", \"hidden\", \"grab\" oder \"account\" zusammen mit populären Website-Namen enthalten.</string>
+    <string name="owovc_gay">Der URL-Verkürzer \"owo.vc (gay)\" verwendet anstößige und sexistische Wörter und kann für unangemessene oder beleidigende Inhalte stehen. Sei dir bewusst, dass die erstellten Links möglicherweise sexistische Begriffe enthalten und von anderen als beleidigend und respektlos empfunden werden könnten. Sei respektvoll und verantwortungsbewusst bei der Verwendung dieses Dienstes.</string>
+
+    <string name="warning">Warnung</string>
+    <string name="info">Info</string>
+    <string name="dont_show_again">Nicht mehr anzeigen</string>
 
     <!--About-->
     <string name="app_description">Ein URL-Verkürzer und QR-Code Generator mit OneUI-Design.</string>
@@ -136,11 +149,5 @@
     <string name="title_">"Titel: "</string>
     <string name="created">"Erstellt: "</string>
     <string name="description_hint">z.B.: Meine Webseite</string>
-
-    <string name="warning">Warnung</string>
-    <string name="owovcgay_warning">Der URL-Verkürzer \"owo.vc (gay)\" verwendet anstößige und sexistische Wörter und kann für unangemessene oder beleidigende Inhalte stehen. Wenn du fortfährst, sei dir bewusst, dass die erstellten Links möglicherweise sexistische Begriffe enthalten und von anderen als beleidigend und respektlos empfunden werden könnten. Sei respektvoll und verantwortungsbewusst bei der Verwendung dieses Dienstes.</string>
-    <string name="info">Info</string>
-    <string name="owovczws_info">Der URL-Verkürzer \"owo.vc (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"owo.vc/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von owo.vc anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
-    <string name="dont_show_again">Nicht mehr anzeigen</string>
 
 </resources>

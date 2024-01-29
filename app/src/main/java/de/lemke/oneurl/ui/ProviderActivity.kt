@@ -61,6 +61,38 @@ class ProviderActivity : AppCompatActivity() {
                 Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
             }
         }
+        binding.tinyurlGroup.setOnClickListener { toggleGroup(binding.tinyurlGroup, binding.tinyurlGroupArrow, binding.tinyurlContent) }
+        binding.tinyurlContentButtonMoreInformation.setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.TINYURL.baseURL)))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.ulvisGroup.setOnClickListener { toggleGroup(binding.ulvisGroup, binding.ulvisGroupArrow, binding.ulvisContent) }
+        binding.ulvisContentButtonMoreInformation.setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.ULVIS.baseURL)))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.oneptcoGroup.setOnClickListener { toggleGroup(binding.oneptcoGroup, binding.oneptcoGroupArrow, binding.oneptcoContent) }
+        binding.oneptcoContentButtonMoreInformation.setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.ONEPTCO.baseURL)))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.owovcGroup.setOnClickListener { toggleGroup(binding.owovcGroup, binding.owovcGroupArrow, binding.owovcContent) }
+        binding.owovcContentButtonMoreInformation.setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.OWOVC.baseURL)))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
 

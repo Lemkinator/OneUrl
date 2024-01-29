@@ -3,8 +3,9 @@ package de.lemke.oneurl.domain.model
 import de.lemke.oneurl.domain.addHttpsIfMissing
 
 /* docs
-    https://v.gd/apishorteningreference.php /is.gd
     https://da.gd/help
+    https://v.gd/apishorteningreference.php
+    https://is.gd/apishorteningreference.php
     https://tinyurl.com/app
     https://ulvis.net/developer.html -> added cloudflare :/ -> removed
     https://github.com/1pt-co/api
@@ -21,6 +22,8 @@ import de.lemke.oneurl.domain.addHttpsIfMissing
     https://ulvis.net/api.php?url=https://example.com&custom=alias&private=1 or
     https://ulvis.net/API/write/get?url=https://example.com&custom=alias&private=1
     https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl?long=test.com&short=test
+    https://www.shareaholic.com/v2/share/shorten_link?url=example.com
+    https://www.shareaholic.com/v2/share/shorten_link?apikey=8943b7fd64cd8b1770ff5affa9a9437b&url=example.com/&service[name]=bitly //requires apikey, but can use key from docs???
     https://owo.vc/api/v2/link {"link": "https://example.com", "generator": "owo", "metadata": "OWOIFY"}
      */
 
@@ -30,13 +33,16 @@ enum class ShortURLProvider {
     VGD,
     ISGD,
     TINYURL,
-    //ULVIS,
+    ULVIS,
     ONEPTCO,
+    GOSHRLC,
     OWOVC,
     OWOVCZWS,
     OWOVCSKETCHY,
     OWOVCGAY,
     ;
+
+    val position: Int get() = all.indexOf(this)
 
     override fun toString(): String = when (this) {
         UNKNOWN -> "Unknown"
@@ -44,8 +50,9 @@ enum class ShortURLProvider {
         VGD -> "v.gd"
         ISGD -> "is.gd"
         TINYURL -> "tinyurl.com"
-        //ULVIS -> "ulvis.net"
+        ULVIS -> "ulvis.net"
         ONEPTCO -> "1pt.co"
+        GOSHRLC -> "go.shr.lc"
         OWOVC -> "owo.vc"
         OWOVCZWS -> "owo.vc (zws)"
         OWOVCSKETCHY -> "owo.vc (sketchy)"
@@ -59,8 +66,9 @@ enum class ShortURLProvider {
             VGD -> 5
             ISGD -> 5
             TINYURL -> 5
-            //ULVIS -> 0
+            ULVIS -> 0
             ONEPTCO -> 0
+            GOSHRLC -> 0
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> 0
         }
 
@@ -73,8 +81,9 @@ enum class ShortURLProvider {
             VGD -> 30
             ISGD -> 30
             TINYURL -> 30
-            //ULVIS -> 60
+            ULVIS -> 60
             ONEPTCO -> noMaxAlias
+            GOSHRLC -> noMaxAlias
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> noMaxAlias
         }
 
@@ -85,8 +94,9 @@ enum class ShortURLProvider {
             VGD -> "https://v.gd/"
             ISGD -> "https://is.gd/"
             TINYURL -> "https://tinyurl.com/"
-            //ULVIS -> "https://ulvis.net/"
+            ULVIS -> "https://ulvis.net/"
             ONEPTCO -> "https://1pt.co/"
+            GOSHRLC -> "https://www.shareaholic.com/"
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "https://owo.vc/"
         }
 
@@ -96,8 +106,9 @@ enum class ShortURLProvider {
         VGD -> "${baseURL}create.php?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias&logstats=1")
         ISGD -> "${baseURL}create.php?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias&logstats=1")
         TINYURL -> "${baseURL}api-create.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
-        //ULVIS -> "${baseURL}API/write/get?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&custom=$alias&private=1")
+        ULVIS -> "${baseURL}API/write/get?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&custom=$alias&private=1")
         ONEPTCO -> "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl?long=$longURL" + (if (alias.isNullOrBlank()) "" else "&short=$alias")
+        GOSHRLC -> "${baseURL}v2/share/shorten_link?url=" + longURL
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link" //{"link": "https://example.com", "generator": "owo", "metadata": "OWOIFY"}
         //CHILPIT -> "${baseURL}api.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
     }
@@ -108,8 +119,9 @@ enum class ShortURLProvider {
         VGD -> ""
         ISGD -> ""
         TINYURL -> ""
-        //ULVIS -> ""
+        ULVIS -> ""
         ONEPTCO -> ""
+        GOSHRLC -> ""
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link/$alias"
     }
 
@@ -119,8 +131,9 @@ enum class ShortURLProvider {
         VGD -> "${baseURL}stats.php?url=$alias"
         ISGD -> "${baseURL}stats.php?url=$alias"
         TINYURL -> null //requires api token
-        //ULVIS -> null
+        ULVIS -> null
         ONEPTCO -> null
+        GOSHRLC -> null
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> null //TODO check when online again :D :/ "${baseURL}api/v2/link/$alias"
     }
 
@@ -130,14 +143,16 @@ enum class ShortURLProvider {
         get() = when (this) {
             UNKNOWN -> ""
             DAGD, VGD, ISGD, TINYURL, ONEPTCO -> "a-z, A-Z, 0-9, _"
-            //ULVIS -> "a-z, A-Z, 0-9"
+            ULVIS -> "a-z, A-Z, 0-9"
+            GOSHRLC -> ""
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> ""
         }
 
     fun isAliasValid(alias: String): Boolean = when (this) {
         UNKNOWN -> false
         DAGD, VGD, ISGD, TINYURL, ONEPTCO -> alias.matches(Regex("[a-zA-Z0-9_]+"))
-        //ULVIS -> alias.matches(Regex("[a-zA-Z0-9]+"))
+        ULVIS -> alias.matches(Regex("[a-zA-Z0-9]+"))
+        GOSHRLC -> true
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> true
     }
 
@@ -145,8 +160,8 @@ enum class ShortURLProvider {
         //add https if missing and provider requires it
         when (this@ShortURLProvider) {
             UNKNOWN -> this
-            VGD, ISGD, TINYURL, ONEPTCO -> this
-            DAGD, /*ULVIS,*/ OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> addHttpsIfMissing(this)
+            VGD, ISGD, TINYURL, ONEPTCO, GOSHRLC -> this
+            DAGD, ULVIS, OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> addHttpsIfMissing(this)
         }.trim()
     }
 
@@ -160,6 +175,7 @@ enum class ShortURLProvider {
             TINYURL,
             //ULVIS,
             ONEPTCO,
+            GOSHRLC,
             OWOVC,
             OWOVCZWS,
             OWOVCSKETCHY,
@@ -171,8 +187,9 @@ enum class ShortURLProvider {
             "v.gd" -> VGD
             "is.gd" -> ISGD
             "tinyurl.com" -> TINYURL
-            //"ulvis.net" -> ULVIS
+            "ulvis.net" -> ULVIS
             "1pt.co" -> ONEPTCO
+            "go.shr.lc" -> GOSHRLC
             "owo.vc" -> OWOVC
             "owo.vc (zws)" -> OWOVCZWS
             "owo.vc (sketchy)" -> OWOVCSKETCHY

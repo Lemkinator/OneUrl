@@ -1,6 +1,7 @@
 package de.lemke.oneurl.data.database
 
 import android.graphics.Bitmap
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.ZonedDateTime
@@ -13,8 +14,9 @@ data class URLDb(
     val shortURLProvider: String,
     val qr: Bitmap,
     val favorite: Boolean,
-    val title: String?,
-    val description: String?,
+    @ColumnInfo(defaultValue = "")
+    val title: String,
+    val description: String,
     val added: ZonedDateTime,
 ) {
     override fun equals(other: Any?): Boolean {

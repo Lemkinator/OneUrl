@@ -140,12 +140,12 @@
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/dagd_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/more_information"
-                        style="@style/ButtonStyle.Filled"
                         android:layout_marginTop="10dp"
-                        android:drawableStart="@drawable/ic_oui_info_outline" />
+                        android:drawableStart="@drawable/ic_oui_info_outline"
+                        android:text="@string/more_information" />
 
                 </LinearLayout>
 
@@ -277,33 +277,489 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/alias_vgd_isgd"
+                        android:text="@string/alias_vgd_isgd_tinyurl"
                         android:textSize="18sp"
                         tools:ignore="RtlSymmetry" />
 
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/vgd_isgd_content_button_more_information"
-                    android:layout_width="wrap_content"
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/vgd_isgd_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline"
+                        android:text="@string/more_information" />
+
+                </LinearLayout>
+
+            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+
+            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@color/background_color"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/tinyurl_group"
+                    style="@style/ProviderInfoGroup">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_oui_open_split_view"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/tinyurl_group_text_view"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:paddingHorizontal="15dp"
+                        android:singleLine="true"
+                        android:text="tinyurl.com"
+                        android:textAlignment="viewStart"
+                        android:textSize="18sp"
+                        tools:ignore="HardcodedText,RtlSymmetry" />
+
+                    <LinearLayout
+                        android:id="@+id/tinyurl_group_icons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_tool_outline"
+                            tools:ignore="ContentDescription" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/tinyurl_group_arrow"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="15dp"
+                        android:src="@drawable/ic_oui_keyboard_arrow_down"
+                        tools:ignore="ContentDescription" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tinyurl_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/more_information"
-                    style="@style/ButtonStyle.Filled"
-                    android:layout_marginTop="10dp"
-                    android:drawableStart="@drawable/ic_oui_info_outline" />
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="20dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/tinyurl_content_button_alias"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_tool_outline"
+                        android:padding="0dp"
+                        android:text="@string/alias" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alias_vgd_isgd_tinyurl"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/tinyurl_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline"
+                        android:text="@string/more_information" />
+
+                </LinearLayout>
+
+            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+
+            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@color/background_color"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/ulvis_group"
+                    style="@style/ProviderInfoGroup">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_oui_open_split_view"
+                        android:tint="@color/secondary_text_icon_color"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/ulvis_group_text_view"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:paddingHorizontal="15dp"
+                        android:singleLine="true"
+                        android:text="ulvis.net"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/secondary_text_icon_color"
+                        android:textSize="18sp"
+                        tools:ignore="HardcodedText,RtlSymmetry" />
+
+                    <LinearLayout
+                        android:id="@+id/ulvis_group_icons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_block"
+                            android:tint="@color/secondary_text_icon_color"
+                            tools:ignore="ContentDescription" />
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_tool_outline"
+                            android:tint="@color/secondary_text_icon_color"
+                            tools:ignore="ContentDescription" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/ulvis_group_arrow"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="15dp"
+                        android:src="@drawable/ic_oui_keyboard_arrow_down"
+                        android:tint="@color/secondary_text_icon_color"
+                        tools:ignore="ContentDescription" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ulvis_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="20dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/ulvis_content_button_disabled"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/ic_oui_block"
+                        android:padding="0dp"
+                        android:text="@string/currently_disabled" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/currently_disabled_ulvis"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/ulvis_content_button_alias"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_tool_outline"
+                        android:padding="0dp"
+                        android:text="@string/alias" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alias_ulvis"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/ulvis_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline"
+                        android:text="@string/more_information" />
+
+                </LinearLayout>
+
+            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+
+            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@color/background_color"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/oneptco_group"
+                    style="@style/ProviderInfoGroup">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_oui_open_split_view"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/oneptco_group_text_view"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:paddingHorizontal="15dp"
+                        android:singleLine="true"
+                        android:text="1pt.co"
+                        android:textAlignment="viewStart"
+                        android:textSize="18sp"
+                        tools:ignore="HardcodedText,RtlSymmetry" />
+
+                    <LinearLayout
+                        android:id="@+id/oneptco_group_icons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_tool_outline"
+                            tools:ignore="ContentDescription" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/oneptco_group_arrow"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="15dp"
+                        android:src="@drawable/ic_oui_keyboard_arrow_down"
+                        tools:ignore="ContentDescription" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/oneptco_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="20dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/oneptco_content_button_alias"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_tool_outline"
+                        android:padding="0dp"
+                        android:text="@string/alias" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alias_oneptco"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/oneptco_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline"
+                        android:text="@string/more_information" />
+
+                </LinearLayout>
+
+            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+
+            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@color/background_color"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/owovc_group"
+                    style="@style/ProviderInfoGroup">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_oui_list"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/owovc_group_text_view"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:paddingHorizontal="15dp"
+                        android:singleLine="true"
+                        android:text="owo.vc"
+                        android:textAlignment="viewStart"
+                        android:textSize="18sp"
+                        tools:ignore="HardcodedText,RtlSymmetry" />
+
+                    <LinearLayout
+                        android:id="@+id/owovc_group_icons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="5dp"
+                            android:src="@drawable/ic_oui_emoji"
+                            tools:ignore="ContentDescription" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/owovc_group_arrow"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="15dp"
+                        android:src="@drawable/ic_oui_keyboard_arrow_down"
+                        tools:ignore="ContentDescription" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/owovc_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="20dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/owovc_content_button_fun"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/ic_oui_emoji"
+                        android:padding="0dp"
+                        android:text="@string/owovc_fun" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/owovc_fun_text"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry,TooManyViews" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/owovc_content_button_zws"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_keyboard_btn_space"
+                        android:padding="0dp"
+                        android:text="zws"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/owovc_zws"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/owovc_content_button_sketchy"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_basic"
+                        android:padding="0dp"
+                        android:text="sketchy"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/owovc_sketchy"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/owovc_content_button_gay"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_long_legs"
+                        android:padding="0dp"
+                        android:text="gay"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/owovc_gay"
+                        android:textSize="18sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/owovc_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline"
+                        android:text="@string/more_information" />
 
                 </LinearLayout>
 
             </dev.oneuiproject.oneui.widget.RoundLinearLayout>
 
         </LinearLayout>
-        <!--
-         tinyurl.com
-         ulvis.net
-         1pt.co
-         owo.vc
-         owo.vc (zws)
-         owo.vc (sketchy)
-         owo.vc (gay)
-         -->
 
     </androidx.core.widget.NestedScrollView>
 

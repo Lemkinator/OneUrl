@@ -25,6 +25,8 @@ import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCZWS
 import de.lemke.oneurl.domain.model.ShortURLProvider.TINYURL
 import de.lemke.oneurl.domain.model.ShortURLProvider.UNKNOWN
 import de.lemke.oneurl.domain.model.ShortURLProvider.VGD
+import de.lemke.oneurl.domain.model.ShortURLProvider.ULVIS
+import de.lemke.oneurl.domain.model.ShortURLProvider.GOSHRLC
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.CookieHandler
@@ -38,9 +40,10 @@ class GenerateURLUseCase @Inject constructor(
     private val generateDAGD: GenerateDAGDUseCase,
     private val generateVGDISGD: GenerateVGDISGDUseCase,
     private val generateTINYURL: GenerateTINYURLUseCase,
-    //private val generateULVIS: GenerateULVISUseCase,
-    private val generateONEPTCOUseCase: GenerateONEPTCOUseCase,
-    private val generateOWOVCUseCase: GenerateOWOVCUseCase,
+    private val generateULVIS: GenerateULVISUseCase,
+    private val generateONEPTCO: GenerateONEPTCOUseCase,
+    private val generateGOSHRLC: GenerateGOSHRLCUseCase,
+    private val generateOWOVC: GenerateOWOVCUseCase,
 ) {
     suspend operator fun invoke(
         provider: ShortURLProvider,
@@ -85,9 +88,10 @@ class GenerateURLUseCase @Inject constructor(
                 DAGD -> generateDAGD(requestQueue, provider, longURL, alias, successCallback, errorCallback)
                 VGD, ISGD -> generateVGDISGD(provider, longURL, alias, successCallback, errorCallback)
                 TINYURL -> generateTINYURL(provider, longURL, alias, successCallback, errorCallback)
-                //ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
-                ONEPTCO -> generateONEPTCOUseCase(provider, longURL, alias, successCallback, errorCallback)
-                OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> generateOWOVCUseCase(provider, longURL, successCallback, errorCallback)
+                ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
+                ONEPTCO -> generateONEPTCO(provider, longURL, alias, successCallback, errorCallback)
+                GOSHRLC -> generateGOSHRLC(provider, longURL, successCallback, errorCallback)
+                OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> generateOWOVC(provider, longURL, successCallback, errorCallback)
             }
         )
     }
@@ -101,8 +105,8 @@ sealed class GenerateURLError(
     class Unknown(context: Context) : GenerateURLError(context.getString(R.string.error), context.getString(R.string.error_unknown))
     class Custom(context: Context, customMessage: String? = null, customTitle: String? = null) :
         GenerateURLError(
-            customTitle ?: context.getString(R.string.error),
-            customMessage ?: context.getString(R.string.error_unknown)
+            (customTitle ?: context.getString(R.string.error)).ifBlank { context.getString(R.string.error) },
+            (customMessage ?: context.getString(R.string.error_unknown)).ifBlank { context.getString(R.string.error_unknown) }
         )
 
     class NoInternet(context: Context) : GenerateURLError(
