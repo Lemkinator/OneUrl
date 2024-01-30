@@ -282,13 +282,52 @@
                         tools:ignore="RtlSymmetry" />
 
                     <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/vgd_isgd_content_button_more_information"
+                        android:id="@+id/vgd_content_button_privacy"
                         style="@style/ButtonStyle.Filled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:drawableStart="@drawable/ic_oui_info_outline"
-                        android:text="@string/more_information" />
+                        android:drawableStart="@drawable/ic_oui_privacy"/>
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/isgd_content_button_privacy"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_privacy" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/vgd_content_button_terms"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_memo_outline" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/isgd_content_button_terms"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_memo_outline" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/vgd_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/isgd_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline" />
 
                 </LinearLayout>
 
@@ -376,6 +415,24 @@
                         android:text="@string/alias_vgd_isgd_tinyurl"
                         android:textSize="18sp"
                         tools:ignore="RtlSymmetry" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/tinyurl_content_button_privacy"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_privacy"
+                        android:text="@string/privacy_policy" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/tinyurl_content_button_terms"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_memo_outline"
+                        android:text="@string/tos" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/tinyurl_content_button_more_information"
@@ -502,6 +559,24 @@
                         tools:ignore="RtlSymmetry" />
 
                     <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/ulvis_content_button_privacy"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_privacy"
+                        android:text="@string/privacy_policy" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/ulvis_content_button_terms"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_memo_outline"
+                        android:text="@string/tos" />
+
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/ulvis_content_button_more_information"
                         style="@style/ButtonStyle.Filled"
                         android:layout_width="wrap_content"
@@ -615,6 +690,89 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
                 android:background="@color/background_color"
+                android:orientation="vertical"
+                tools:ignore="TooManyViews">
+
+                <LinearLayout
+                    android:id="@+id/shareaholic_group"
+                    style="@style/ProviderInfoGroup">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_oui_open_split_view"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/shareaholic_group_text_view"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="marquee"
+                        android:paddingHorizontal="15dp"
+                        android:singleLine="true"
+                        android:text="go.shr.lc (Shareaholic)"
+                        android:textAlignment="viewStart"
+                        android:textSize="18sp"
+                        tools:ignore="HardcodedText,RtlSymmetry" />
+
+                    <ImageView
+                        android:id="@+id/shareaholic_group_arrow"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="15dp"
+                        android:src="@drawable/ic_oui_keyboard_arrow_down"
+                        tools:ignore="ContentDescription" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/shareaholic_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="20dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/shareaholic_content_button_privacy"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_privacy"
+                        android:text="@string/privacy_policy" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/shareaholic_content_button_terms"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_memo_outline"
+                        android:text="@string/tos" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/shareaholic_content_button_more_information"
+                        style="@style/ButtonStyle.Filled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_oui_info_outline"
+                        android:text="@string/more_information" />
+
+                </LinearLayout>
+
+            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+
+            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@color/background_color"
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -690,7 +848,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/owovc_fun_text"
                         android:textSize="18sp"
-                        tools:ignore="RtlSymmetry,TooManyViews" />
+                        tools:ignore="RtlSymmetry" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/owovc_content_button_zws"

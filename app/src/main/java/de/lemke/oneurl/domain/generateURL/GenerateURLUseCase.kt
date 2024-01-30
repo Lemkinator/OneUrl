@@ -26,7 +26,7 @@ import de.lemke.oneurl.domain.model.ShortURLProvider.TINYURL
 import de.lemke.oneurl.domain.model.ShortURLProvider.UNKNOWN
 import de.lemke.oneurl.domain.model.ShortURLProvider.VGD
 import de.lemke.oneurl.domain.model.ShortURLProvider.ULVIS
-import de.lemke.oneurl.domain.model.ShortURLProvider.GOSHRLC
+import de.lemke.oneurl.domain.model.ShortURLProvider.SHAREAHOLIC
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.CookieHandler
@@ -42,7 +42,7 @@ class GenerateURLUseCase @Inject constructor(
     private val generateTINYURL: GenerateTINYURLUseCase,
     private val generateULVIS: GenerateULVISUseCase,
     private val generateONEPTCO: GenerateONEPTCOUseCase,
-    private val generateGOSHRLC: GenerateGOSHRLCUseCase,
+    private val generateSHAREAHOLIC: GenerateSHAREAHOLICUseCase,
     private val generateOWOVC: GenerateOWOVCUseCase,
 ) {
     suspend operator fun invoke(
@@ -90,7 +90,7 @@ class GenerateURLUseCase @Inject constructor(
                 TINYURL -> generateTINYURL(provider, longURL, alias, successCallback, errorCallback)
                 ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
                 ONEPTCO -> generateONEPTCO(provider, longURL, alias, successCallback, errorCallback)
-                GOSHRLC -> generateGOSHRLC(provider, longURL, successCallback, errorCallback)
+                SHAREAHOLIC -> generateSHAREAHOLIC(provider, longURL, successCallback, errorCallback)
                 OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> generateOWOVC(provider, longURL, successCallback, errorCallback)
             }
         )

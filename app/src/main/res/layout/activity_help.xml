@@ -31,14 +31,14 @@
                 android:textSize="17sp" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/privacyPolicyButton"
+                android:id="@+id/providerInfoButton"
                 style="@style/ButtonStyle.Transparent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="5dp"
-                android:drawableStart="@drawable/ic_oui_security_2"
-                android:text="@string/privacy_policy" />
+                android:drawableStart="@drawable/ic_oui_open_split_view"
+                android:text="@string/provider_info" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/contactMeButton"

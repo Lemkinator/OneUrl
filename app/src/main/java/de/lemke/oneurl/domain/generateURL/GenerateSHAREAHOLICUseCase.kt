@@ -9,10 +9,11 @@ import com.android.volley.toolbox.JsonObjectRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import org.json.JSONObject
 import javax.inject.Inject
 
 
-class GenerateGOSHRLCUseCase @Inject constructor(
+class GenerateSHAREAHOLICUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     operator fun invoke(
@@ -21,7 +22,7 @@ class GenerateGOSHRLCUseCase @Inject constructor(
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit = { },
     ): JsonObjectRequest {
-        val tag = "GenerateURLUseCase_GOSHRLC"
+        val tag = "GenerateURLUseCase_SHAREAHOLIC"
         val apiURL = provider.getCreateURLApi(longURL)
         Log.d(tag, "start request: $apiURL")
         return JsonObjectRequest(
@@ -55,17 +56,16 @@ class GenerateGOSHRLCUseCase @Inject constructor(
                     return@JsonObjectRequest
                 }
                 if (response.has("errors")) {
-                    //get first error code
-                    val error = response.optJSONArray("errors")?.optJSONObject(0)
-                    Log.e(tag, "error: $error")
-                    when (error?.optString("code")) {
+                    val firstError = response.optJSONArray("errors")?.optJSONObject(0)
+                    Log.e(tag, "error: $firstError")
+                    when (firstError?.optString("code")) {
                         "100" -> errorCallback(GenerateURLError.Unknown(context)) //100	apikey not provided
                         "101" -> errorCallback(GenerateURLError.Unknown(context)) //101	apikey provided is invalid
                         "140" -> errorCallback(GenerateURLError.Unknown(context)) //140	Missing URL
                         "141" -> errorCallback(GenerateURLError.InvalidURL(context)) //141	Invalid URL
                         "145" -> errorCallback(GenerateURLError.InvalidURL(context)) //145	URL shortening problem or unsafe URL
                         "429" -> errorCallback(GenerateURLError.RateLimitExceeded(context)) //429	rate_limit_exceeded
-                        else -> errorCallback(GenerateURLError.Custom(context, error?.optString("detail")))
+                        else -> errorCallback(GenerateURLError.Custom(context, firstError?.optString("detail")))
                     }
                     return@JsonObjectRequest
                 }
@@ -82,6 +82,22 @@ class GenerateGOSHRLCUseCase @Inject constructor(
                         errorCallback(GenerateURLError.Unknown(context))
                         return@JsonObjectRequest
                     }
+                    val response = JSONObject(String(networkResponse.data))
+                    if (response.has("errors")) {
+                        val firstError = response.optJSONArray("errors")?.optJSONObject(0)
+                        Log.e(tag, "error: $firstError")
+                        when (firstError?.optString("code")) {
+                            "100" -> errorCallback(GenerateURLError.Unknown(context)) //100	apikey not provided
+                            "101" -> errorCallback(GenerateURLError.Unknown(context)) //101	apikey provided is invalid
+                            "140" -> errorCallback(GenerateURLError.Unknown(context)) //140	Missing URL
+                            "141" -> errorCallback(GenerateURLError.InvalidURL(context)) //141	Invalid URL
+                            "145" -> errorCallback(GenerateURLError.InvalidURL(context)) //145	URL shortening problem or unsafe URL
+                            "429" -> errorCallback(GenerateURLError.RateLimitExceeded(context)) //429	rate_limit_exceeded
+                            else -> errorCallback(GenerateURLError.Custom(context, firstError?.optString("detail")))
+                        }
+                        return@JsonObjectRequest
+                    }
+                    Log.e(tag, "data: ${String(networkResponse.data)}")
                     errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_unknown) + " ($statusCode)"))
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")

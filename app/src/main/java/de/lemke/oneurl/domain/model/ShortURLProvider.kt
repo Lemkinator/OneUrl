@@ -35,7 +35,7 @@ enum class ShortURLProvider {
     TINYURL,
     ULVIS,
     ONEPTCO,
-    GOSHRLC,
+    SHAREAHOLIC,
     OWOVC,
     OWOVCZWS,
     OWOVCSKETCHY,
@@ -52,7 +52,7 @@ enum class ShortURLProvider {
         TINYURL -> "tinyurl.com"
         ULVIS -> "ulvis.net"
         ONEPTCO -> "1pt.co"
-        GOSHRLC -> "go.shr.lc"
+        SHAREAHOLIC -> "go.shr.lc"
         OWOVC -> "owo.vc"
         OWOVCZWS -> "owo.vc (zws)"
         OWOVCSKETCHY -> "owo.vc (sketchy)"
@@ -68,7 +68,7 @@ enum class ShortURLProvider {
             TINYURL -> 5
             ULVIS -> 0
             ONEPTCO -> 0
-            GOSHRLC -> 0
+            SHAREAHOLIC -> 0
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> 0
         }
 
@@ -83,7 +83,7 @@ enum class ShortURLProvider {
             TINYURL -> 30
             ULVIS -> 60
             ONEPTCO -> noMaxAlias
-            GOSHRLC -> noMaxAlias
+            SHAREAHOLIC -> noMaxAlias
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> noMaxAlias
         }
 
@@ -96,7 +96,7 @@ enum class ShortURLProvider {
             TINYURL -> "https://tinyurl.com/"
             ULVIS -> "https://ulvis.net/"
             ONEPTCO -> "https://1pt.co/"
-            GOSHRLC -> "https://www.shareaholic.com/"
+            SHAREAHOLIC -> "https://www.shareaholic.com/"
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "https://owo.vc/"
         }
 
@@ -108,7 +108,7 @@ enum class ShortURLProvider {
         TINYURL -> "${baseURL}api-create.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
         ULVIS -> "${baseURL}API/write/get?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&custom=$alias&private=1")
         ONEPTCO -> "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl?long=$longURL" + (if (alias.isNullOrBlank()) "" else "&short=$alias")
-        GOSHRLC -> "${baseURL}v2/share/shorten_link?url=" + longURL
+        SHAREAHOLIC -> "${baseURL}v2/share/shorten_link?url=" + longURL
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link" //{"link": "https://example.com", "generator": "owo", "metadata": "OWOIFY"}
         //CHILPIT -> "${baseURL}api.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
     }
@@ -121,7 +121,7 @@ enum class ShortURLProvider {
         TINYURL -> ""
         ULVIS -> ""
         ONEPTCO -> ""
-        GOSHRLC -> ""
+        SHAREAHOLIC -> ""
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link/$alias"
     }
 
@@ -133,7 +133,7 @@ enum class ShortURLProvider {
         TINYURL -> null //requires api token
         ULVIS -> null
         ONEPTCO -> null
-        GOSHRLC -> null
+        SHAREAHOLIC -> null
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> null //TODO check when online again :D :/ "${baseURL}api/v2/link/$alias"
     }
 
@@ -144,7 +144,7 @@ enum class ShortURLProvider {
             UNKNOWN -> ""
             DAGD, VGD, ISGD, TINYURL, ONEPTCO -> "a-z, A-Z, 0-9, _"
             ULVIS -> "a-z, A-Z, 0-9"
-            GOSHRLC -> ""
+            SHAREAHOLIC -> ""
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> ""
         }
 
@@ -152,7 +152,7 @@ enum class ShortURLProvider {
         UNKNOWN -> false
         DAGD, VGD, ISGD, TINYURL, ONEPTCO -> alias.matches(Regex("[a-zA-Z0-9_]+"))
         ULVIS -> alias.matches(Regex("[a-zA-Z0-9]+"))
-        GOSHRLC -> true
+        SHAREAHOLIC -> true
         OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> true
     }
 
@@ -160,10 +160,42 @@ enum class ShortURLProvider {
         //add https if missing and provider requires it
         when (this@ShortURLProvider) {
             UNKNOWN -> this
-            VGD, ISGD, TINYURL, ONEPTCO, GOSHRLC -> this
+            VGD, ISGD, TINYURL, ONEPTCO, SHAREAHOLIC -> this
             DAGD, ULVIS, OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> addHttpsIfMissing(this)
         }.trim()
     }
+
+    val infoURL: String
+        get() = when (this) {
+            UNKNOWN -> "https://www.leonard-lemke.com/apps/oneurl"
+            DAGD, VGD, ISGD, TINYURL, ULVIS, ONEPTCO, SHAREAHOLIC, OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> baseURL
+        }
+
+    val privacyURL: String?
+        get() = when (this) {
+            UNKNOWN -> null
+            DAGD -> null
+            VGD -> "https://v.gd/privacy.php"
+            ISGD -> "https://is.gd/privacy.php"
+            TINYURL -> "https://tinyurl.com/app/privacy-policy"
+            ULVIS -> "https://ulvis.net/privacy.html"
+            ONEPTCO -> null
+            SHAREAHOLIC -> "https://www.shareaholic.com/privacy/"
+            OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> null
+        }
+
+    val termsURL: String?
+        get() = when (this) {
+            UNKNOWN -> null
+            DAGD -> null
+            VGD -> "https://v.gd/terms.php"
+            ISGD -> "https://is.gd/terms.php"
+            TINYURL -> "https://tinyurl.com/app/terms"
+            ULVIS -> "https://ulvis.net/disclaimer.html"
+            ONEPTCO -> null
+            SHAREAHOLIC -> "https://www.shareaholic.com/terms/"
+            OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> null
+        }
 
     companion object {
         private val default = DAGD
@@ -175,7 +207,7 @@ enum class ShortURLProvider {
             TINYURL,
             //ULVIS,
             ONEPTCO,
-            GOSHRLC,
+            SHAREAHOLIC,
             OWOVC,
             OWOVCZWS,
             OWOVCSKETCHY,
@@ -189,7 +221,7 @@ enum class ShortURLProvider {
             "tinyurl.com" -> TINYURL
             "ulvis.net" -> ULVIS
             "1pt.co" -> ONEPTCO
-            "go.shr.lc" -> GOSHRLC
+            "go.shr.lc" -> SHAREAHOLIC
             "owo.vc" -> OWOVC
             "owo.vc (zws)" -> OWOVCZWS
             "owo.vc (sketchy)" -> OWOVCSKETCHY

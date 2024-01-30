@@ -1,5 +1,6 @@
 package de.lemke.oneurl.ui
 
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -15,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
-import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.ShortURLProvider.*
 
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
@@ -44,51 +45,55 @@ class ProviderActivity : AppCompatActivity() {
         }
     }
 
+    private fun openLink(link: String?) = try {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(this, getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
+    }
+
+    @SuppressLint("SetTextI18n")
     private fun initProvider() {
         binding.dagdGroup.setOnClickListener { toggleGroup(binding.dagdGroup, binding.dagdGroupArrow, binding.dagdContent) }
-        binding.dagdContentButtonMoreInformation.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.DAGD.baseURL)))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.dagdContentButtonMoreInformation.setOnClickListener { openLink(DAGD.infoURL) }
+
         binding.vgdIsgdGroup.setOnClickListener { toggleGroup(binding.vgdIsgdGroup, binding.vgdIsgdGroupArrow, binding.vgdIsgdContent) }
-        binding.vgdIsgdContentButtonMoreInformation.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.VGD.baseURL)))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.vgdContentButtonMoreInformation.text = getString(R.string.more_information) + " ($VGD)"
+        binding.vgdContentButtonMoreInformation.setOnClickListener { openLink(VGD.infoURL) }
+        binding.vgdContentButtonPrivacy.text = getString(R.string.privacy_policy) + " ($VGD)"
+        binding.vgdContentButtonPrivacy.setOnClickListener { openLink(VGD.privacyURL) }
+        binding.vgdContentButtonTerms.text = getString(R.string.tos) + " ($VGD)"
+        binding.vgdContentButtonTerms.setOnClickListener { openLink(VGD.termsURL) }
+        binding.isgdContentButtonMoreInformation.text = getString(R.string.more_information) + " ($ISGD)"
+        binding.isgdContentButtonMoreInformation.setOnClickListener { openLink(ISGD.infoURL) }
+        binding.isgdContentButtonPrivacy.text = getString(R.string.privacy_policy) + " ($ISGD)"
+        binding.isgdContentButtonPrivacy.setOnClickListener { openLink(ISGD.privacyURL) }
+        binding.isgdContentButtonTerms.text = getString(R.string.tos) + " ($ISGD)"
+        binding.isgdContentButtonTerms.setOnClickListener { openLink(ISGD.termsURL) }
+
         binding.tinyurlGroup.setOnClickListener { toggleGroup(binding.tinyurlGroup, binding.tinyurlGroupArrow, binding.tinyurlContent) }
-        binding.tinyurlContentButtonMoreInformation.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.TINYURL.baseURL)))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.tinyurlContentButtonMoreInformation.setOnClickListener { openLink(TINYURL.infoURL) }
+        binding.tinyurlContentButtonPrivacy.setOnClickListener { openLink(TINYURL.privacyURL) }
+        binding.tinyurlContentButtonTerms.setOnClickListener { openLink(TINYURL.termsURL) }
+
         binding.ulvisGroup.setOnClickListener { toggleGroup(binding.ulvisGroup, binding.ulvisGroupArrow, binding.ulvisContent) }
-        binding.ulvisContentButtonMoreInformation.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.ULVIS.baseURL)))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.ulvisContentButtonMoreInformation.setOnClickListener { openLink(ULVIS.infoURL) }
+        binding.ulvisContentButtonPrivacy.setOnClickListener { openLink(ULVIS.privacyURL) }
+        binding.ulvisContentButtonTerms.setOnClickListener { openLink(ULVIS.termsURL) }
+
         binding.oneptcoGroup.setOnClickListener { toggleGroup(binding.oneptcoGroup, binding.oneptcoGroupArrow, binding.oneptcoContent) }
-        binding.oneptcoContentButtonMoreInformation.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.ONEPTCO.baseURL)))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
-            }
+        binding.oneptcoContentButtonMoreInformation.setOnClickListener { openLink(ONEPTCO.infoURL) }
+
+        binding.shareaholicGroup.setOnClickListener {
+            toggleGroup(binding.shareaholicGroup, binding.shareaholicGroupArrow, binding.shareaholicContent)
         }
+        binding.shareaholicContentButtonMoreInformation.setOnClickListener { openLink(SHAREAHOLIC.infoURL) }
+        binding.shareaholicContentButtonPrivacy.setOnClickListener { openLink(SHAREAHOLIC.privacyURL) }
+        binding.shareaholicContentButtonTerms.setOnClickListener { openLink(SHAREAHOLIC.termsURL) }
+
         binding.owovcGroup.setOnClickListener { toggleGroup(binding.owovcGroup, binding.owovcGroupArrow, binding.owovcContent) }
         binding.owovcContentButtonMoreInformation.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShortURLProvider.OWOVC.baseURL)))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(OWOVC.infoURL)))
             } catch (e: ActivityNotFoundException) {
                 Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
             }
