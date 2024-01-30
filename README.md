@@ -1,5 +1,5 @@
-<!--suppress CheckImageSize -->
-<div style="text-align: center;">
+<!--suppress CheckImageSize, XmlDeprecatedElement, HtmlDeprecatedTag -->
+<center>
 
 [![](https://img.shields.io/website?down_color=red&down_message=offline&up_color=blue&up_message=online&url=https%3A%2F%2Fwww.leonard-lemke.com)](https://www.leonard-lemke.com/rr)
 [![](https://img.shields.io/github/last-commit/Lemkinator/OneURL)](https://github.com/Lemkinator/OneURL/commits/)
@@ -27,6 +27,8 @@ A URL-Shortener with OneUI-Design.
 <img loading="lazy" src="img/mobile2.png" height="350" alt="Mobile 2"/>
 <img loading="lazy" src="img/mobile3.png" height="350" alt="Mobile 3"/>
 <img loading="lazy" src="img/mobile4.png" height="350" alt="Mobile 4"/>
+<img loading="lazy" src="img/mobile5.png" height="350" alt="Mobile 5"/>
+<img loading="lazy" src="img/mobile6.png" height="350" alt="Mobile 6"/>
 
 ## More Information: <a target="_blank" href='https://www.leonard-lemke.com/apps/oneurl'>www.leonard-lemke.com </a>
 
@@ -34,4 +36,4 @@ A URL-Shortener with OneUI-Design.
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Lemkinator/OneURL&type=Date)](https://star-history.com/#Lemkinator/OneURL&Date)
 
-</div>
+</center>

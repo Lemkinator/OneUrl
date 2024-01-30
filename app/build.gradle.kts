@@ -19,8 +19,8 @@ android {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.1.0"
+        versionCode = 10
+        versionName = "1.1.2"
 
         kapt {
             arguments {
@@ -116,16 +116,11 @@ dependencies {
     implementation("io.github.oneuiproject.sesl:appcompat:1.4.0")
     implementation("io.github.oneuiproject.sesl:material:1.5.0")
     implementation("io.github.oneuiproject.sesl:preference:1.1.0")
-    implementation("io.github.oneuiproject.sesl:recyclerview:1.4.1")
-    implementation("io.github.oneuiproject.sesl:indexscroll:1.0.3")
-    implementation("io.github.oneuiproject.sesl:picker-basic:1.2.0")
     implementation("io.github.oneuiproject.sesl:picker-color:1.1.0")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
     implementation("com.airbnb.android:lottie:6.3.0")
     implementation("androidx.core:core-splashscreen:1.1.0-alpha02")
-    implementation("androidx.core:core-animation:1.0.0-rc01")
-    implementation("com.google.android.play:core:1.10.3")
     implementation("com.google.android.play:core-ktx:1.8.1")
     implementation("com.android.volley:volley:1.2.1")
 

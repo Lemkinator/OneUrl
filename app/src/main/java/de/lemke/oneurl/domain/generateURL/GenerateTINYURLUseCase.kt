@@ -51,25 +51,14 @@ class GenerateTINYURLUseCase @Inject constructor(
                     }
                     Log.e(tag, "statusCode: $statusCode")
                     when (statusCode) {
-                        422 -> {
-                            Log.e(tag, "error (422): alias already exists")
-                            errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        }
-
-                        400 -> {
-                            if (alias.isNullOrBlank()) {
-                                Log.e(tag, "error (400): invalid URL")
-                                errorCallback(GenerateURLError.InvalidURL(context))
-                            } else {
-                                Log.e(tag, "error (400): invalid URL or alias")
-                                errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_invalid_url_or_alias)))
-                            }
+                        422, 400 -> {
+                            if (alias.isNullOrBlank()) errorCallback(GenerateURLError.InvalidURL(context))
+                            else errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_invalid_url_or_alias)))
                         }
 
                         else -> errorCallback(
                             GenerateURLError.Custom(
-                                context,
-                                (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
+                                context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
                             )
                         )
                     }
