@@ -115,7 +115,11 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             findPreference<PreferenceScreen>("privacy_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_website))))
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_website))))
+                } catch (e: ActivityNotFoundException) {
+                    Toast.makeText(settingsActivity, getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
+                }
                 true
             }
 

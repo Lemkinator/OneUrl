@@ -1,5 +1,6 @@
 package de.lemke.oneurl.ui
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.IntentSender.SendIntentException
 import android.net.ConnectivityManager
@@ -9,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.play.core.appupdate.AppUpdateInfo
@@ -78,7 +80,11 @@ class AboutActivity : AppCompatActivity() {
         }
         binding.aboutBtnOpenInStore.setOnClickListener { openApp(packageName, false) }
         binding.aboutBtnOpenOneuiGithub.setOnClickListener {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.oneui_github_link))))
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.oneui_github_link))))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
+            }
         }
         binding.aboutBtnAboutMe.setOnClickListener {
             startActivity(Intent(this@AboutActivity, AboutMeActivity::class.java))
