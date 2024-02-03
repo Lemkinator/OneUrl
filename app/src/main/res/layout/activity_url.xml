@@ -175,6 +175,7 @@
                     android:visibility="gone">
 
                     <TextView
+                        style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
@@ -185,6 +186,7 @@
 
                     <TextView
                         android:id="@+id/url_title_textview"
+                        style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
@@ -212,6 +214,7 @@
                     android:visibility="gone">
 
                     <TextView
+                        style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
@@ -222,6 +225,7 @@
 
                     <TextView
                         android:id="@+id/url_description_textview"
+                        style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
@@ -247,6 +251,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
@@ -257,6 +262,7 @@
 
                     <TextView
                         android:id="@+id/url_added_textview"
+                        style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
