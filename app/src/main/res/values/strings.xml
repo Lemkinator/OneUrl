@@ -170,6 +170,7 @@
     <string name="description_">"Description: "</string>
     <string name="title_">"Title: "</string>
     <string name="created">"Created: "</string>
+    <string name="visits">"Visits: "</string>
     <string name="description_hint">e.g.: My website</string>
 
 </resources>

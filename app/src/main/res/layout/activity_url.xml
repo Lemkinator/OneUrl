@@ -273,6 +273,45 @@
 
                 </LinearLayout>
 
+                <View
+                    android:id="@+id/url_visits_divider"
+                    android:layout_width="fill_parent"
+                    android:layout_height="@dimen/sesl_list_divider_height"
+                    android:layout_marginStart="@dimen/sesl_list_divider_inset"
+                    android:layout_marginEnd="@dimen/sesl_list_divider_inset"
+                    android:background="@color/oui_list_divider_color"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/url_visits_layout"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="18dp"
+                        android:layout_marginStart="18dp"
+                        android:text="@string/visits"
+                        android:textSize="18sp"
+                        android:transitionName="added" />
+
+                    <TextView
+                        android:id="@+id/url_visits_textview"
+                        style="?android:attr/textAppearanceLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="18dp"
+                        android:layout_marginEnd="18dp"
+                        android:layout_weight="1"
+                        android:textSize="18sp"
+                        android:transitionName="added" />
+
+                </LinearLayout>
+
             </dev.oneuiproject.oneui.widget.RoundLinearLayout>
 
         </LinearLayout>

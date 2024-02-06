@@ -27,6 +27,7 @@ import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import de.lemke.oneurl.domain.generateURL.GenerateOWOVCUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
@@ -75,6 +76,9 @@ class URLActivity : AppCompatActivity() {
     lateinit var shareQRCode: ShareQRCodeUseCase
 
     @Inject
+    lateinit var generateOWOVC: GenerateOWOVCUseCase
+
+    @Inject
     lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,6 +117,18 @@ class URLActivity : AppCompatActivity() {
 
 
     private fun initViews() {
+        lifecycleScope.launch {
+            generateOWOVC.getURLVisitCount(url) { visitCount ->
+                if (visitCount != null) {
+                    binding.urlVisitsDivider.visibility = View.VISIBLE
+                    binding.urlVisitsLayout.visibility = View.VISIBLE
+                    binding.urlVisitsTextview.text = visitCount.toString()
+                } else {
+                    binding.urlVisitsDivider.visibility = View.GONE
+                    binding.urlVisitsLayout.visibility = View.GONE
+                }
+            }
+        }
         val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
         val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {
             setSpan(android.text.style.UnderlineSpan(), 0, url.shortURL.length, 0)

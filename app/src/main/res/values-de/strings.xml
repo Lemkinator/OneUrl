@@ -150,6 +150,7 @@
     <string name="description_">"Beschreibung: "</string>
     <string name="title_">"Titel: "</string>
     <string name="created">"Erstellt: "</string>
+    <string name="visits">"Klicks: "</string>
     <string name="description_hint">z.B.: Meine Webseite</string>
 
 </resources>

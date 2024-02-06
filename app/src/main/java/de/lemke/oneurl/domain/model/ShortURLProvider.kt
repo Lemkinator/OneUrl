@@ -153,7 +153,20 @@ enum class ShortURLProvider {
         ULVIS -> null
         ONEPTCO -> null
         SHAREAHOLIC -> null
-        OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> null //TODO check when online again :D :/ "${baseURL}api/v2/link/$alias"
+        OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> null
+    }
+
+    fun getAnalyticsURLApi(): String? = when (this) {
+        UNKNOWN -> null
+        DAGD -> null
+        VGD -> null
+        ISGD -> null
+        TINYURL -> null
+        KURZELINKS, OCN, T1P, OGY -> null
+        ULVIS -> null
+        ONEPTCO -> null
+        SHAREAHOLIC -> null
+        OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> "${baseURL}api/v2/link/"
     }
 
     val aliasConfigurable: Boolean get() = this.allowedAliasCharacters.isNotBlank()
