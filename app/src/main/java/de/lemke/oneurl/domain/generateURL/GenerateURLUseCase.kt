@@ -17,6 +17,9 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProvider.DAGD
 import de.lemke.oneurl.domain.model.ShortURLProvider.ISGD
+import de.lemke.oneurl.domain.model.ShortURLProvider.KURZELINKS
+import de.lemke.oneurl.domain.model.ShortURLProvider.OCN
+import de.lemke.oneurl.domain.model.ShortURLProvider.OGY
 import de.lemke.oneurl.domain.model.ShortURLProvider.ONEPTCO
 import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVC
 import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCGAY
@@ -27,6 +30,7 @@ import de.lemke.oneurl.domain.model.ShortURLProvider.UNKNOWN
 import de.lemke.oneurl.domain.model.ShortURLProvider.VGD
 import de.lemke.oneurl.domain.model.ShortURLProvider.ULVIS
 import de.lemke.oneurl.domain.model.ShortURLProvider.SHAREAHOLIC
+import de.lemke.oneurl.domain.model.ShortURLProvider.T1P
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.CookieHandler
@@ -40,6 +44,7 @@ class GenerateURLUseCase @Inject constructor(
     private val generateDAGD: GenerateDAGDUseCase,
     private val generateVGDISGD: GenerateVGDISGDUseCase,
     private val generateTINYURL: GenerateTINYURLUseCase,
+    private val generateKURZELINKS: GenerateKURZELINKSUseCase,
     private val generateULVIS: GenerateULVISUseCase,
     private val generateONEPTCO: GenerateONEPTCOUseCase,
     private val generateSHAREAHOLIC: GenerateSHAREAHOLICUseCase,
@@ -88,6 +93,7 @@ class GenerateURLUseCase @Inject constructor(
                 DAGD -> generateDAGD(requestQueue, provider, longURL, alias, successCallback, errorCallback)
                 VGD, ISGD -> generateVGDISGD(provider, longURL, alias, successCallback, errorCallback)
                 TINYURL -> generateTINYURL(provider, longURL, alias, successCallback, errorCallback)
+                KURZELINKS, OCN, T1P, OGY -> generateKURZELINKS(provider, longURL, alias, successCallback, errorCallback)
                 ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
                 ONEPTCO -> generateONEPTCO(provider, longURL, alias, successCallback, errorCallback)
                 SHAREAHOLIC -> generateSHAREAHOLIC(provider, longURL, successCallback, errorCallback)

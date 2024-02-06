@@ -30,8 +30,10 @@
     <string name="redirect_hint_vgd_isgd">Before redirecting, v.gd and is.gd display a hint that informs the user about the destination URL. The user has the option to click on the displayed URL before the redirection takes place. It is also possible to skip this notice in future.</string>
     <string name="analytics_vgd_isgd">The providers v.gd and is.gd offer the possibility to use analytics to get insights into the performance of the shortened links.</string>
     <string name="alias_vgd_isgd_tinyurl">The individual aliases can have a length between 5 and 30 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
+    <string name="alias_kurzelinks">The individual aliases can have a length between 5 and 100 characters and may only consist of the characters a–z, A–Z, 0–9, -, _. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="alias_ulvis">The individual aliases can have a length between 1 and 60 characters and may only consist of the characters a–z, A–Z and 0–9. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="alias_oneptco">The individual aliases may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
+    <string name="privacy_kurzelinks">These providers have been designed to be as data efficient as possible. They are operated from Germany and comply with the applicable privacy regulations in Germany and Europe.</string>
     <string name="currently_disabled">Currently disabled</string>
     <string name="currently_disabled_ulvis">The provider ulvis.net is currently disabled because a security check has been added which makes it more difficult to use.</string>
     <string name="owovc_fun">Entertainment</string>

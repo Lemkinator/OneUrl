@@ -8,8 +8,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -29,13 +27,13 @@ import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.addHttpsIfMissing
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
+import de.lemke.oneurl.domain.withHttps
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -112,30 +110,9 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_url, menu)
-        return true
-    }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menu_item_url_favorite -> {
-                url = url.copy(favorite = !url.favorite)
-                item.title = getString(if (url.favorite) R.string.remove_from_fav else R.string.add_to_fav)
-                item.icon = if (url.favorite) getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
-                else getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off)
-                lifecycleScope.launch { updateURL(url) }
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
 
     private fun initViews() {
-        val menuItemFav = binding.root.toolbar.menu.findItem(R.id.menu_item_url_favorite)
-        menuItemFav.title = getString(if (url.favorite) R.string.remove_from_fav else R.string.add_to_fav)
-        menuItemFav.icon = if (url.favorite) getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
-        else getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off)
-
         val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
         val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {
             setSpan(android.text.style.UnderlineSpan(), 0, url.shortURL.length, 0)
@@ -144,7 +121,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlShortButton.text = shortURL
         binding.urlShortButton.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(addHttpsIfMissing(url.shortURL))))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.shortURL.withHttps())))
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("URLActivity", "Error: ${e.message}")
@@ -172,7 +149,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlLongButton.text = longURL
         binding.urlLongButton.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(addHttpsIfMissing(longURL.toString()))))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(longURL.toString().withHttps())))
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("URLActivity", "Error: ${e.message}")
@@ -193,13 +170,13 @@ class URLActivity : AppCompatActivity() {
             }
             startActivity(Intent.createChooser(sendIntent, null))
         }
-        if (!url.title.isNullOrBlank()) {
-            binding.urlTitleTextview.text = makeSectionOfTextBold(url.title.toString(), boldText, color)
+        if (url.title.isNotBlank()) {
+            binding.urlTitleTextview.text = makeSectionOfTextBold(url.title, boldText, color)
             binding.urlTitleLayout.visibility = View.VISIBLE
             binding.urlTitleDivider.visibility = View.VISIBLE
         }
-        if (!url.description.isNullOrBlank()) {
-            binding.urlDescriptionTextview.text = makeSectionOfTextBold(url.description.toString(), boldText, color)
+        if (url.description.isNotBlank()) {
+            binding.urlDescriptionTextview.text = makeSectionOfTextBold(url.description, boldText, color)
             binding.urlDescriptionLayout.visibility = View.VISIBLE
             binding.urlDescriptionDivider.visibility = View.VISIBLE
         }
@@ -218,7 +195,9 @@ class URLActivity : AppCompatActivity() {
     }
 
     private fun initBNV() {
-        binding.urlBnv.menu.findItem(R.id.url_bnv_analytics).isVisible = url.shortURLProvider.getAnalyticsURL(url.shortURL) != null
+        binding.urlBnv.menu.findItem(R.id.url_bnv_analytics)?.isVisible = url.shortURLProvider.getAnalyticsURL(url.shortURL) != null
+        binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav)?.isVisible = !url.favorite
+        binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav)?.isVisible = url.favorite
         binding.urlBnv.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.url_bnv_analytics -> {
@@ -229,6 +208,22 @@ class URLActivity : AppCompatActivity() {
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
                     }
+                    return@setOnItemSelectedListener true
+                }
+
+                R.id.url_bnv_add_to_fav -> {
+                    it.isVisible = false
+                    binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav)?.isVisible = true
+                    url = url.copy(favorite = true)
+                    lifecycleScope.launch { updateURL(url) }
+                    return@setOnItemSelectedListener true
+                }
+
+                R.id.url_bnv_remove_from_fav -> {
+                    it.isVisible = false
+                    binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav)?.isVisible = true
+                    url = url.copy(favorite = false)
+                    lifecycleScope.launch { updateURL(url) }
                     return@setOnItemSelectedListener true
                 }
 

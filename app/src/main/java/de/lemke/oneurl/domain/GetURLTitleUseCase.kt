@@ -47,7 +47,7 @@ class GetURLTitleUseCase @Inject constructor(
                 start()
                 add(
                     StringRequest(
-                        addHttpsIfMissing(url),
+                        url.withHttps(),
                         { response ->
                             try {
                                 val title = Regex("<title>(.*?)</title>").find(response)?.groupValues?.get(1)

@@ -7,7 +7,24 @@
         android:icon="@drawable/ic_oui_report"
         android:title="@string/analytics"
         app:showAsAction="always"
+        android:visible="false"
         tools:ignore="AlwaysShowAction,AppCompatResource" />
+
+    <item
+        android:id="@+id/url_bnv_add_to_fav"
+        android:icon="@drawable/ic_oui_favorite_off"
+        android:title="@string/add_to_fav"
+        app:showAsAction="always"
+        android:visible="false"
+        tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/url_bnv_remove_from_fav"
+        android:icon="@drawable/ic_oui_favorite_on"
+        android:title="@string/remove_from_fav"
+        app:showAsAction="always"
+        android:visible="false"
+        tools:ignore="AppCompatResource" />
 
     <item
         android:id="@+id/url_bnv_delete"

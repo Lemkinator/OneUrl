@@ -75,6 +75,11 @@ class ProviderActivity : AppCompatActivity() {
         binding.tinyurlContentButtonPrivacy.setOnClickListener { openLink(TINYURL.privacyURL) }
         binding.tinyurlContentButtonTerms.setOnClickListener { openLink(TINYURL.termsURL) }
 
+        binding.kurzelinksGroup.setOnClickListener { toggleGroup(binding.kurzelinksGroup, binding.kurzelinksGroupArrow, binding.kurzelinksContent) }
+        binding.kurzelinksContentButtonMoreInformation.setOnClickListener { openLink(KURZELINKS.infoURL) }
+        binding.kurzelinksContentButtonPrivacy.setOnClickListener { openLink(KURZELINKS.privacyURL) }
+        binding.kurzelinksContentButtonTerms.setOnClickListener { openLink(KURZELINKS.termsURL) }
+
         binding.ulvisGroup.setOnClickListener { toggleGroup(binding.ulvisGroup, binding.ulvisGroupArrow, binding.ulvisContent) }
         binding.ulvisContentButtonMoreInformation.setOnClickListener { openLink(ULVIS.infoURL) }
         binding.ulvisContentButtonPrivacy.setOnClickListener { openLink(ULVIS.privacyURL) }

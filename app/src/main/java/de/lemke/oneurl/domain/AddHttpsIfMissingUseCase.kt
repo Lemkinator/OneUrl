@@ -1,3 +1,5 @@
 package de.lemke.oneurl.domain
 
-fun addHttpsIfMissing(url: String): String = if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
+fun String.withHttps() = if (this.startsWith("http://") || this.startsWith("https://")) this else "https://$this"
+
+fun String.withoutHttps() = this.removePrefix("https://").removePrefix("http://").removeSuffix("/")

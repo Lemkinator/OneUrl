@@ -96,4 +96,5 @@ fabric.properties
 
 /local.properties
 local.properties
+secrets.properties
 keystore.properties

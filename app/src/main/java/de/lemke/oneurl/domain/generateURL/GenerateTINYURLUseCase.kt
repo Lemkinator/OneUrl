@@ -44,12 +44,12 @@ class GenerateTINYURLUseCase @Inject constructor(
                     Log.e(tag, "error: $error")
                     val networkResponse: NetworkResponse? = error.networkResponse
                     val statusCode = networkResponse?.statusCode
+                    Log.e(tag, "statusCode: $statusCode")
                     if (networkResponse == null || statusCode == null) {
                         Log.e(tag, "error.networkResponse == null")
                         errorCallback(GenerateURLError.Custom(context, error.message))
                         return@StringRequest
                     }
-                    Log.e(tag, "statusCode: $statusCode")
                     when (statusCode) {
                         422, 400 -> {
                             if (alias.isNullOrBlank()) errorCallback(GenerateURLError.InvalidURL(context))
