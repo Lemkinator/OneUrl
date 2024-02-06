@@ -93,7 +93,7 @@ enum class ShortURLProvider {
             ISGD -> 30
             TINYURL -> 30
             ULVIS -> 60
-            KURZELINKS, OCN, T1P, OGY -> 100
+            KURZELINKS, OCN, T1P, OGY -> 100 //tested up to 250
             ONEPTCO -> noMaxAlias
             SHAREAHOLIC -> noMaxAlias
             OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> noMaxAlias
