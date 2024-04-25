@@ -1,33 +1,82 @@
-package de.lemke.oneurl.domain.generateURL
-
+package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.model.ShortURLProvider
-import javax.inject.Inject
+import de.lemke.oneurl.domain.generateURL.GenerateURLError
 
+/*
+https://tinyurl.com/app
+example: https://tinyurl.com/api-create.php?url=https://example.com&alias=example // json body: https://api.tinyurl.com/create
+ */
 
-class GenerateTINYURLUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
-) {
-    operator fun invoke(
-        provider: ShortURLProvider,
+class Tinyurl : ShortURLProvider {
+    override val enabled = true
+    override val name = "tinyurl.com"
+    override val group = name
+    override val baseURL = "https://tinyurl.com/"
+    override val apiURL = "${baseURL}api-create.php"
+    override val infoURL = baseURL
+    override val privacyURL = "${baseURL}app/privacy-policy"
+    override val termsURL = "${baseURL}app/terms"
+    override val aliasConfig = object : AliasConfig {
+        override val minAliasLength = 5
+        override val maxAliasLength = 30
+        override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
+        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+    }
+
+    override fun getAnalyticsURL(alias: String) = null //requires api token
+
+    override fun sanitizeLongURL(url: String) = url.trim()
+
+    //Info
+    override val infoIcons: List<Int> = listOf(
+        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
+    )
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+            context.getString(R.string.alias),
+            context.getString(R.string.alias_vgd_isgd_tinyurl)
+        )
+    )
+
+    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
+            context.getString(R.string.privacy_policy),
+            privacyURL
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
+            context.getString(R.string.tos),
+            termsURL
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+            context.getString(R.string.more_information),
+            infoURL
+        )
+    )
+
+    override fun getCreateRequest(
+        context: Context,
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit = { },
+        errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
-        val tag = "GenerateURLUseCase_TINYURL"
-        val apiURL = provider.getCreateURLApi(longURL, alias)
-        Log.d(tag, "start request: $apiURL")
+        val tag = "TinyurlCreateRequest"
+        val url = apiURL + "?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
+        Log.d(tag, "start request: $url")
         return StringRequest(
             Request.Method.POST,
-            provider.getCreateURLApi(longURL, alias),
+            url,
             { response ->
                 Log.d(tag, "response: $response")
                 if (response.startsWith("https://tinyurl.com/") || response.startsWith("http://tinyurl.com/")) {

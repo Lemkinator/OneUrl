@@ -26,8 +26,7 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
-import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.generateURL.GenerateOWOVCUseCase
+import de.lemke.oneurl.domain.model.Owovz
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
@@ -61,9 +60,6 @@ class URLActivity : AppCompatActivity() {
     lateinit var getUserSettings: GetUserSettingsUseCase
 
     @Inject
-    lateinit var updateUserSettings: UpdateUserSettingsUseCase
-
-    @Inject
     lateinit var exportQRCode: ExportQRCodeUseCase
 
     @Inject
@@ -74,9 +70,6 @@ class URLActivity : AppCompatActivity() {
 
     @Inject
     lateinit var shareQRCode: ShareQRCodeUseCase
-
-    @Inject
-    lateinit var generateOWOVC: GenerateOWOVCUseCase
 
     @Inject
     lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
@@ -115,10 +108,9 @@ class URLActivity : AppCompatActivity() {
     }
 
 
-
     private fun initViews() {
-        lifecycleScope.launch {
-            generateOWOVC.getURLVisitCount(url) { visitCount ->
+        (url.shortURLProvider as? Owovz)?.let {
+            it.getURLVisitCount(this, url.shortURL) { visitCount ->
                 if (visitCount != null) {
                     binding.urlVisitsDivider.visibility = View.VISIBLE
                     binding.urlVisitsLayout.visibility = View.VISIBLE

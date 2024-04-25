@@ -1,37 +1,81 @@
-package de.lemke.oneurl.domain.generateURL
-
+package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
-import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.ShortURLProvider.DAGD
-import javax.inject.Inject
+import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.domain.withHttps
 
+/*
+https://da.gd/help
+example: https://da.gd/shorten?url=http://some_long_url&shorturl=slug
+ */
 
-class GenerateDAGDUseCase @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    operator fun invoke(
-        requestQueue: RequestQueue,
-        provider: ShortURLProvider,
+class Dagd : ShortURLProvider {
+    override val enabled = true
+    override val name = "da.gd"
+    override val group = name
+    override val baseURL = "https://da.gd/"
+    override val apiURL = "${baseURL}shorten"
+    override val infoURL = baseURL
+    override val privacyURL = null
+    override val termsURL = null
+    override val aliasConfig = object : AliasConfig {
+        override val minAliasLength = 0
+        override val maxAliasLength = 10
+        override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
+        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+    }
+
+    //Info
+    override val infoIcons: List<Int> = listOf(
+        dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
+    )
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+            context.getString(R.string.analytics),
+            context.getString(R.string.analytics_dagd)
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+            context.getString(R.string.alias),
+            context.getString(R.string.alias_dagd)
+        )
+    )
+
+    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+            context.getString(R.string.more_information),
+            infoURL
+        )
+    )
+
+    override fun getAnalyticsURL(alias: String) = "${baseURL}stats/$alias"
+
+    override fun sanitizeLongURL(url: String) = url.withHttps().trim()
+
+    override fun getCreateRequest(
+        context: Context,
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit = { },
+        errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
-        val tag = "GenerateURLUseCase_DAGD"
-        if (alias == null) return requestCreateDAGD(provider, longURL, null, successCallback, errorCallback)
-        val apiURL = provider.getCheckURLApi(alias)
-        Log.d(tag, "start request: $apiURL")
+        val tag = "DagdCreateRequest_check"
+        if (alias == null) return requestCreateDAGD(context, longURL, null, successCallback, errorCallback)
+        val checkUrlApi = "${baseURL}coshorten/$alias"
+        Log.d(tag, "start request: $checkUrlApi")
         return StringRequest(
             Request.Method.GET,
-            apiURL,
+            checkUrlApi,
             { response ->
                 if (response.trim() != longURL) {
                     Log.e(tag, "error, shortURL already exists, but has different longURL, longURL: $longURL, response: $response")
@@ -39,7 +83,7 @@ class GenerateDAGDUseCase @Inject constructor(
                     return@StringRequest
                 }
                 Log.d(tag, "shortURL already exists (but is not in local db): $response")
-                val shortURL = DAGD.baseURL + alias
+                val shortURL = baseURL + alias
                 Log.d(tag, "shortURL: $shortURL")
                 successCallback(shortURL)
             },
@@ -58,7 +102,9 @@ class GenerateDAGDUseCase @Inject constructor(
                     } else {
                         Log.w(tag, "error, statusCode: ${error.networkResponse.statusCode}, trying to create it anyway")
                     }
-                    requestQueue.add(requestCreateDAGD(provider, longURL, alias, successCallback, errorCallback))
+                    RequestQueueSingleton.getInstance(context).addToRequestQueue(
+                        requestCreateDAGD(context, longURL, alias, successCallback, errorCallback)
+                    )
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.e(tag, "error: $e")
@@ -69,18 +115,18 @@ class GenerateDAGDUseCase @Inject constructor(
     }
 
     private fun requestCreateDAGD(
-        provider: ShortURLProvider,
+        context: Context,
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit = { },
+        errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
-        val tag = "GenerateURLUseCase_DAGD"
-        val apiURL = provider.getCreateURLApi(longURL, alias)
-        Log.d(tag, "start request: $apiURL")
+        val tag = "DagdCreateRequest_create"
+        val url = apiURL + "?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        Log.d(tag, "start request: $url")
         return StringRequest(
             Request.Method.GET,
-            provider.getCreateURLApi(longURL, alias),
+            url,
             { response ->
                 Log.d(tag, "response: $response")
                 if (response.startsWith("https://da.gd")) {
@@ -107,7 +153,10 @@ class GenerateDAGDUseCase @Inject constructor(
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
                         errorCallback(
-                            GenerateURLError.Custom(context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)")
+                            GenerateURLError.Custom(
+                                context,
+                                (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
+                            )
                         )
                         return@StringRequest
                     }

@@ -1,33 +1,91 @@
-package de.lemke.oneurl.domain.generateURL
-
+package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.model.ShortURLProvider
-import javax.inject.Inject
+import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.withHttps
 
+/*
+https://ulvis.net/developer.html -> added cloudflare :/ -> removed
+example:
+https://ulvis.net/api.php?url=https://example.com&custom=alias&private=1
+https://ulvis.net/API/write/get?url=https://example.com&custom=alias&private=1
+ */
 
-class GenerateULVISUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
-) {
-    operator fun invoke(
-        provider: ShortURLProvider,
+class Ulvis : ShortURLProvider {
+    override val enabled = false //added cloudflare :/
+    override val name = "ulvis.net"
+    override val group = name
+    override val baseURL = "https://ulvis.net/"
+    override val apiURL = "${baseURL}API/write/get"
+    override val infoURL = baseURL
+    override val privacyURL = "${baseURL}privacy.html"
+    override val termsURL = "${baseURL}disclaimer.html"
+    override val aliasConfig = object : AliasConfig {
+        override val minAliasLength = 0
+        override val maxAliasLength = 60
+        override val allowedAliasCharacters = "a-z, A-Z, 0-9"
+        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
+    }
+
+    override fun getAnalyticsURL(alias: String) = null
+
+    override fun sanitizeLongURL(url: String) = url.withHttps().trim()
+
+    //Info
+    override val infoIcons: List<Int> = listOf(
+        dev.oneuiproject.oneui.R.drawable.ic_oui_block,
+        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
+    )
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_block,
+            context.getString(R.string.currently_disabled),
+            context.getString(R.string.currently_disabled_ulvis)
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+            context.getString(R.string.alias),
+            context.getString(R.string.alias_ulvis)
+        )
+    )
+
+    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
+            context.getString(R.string.privacy_policy),
+            privacyURL
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
+            context.getString(R.string.tos),
+            termsURL
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+            context.getString(R.string.more_information),
+            infoURL
+        )
+    )
+
+    override fun getCreateRequest(
+        context: Context,
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit = { },
+        errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
-        val tag = "GenerateULVISUseCase"
-        val apiURL = provider.getCreateURLApi(longURL, alias)
-        Log.d(tag, "start request: $apiURL")
+        val tag = "UlvisCreateRequest"
+        val url = apiURL + "?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&custom=$alias&private=1")
+        Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.POST,
-            apiURL,
+            url,
             null,
             { response ->
                 Log.d(tag, "response: $response")
@@ -91,13 +149,18 @@ class GenerateULVISUseCase @Inject constructor(
                     if (statusCode == 403) {
                         Log.e(tag, "error: 403")
                         //Doesn't work, different cookies
-                        errorCallback(GenerateURLError.HumanVerificationRequired(context, provider))
+                        errorCallback(GenerateURLError.HumanVerificationRequired(context, this))
                         return@JsonObjectRequest
                     }
                     val data = networkResponse.data
                     if (data == null) {
                         Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(GenerateURLError.Custom(context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"))
+                        errorCallback(
+                            GenerateURLError.Custom(
+                                context,
+                                (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
+                            )
+                        )
                         return@JsonObjectRequest
                     }
                     val message = data.toString(charset("UTF-8"))

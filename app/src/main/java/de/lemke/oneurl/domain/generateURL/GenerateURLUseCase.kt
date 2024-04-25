@@ -8,52 +8,21 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.widget.Toast
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.BasicNetwork
-import com.android.volley.toolbox.DiskBasedCache
-import com.android.volley.toolbox.HurlStack
 import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.ShortURLProvider.DAGD
-import de.lemke.oneurl.domain.model.ShortURLProvider.ISGD
-import de.lemke.oneurl.domain.model.ShortURLProvider.KURZELINKS
-import de.lemke.oneurl.domain.model.ShortURLProvider.OCN
-import de.lemke.oneurl.domain.model.ShortURLProvider.OGY
-import de.lemke.oneurl.domain.model.ShortURLProvider.ONEPTCO
-import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVC
-import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCGAY
-import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCSKETCHY
-import de.lemke.oneurl.domain.model.ShortURLProvider.OWOVCZWS
-import de.lemke.oneurl.domain.model.ShortURLProvider.TINYURL
-import de.lemke.oneurl.domain.model.ShortURLProvider.UNKNOWN
-import de.lemke.oneurl.domain.model.ShortURLProvider.VGD
-import de.lemke.oneurl.domain.model.ShortURLProvider.ULVIS
-import de.lemke.oneurl.domain.model.ShortURLProvider.SHAREAHOLIC
-import de.lemke.oneurl.domain.model.ShortURLProvider.T1P
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.net.CookieHandler
-import java.net.CookieManager
-import java.net.CookiePolicy
 import javax.inject.Inject
 
 
 class GenerateURLUseCase @Inject constructor(
     @ActivityContext private val context: Context,
-    private val generateDAGD: GenerateDAGDUseCase,
-    private val generateVGDISGD: GenerateVGDISGDUseCase,
-    private val generateTINYURL: GenerateTINYURLUseCase,
-    private val generateKURZELINKS: GenerateKURZELINKSUseCase,
-    private val generateULVIS: GenerateULVISUseCase,
-    private val generateONEPTCO: GenerateONEPTCOUseCase,
-    private val generateSHAREAHOLIC: GenerateSHAREAHOLICUseCase,
-    private val generateOWOVC: GenerateOWOVCUseCase,
 ) {
     suspend operator fun invoke(
         provider: ShortURLProvider,
         longURL: String,
-        alias: String? = null,
+        alias: String?,
         successCallback: (shortURL: String) -> Unit = { },
         errorCallback: (error: GenerateURLError) -> Unit = { },
     ) = withContext(Dispatchers.Default) {
@@ -65,40 +34,8 @@ class GenerateURLUseCase @Inject constructor(
             errorCallback(GenerateURLError.NoInternet(context))
             return@withContext
         }
-        val cookieManager = CookieManager()
-        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
-        CookieHandler.setDefault(cookieManager)
-        // Instantiate the cache
-        val cache = DiskBasedCache(context.cacheDir, 1024 * 1024) // 1MB cap
-        // Set up the network to use HttpURLConnection as the HTTP client.
-        val network = BasicNetwork(HurlStack())
-        // Instantiate the RequestQueue with the cache and network. Start the queue.
-        val requestQueue = RequestQueue(cache, network).apply {
-            start()
-        }
-        generate(requestQueue, provider, longURL, alias, successCallback, errorCallback)
-    }
-
-    private fun generate(
-        requestQueue: RequestQueue,
-        provider: ShortURLProvider,
-        longURL: String,
-        alias: String?,
-        successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit = { },
-    ) {
-        requestQueue.add(
-            when (provider) {
-                UNKNOWN -> null
-                DAGD -> generateDAGD(requestQueue, provider, longURL, alias, successCallback, errorCallback)
-                VGD, ISGD -> generateVGDISGD(provider, longURL, alias, successCallback, errorCallback)
-                TINYURL -> generateTINYURL(provider, longURL, alias, successCallback, errorCallback)
-                KURZELINKS, OCN, T1P, OGY -> generateKURZELINKS(provider, longURL, alias, successCallback, errorCallback)
-                ULVIS -> generateULVIS(provider, longURL, alias, successCallback, errorCallback)
-                ONEPTCO -> generateONEPTCO(provider, longURL, alias, successCallback, errorCallback)
-                SHAREAHOLIC -> generateSHAREAHOLIC(provider, longURL, successCallback, errorCallback)
-                OWOVC, OWOVCZWS, OWOVCSKETCHY, OWOVCGAY -> generateOWOVC(provider, longURL, successCallback, errorCallback)
-            }
+        RequestQueueSingleton.getInstance(context).addToRequestQueue(
+            provider.getCreateRequest(context, longURL, alias, successCallback, errorCallback)
         )
     }
 }

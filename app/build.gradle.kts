@@ -2,8 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
-    id("kotlin-kapt")
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    id("kotlin-kapt")
     //id("com.google.devtools.ksp")
 }
 
@@ -125,11 +125,12 @@ dependencies {
     implementation("io.github.oneuiproject.sesl:picker-color:1.1.0")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("com.airbnb.android:lottie:6.3.0")
-    implementation("androidx.core:core-splashscreen:1.1.0-alpha02")
+    implementation("com.airbnb.android:lottie:6.4.0")
+    implementation("androidx.core:core-splashscreen:1.1.0-rc01")
     implementation("com.google.android.play:core-ktx:1.8.1")
     implementation("com.android.volley:volley:1.2.1")
 
+    //noinspection GradleDependency
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

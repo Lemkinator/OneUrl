@@ -6,7 +6,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:8.2.2")
+        classpath("com.android.tools.build:gradle:8.3.0")
         classpath("com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1")
         //classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.9.0-1.0.11")
     }
@@ -21,12 +21,8 @@ allprojects {
 }
 
 plugins {
-    id("com.android.application") version "8.2.2" apply false
-    id("com.android.library") version "8.2.2" apply false
+    id("com.android.application") version "8.3.0" apply false
+    id("com.android.library") version "8.3.0" apply false
     id("org.jetbrains.kotlin.android") version "1.7.20" apply false
     id("com.google.dagger.hilt.android") version "2.42" apply false
-}
-
-tasks.register("clean", Delete::class.java) {
-    delete(rootProject.buildDir)
 }

@@ -1,33 +1,72 @@
-package de.lemke.oneurl.domain.generateURL
-
+package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.model.ShortURLProvider
-import javax.inject.Inject
+import de.lemke.oneurl.domain.generateURL.GenerateURLError
 
+/*
+https://github.com/1pt-co/api
+example: https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl?long=test.com&short=test
+ */
 
-class GenerateONEPTCOUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
-) {
-    operator fun invoke(
-        provider: ShortURLProvider,
+class Oneptco : ShortURLProvider {
+    override val enabled = true
+    override val name = "1pt.co"
+    override val group = name
+    override val baseURL = "https://1pt.co/"
+    override val apiURL = "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl"
+    override val infoURL = baseURL
+    override val privacyURL = null
+    override val termsURL = null
+    override val aliasConfig = object : AliasConfig {
+        override val minAliasLength = 0
+        override val maxAliasLength = AliasConfig.NO_MAX_ALIAS_SPECIFIED
+        override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
+        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+    }
+
+    override fun getAnalyticsURL(alias: String) = null
+
+    override fun sanitizeLongURL(url: String) = url.trim()
+
+    //Info
+    override val infoIcons: List<Int> = listOf(
+        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
+    )
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+            context.getString(R.string.alias),
+            context.getString(R.string.alias_oneptco)
+        )
+    )
+
+    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+            context.getString(R.string.more_information),
+            infoURL
+        )
+    )
+
+    override fun getCreateRequest(
+        context: Context,
         longURL: String,
         alias: String?,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit = { },
+        errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
-        val tag = "GenerateONEPTCOUseCase"
-        val apiURL = provider.getCreateURLApi(longURL, alias)
-        Log.d(tag, "start request: $apiURL")
+        val tag = "OneptcoCreateRequest"
+        val url = apiURL + "?long=$longURL" + (if (alias.isNullOrBlank()) "" else "&short=$alias")
+        Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.POST,
-            apiURL,
+            url,
             null,
             { response ->
                 Log.d(tag, "response: $response")
@@ -64,7 +103,7 @@ class GenerateONEPTCOUseCase @Inject constructor(
                     errorCallback(GenerateURLError.AliasAlreadyExists(context))
                     return@JsonObjectRequest
                 }
-                val shortURL = provider.baseURL + response.getString("short").trim()
+                val shortURL = baseURL + response.getString("short").trim()
                 Log.d(tag, "shortURL: $shortURL")
                 successCallback(shortURL)
             },

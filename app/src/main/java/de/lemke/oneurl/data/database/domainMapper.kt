@@ -1,12 +1,12 @@
 package de.lemke.oneurl.data.database
 
-import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 
 fun urlFromDb(urlDb: URLDb): URL = URL(
     shortURL = urlDb.shortURL,
     longURL = urlDb.longURL,
-    shortURLProvider = ShortURLProvider.fromString(urlDb.shortURLProvider),
+    shortURLProvider = ShortURLProviderCompanion.fromString(urlDb.shortURLProvider),
     qr = urlDb.qr,
     favorite = urlDb.favorite,
     title = urlDb.title,
@@ -17,7 +17,7 @@ fun urlFromDb(urlDb: URLDb): URL = URL(
 fun urlToDb(url: URL): URLDb = URLDb(
     shortURL = url.shortURL,
     longURL = url.longURL,
-    shortURLProvider = url.shortURLProvider.toString(),
+    shortURLProvider = url.shortURLProvider.name,
     qr = url.qr,
     favorite = url.favorite,
     title = url.title,

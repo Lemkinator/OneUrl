@@ -25,7 +25,9 @@ import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
+import de.lemke.oneurl.domain.model.Owovz
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
@@ -34,6 +36,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class AddURLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddUrlBinding
+    private lateinit var selectedShortURLProvider: ShortURLProvider
     private var addToFavorites = false
 
     @Inject
@@ -46,16 +49,17 @@ class AddURLActivity : AppCompatActivity() {
     lateinit var generateURL: GenerateURLUseCase
 
     @Inject
-    lateinit var addURL: AddURLUseCase
-
-    @Inject
-    lateinit var getURL: GetURLUseCase
+    lateinit var getURLTitle: GetURLTitleUseCase
 
     @Inject
     lateinit var generateQRCode: GenerateQRCodeUseCase
 
     @Inject
-    lateinit var getURLTitle: GetURLTitleUseCase
+    lateinit var addURL: AddURLUseCase
+
+    @Inject
+    lateinit var getURL: GetURLUseCase
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,16 +103,19 @@ class AddURLActivity : AppCompatActivity() {
     }
 
     private suspend fun initViews() {
-        val adapter =
-            ArrayAdapter(this@AddURLActivity, android.R.layout.simple_spinner_item, ShortURLProvider.all.map { it.toString() })
+        val userSettings = getUserSettings()
+        val availableShortURLProvider = ShortURLProviderCompanion.available
+        selectedShortURLProvider = availableShortURLProvider.find { it.name == userSettings.selectedShortURLProvider.name }
+            ?: availableShortURLProvider.find { it == ShortURLProviderCompanion.default }
+                    ?: availableShortURLProvider.first()
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, availableShortURLProvider.map { it.name })
         adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
         binding.providerSpinner.adapter = adapter
-        val userSettings = getUserSettings()
-        binding.providerSpinner.setSelection(userSettings.selectedShortURLProvider.position)
+        binding.providerSpinner.setSelection(availableShortURLProvider.indexOf(selectedShortURLProvider))
         onProviderChanged(userSettings.selectedShortURLProvider)
         binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                lifecycleScope.launch { onProviderChanged(ShortURLProvider.all[p2]) }
+                lifecycleScope.launch { onProviderChanged(availableShortURLProvider[p2]) }
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -132,10 +139,11 @@ class AddURLActivity : AppCompatActivity() {
     }
 
     private suspend fun onProviderChanged(provider: ShortURLProvider) {
-        if (provider.aliasConfigurable) binding.textInputLayoutAlias.visibility = View.VISIBLE
+        selectedShortURLProvider = provider
+        if (provider.aliasConfig != null) binding.textInputLayoutAlias.visibility = View.VISIBLE
         else binding.textInputLayoutAlias.visibility = View.GONE
         val userSettings = getUserSettings()
-        if (provider == ShortURLProvider.OWOVCGAY && userSettings.showOWOVCGAYWarning) {
+        if (provider is Owovz.OwovzGay && userSettings.showOWOVCGAYWarning) {
             AlertDialog.Builder(this@AddURLActivity)
                 .setTitle(R.string.warning)
                 .setMessage(R.string.owovc_gay)
@@ -145,7 +153,7 @@ class AddURLActivity : AppCompatActivity() {
                 }
                 .create()
                 .show()
-        } else if (provider == ShortURLProvider.OWOVCZWS && userSettings.showOWOVCZWSInfo) {
+        } else if (provider is Owovz.OwovzZws && userSettings.showOWOVCZWSInfo) {
             AlertDialog.Builder(this@AddURLActivity)
                 .setTitle(R.string.info)
                 .setMessage(R.string.owovc_zws)
@@ -178,87 +186,47 @@ class AddURLActivity : AppCompatActivity() {
     }
 
     private fun checkAndAddURL() {
-        val provider = ShortURLProvider.all[binding.providerSpinner.selectedItemPosition]
-        val alias = (binding.editTextAlias.text ?: "").toString().trim()
         if (binding.editTextURL.text.isNullOrBlank()) {
             binding.editTextURL.error = getString(R.string.error_empty_url)
             return
         }
-        val longURL = provider.sanitizeURL(binding.editTextURL.text.toString())
-        if (provider.aliasConfigurable && alias.isNotBlank()) {
-            if (alias.length < provider.minAliasLength) {
-                binding.editTextAlias.error = getString(R.string.error_alias_too_short)
-                return
-            }
-            if (alias.length > provider.maxAliasLength) {
-                binding.editTextAlias.error = getString(R.string.error_alias_too_long, provider.maxAliasLength)
-                return
-            }
-            if (!provider.isAliasValid(alias)) {
-                binding.editTextAlias.error = getString(R.string.error_invalid_alias, provider.allowedAliasCharacters)
-                return
+        val alias = (binding.editTextAlias.text ?: "").toString().trim()
+        val provider = selectedShortURLProvider
+        if (alias.isNotBlank()) {
+            provider.aliasConfig?.let {
+                if (alias.length < it.minAliasLength) {
+                    binding.editTextAlias.error = getString(R.string.error_alias_too_short)
+                    return
+                }
+                if (alias.length > it.maxAliasLength) {
+                    binding.editTextAlias.error = getString(R.string.error_alias_too_long, it.maxAliasLength)
+                    return
+                }
+                if (!it.isAliasValid(alias)) {
+                    binding.editTextAlias.error = getString(R.string.error_invalid_alias, it.allowedAliasCharacters)
+                    return
+                }
             }
         }
         setLoading(true)
-        lifecycleScope.launch {
-            val existingURLs = getURL(provider, longURL)
-            if (existingURLs.isNotEmpty()) {
-                if (alias.isBlank()) {
-                    alreadyShortened(existingURLs.first().shortURL)
-                    return@launch
-                }
-                for (url in existingURLs) {
-                    if (url.shortURL == provider.baseURL + alias) {
-                        alreadyShortened(url.shortURL)
-                        return@launch
-                    }
+        lifecycleScope.launch { checkDuplicates(provider, provider.sanitizeLongURL(binding.editTextURL.text.toString()), alias) }
+    }
+
+    private suspend fun checkDuplicates(provider: ShortURLProvider, longURL: String, alias: String) {
+        val existingURLs = getURL(provider, longURL)
+        if (existingURLs.isNotEmpty()) {
+            if (alias.isBlank()) {
+                alreadyShortened(existingURLs.first().shortURL)
+                return
+            }
+            for (url in existingURLs) {
+                if (url.shortURL == provider.baseURL + alias) {
+                    alreadyShortened(url.shortURL)
+                    return
                 }
             }
-            generateURL(
-                provider = provider,
-                longURL = longURL,
-                alias = alias,
-                errorCallback = {
-                    lifecycleScope.launch {
-                        AlertDialog.Builder(this@AddURLActivity).apply {
-                            setTitle(it.title)
-                            setMessage(it.message)
-                            if (it.action != null) {
-                                setNeutralButton(it.action.title) { _: DialogInterface, _: Int ->
-                                    it.action.action()
-                                }
-                            }
-                            setPositiveButton(R.string.ok, null)
-                            show()
-                        }
-                        setLoading(false)
-                    }
-                },
-                successCallback = {
-                    lifecycleScope.launch {
-                        getURLTitle(longURL) { title ->
-                            lifecycleScope.launch {
-                                addURL(
-                                    URL(
-                                        shortURL = it,
-                                        longURL = longURL,
-                                        shortURLProvider = provider,
-                                        qr = generateQRCode(it),
-                                        favorite = addToFavorites,
-                                        title = title,
-                                        description = binding.editTextDescription.text.toString(),
-                                        added = ZonedDateTime.now()
-                                    )
-                                )
-                                setLoading(false)
-                                Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
-                                finish()
-                            }
-                        }
-                    }
-                },
-            )
         }
+        createURL(provider, longURL, alias)
     }
 
     private fun alreadyShortened(shortURL: String) {
@@ -273,5 +241,52 @@ class AddURLActivity : AppCompatActivity() {
             .create()
             .show()
         setLoading(false)
+    }
+
+    private suspend fun createURL(provider: ShortURLProvider, longURL: String, alias: String) {
+        getURLTitle(longURL) { title ->
+            lifecycleScope.launch {
+                generateURL(
+                    provider = provider,
+                    longURL = longURL,
+                    alias = alias,
+                    errorCallback = {
+                        lifecycleScope.launch {
+                            AlertDialog.Builder(this@AddURLActivity).apply {
+                                setTitle(it.title)
+                                setMessage(it.message)
+                                if (it.action != null) {
+                                    setNeutralButton(it.action.title) { _: DialogInterface, _: Int ->
+                                        it.action.action()
+                                    }
+                                }
+                                setPositiveButton(R.string.ok, null)
+                                show()
+                            }
+                            setLoading(false)
+                        }
+                    },
+                    successCallback = { shortURL ->
+                        lifecycleScope.launch {
+                            addURL(
+                                URL(
+                                    shortURL = shortURL,
+                                    longURL = longURL,
+                                    shortURLProvider = provider,
+                                    qr = generateQRCode(shortURL),
+                                    favorite = addToFavorites,
+                                    title = title,
+                                    description = binding.editTextDescription.text.toString(),
+                                    added = ZonedDateTime.now()
+                                )
+                            )
+                            setLoading(false)
+                            Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
+                    },
+                )
+            }
+        }
     }
 }
