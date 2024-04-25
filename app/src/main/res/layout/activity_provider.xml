@@ -442,11 +442,13 @@
             </dev.oneuiproject.oneui.widget.RoundLinearLayout>
 
             <dev.oneuiproject.oneui.widget.RoundLinearLayout
+                android:id="@+id/kurzelinks_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
                 android:background="@color/background_color"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <LinearLayout
                     android:id="@+id/kurzelinks_group"

@@ -1,11 +1,13 @@
 package de.lemke.oneurl.domain.model
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.Response
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import java.util.Locale
 
 /*
 https://cleanuri.com/docs //no alias
@@ -34,9 +36,17 @@ class ShortURLProviderCompanion {
             Owovz.OwovzGay(),
         )
 
-        val available = all.filter { it.enabled }
+        /*
+        provide kurzelinks.de for German users only
+        Assigning Locale.getDefault() to a final static field (suspicious)
+        intended behavior: if the user changes locale while the app is running, the app will not update the list of available providers
+         */
+        @SuppressLint("ConstantLocale")
+        val availableWithDisabled = if (Locale.getDefault().language == "de") all else all.filter { it !is Kurzelinksde }
 
-        val infoList = all.distinctBy(ShortURLProvider::group)
+        val available = availableWithDisabled.filter { it.enabled }
+
+        val infoList = availableWithDisabled.distinctBy(ShortURLProvider::group)
 
         val default: ShortURLProvider = all.first()
 

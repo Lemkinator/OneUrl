@@ -24,6 +24,7 @@ import de.lemke.oneurl.domain.model.Shareaholic
 import de.lemke.oneurl.domain.model.Tinyurl
 import de.lemke.oneurl.domain.model.Ulvis
 import de.lemke.oneurl.domain.model.VgdIsgd
+import java.util.Locale
 
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
@@ -85,13 +86,16 @@ class ProviderActivity : AppCompatActivity() {
         binding.tinyurlContentButtonPrivacy.setOnClickListener { openLink(tinyurl.privacyURL) }
         binding.tinyurlContentButtonTerms.setOnClickListener { openLink(tinyurl.termsURL) }
 
-        val kurzelinks = Kurzelinksde.Kurzelinks()
-        binding.kurzelinksGroup.setOnClickListener {
-            toggleGroup(binding.kurzelinksGroup, binding.kurzelinksGroupArrow, binding.kurzelinksContent)
+        if (Locale.getDefault().language == "de") {
+            binding.kurzelinksLayout.visibility = View.VISIBLE
+            val kurzelinks = Kurzelinksde.Kurzelinks()
+            binding.kurzelinksGroup.setOnClickListener {
+                toggleGroup(binding.kurzelinksGroup, binding.kurzelinksGroupArrow, binding.kurzelinksContent)
+            }
+            binding.kurzelinksContentButtonMoreInformation.setOnClickListener { openLink(kurzelinks.infoURL) }
+            binding.kurzelinksContentButtonPrivacy.setOnClickListener { openLink(kurzelinks.privacyURL) }
+            binding.kurzelinksContentButtonTerms.setOnClickListener { openLink(kurzelinks.termsURL) }
         }
-        binding.kurzelinksContentButtonMoreInformation.setOnClickListener { openLink(kurzelinks.infoURL) }
-        binding.kurzelinksContentButtonPrivacy.setOnClickListener { openLink(kurzelinks.privacyURL) }
-        binding.kurzelinksContentButtonTerms.setOnClickListener { openLink(kurzelinks.termsURL) }
 
         val ulvis = Ulvis()
         binding.ulvisGroup.setOnClickListener { toggleGroup(binding.ulvisGroup, binding.ulvisGroupArrow, binding.ulvisContent) }
