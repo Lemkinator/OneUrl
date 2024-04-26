@@ -240,7 +240,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/redirect_hint_vgd_isgd"
+                        android:text="@string/redirect_hint_vgd"
                         android:textSize="18sp"
                         tools:ignore="RtlSymmetry" />
 

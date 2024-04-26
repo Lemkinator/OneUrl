@@ -20,8 +20,8 @@ android {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
         targetSdk = 34
-        versionCode = 12
-        versionName = "1.2.1"
+        versionCode = 13
+        versionName = "1.2.2"
 
         kapt {
             arguments {
@@ -126,7 +126,7 @@ dependencies {
     implementation("io.github.oneuiproject:icons:1.1.0")
 
     implementation("com.airbnb.android:lottie:6.4.0")
-    implementation("androidx.core:core-splashscreen:1.1.0-rc01")
+    implementation("androidx.core:core-splashscreen:1.2.0-alpha01")
     implementation("com.google.android.play:core-ktx:1.8.1")
     implementation("com.android.volley:volley:1.2.1")
 

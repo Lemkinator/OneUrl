@@ -42,7 +42,7 @@ sealed class VgdIsgd : ShortURLProvider {
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
             context.getString(R.string.redirect_hint),
-            context.getString(R.string.redirect_hint_vgd_isgd)
+            context.getString(R.string.redirect_hint_vgd)
         ),
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_report,
