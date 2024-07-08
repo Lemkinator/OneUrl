@@ -7,6 +7,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.urlEncodeAmpersand
 
 /*
 https://tinyurl.com/app
@@ -31,7 +32,7 @@ class Tinyurl : ShortURLProvider {
 
     override fun getAnalyticsURL(alias: String) = null //requires api token
 
-    override fun sanitizeLongURL(url: String) = url.trim()
+    override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     //Info
     override val infoIcons: List<Int> = listOf(
@@ -67,12 +68,12 @@ class Tinyurl : ShortURLProvider {
     override fun getCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
         val tag = "TinyurlCreateRequest"
-        val url = apiURL + "?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&alias=$alias")
+        val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&alias=$alias")
         Log.d(tag, "start request: $url")
         return StringRequest(
             Request.Method.POST,
@@ -101,7 +102,7 @@ class Tinyurl : ShortURLProvider {
                     }
                     when (statusCode) {
                         422, 400 -> {
-                            if (alias.isNullOrBlank()) errorCallback(GenerateURLError.InvalidURL(context))
+                            if (alias.isBlank()) errorCallback(GenerateURLError.InvalidURL(context))
                             else errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_invalid_url_or_alias)))
                         }
 

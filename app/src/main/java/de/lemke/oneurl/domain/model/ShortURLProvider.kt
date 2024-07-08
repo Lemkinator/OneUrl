@@ -75,7 +75,7 @@ class Unknown : ShortURLProvider {
     override fun getCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): Request<*> {
@@ -111,7 +111,7 @@ interface ShortURLProvider {
     fun getCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): Request<*>

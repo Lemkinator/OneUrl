@@ -7,6 +7,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.urlEncodeAmpersand
 
 /*
 https://github.com/1pt-co/api
@@ -31,7 +32,7 @@ class Oneptco : ShortURLProvider {
 
     override fun getAnalyticsURL(alias: String) = null
 
-    override fun sanitizeLongURL(url: String) = url.trim()
+    override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     //Info
     override val infoIcons: List<Int> = listOf(
@@ -57,12 +58,12 @@ class Oneptco : ShortURLProvider {
     override fun getCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
         val tag = "OneptcoCreateRequest"
-        val url = apiURL + "?long=$longURL" + (if (alias.isNullOrBlank()) "" else "&short=$alias")
+        val url = apiURL + "?long=$longURL" + (if (alias.isBlank()) "" else "&short=$alias")
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.POST,

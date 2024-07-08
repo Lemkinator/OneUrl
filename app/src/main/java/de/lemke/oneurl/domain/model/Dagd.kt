@@ -8,6 +8,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.domain.urlEncodeAmpersand
 import de.lemke.oneurl.domain.withHttps
 
 /*
@@ -60,25 +61,25 @@ class Dagd : ShortURLProvider {
 
     override fun getAnalyticsURL(alias: String) = "${baseURL}stats/$alias"
 
-    override fun sanitizeLongURL(url: String) = url.withHttps().trim()
+    override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
     override fun getCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
         val tag = "DagdCreateRequest_check"
-        if (alias == null) return requestCreateDAGD(context, longURL, null, successCallback, errorCallback)
+        if (alias.isBlank()) return requestCreateDAGD(context, longURL, "", successCallback, errorCallback)
         val checkUrlApi = "${baseURL}coshorten/$alias"
         Log.d(tag, "start request: $checkUrlApi")
         return StringRequest(
             Request.Method.GET,
             checkUrlApi,
             { response ->
-                if (response.trim() != longURL) {
-                    Log.e(tag, "error, shortURL already exists, but has different longURL, longURL: $longURL, response: $response")
+                if (sanitizeLongURL(response) != longURL) {
+                    Log.e(tag, "error, shortURL already exists, but has different longURL, longURL: $longURL, response: ${sanitizeLongURL(response)} ($response)")
                     errorCallback(GenerateURLError.AliasAlreadyExists(context))
                     return@StringRequest
                 }
@@ -117,12 +118,12 @@ class Dagd : ShortURLProvider {
     private fun requestCreateDAGD(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
         val tag = "DagdCreateRequest_create"
-        val url = apiURL + "?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias")
+        val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&shorturl=$alias")
         Log.d(tag, "start request: $url")
         return StringRequest(
             Request.Method.GET,

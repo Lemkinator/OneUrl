@@ -7,6 +7,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.urlEncodeAmpersand
 import org.json.JSONObject
 
 /*
@@ -28,7 +29,7 @@ class Shareaholic : ShortURLProvider {
 
     override fun getAnalyticsURL(alias: String) = null
 
-    override fun sanitizeLongURL(url: String) = url.trim()
+    override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     //Info
     override val infoIcons: List<Int> = listOf()
@@ -56,7 +57,7 @@ class Shareaholic : ShortURLProvider {
     override fun getCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {

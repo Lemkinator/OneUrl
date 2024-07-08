@@ -7,6 +7,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.urlEncodeAmpersand
 
 /*
 docs:
@@ -29,7 +30,7 @@ sealed class VgdIsgd : ShortURLProvider {
 
     override fun getAnalyticsURL(alias: String) = "${baseURL}stats.php?url=$alias"
 
-    override fun sanitizeLongURL(url: String) = url.trim()
+    override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     //Info
     override val infoIcons: List<Int> = listOf(
@@ -96,12 +97,12 @@ sealed class VgdIsgd : ShortURLProvider {
     fun getVgdIsgdCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
         val tag = "VgdIsgdCreateRequest_$name"
-        val url = apiURL + "?format=json&url=" + longURL + (if (alias.isNullOrBlank()) "" else "&shorturl=$alias&logstats=1")
+        val url = apiURL + "?format=json&url=" + longURL + (if (alias.isBlank()) "" else "&shorturl=$alias&logstats=1")
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.GET,
@@ -196,7 +197,7 @@ sealed class VgdIsgd : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest = getVgdIsgdCreateRequest(context, longURL, alias, successCallback, errorCallback)
@@ -213,7 +214,7 @@ sealed class VgdIsgd : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest = getVgdIsgdCreateRequest(context, longURL, alias, successCallback, errorCallback)

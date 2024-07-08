@@ -72,7 +72,7 @@ sealed class Kurzelinksde : ShortURLProvider {
     fun getKurzelinksCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
@@ -138,7 +138,7 @@ sealed class Kurzelinksde : ShortURLProvider {
                 "apiversion" to "22",
                 "url" to longURL,
                 "servicedomain" to baseURL.withoutHttps(),
-                "requesturl" to (alias ?: "")
+                "requesturl" to alias
             )
         }
     }
@@ -154,7 +154,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
@@ -171,7 +171,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
@@ -188,7 +188,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
@@ -205,7 +205,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)

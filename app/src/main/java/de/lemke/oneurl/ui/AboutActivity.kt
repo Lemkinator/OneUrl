@@ -1,5 +1,6 @@
 package de.lemke.oneurl.ui
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.IntentSender.SendIntentException
@@ -11,14 +12,17 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.tasks.Task
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.ActivityResult
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.tasks.Task
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
@@ -26,7 +30,12 @@ import de.lemke.oneurl.databinding.ActivityAboutBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.OpenAppUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import dev.oneuiproject.oneui.layout.AppInfoLayout.*
+import dev.oneuiproject.oneui.layout.AppInfoLayout.LOADING
+import dev.oneuiproject.oneui.layout.AppInfoLayout.NOT_UPDATEABLE
+import dev.oneuiproject.oneui.layout.AppInfoLayout.NO_CONNECTION
+import dev.oneuiproject.oneui.layout.AppInfoLayout.NO_UPDATE
+import dev.oneuiproject.oneui.layout.AppInfoLayout.OnClickListener
+import dev.oneuiproject.oneui.layout.AppInfoLayout.UPDATE_AVAILABLE
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -66,7 +75,7 @@ class AboutActivity : AppCompatActivity() {
             }
         })
         val version: TextView = binding.appInfoLayout.findViewById(dev.oneuiproject.oneui.design.R.id.app_info_version)
-        lifecycleScope. launch { setVersionTextView(version, getUserSettings().devModeEnabled) }
+        lifecycleScope.launch { setVersionTextView(version, getUserSettings().devModeEnabled) }
         version.setOnClickListener {
             clicks++
             if (clicks > 5) {
@@ -143,18 +152,22 @@ class AboutActivity : AppCompatActivity() {
 
     private fun startUpdateFlow() {
         try {
-            appUpdateManager.startUpdateFlowForResult( // Pass the intent that is returned by 'getAppUpdateInfo()'.
-                appUpdateInfo,  //AppUpdateType.FLEXIBLE,
-                AppUpdateType.IMMEDIATE,
-                this,
-                UPDATEREQUESTCODE
+            appUpdateManager.startUpdateFlowForResult(
+                appUpdateInfo,
+                registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+                    when (result.resultCode) {
+                        // For immediate updates, you might not receive RESULT_OK because
+                        // the update should already be finished by the time control is given back to your app.
+                        Activity.RESULT_OK -> Log.d("InAppUpdate", "Update successful")
+                        Activity.RESULT_CANCELED -> Log.d("InAppUpdate", "Update canceled")
+                        ActivityResult.RESULT_IN_APP_UPDATE_FAILED ->
+                            Log.d("InAppUpdate", "Update failed")
+                    }
+                },
+                AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
             )
         } catch (e: SendIntentException) {
             e.printStackTrace()
         }
-    }
-
-    companion object {
-        private const val UPDATEREQUESTCODE = 5
     }
 }

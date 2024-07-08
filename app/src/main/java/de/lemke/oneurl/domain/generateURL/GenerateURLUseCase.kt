@@ -22,7 +22,7 @@ class GenerateURLUseCase @Inject constructor(
     suspend operator fun invoke(
         provider: ShortURLProvider,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit = { },
         errorCallback: (error: GenerateURLError) -> Unit = { },
     ) = withContext(Dispatchers.Default) {

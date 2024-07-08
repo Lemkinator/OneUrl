@@ -76,12 +76,12 @@ class Ulvis : ShortURLProvider {
     override fun getCreateRequest(
         context: Context,
         longURL: String,
-        alias: String?,
+        alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
         val tag = "UlvisCreateRequest"
-        val url = apiURL + "?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&custom=$alias&private=1")
+        val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&custom=$alias&private=1")
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.POST,

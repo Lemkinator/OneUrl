@@ -213,7 +213,7 @@ sealed class Owovz : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
@@ -226,7 +226,7 @@ sealed class Owovz : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
@@ -238,7 +238,7 @@ sealed class Owovz : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
@@ -250,7 +250,7 @@ sealed class Owovz : ShortURLProvider {
         override fun getCreateRequest(
             context: Context,
             longURL: String,
-            alias: String?,
+            alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
