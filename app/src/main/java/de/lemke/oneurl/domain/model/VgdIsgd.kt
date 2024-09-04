@@ -117,6 +117,7 @@ sealed class VgdIsgd : ShortURLProvider {
                     Error code 1 - there was a problem with the original long URL provided
                     Please specify a URL to shorten.                                            //should not happen, checked before
                     Please enter a valid URL to shorten
+                    Sorry, the URL you entered is on our internal blacklist. It may have been used abusively in the past, or it may link to another URL redirection service.
                     Error code 2 - there was a problem with the short URL provided (for custom short URLs)
                     Short URLs must be at least 5 characters long                               //should not happen, checked before
                     Short URLs may only contain the characters a-z, 0-9 and underscore          //should not happen, checked before
@@ -125,7 +126,12 @@ sealed class VgdIsgd : ShortURLProvider {
                     Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
                      */
                     when (response.getString("errorcode")) {
-                        "1" -> errorCallback(GenerateURLError.InvalidURL(context))
+                        "1" -> if (response.optString("errormessage").contains("blacklist", ignoreCase = true)) {
+                            errorCallback(GenerateURLError.BlacklistedURL(context))
+                        } else {
+                            errorCallback(GenerateURLError.InvalidURL(context))
+                        }
+
                         "2" -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
                         "3" -> errorCallback(GenerateURLError.RateLimitExceeded(context))
                         "4" -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))

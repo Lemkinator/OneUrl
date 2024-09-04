@@ -91,6 +91,11 @@ sealed class GenerateURLError(
         context.getString(R.string.error_invalid_url)
     )
 
+    class BlacklistedURL(context: Context) : GenerateURLError(
+        context.getString(R.string.error),
+        context.getString(R.string.error_blacklisted_url)
+    )
+
     class AliasAlreadyExists(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_alias_already_exists)

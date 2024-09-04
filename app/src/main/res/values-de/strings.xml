@@ -111,6 +111,7 @@
     <string name="error_invalid_url">Ungültige URL.</string>
     <string name="error_invalid_alias">Ungültiges Kürzel (erlaubte Zeichen: %1$s).</string>
     <string name="error_invalid_url_or_alias">Ungültige URL oder Kürzel.</string>
+    <string name="error_blacklisted_url">Diese URL ist auf der Blacklist. Sie wurde möglicherweise in der Vergangenheit missbräuchlich verwendet oder verweist auf einen anderen URL-Verkürzungsdienst. Wenn du weiterhin versuchst, URLs aus der Blacklist zu verkürzen, könntest du von der Nutzung dieses Dienstes ausgeschlossen werden.</string>
     <string name="error_rate_limit_exceeded">Du hast zu viele Anfragen gestellt. Bitte verwende einen anderen Anbieter oder warte mindestens 5 Minuten, bevor du eine weitere Anfrage stellst. Andernfalls könntest du für die Nutzung dieses Dienstes gesperrt werden.</string>
     <string name="error_service_unavailable">Dienst nicht verfügbar.</string>
     <string name="error_service_unavailable_text">Dienst aktuell nicht verfügbar. Bitte versuche es später erneut oder wähle einen anderen Anbieter.</string>

@@ -131,6 +131,7 @@
     <string name="error_invalid_url">Invalid URL.</string>
     <string name="error_invalid_alias">Invalid alias (allowed characters: %1$s).</string>
     <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
+    <string name="error_blacklisted_url">This URL is blacklisted. It may have been used abusively in the past, or it may link to another URL redirection service. If you continue to try to shorten blacklisted URLs, you may be blocked from using this service.</string>
     <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>
     <string name="error_service_unavailable">Service unavailable</string>
     <string name="error_service_unavailable_text">Service currently unavailable. Please try again later or use another provider.</string>
