@@ -83,6 +83,22 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <dev.oneuiproject.oneui.widget.RelatedCard
+                android:id="@+id/tipsCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="20dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tipsCardText"
+                    style="@style/Base.CardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </dev.oneuiproject.oneui.widget.RelatedCard>
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
@@ -103,13 +119,28 @@
             android:layout_gravity="center"
             android:text="@string/add" />
 
-        <androidx.appcompat.widget.SeslProgressBar
-            android:id="@+id/add_url_footer_button_progress"
-            style="@style/Widget.AppCompat.ProgressBar"
-            android:layout_width="32.0dp"
-            android:layout_height="32.0dp"
-            android:layout_gravity="center"
-            android:visibility="gone" />
+        <LinearLayout
+            android:id="@+id/add_url_footer_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/add_url_footer_progress_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center" />
+
+            <androidx.appcompat.widget.SeslProgressBar
+                android:id="@+id/add_url_footer_progress_bar"
+                style="@style/Widget.AppCompat.ProgressBar"
+                android:layout_width="32.0dp"
+                android:layout_height="32.0dp"
+                android:layout_gravity="center" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

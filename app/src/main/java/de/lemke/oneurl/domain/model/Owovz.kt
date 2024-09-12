@@ -219,6 +219,11 @@ sealed class Owovz : ShortURLProvider {
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "owo", longURL, successCallback, errorCallback)
 
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.info),
+            context.getString(R.string.owovc_fun_text)
+        )
+
     }
 
     class OwovzZws : Owovz() {
@@ -231,6 +236,11 @@ sealed class Owovz : ShortURLProvider {
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "zws", longURL, successCallback, errorCallback)
+
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.info),
+            context.getString(R.string.owovc_zws)
+        )
     }
 
     class OwovzSketchy : Owovz() {
@@ -243,6 +253,11 @@ sealed class Owovz : ShortURLProvider {
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "sketchy", longURL, successCallback, errorCallback)
+
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.info),
+            context.getString(R.string.owovc_sketchy)
+        )
     }
 
     class OwovzGay : Owovz() {
@@ -255,5 +270,10 @@ sealed class Owovz : ShortURLProvider {
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "gay", longURL, successCallback, errorCallback)
+
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.warning),
+            context.getString(R.string.owovc_gay)
+        )
     }
 }

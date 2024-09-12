@@ -570,21 +570,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         }
 
         inner class ViewHolder internal constructor(itemView: View, var isSeparator: Boolean) : RecyclerView.ViewHolder(itemView) {
-            var parentView: LinearLayout
-            var listItemImg: ImageView
-            var listItemTitle: TextView
-            var listItemSubtitle1: TextView
-            var listItemSubtitle2: TextView
-            var listItemFav: AppCompatButton
-
-            init {
-                parentView = itemView as LinearLayout
-                listItemImg = itemView.findViewById(R.id.list_item_img)
-                listItemTitle = parentView.findViewById(R.id.list_item_title)
-                listItemSubtitle1 = parentView.findViewById(R.id.list_item_subtitle1)
-                listItemSubtitle2 = parentView.findViewById(R.id.list_item_subtitle2)
-                listItemFav = parentView.findViewById(R.id.list_item_fav)
-            }
+            var parentView: LinearLayout = itemView as LinearLayout
+            var listItemImg: ImageView = itemView.findViewById(R.id.list_item_img)
+            var listItemTitle: TextView = parentView.findViewById(R.id.list_item_title)
+            var listItemSubtitle1: TextView = parentView.findViewById(R.id.list_item_subtitle1)
+            var listItemSubtitle2: TextView = parentView.findViewById(R.id.list_item_subtitle2)
+            var listItemFav: AppCompatButton = parentView.findViewById(R.id.list_item_fav)
         }
     }
 

@@ -107,8 +107,7 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-
-    private fun initViews() {
+    private fun refreshOwovzVisitCount() {
         (url.shortURLProvider as? Owovz)?.let {
             it.getURLVisitCount(this, url.shortURL) { visitCount ->
                 if (visitCount != null) {
@@ -120,6 +119,22 @@ class URLActivity : AppCompatActivity() {
                     binding.urlVisitsLayout.visibility = View.GONE
                 }
             }
+        }
+    }
+
+
+    private fun initViews() {
+        refreshOwovzVisitCount()
+        binding.urlVisitsRefreshButton.setOnClickListener {
+            refreshOwovzVisitCount()
+            binding.urlVisitsRefreshButton.isEnabled = false
+            binding.urlVisitsRefreshButton.alpha = 0.5f
+            binding.urlVisitsRefreshButton.animate().rotationBy(-720f).setDuration(1500)
+                .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator()).withEndAction {
+                binding.urlVisitsRefreshButton.isEnabled = true
+                binding.urlVisitsRefreshButton.alpha = 1f
+            }
+
         }
         val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
         val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {

@@ -95,9 +95,9 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             if (showInAppReviewOrFinish.canShowInAppReview()) {
                 setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
             }
-        }
-        pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-            lifecycleScope.launch { exportQRCode(uri, qrCode, url) }
+            pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
+                lifecycleScope.launch { exportQRCode(uri, qrCode, url) }
+            }
         }
     }
 

@@ -284,10 +284,10 @@
 
                 <LinearLayout
                     android:id="@+id/url_visits_layout"
-                    android:visibility="gone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:visibility="gone">
 
                     <TextView
                         style="?android:attr/textAppearanceLarge"
@@ -309,6 +309,16 @@
                         android:layout_weight="1"
                         android:textSize="18sp"
                         android:transitionName="added" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/url_visits_refresh_button"
+                        style="@style/ButtonStyle.Transparent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="18dp"
+                        android:layout_marginEnd="18dp"
+                        android:drawableEnd="@drawable/ic_oui_refresh"
+                        android:drawableTint="@color/primary_text_icon_color" />
 
                 </LinearLayout>
 

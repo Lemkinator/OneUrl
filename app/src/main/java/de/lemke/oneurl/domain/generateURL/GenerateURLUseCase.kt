@@ -10,7 +10,9 @@ import android.net.Uri
 import android.widget.Toast
 import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.oneurl.R
+import de.lemke.oneurl.domain.UrlhausCheckUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.withHttps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -18,14 +20,17 @@ import javax.inject.Inject
 
 class GenerateURLUseCase @Inject constructor(
     @ActivityContext private val context: Context,
+    private val urlhausCheck: UrlhausCheckUseCase,
 ) {
     suspend operator fun invoke(
         provider: ShortURLProvider,
         longURL: String,
         alias: String,
+        setLoadingMessage: (Int) -> Unit,
         successCallback: (shortURL: String) -> Unit = { },
         errorCallback: (error: GenerateURLError) -> Unit = { },
     ) = withContext(Dispatchers.Default) {
+        setLoadingMessage(R.string.checking_internet)
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
         if (capabilities == null || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
@@ -34,8 +39,20 @@ class GenerateURLUseCase @Inject constructor(
             errorCallback(GenerateURLError.NoInternet(context))
             return@withContext
         }
+        setLoadingMessage(R.string.checking_url)
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
-            provider.getCreateRequest(context, longURL, alias, successCallback, errorCallback)
+            urlhausCheck(
+                longURL.withHttps(),
+                {
+                    setLoadingMessage(R.string.generating_url)
+                    RequestQueueSingleton.getInstance(context).addToRequestQueue(
+                        provider.getCreateRequest(context, longURL, alias, successCallback, errorCallback)
+                    )
+                },
+                { message, urlhausLink, virustotalLink ->
+                    errorCallback(GenerateURLError.BlacklistedURL(context, message, urlhausLink, virustotalLink))
+                }
+            )
         )
     }
 }
@@ -43,7 +60,8 @@ class GenerateURLUseCase @Inject constructor(
 sealed class GenerateURLError(
     val title: String,
     val message: String,
-    val action: ErrorAction? = null,
+    val actionOne: ErrorAction? = null,
+    val actionTwo: ErrorAction? = null,
 ) {
     class Unknown(context: Context) : GenerateURLError(context.getString(R.string.error), context.getString(R.string.error_unknown))
     class Custom(context: Context, customMessage: String? = null, customTitle: String? = null) :
@@ -91,9 +109,23 @@ sealed class GenerateURLError(
         context.getString(R.string.error_invalid_url)
     )
 
-    class BlacklistedURL(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
-        context.getString(R.string.error_blacklisted_url)
+    class BlacklistedURL(context: Context, message: String? = null, urlhausLink: String? = null, virustotalLink: String? = null) : GenerateURLError(
+        context.getString(R.string.warning),
+        message ?: context.getString(R.string.error_blacklisted_url),
+        if (urlhausLink != null) ErrorAction("URLhaus") {
+            try {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(urlhausLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
+            }
+        } else null,
+        if (virustotalLink != null) ErrorAction("VirusTotal") {
+            try {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(virustotalLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
+            }
+        } else null
     )
 
     class AliasAlreadyExists(context: Context) : GenerateURLError(

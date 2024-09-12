@@ -20,8 +20,8 @@ android {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
         targetSdk = 34
-        versionCode = 14
-        versionName = "1.2.3"
+        versionCode = 15
+        versionName = "1.2.4"
 
         kapt {
             arguments {
@@ -31,8 +31,6 @@ android {
         //ksp {arg("room.schemaLocation", "$projectDir/schemas") }
 
         resourceConfigurations += listOf("en", "de")
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {

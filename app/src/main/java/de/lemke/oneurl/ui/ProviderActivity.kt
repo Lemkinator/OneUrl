@@ -24,6 +24,7 @@ import de.lemke.oneurl.domain.model.Shareaholic
 import de.lemke.oneurl.domain.model.Tinyurl
 import de.lemke.oneurl.domain.model.Ulvis
 import de.lemke.oneurl.domain.model.VgdIsgd
+import de.lemke.oneurl.domain.model.Zwsim
 import java.util.Locale
 
 @AndroidEntryPoint
@@ -113,6 +114,9 @@ class ProviderActivity : AppCompatActivity() {
         binding.shareaholicContentButtonMoreInformation.setOnClickListener { openLink(shareaholic.infoURL) }
         binding.shareaholicContentButtonPrivacy.setOnClickListener { openLink(shareaholic.privacyURL) }
         binding.shareaholicContentButtonTerms.setOnClickListener { openLink(shareaholic.termsURL) }
+
+        binding.zwsimGroup.setOnClickListener { toggleGroup(binding.zwsimGroup, binding.zwsimGroupArrow, binding.zwsimContent) }
+        binding.zwsimContentButtonMoreInformation.setOnClickListener { openLink(Zwsim().infoURL) }
 
         binding.owovcGroup.setOnClickListener { toggleGroup(binding.owovcGroup, binding.owovcGroupArrow, binding.owovcContent) }
         binding.owovcContentButtonMoreInformation.setOnClickListener {

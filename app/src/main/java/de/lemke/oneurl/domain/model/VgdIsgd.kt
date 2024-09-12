@@ -94,6 +94,8 @@ sealed class VgdIsgd : ShortURLProvider {
         )
     }
 
+    override fun getTipsCardTitleAndInfo(context: Context) = null
+
     fun getVgdIsgdCreateRequest(
         context: Context,
         longURL: String,

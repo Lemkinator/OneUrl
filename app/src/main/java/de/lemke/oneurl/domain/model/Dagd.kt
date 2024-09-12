@@ -59,6 +59,8 @@ class Dagd : ShortURLProvider {
         )
     )
 
+    override fun getTipsCardTitleAndInfo(context: Context) = null
+
     override fun getAnalyticsURL(alias: String) = "${baseURL}stats/$alias"
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()

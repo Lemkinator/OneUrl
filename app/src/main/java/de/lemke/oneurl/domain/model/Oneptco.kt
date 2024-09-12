@@ -54,6 +54,7 @@ class Oneptco : ShortURLProvider {
             infoURL
         )
     )
+    override fun getTipsCardTitleAndInfo(context: Context) = null
 
     override fun getCreateRequest(
         context: Context,

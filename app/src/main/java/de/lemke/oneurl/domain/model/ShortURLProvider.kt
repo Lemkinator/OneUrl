@@ -10,8 +10,13 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import java.util.Locale
 
 /*
-https://cleanuri.com/docs //no alias
-https://vurl.com/developers/ //no alias
+https://github.com/ShareX/ShareX/tree/develop/ShareX.UploadersLib/URLShorteners
+
+https://cleanuri.com/docs //no alias, sometimes redirects to suspicious sites???
+https://vurl.com/developers/ //no alias, shows hint before redirecting
+https://turl.ca/api.php?url=https://example.com 500 (Internal Server Error)
+offline: nl.cm, 2.gp, turl.ca
+requires api key: kutt.it
 https://github.com/robvanbakel/gotiny-api
 CHILPIT -> "${baseURL}api.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
  */
@@ -30,6 +35,7 @@ class ShortURLProviderCompanion {
             Ulvis(), //disabled
             Oneptco(),
             Shareaholic(),
+            Zwsim(),
             Owovz.OwovzOwo(),
             Owovz.OwovzZws(),
             Owovz.OwovzSketchy(),
@@ -91,6 +97,7 @@ class Unknown : ShortURLProvider {
     override val infoIcons = emptyList<Int>()
     override fun getInfoContents(context: Context) = emptyList<ProviderInfo>()
     override fun getInfoButtons(context: Context) = emptyList<ProviderInfo>()
+    override fun getTipsCardTitleAndInfo(context: Context) = null
 }
 
 interface ShortURLProvider {
@@ -120,6 +127,7 @@ interface ShortURLProvider {
     val infoIcons: List<Int>
     fun getInfoContents(context: Context): List<ProviderInfo>
     fun getInfoButtons(context: Context): List<ProviderInfo>
+    fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>?
 }
 
 class ProviderInfo(

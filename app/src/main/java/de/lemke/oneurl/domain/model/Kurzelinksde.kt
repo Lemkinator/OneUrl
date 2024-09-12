@@ -69,6 +69,11 @@ sealed class Kurzelinksde : ShortURLProvider {
         )
     }
 
+    override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+        context.getString(R.string.info),
+        context.getString(R.string.privacy_kurzelinks)
+    )
+
     fun getKurzelinksCreateRequest(
         context: Context,
         longURL: String,

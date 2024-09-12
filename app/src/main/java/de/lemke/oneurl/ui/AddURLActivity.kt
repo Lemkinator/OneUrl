@@ -25,7 +25,6 @@ import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
-import de.lemke.oneurl.domain.model.Owovz
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
@@ -142,28 +141,13 @@ class AddURLActivity : AppCompatActivity() {
         selectedShortURLProvider = provider
         if (provider.aliasConfig != null) binding.textInputLayoutAlias.visibility = View.VISIBLE
         else binding.textInputLayoutAlias.visibility = View.GONE
-        val userSettings = getUserSettings()
-        if (provider is Owovz.OwovzGay && userSettings.showOWOVCGAYWarning) {
-            AlertDialog.Builder(this@AddURLActivity)
-                .setTitle(R.string.warning)
-                .setMessage(R.string.owovc_gay)
-                .setPositiveButton(R.string.ok, null)
-                .setNegativeButton(R.string.dont_show_again) { _: DialogInterface, _: Int ->
-                    lifecycleScope.launch { updateUserSettings { it.copy(showOWOVCGAYWarning = false) } }
-                }
-                .create()
-                .show()
-        } else if (provider is Owovz.OwovzZws && userSettings.showOWOVCZWSInfo) {
-            AlertDialog.Builder(this@AddURLActivity)
-                .setTitle(R.string.info)
-                .setMessage(R.string.owovc_zws)
-                .setPositiveButton(R.string.ok, null)
-                .setNegativeButton(R.string.dont_show_again) { _: DialogInterface, _: Int ->
-                    lifecycleScope.launch { updateUserSettings { it.copy(showOWOVCZWSInfo = false) } }
-                }
-                .create()
-                .show()
-        }
+        val tipsCardInfo = provider.getTipsCardTitleAndInfo(this)
+        if (tipsCardInfo != null) {
+            binding.tipsCard.titleText = tipsCardInfo.first
+            binding.tipsCardText.text = tipsCardInfo.second
+            binding.tipsCardText.setTextColor(getColor(R.color.primary_text_icon_color))
+            binding.tipsCard.visibility = View.VISIBLE
+        } else binding.tipsCard.visibility = View.GONE
         updateUserSettings { it.copy(selectedShortURLProvider = provider) }
     }
 
@@ -174,8 +158,12 @@ class AddURLActivity : AppCompatActivity() {
         binding.addUrlFooterButton.setOnClickListener { checkAndAddURL() }
     }
 
-    private fun setLoading(loading: Boolean) {
-        binding.addUrlFooterButtonProgress.visibility = if (loading) View.VISIBLE else View.GONE
+    private fun setLoading(messageStringResource: Int) = setLoading(getString(messageStringResource))
+
+    private fun setLoading(message: String?) {
+        val loading = !message.isNullOrBlank()
+        binding.addUrlFooterProgress.visibility = if (loading) View.VISIBLE else View.GONE
+        binding.addUrlFooterProgressText.text = message
         binding.addUrlFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
         binding.providerSpinner.isEnabled = !loading
         binding.editTextURL.isEnabled = !loading
@@ -208,11 +196,11 @@ class AddURLActivity : AppCompatActivity() {
                 }
             }
         }
-        setLoading(true)
         lifecycleScope.launch { checkDuplicates(provider, provider.sanitizeLongURL(binding.editTextURL.text.toString()), alias) }
     }
 
     private suspend fun checkDuplicates(provider: ShortURLProvider, longURL: String, alias: String) {
+        setLoading(R.string.checking_duplicates)
         val existingURLs = getURL(provider, longURL)
         if (existingURLs.isNotEmpty()) {
             if (alias.isBlank()) {
@@ -240,7 +228,7 @@ class AddURLActivity : AppCompatActivity() {
             }
             .create()
             .show()
-        setLoading(false)
+        setLoading(null)
     }
 
     private suspend fun createURL(provider: ShortURLProvider, longURL: String, alias: String) {
@@ -250,20 +238,26 @@ class AddURLActivity : AppCompatActivity() {
                     provider = provider,
                     longURL = longURL,
                     alias = alias,
+                    setLoadingMessage = { lifecycleScope.launch { setLoading(it) } },
                     errorCallback = {
                         lifecycleScope.launch {
                             AlertDialog.Builder(this@AddURLActivity).apply {
                                 setTitle(it.title)
                                 setMessage(it.message)
-                                if (it.action != null) {
-                                    setNeutralButton(it.action.title) { _: DialogInterface, _: Int ->
-                                        it.action.action()
+                                setNeutralButton(R.string.ok, null)
+                                if (it.actionOne != null) {
+                                    setPositiveButton(it.actionOne.title) { _: DialogInterface, _: Int ->
+                                        it.actionOne.action()
                                     }
                                 }
-                                setPositiveButton(R.string.ok, null)
+                                if (it.actionTwo != null) {
+                                    setNegativeButton(it.actionTwo.title) { _: DialogInterface, _: Int ->
+                                        it.actionTwo.action()
+                                    }
+                                }
                                 show()
                             }
-                            setLoading(false)
+                            setLoading(null)
                         }
                     },
                     successCallback = { shortURL ->
@@ -280,7 +274,7 @@ class AddURLActivity : AppCompatActivity() {
                                     added = ZonedDateTime.now()
                                 )
                             )
-                            setLoading(false)
+                            setLoading(null)
                             Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
                             finish()
                         }

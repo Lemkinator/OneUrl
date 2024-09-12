@@ -54,6 +54,8 @@ class Shareaholic : ShortURLProvider {
         )
     )
 
+    override fun getTipsCardTitleAndInfo(context: Context) = null
+
     override fun getCreateRequest(
         context: Context,
         longURL: String,
