@@ -78,6 +78,9 @@ class GenerateQRCodeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityGenerateQrCodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
+            if (this::qrCode.isInitialized && this::url.isInitialized) exportQRCode(uri, qrCode, url)
+        }
         binding.toolbarLayout.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
         binding.toolbarLayout.tooltipText = getString(R.string.sesl_navigate_up)
         lifecycleScope.launch {
@@ -94,9 +97,6 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             initViews()
             if (showInAppReviewOrFinish.canShowInAppReview()) {
                 setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
-            }
-            pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-                lifecycleScope.launch { exportQRCode(uri, qrCode, url) }
             }
         }
     }

@@ -3,7 +3,6 @@ package de.lemke.oneurl.ui
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.IntentSender.SendIntentException
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -12,6 +11,8 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -45,6 +46,7 @@ class AboutActivity : AppCompatActivity() {
     private lateinit var appUpdateManager: AppUpdateManager
     private lateinit var appUpdateInfo: AppUpdateInfo
     private lateinit var appUpdateInfoTask: Task<AppUpdateInfo>
+    private lateinit var activityResultLauncher: ActivityResultLauncher<IntentSenderRequest>
     private var clicks = 0
 
     @Inject
@@ -98,6 +100,15 @@ class AboutActivity : AppCompatActivity() {
         binding.aboutBtnAboutMe.setOnClickListener {
             startActivity(Intent(this@AboutActivity, AboutMeActivity::class.java))
         }
+        activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            when (result.resultCode) {
+                // For immediate updates, you might not receive RESULT_OK because
+                // the update should already be finished by the time control is given back to your app.
+                Activity.RESULT_OK -> Log.d("InAppUpdate", "Update successful")
+                Activity.RESULT_CANCELED -> Log.w("InAppUpdate", "Update canceled")
+                ActivityResult.RESULT_IN_APP_UPDATE_FAILED -> Log.e("InAppUpdate", "Update failed")
+            }
+        }
         checkUpdate()
     }
 
@@ -145,8 +156,8 @@ class AboutActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener { appUpdateInfo: Exception ->
-                Log.w("AboutActivity", appUpdateInfo.message.toString())
                 binding.appInfoLayout.status = NOT_UPDATEABLE
+                Log.w("AboutActivity", appUpdateInfo.message.toString())
             }
     }
 
@@ -154,19 +165,11 @@ class AboutActivity : AppCompatActivity() {
         try {
             appUpdateManager.startUpdateFlowForResult(
                 appUpdateInfo,
-                registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-                    when (result.resultCode) {
-                        // For immediate updates, you might not receive RESULT_OK because
-                        // the update should already be finished by the time control is given back to your app.
-                        Activity.RESULT_OK -> Log.d("InAppUpdate", "Update successful")
-                        Activity.RESULT_CANCELED -> Log.d("InAppUpdate", "Update canceled")
-                        ActivityResult.RESULT_IN_APP_UPDATE_FAILED ->
-                            Log.d("InAppUpdate", "Update failed")
-                    }
-                },
+                activityResultLauncher,
                 AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
             )
-        } catch (e: SendIntentException) {
+        } catch (e: Exception) {
+            binding.appInfoLayout.status = NOT_UPDATEABLE
             e.printStackTrace()
         }
     }
