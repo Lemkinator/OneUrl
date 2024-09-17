@@ -44,7 +44,7 @@ class URLActivity : AppCompatActivity() {
     private lateinit var url: URL
     private lateinit var boldText: String
     private lateinit var saveLocation: SaveLocation
-    private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri>
+    private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri?>
     private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
 
     @Inject

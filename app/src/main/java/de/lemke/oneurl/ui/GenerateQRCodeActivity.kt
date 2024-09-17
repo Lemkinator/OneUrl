@@ -38,7 +38,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity() {
     private lateinit var binding: ActivityGenerateQrCodeBinding
-    private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri>
+    private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri?>
     private lateinit var url: String
     private lateinit var qrCode: Bitmap
     private lateinit var saveLocation: SaveLocation
