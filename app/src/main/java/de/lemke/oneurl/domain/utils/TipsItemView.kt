@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import de.lemke.oneurl.R
@@ -43,7 +44,7 @@ class TipsItemView @JvmOverloads constructor(
         setPadding(horizontalPadding, 0, horizontalPadding, 0)
     }
 
-    fun setIcon(@DrawableRes resId: Int) = setIcon(context.getDrawable(resId))
+    fun setIcon(@DrawableRes resId: Int) = setIcon(AppCompatResources.getDrawable(context, resId))
 
     private fun setIcon(icon: Drawable?) {
         val hasIcon = icon != null

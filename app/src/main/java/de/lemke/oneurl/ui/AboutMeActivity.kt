@@ -10,6 +10,7 @@ import android.os.SystemClock
 import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.TooltipCompat
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.AppBarLayout.OnOffsetChangedListener
@@ -82,7 +83,7 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
             ViewUtils.SEM_ROUNDED_CORNER_TOP_LEFT or ViewUtils.SEM_ROUNDED_CORNER_TOP_RIGHT,
             getColor(dev.oneuiproject.oneui.design.R.color.oui_round_and_bgcolor)
         )
-        val appIcon = getDrawable(R.drawable.me4_round)
+        val appIcon = AppCompatResources.getDrawable(this, R.drawable.me4_round)
         binding.aboutHeaderIcon.setImageDrawable(appIcon)
         binding.aboutBottomIcon.setImageDrawable(appIcon)
         binding.aboutHeaderGithub.setOnClickListener(this)

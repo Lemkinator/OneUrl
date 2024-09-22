@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.Log
 import android.util.TypedValue
+import androidx.appcompat.content.res.AppCompatResources
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import dev.oneuiproject.oneui.qr.QREncoder
@@ -73,7 +74,7 @@ class GenerateQRCodeUseCase @Inject constructor(
     }
 
     private fun drawIcon(bitmap: Bitmap) {
-        val icon = context.getDrawable(R.drawable.ic_launcher_themed) ?: return
+        val icon = AppCompatResources.getDrawable(context, R.drawable.ic_launcher_themed) ?: return
         val size = getPixel(40)
         val iconTop = bitmap.height / 2 - size / 2
         val iconLeft = bitmap.width / 2 - size / 2

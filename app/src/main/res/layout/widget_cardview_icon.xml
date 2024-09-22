@@ -13,7 +13,8 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/sesl_list_divider_height"
             android:background="?attr/listDividerColor"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:ignore="PrivateResource" />
 
         <LinearLayout
             android:id="@+id/cardview_container"

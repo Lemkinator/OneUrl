@@ -109,8 +109,8 @@ class SettingsActivity : AppCompatActivity() {
                 autoDarkModePref.isChecked = userSettings.autoDarkMode
                 darkModePref.isEnabled = !autoDarkModePref.isChecked
                 darkModePref.value = if (userSettings.darkMode) "1" else "0"
-                saveLocationPref.entries = SaveLocation.values().map { it.toLocalizedString(requireContext()) }.toTypedArray()
-                saveLocationPref.entryValues = SaveLocation.values().map { it.name }.toTypedArray()
+                saveLocationPref.entries = SaveLocation.entries.map { it.toLocalizedString(requireContext()) }.toTypedArray()
+                saveLocationPref.entryValues = SaveLocation.entries.map { it.name }.toTypedArray()
                 saveLocationPref.value = userSettings.saveLocation.name
             }
 

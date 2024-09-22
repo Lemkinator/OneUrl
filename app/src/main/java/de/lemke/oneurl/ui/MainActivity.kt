@@ -17,6 +17,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.util.SeslRoundedCorner
 import androidx.appcompat.util.SeslSubheaderRoundedCorner
 import androidx.appcompat.widget.AppCompatButton
@@ -350,7 +351,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         aboutAppOption.setOnClickListener { startActivity(Intent(this@MainActivity, AboutActivity::class.java)) }
         aboutMeOption.setOnClickListener { startActivity(Intent(this@MainActivity, AboutMeActivity::class.java)) }
         settingsOption.setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
-        binding.drawerLayoutMain.setDrawerButtonIcon(getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline))
+        binding.drawerLayoutMain.setDrawerButtonIcon(
+            AppCompatResources.getDrawable(
+                this@MainActivity,
+                dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline
+            )
+        )
         binding.drawerLayoutMain.setDrawerButtonOnClickListener {
             startActivity(Intent().setClass(this@MainActivity, AboutActivity::class.java))
         }
@@ -532,8 +538,14 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
             else holder.listItemImg.setImageBitmap(currentList[position].qr)
             holder.listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                null, null, if (currentList[position].favorite) getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
-                else getDrawable(dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off), null
+                null,
+                null,
+                if (currentList[position].favorite) AppCompatResources.getDrawable(
+                    this@MainActivity,
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on
+                )
+                else AppCompatResources.getDrawable(this@MainActivity, dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off),
+                null
             )
             holder.listItemFav.setOnClickListener {
                 lifecycleScope.launch {
@@ -579,6 +591,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         }
     }
 
+    @SuppressLint("PrivateResource")
     private inner class ItemDecoration(context: Context) : RecyclerView.ItemDecoration() {
         private val divider: Drawable?
         private val roundedCorner: SeslSubheaderRoundedCorner
@@ -586,7 +599,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         init {
             val outValue = TypedValue()
             context.theme.resolveAttribute(androidx.appcompat.R.attr.isLightTheme, outValue, true)
-            divider = context.getDrawable(
+            divider = AppCompatResources.getDrawable(
+                context,
                 if (outValue.data == 0) androidx.appcompat.R.drawable.sesl_list_divider_dark
                 else androidx.appcompat.R.drawable.sesl_list_divider_light
             )!!

@@ -28,7 +28,6 @@
 
     <string name="warning">Warnung</string>
     <string name="info">Info</string>
-    <string name="dont_show_again">Nicht mehr anzeigen</string>
 
     <!--About-->
     <string name="app_description">Ein URL-Verkürzer und QR-Code Generator mit OneUI-Design.</string>

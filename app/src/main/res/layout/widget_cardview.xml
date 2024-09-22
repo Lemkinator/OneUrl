@@ -15,7 +15,8 @@
             android:layout_marginStart="@dimen/sesl_list_divider_inset"
             android:layout_marginEnd="@dimen/sesl_list_divider_inset"
             android:background="?attr/listDividerColor"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:ignore="PrivateResource" />
 
         <LinearLayout
             android:id="@+id/cardview_container"

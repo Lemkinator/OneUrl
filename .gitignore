@@ -86,6 +86,7 @@ fabric.properties
 /.idea/assetWizardSettings.xml
 /.idea/deploymentTargetDropDown.xml
 .DS_Store
+.kotlin/
 
 /build
 /release

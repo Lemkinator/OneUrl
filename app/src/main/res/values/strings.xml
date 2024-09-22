@@ -46,7 +46,6 @@
 
     <string name="warning">Warning</string>
     <string name="info">Info</string>
-    <string name="dont_show_again">Don\'t show again</string>
 
     <!--About-->
     <string name="app_description">A URL-Shortener and QR code generator with OneUI-Design.</string>

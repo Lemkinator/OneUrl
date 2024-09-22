@@ -14,5 +14,5 @@
         android:layout_width="@dimen/sesl_menu_item_badge_size"
         android:layout_height="@dimen/sesl_menu_item_badge_size"
         android:importantForAccessibility="no"
-        tools:ignore="HardcodedText" />
+        tools:ignore="HardcodedText,PrivateResource" />
 </LinearLayout>

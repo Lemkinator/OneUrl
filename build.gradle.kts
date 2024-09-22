@@ -32,7 +32,7 @@ buildscript {
 
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.20")
-        classpath("com.android.tools.build:gradle:8.6.0")
+        classpath("com.android.tools.build:gradle:8.6.1")
         classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.0.20-1.0.25")
         classpath("com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1")
     }

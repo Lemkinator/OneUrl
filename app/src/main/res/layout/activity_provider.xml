@@ -594,7 +594,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_oui_open_split_view"
-                        android:tint="@color/secondary_text_icon_color"
+                        app:tint="@color/secondary_text_icon_color"
                         tools:ignore="ContentDescription" />
 
                     <TextView
@@ -623,7 +623,7 @@
                             android:layout_height="24dp"
                             android:layout_marginEnd="5dp"
                             android:src="@drawable/ic_oui_block"
-                            android:tint="@color/secondary_text_icon_color"
+                            app:tint="@color/secondary_text_icon_color"
                             tools:ignore="ContentDescription" />
 
                         <ImageView
@@ -631,7 +631,7 @@
                             android:layout_height="24dp"
                             android:layout_marginEnd="5dp"
                             android:src="@drawable/ic_oui_tool_outline"
-                            android:tint="@color/secondary_text_icon_color"
+                            app:tint="@color/secondary_text_icon_color"
                             tools:ignore="ContentDescription" />
 
                     </LinearLayout>
@@ -642,7 +642,7 @@
                         android:layout_height="16dp"
                         android:layout_marginStart="15dp"
                         android:src="@drawable/ic_oui_keyboard_arrow_down"
-                        android:tint="@color/secondary_text_icon_color"
+                        app:tint="@color/secondary_text_icon_color"
                         tools:ignore="ContentDescription" />
 
                 </LinearLayout>

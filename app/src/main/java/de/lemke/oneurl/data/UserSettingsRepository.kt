@@ -83,7 +83,7 @@ class UserSettingsRepository @Inject constructor(
         qrIcon = prefs[KEY_QR_ICON] ?: true,
         qrTintAnchor = prefs[KEY_QR_TINT_ANCHOR] ?: false,
         qrTintBorder = prefs[KEY_QR_TINT_BORDER] ?: false,
-        saveLocation = SaveLocation.values()[prefs[KEY_SAVE_LOCATION] ?: SaveLocation.default.ordinal],
+        saveLocation = SaveLocation.entries[prefs[KEY_SAVE_LOCATION] ?: SaveLocation.default.ordinal],
         currentCategory = prefs[KEY_CURRENT_CATEGORY] ?: "",
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
     )
@@ -175,7 +175,7 @@ enum class SaveLocation {
     companion object {
         val default = CUSTOM
 
-        fun fromStringOrDefault(string: String?): SaveLocation = values().firstOrNull { it.toString() == string } ?: default
+        fun fromStringOrDefault(string: String?): SaveLocation = entries.firstOrNull { it.toString() == string } ?: default
     }
 
     fun toLocalizedString(context: Context): String {

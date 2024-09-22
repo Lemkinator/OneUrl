@@ -117,7 +117,8 @@
                     android:layout_height="@dimen/sesl_list_divider_height"
                     android:layout_marginStart="@dimen/sesl_list_divider_inset"
                     android:layout_marginEnd="@dimen/sesl_list_divider_inset"
-                    android:background="@color/oui_list_divider_color" />
+                    android:background="@color/oui_list_divider_color"
+                    tools:ignore="PrivateResource" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -204,7 +205,8 @@
                     android:layout_marginStart="@dimen/sesl_list_divider_inset"
                     android:layout_marginEnd="@dimen/sesl_list_divider_inset"
                     android:background="@color/oui_list_divider_color"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    tools:ignore="PrivateResource" />
 
                 <LinearLayout
                     android:id="@+id/url_description_layout"
@@ -243,7 +245,8 @@
                     android:layout_marginStart="@dimen/sesl_list_divider_inset"
                     android:layout_marginEnd="@dimen/sesl_list_divider_inset"
                     android:background="@color/oui_list_divider_color"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    tools:ignore="PrivateResource" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -280,7 +283,8 @@
                     android:layout_marginStart="@dimen/sesl_list_divider_inset"
                     android:layout_marginEnd="@dimen/sesl_list_divider_inset"
                     android:background="@color/oui_list_divider_color"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    tools:ignore="PrivateResource" />
 
                 <LinearLayout
                     android:id="@+id/url_visits_layout"
