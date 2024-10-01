@@ -27,6 +27,7 @@ import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.model.Owovz
+import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
@@ -107,35 +108,33 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-    private fun refreshOwovzVisitCount() {
-        (url.shortURLProvider as? Owovz)?.let {
-            it.getURLVisitCount(this, url.shortURL) { visitCount ->
-                if (visitCount != null) {
-                    binding.urlVisitsDivider.visibility = View.VISIBLE
-                    binding.urlVisitsLayout.visibility = View.VISIBLE
-                    binding.urlVisitsTextview.text = visitCount.toString()
-                } else {
-                    binding.urlVisitsDivider.visibility = View.GONE
-                    binding.urlVisitsLayout.visibility = View.GONE
-                }
-            }
+    private fun updateVisitCount(count: Int?) {
+        if (count != null) {
+            binding.urlVisitsDivider.visibility = View.VISIBLE
+            binding.urlVisitsLayout.visibility = View.VISIBLE
+            binding.urlVisitsTextview.text = count.toString()
+        } else {
+            binding.urlVisitsDivider.visibility = View.GONE
+            binding.urlVisitsLayout.visibility = View.GONE
         }
+    }
+
+    private fun refreshVisitCount() {
+        binding.urlVisitsRefreshButton.isEnabled = false
+        binding.urlVisitsRefreshButton.alpha = 0.5f
+        binding.urlVisitsRefreshButton.animate().rotationBy(-720f).setDuration(1500)
+            .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator()).withEndAction {
+                binding.urlVisitsRefreshButton.isEnabled = true
+                binding.urlVisitsRefreshButton.alpha = 1f
+            }
+        (url.shortURLProvider as? Owovz)?.getURLVisitCount(this, url.shortURL) { count -> updateVisitCount(count) }
+        (url.shortURLProvider as? Spoome)?.getURLVisitCount(this, url.alias) { count -> updateVisitCount(count) }
     }
 
 
     private fun initViews() {
-        refreshOwovzVisitCount()
-        binding.urlVisitsRefreshButton.setOnClickListener {
-            refreshOwovzVisitCount()
-            binding.urlVisitsRefreshButton.isEnabled = false
-            binding.urlVisitsRefreshButton.alpha = 0.5f
-            binding.urlVisitsRefreshButton.animate().rotationBy(-720f).setDuration(1500)
-                .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator()).withEndAction {
-                binding.urlVisitsRefreshButton.isEnabled = true
-                binding.urlVisitsRefreshButton.alpha = 1f
-            }
-
-        }
+        refreshVisitCount()
+        binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
         val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
         val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {
             setSpan(android.text.style.UnderlineSpan(), 0, url.shortURL.length, 0)

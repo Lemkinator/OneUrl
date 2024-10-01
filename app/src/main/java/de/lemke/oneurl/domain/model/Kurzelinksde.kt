@@ -2,7 +2,6 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
-import com.android.volley.NetworkResponse
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
@@ -13,8 +12,22 @@ import org.json.JSONObject
 /*
 docs: https://kurzelinks.de/ https://ogy.de/ https://t1p.de/ https://0cn.de/ -> pdf
 example: https://kurzelinks.de/api?key=API_KEY&json=1&apiversion=22&url=example.com&servicedomain=kurzelinks.de&requesturl=example
- */
 
+response:
+{"@attributes":{"api":"22"},"status":"ok","shorturl":{"url":"https:\/\/kurzelinks.de\/014q","originalurl":"http:\/\/example.com"}}
+
+error:
+400: Error occurred (please check the correctness of the request)
+403: No permission for the operation is available (check API key)
+423: the specified desired URL is not available
+429: the maximum number of allowed requests has been exceeded
+444: the API cannot be accessed at the moment (please try again later)
+
+*/
+val kurzelinksde = Kurzelinksde.Kurzelinks()
+val kurzelinksdeOgy = Kurzelinksde.Ogy()
+val kurzelinksdeT1p = Kurzelinksde.T1p()
+val kurzelinksdeOcn = Kurzelinksde.Ocn()
 sealed class Kurzelinksde : ShortURLProvider {
     override val enabled = true
     final override val group = "kurzelinks.de, 0cn.de, t1p.de, ogy.de"
@@ -81,7 +94,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
-        val tag = "KurzelinksCreateRequest_$name"
+        val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $apiURL")
         return object : StringRequest(
             Method.POST,
@@ -89,13 +102,15 @@ sealed class Kurzelinksde : ShortURLProvider {
             { response ->
                 Log.d(tag, "response: $response")
                 try {
-                    //response: {"@attributes":{"api":"22"},"status":"ok","shorturl":{"url":"https:\/\/kurzelinks.de\/014q","originalurl":"http:\/\/example.com"}}
-                    val json = JSONObject(response)
-                    val shortURL = json.getJSONObject("shorturl").getString("url")
-                    Log.d(tag, "shortURL: $shortURL")
-                    successCallback(shortURL)
+                    val shortURL = JSONObject(response).optJSONObject("shorturl")?.optString("url")
+                    if (shortURL == null) {
+                        Log.e(tag, "error: shortURL not found")
+                        errorCallback(GenerateURLError.Unknown(context))
+                    } else {
+                        Log.d(tag, "shortURL: $shortURL")
+                        successCallback(shortURL)
+                    }
                 } catch (e: Exception) {
-                    Log.e(tag, "error: $e")
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))
                 }
@@ -103,41 +118,26 @@ sealed class Kurzelinksde : ShortURLProvider {
             { error ->
                 try {
                     Log.e(tag, "error: $error")
-                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val networkResponse = error.networkResponse
                     val statusCode = networkResponse?.statusCode
-                    Log.e(tag, "statusCode: $statusCode")
-                    if (networkResponse == null || statusCode == null) {
-                        Log.e(tag, "error.networkResponse == null")
-                        errorCallback(GenerateURLError.Custom(context, error.message))
-                    } else {
-                        /*
-                        400: Error occurred (please check the correctness of the request)
-                        403: No permission for the operation is available (check API key)
-                        423: the specified desired URL is not available
-                        429: the maximum number of allowed requests has been exceeded
-                        444: the API cannot be accessed at the moment (please try again later)
-                         */
-                        when (statusCode) {
-                            400, 403 -> errorCallback(GenerateURLError.Unknown(context))
-                            423 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                            429 -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                            444 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-
-                            else -> errorCallback(
-                                GenerateURLError.Custom(
-                                    context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
-                                )
-                            )
-                        }
+                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                    when {
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        statusCode == 400 || statusCode == 403 -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        statusCode == 423 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded(context))
+                        statusCode == 444 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
+                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {
-                    Log.e(tag, "error: $e")
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))
                 }
             }
         ) {
-            override fun getParams(): MutableMap<String, String> = mutableMapOf(
+            override fun getParams() = mapOf(
                 "key" to BuildConfig.KURZELINKS_API_KEY,
                 "json" to "1",
                 "apiversion" to "22",

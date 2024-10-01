@@ -16,15 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
-import de.lemke.oneurl.domain.model.Dagd
-import de.lemke.oneurl.domain.model.Kurzelinksde
-import de.lemke.oneurl.domain.model.Oneptco
-import de.lemke.oneurl.domain.model.Owovz
-import de.lemke.oneurl.domain.model.Shareaholic
-import de.lemke.oneurl.domain.model.Tinyurl
-import de.lemke.oneurl.domain.model.Ulvis
-import de.lemke.oneurl.domain.model.VgdIsgd
-import de.lemke.oneurl.domain.model.Zwsim
+import de.lemke.oneurl.domain.model.*
 import java.util.Locale
 
 @AndroidEntryPoint
@@ -63,10 +55,8 @@ class ProviderActivity : AppCompatActivity() {
     @SuppressLint("SetTextI18n")
     private fun initProvider() {
         binding.dagdGroup.setOnClickListener { toggleGroup(binding.dagdGroup, binding.dagdGroupArrow, binding.dagdContent) }
-        binding.dagdContentButtonMoreInformation.setOnClickListener { openLink(Dagd().infoURL) }
+        binding.dagdContentButtonMoreInformation.setOnClickListener { openLink(dagd.infoURL) }
 
-        val vgd = VgdIsgd.Vgd()
-        val isgd = VgdIsgd.Isgd()
         binding.vgdIsgdGroup.setOnClickListener { toggleGroup(binding.vgdIsgdGroup, binding.vgdIsgdGroupArrow, binding.vgdIsgdContent) }
         binding.vgdContentButtonMoreInformation.text = getString(R.string.more_information) + " (${vgd.name})"
         binding.vgdContentButtonMoreInformation.setOnClickListener { openLink(vgd.infoURL) }
@@ -81,7 +71,6 @@ class ProviderActivity : AppCompatActivity() {
         binding.isgdContentButtonTerms.text = getString(R.string.tos) + " (${isgd.name})"
         binding.isgdContentButtonTerms.setOnClickListener { openLink(isgd.termsURL) }
 
-        val tinyurl = Tinyurl()
         binding.tinyurlGroup.setOnClickListener { toggleGroup(binding.tinyurlGroup, binding.tinyurlGroupArrow, binding.tinyurlContent) }
         binding.tinyurlContentButtonMoreInformation.setOnClickListener { openLink(tinyurl.infoURL) }
         binding.tinyurlContentButtonPrivacy.setOnClickListener { openLink(tinyurl.privacyURL) }
@@ -89,25 +78,25 @@ class ProviderActivity : AppCompatActivity() {
 
         if (Locale.getDefault().language == "de") {
             binding.kurzelinksLayout.visibility = View.VISIBLE
-            val kurzelinks = Kurzelinksde.Kurzelinks()
             binding.kurzelinksGroup.setOnClickListener {
                 toggleGroup(binding.kurzelinksGroup, binding.kurzelinksGroupArrow, binding.kurzelinksContent)
             }
-            binding.kurzelinksContentButtonMoreInformation.setOnClickListener { openLink(kurzelinks.infoURL) }
-            binding.kurzelinksContentButtonPrivacy.setOnClickListener { openLink(kurzelinks.privacyURL) }
-            binding.kurzelinksContentButtonTerms.setOnClickListener { openLink(kurzelinks.termsURL) }
+            binding.kurzelinksContentButtonMoreInformation.setOnClickListener { openLink(kurzelinksde.infoURL) }
+            binding.kurzelinksContentButtonPrivacy.setOnClickListener { openLink(kurzelinksde.privacyURL) }
+            binding.kurzelinksContentButtonTerms.setOnClickListener { openLink(kurzelinksde.termsURL) }
         }
 
-        val ulvis = Ulvis()
         binding.ulvisGroup.setOnClickListener { toggleGroup(binding.ulvisGroup, binding.ulvisGroupArrow, binding.ulvisContent) }
         binding.ulvisContentButtonMoreInformation.setOnClickListener { openLink(ulvis.infoURL) }
         binding.ulvisContentButtonPrivacy.setOnClickListener { openLink(ulvis.privacyURL) }
         binding.ulvisContentButtonTerms.setOnClickListener { openLink(ulvis.termsURL) }
 
         binding.oneptcoGroup.setOnClickListener { toggleGroup(binding.oneptcoGroup, binding.oneptcoGroupArrow, binding.oneptcoContent) }
-        binding.oneptcoContentButtonMoreInformation.setOnClickListener { openLink(Oneptco().infoURL) }
+        binding.oneptcoContentButtonMoreInformation.setOnClickListener { openLink(oneptco.infoURL) }
 
-        val shareaholic = Shareaholic()
+        binding.l4fGroup.setOnClickListener { toggleGroup(binding.l4fGroup, binding.l4fGroupArrow, binding.l4fContent) }
+        binding.l4fContentButtonMoreInformation.setOnClickListener { openLink(l4f.infoURL) }
+
         binding.shareaholicGroup.setOnClickListener {
             toggleGroup(binding.shareaholicGroup, binding.shareaholicGroupArrow, binding.shareaholicContent)
         }
@@ -116,12 +105,12 @@ class ProviderActivity : AppCompatActivity() {
         binding.shareaholicContentButtonTerms.setOnClickListener { openLink(shareaholic.termsURL) }
 
         binding.zwsimGroup.setOnClickListener { toggleGroup(binding.zwsimGroup, binding.zwsimGroupArrow, binding.zwsimContent) }
-        binding.zwsimContentButtonMoreInformation.setOnClickListener { openLink(Zwsim().infoURL) }
+        binding.zwsimContentButtonMoreInformation.setOnClickListener { openLink(zwsim.infoURL) }
 
         binding.owovcGroup.setOnClickListener { toggleGroup(binding.owovcGroup, binding.owovcGroupArrow, binding.owovcContent) }
         binding.owovcContentButtonMoreInformation.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Owovz.OwovzOwo().infoURL)))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(owovzOwo.infoURL)))
             } catch (e: ActivityNotFoundException) {
                 Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
             }

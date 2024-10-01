@@ -9,6 +9,8 @@ import org.json.JSONObject
 import javax.inject.Inject
 
 /*
+https://www.phishtank.com/ restricted
+
 https://urlhaus.abuse.ch/api/#automation
 https://urlhaus-api.abuse.ch/
 https://urlhaus-api.abuse.ch/v1/url/
@@ -80,15 +82,15 @@ class UrlhausCheckUseCase @Inject constructor(
                                 ?.optJSONObject("virustotal")?.optString("link")?.ifBlank { null }
                             blacklistCallback(context.getString(R.string.error_urlhaus_blacklisted, listedOn, reason), urlhausLink, virustotalLink)
                         } catch (e: Exception) {
-                            Log.w(tag, "Failed to get urlhaus_link or virustotal_link: $e")
+                            Log.w(tag, "Failed to get urlhaus_link or virustotal_link for $url: $e")
                             blacklistCallback(context.getString(R.string.error_urlhaus_blacklisted, listedOn, reason), null, null)
                         }
                     } else {
-                        Log.d(tag, "Urlhaus Check returned no results")
+                        Log.d(tag, "Urlhaus Check returned no results for $url")
                         successCallback()
                     }
                 } catch (e: Exception) {
-                    Log.e(tag, "Skipped Urlhaus Check because of Exception: $e")
+                    Log.e(tag, "Skipped Urlhaus Check for $url because of Exception: $e")
                     successCallback()
                 }
             },
@@ -97,11 +99,7 @@ class UrlhausCheckUseCase @Inject constructor(
                 successCallback()
             }
         ) {
-            override fun getParams(): MutableMap<String, String> {
-                val params = HashMap<String, String>()
-                params["url"] = url
-                return params
-            }
+            override fun getParams() = mapOf("url" to url)
         }
     }
 }

@@ -2,7 +2,6 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
-import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
@@ -14,7 +13,15 @@ import de.lemke.oneurl.domain.withHttps
 /*
 https://da.gd/help
 example: https://da.gd/shorten?url=http://some_long_url&shorturl=slug
+
+errors:
+400: Long URL cannot be empty                           //should not happen, checked before
+400: Long URL must have http:// or https:// scheme.     //should not happen, checked before
+400: Long URL is not a valid URL.
+400: Short URL already taken. Pick a different one.
+400: Custom short URL contained invalid characters.     //should not happen, checked before
  */
+val dagd = Dagd()
 
 class Dagd : ShortURLProvider {
     override val enabled = true
@@ -72,7 +79,7 @@ class Dagd : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
-        val tag = "DagdCreateRequest_check"
+        val tag = "CreateRequest_check_$name"
         if (alias.isBlank()) return requestCreateDAGD(context, longURL, "", successCallback, errorCallback)
         val checkUrlApi = "${baseURL}coshorten/$alias"
         Log.d(tag, "start request: $checkUrlApi")
@@ -93,24 +100,23 @@ class Dagd : ShortURLProvider {
             { error ->
                 try {
                     Log.w(tag, "error: $error")
-                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val message = error.message
+                    val networkResponse = error.networkResponse
                     val statusCode = networkResponse?.statusCode
-                    if (networkResponse == null || statusCode == null) {
-                        Log.e(tag, "error.networkResponse == null")
-                        errorCallback(GenerateURLError.Custom(context, error.message))
-                        return@StringRequest
+                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                    Log.e(tag, "$statusCode: message: $message data: $data")
+                    when {
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        else -> {
+                            if (statusCode == 404) Log.d(tag, "shortURL does not exist yet, creating it")
+                            else Log.w(tag, "error, trying to create it anyway")
+                            RequestQueueSingleton.getInstance(context).addToRequestQueue(
+                                requestCreateDAGD(context, longURL, alias, successCallback, errorCallback)
+                            )
+                        }
                     }
-                    if (statusCode == 404) {
-                        Log.d(tag, "shortURL does not exist yet, creating it")
-                    } else {
-                        Log.w(tag, "error, statusCode: ${error.networkResponse.statusCode}, trying to create it anyway")
-                    }
-                    RequestQueueSingleton.getInstance(context).addToRequestQueue(
-                        requestCreateDAGD(context, longURL, alias, successCallback, errorCallback)
-                    )
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    Log.e(tag, "error: $e")
                     errorCallback(GenerateURLError.Unknown(context))
                 }
             }
@@ -124,7 +130,7 @@ class Dagd : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
-        val tag = "DagdCreateRequest_create"
+        val tag = "CreateRequest_create_$name"
         val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&shorturl=$alias")
         Log.d(tag, "start request: $url")
         return StringRequest(
@@ -138,54 +144,27 @@ class Dagd : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with https://da.gd, response: $response")
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown(context, 200))
                 }
             },
             { error ->
                 try {
                     Log.e(tag, "error: $error")
-                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val networkResponse = error.networkResponse
                     val statusCode = networkResponse?.statusCode
-                    Log.e(tag, "statusCode: $statusCode")
-                    if (networkResponse == null || statusCode == null) {
-                        Log.e(tag, "error.networkResponse == null")
-                        errorCallback(GenerateURLError.Custom(context, error.message))
-                        return@StringRequest
-                    }
-                    val data = networkResponse.data
-                    if (data == null) {
-                        Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(
-                            GenerateURLError.Custom(
-                                context,
-                                (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
-                            )
-                        )
-                        return@StringRequest
-                    }
-                    val message = data.toString(charset("UTF-8"))
-                    Log.e(tag, "error: $message ($statusCode)")
-                    /* possible error messages:
-                    400: Long URL cannot be empty                           //should not happen, checked before
-                    400: Long URL must have http:// or https:// scheme.     //should not happen, checked before
-                    400: Long URL is not a valid URL.
-                    400: Short URL already taken. Pick a different one.
-                    400: Custom short URL contained invalid characters.     //should not happen, checked before
-                     */
+                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        message.contains("Long URL cannot be empty") -> errorCallback(GenerateURLError.InvalidURL(context))
-                        message.contains("Long URL must have http:// or https:// scheme") ->
-                            errorCallback(GenerateURLError.InvalidURL(context))
-
-                        message.contains("Long URL is not a valid URL") -> errorCallback(GenerateURLError.InvalidURL(context))
-                        message.contains("Short URL already taken") -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        message.contains("Custom short URL contained invalid characters") ->
-                            errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_invalid_alias)))
-
-                        else -> errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        data.contains("Long URL cannot be empty") -> errorCallback(GenerateURLError.InvalidURL(context))
+                        data.contains("Long URL must have http:// or https:// scheme") -> errorCallback(GenerateURLError.InvalidURL(context))
+                        data.contains("Long URL is not a valid URL") -> errorCallback(GenerateURLError.InvalidURL(context))
+                        data.contains("Short URL already taken") -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        data.contains("Custom short URL contained invalid characters") -> errorCallback(GenerateURLError.InvalidAlias(context))
+                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {
-                    Log.e(tag, "error: $e")
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))
                 }

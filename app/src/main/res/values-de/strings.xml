@@ -6,28 +6,36 @@
 
     <!--Provider info-->
     <string name="provider_info">Anbieter-Informationen</string>
-    <string name="analytics_dagd">Der Anbieter da.gd bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten. Bei da.gd müssen die Links innerhalb der letzten 60 Tage mindestens einmal aufgerufen worden sein, ansonsten wird ein Fehler angezeigt (404).</string>
-    <string name="alias_dagd">Die individuellen Kürzel können eine Länge zwischen 1 und 10 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="redirect_hint">Hinweis vor Weiterleitung</string>
+    <string name="redirect_hint_text">Vor der Weiterleitung zeigt dieser Anbieter einen Hinweis an, der den Benutzer über die Ziel-URL informiert.</string>
     <string name="redirect_hint_vgd">Vor der Weiterleitung zeigt v.gd einen Hinweis an, der dem Benutzer die Ziel-URL mitteilt. Der Nutzer hat die Option, auf die angezeigte URL zu klicken, bevor die Weiterleitung erfolgt. Zudem besteht die Möglichkeit, diesen Hinweis zukünftig zu überspringen.</string>
+    <string name="analytics_dagd">Der Anbieter da.gd bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten. Bei da.gd müssen die Links innerhalb der letzten 60 Tage mindestens einmal aufgerufen worden sein, ansonsten wird ein Fehler angezeigt (404).</string>
     <string name="analytics_vgd_isgd">Die Anbieter v.gd und is.gd bieten die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
+    <string name="analytics_owovc">Der Anbieter owo.vc bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
+    <string name="analytics_spoome">Der Anbieter spoo.me bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
+    <string name="alias_dagd">Die individuellen Kürzel können eine Länge zwischen 1 und 10 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="alias_vgd_isgd_tinyurl">Die individuellen Kürzel können eine Länge zwischen 5 und 30 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="alias_kurzelinks">Die individuellen Kürzel können eine Länge zwischen 5 und 100 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9, -, _ bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="alias_ulvis">Die individuellen Kürzel können eine Länge zwischen 1 und 60 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z und 0–9 bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="alias_oneptco">Die individuellen Kürzel dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <string name="alias_spoome">Die individuellen Kürzel können eine Länge zwischen 1 und 15 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9, -, _ bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <string name="alias_l4f">Die individuellen Kürzel können eine Länge zwischen 1 und 100 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z und 0–9 bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="privacy_kurzelinks">Diese Anbieter wurden so konzipiert, dass sie so datensparsam arbeiten, wie möglich. Sie werden von Deutschland aus betrieben und halten sich an die geltenden Datenschutzregelungen in Deutschland und Europa.</string>
     <string name="currently_disabled">Aktuell deaktiviert</string>
     <string name="currently_disabled_ulvis">Der Anbieter ulvis.net ist derzeit deaktiviert, da eine Sicherheitsüberprüfung hinzugefügt wurde, welche die Nutzung erschwert.</string>
-    <string name="analytics_owovc">Der Anbieter owo.vc bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
+    <string name="emoji">Unterhaltung</string>
+    <string name="emoji_text">Dieser URL-Verkürzer verwendet Emojis, um personalisierte und leicht zu merkende Links zu erstellen. Falls ein eigenes Kürzel angegeben wird, sind nur Emojis erlaubt.</string>
     <string name="owovc_fun">Unterhaltung</string>
     <string name="owovc_fun_text">Neben dem normalen URL-Verkürzer bietet owo.vc auch weitere URL-Verkürzer an. Diese sind für Unterhaltungszwecke gedacht und sollten respektvoll, verantwortungsbewusst und mit Vorsicht verwendet werden.</string>
     <string name="owovc_zws">Der URL-Verkürzer \"owo.vc (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"owo.vc/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von owo.vc anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
     <string name="owovc_sketchy">Der URL-Verkürzer \"owo.vc (sketchy)\" generiert verdächtig aussehende URLs, die Schlüsselwörter wie \"bank-login\", \"password\", \"hidden\", \"grab\" oder \"account\" zusammen mit populären Website-Namen enthalten.</string>
     <string name="owovc_gay">Der URL-Verkürzer \"owo.vc (gay)\" verwendet anstößige und sexistische Wörter und kann für unangemessene oder beleidigende Inhalte stehen. Sei dir bewusst, dass die erstellten Links möglicherweise sexis tische Begriffe enthalten und von anderen als beleidigend und respektlos empfunden werden könnten. Sei respektvoll und verantwortungsbewusst bei der Verwendung dieses Dienstes.</string>
     <string name="zwsim_zws">Der URL-Verkürzer \"zws.im (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"zws.im/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von zws.im anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
+    <string name="tly_info">Dieser URL-Shortener verwendet mehrere Domains für denselben Dienst, was bedeutet, dass er Kurz-URLs mit unterschiedlichen Domainnamen (z.B. tinyurl.com) erstellen kann. Daher wird empfohlen, diesen Dienst mit Vorsicht zu nutzen.</string>
 
     <string name="warning">Warnung</string>
     <string name="info">Info</string>
+    <string name="experimental">Experimentell</string>
 
     <!--About-->
     <string name="app_description">Ein URL-Verkürzer und QR-Code Generator mit OneUI-Design.</string>
@@ -110,11 +118,13 @@
     <string name="error_vgd_isgd">Es scheint, dass es ein Problem mit v.gd/is.gd gibt. Bitte wähle einen anderen Anbieter.</string>
     <string name="error_empty_url">Keine URL eingegeben.</string>
     <string name="error_url_already_exists">URL bereits gekürzt</string>
+    <string name="error_url_already_exists_with_different_alias">Diese URL wurde bereits mit einem anderen Kürzel verkürzt. Versuche, eine andere URL zu verkürzen oder keinen Kürzel anzugeben.</string>
     <string name="error_alias_already_exists">Kürzel existiert bereits.</string>
-    <string name="error_alias_too_short">Kürzel zu kurz (min. 5 Zeichen).</string>
+    <string name="error_alias_too_short">Kürzel zu kurz (min. %1$d Zeichen).</string>
     <string name="error_alias_too_long">Kürzel zu lang (max. %1$d Zeichen).</string>
     <string name="error_invalid_url">Ungültige URL.</string>
-    <string name="error_invalid_alias">Ungültiges Kürzel (erlaubte Zeichen: %1$s).</string>
+    <string name="error_invalid_alias">Ungültiges Kürzel.</string>
+    <string name="error_invalid_alias_allowed_characters">Ungültiges Kürzel (erlaubte Zeichen: %1$s).</string>
     <string name="error_invalid_url_or_alias">Ungültige URL oder Kürzel.</string>
     <string name="error_blacklisted_url">Diese URL ist auf der Blacklist. Sie wurde möglicherweise in der Vergangenheit missbräuchlich verwendet oder verweist auf einen anderen URL-Verkürzungsdienst. Wenn du weiterhin versuchst, URLs aus der Blacklist zu verkürzen, könntest du von der Nutzung dieses Dienstes ausgeschlossen werden.</string>
     <string name="error_rate_limit_exceeded">Du hast zu viele Anfragen gestellt. Bitte verwende einen anderen Anbieter oder warte mindestens 5 Minuten, bevor du eine weitere Anfrage stellst. Andernfalls könntest du für die Nutzung dieses Dienstes gesperrt werden.</string>

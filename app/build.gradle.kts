@@ -95,7 +95,7 @@ dependencies {
     //sesl6 modules
     implementation("sesl.androidx.core:core:1.13.1+1.0.11-sesl6+rev1")
     implementation("sesl.androidx.core:core-ktx:1.13.1+1.0.0-sesl6+rev0")
-    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev3")
+    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev4")
     implementation("sesl.androidx.preference:preference:1.2.1+1.0.4-sesl6+rev3")
     implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl6+rev3")
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev0")

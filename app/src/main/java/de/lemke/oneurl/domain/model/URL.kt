@@ -25,7 +25,7 @@ data class URL(
     override fun hashCode(): Int = shortURL.hashCode()
 
     val alias: String
-        get() = shortURL.substringAfterLast('/')
+        get() = shortURL.substringAfterLast('/') //does not work for Owovz (e.g. sketchy)
 
     val addedFormatMedium: String
         get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))

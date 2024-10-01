@@ -11,52 +11,69 @@ import java.util.Locale
 
 /*
 https://github.com/ShareX/ShareX/tree/develop/ShareX.UploadersLib/URLShorteners
+https://github.com/738/awesome-url-shortener
 
 https://cleanuri.com/docs //no alias, sometimes redirects to suspicious sites???
 https://vurl.com/developers/ //no alias, shows hint before redirecting
 https://turl.ca/api.php?url=https://example.com 500 (Internal Server Error)
+
 offline: nl.cm, 2.gp, turl.ca
-requires api key: kutt.it
-https://github.com/robvanbakel/gotiny-api
+
+requires api key: kutt.it (also: Anonymous link creation has been disabled temporarily. Please log in.)
+
+shut down: gotiny.cc/ (https://github.com/robvanbakel/gotiny-api)
+
 CHILPIT -> "${baseURL}api.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
  */
 
 class ShortURLProviderCompanion {
     companion object {
-        private val all: List<ShortURLProvider> = listOf(
-            Dagd(),
-            VgdIsgd.Vgd(),
-            VgdIsgd.Isgd(),
-            Tinyurl(),
-            Kurzelinksde.Kurzelinks(),
-            Kurzelinksde.Ocn(),
-            Kurzelinksde.T1p(),
-            Kurzelinksde.Ogy(),
-            Ulvis(), //disabled
-            Oneptco(),
-            Shareaholic(),
-            Zwsim(),
-            Owovz.OwovzOwo(),
-            Owovz.OwovzZws(),
-            Owovz.OwovzSketchy(),
-            Owovz.OwovzGay(),
+        private val provider: List<ShortURLProvider> = listOf(
+            dagd,
+            vgd,
+            isgd,
+            tinyurl,
+            kurzelinksde,
+            kurzelinksdeOcn,
+            kurzelinksdeT1p,
+            kurzelinksdeOgy,
+            ulvis, //disabled
+            oneptco,
+            l4f,
+            shareaholic,
+            shrtlnk, //disabled
+            tinyim,
+            tly,
+            tlyIbitly,
+            tlyTwtrto, //disabled
+            tlyJpegly,
+            tlyRebrandly, //disabled
+            tlyBitly, //disabled
+            zwsim,
+            spoome,
+            spoomeEmoji,
+            owovzOwo,
+            owovzZws,
+            owovzSketchy,
+            owovzGay,
         )
 
         /*
         provide kurzelinks.de for German users only
         Assigning Locale.getDefault() to a final static field (suspicious)
-        intended behavior: if the user changes locale while the app is running, the app will not update the list of available providers
+        intended behavior: if the user changes locale while the app is running,
+        the app will not update the list of available providers until restart
          */
         @SuppressLint("ConstantLocale")
-        val availableWithDisabled = if (Locale.getDefault().language == "de") all else all.filter { it !is Kurzelinksde }
+        val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinksde }
 
-        val available = availableWithDisabled.filter { it.enabled }
+        val enabled = all.filter { it.enabled }
 
-        val infoList = availableWithDisabled.distinctBy(ShortURLProvider::group)
+        val infoList = all.distinctBy(ShortURLProvider::group)
 
-        val default: ShortURLProvider = all.first()
+        val default: ShortURLProvider = enabled.first()
 
-        private fun fromStringOrNull(name: String?): ShortURLProvider? = all.find { it.name == name }
+        private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
 
         fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
 

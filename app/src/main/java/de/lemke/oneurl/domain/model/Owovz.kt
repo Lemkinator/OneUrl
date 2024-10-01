@@ -3,7 +3,6 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -15,8 +14,50 @@ import org.json.JSONObject
 /*
 docs: https://owo.vc/api.html
 example: https://owo.vc/api/v2/link {"link": "https://example.com", "generator": "owo", "metadata": "IGNORE"}
- */
 
+success:
+{
+    "id": "uvu.owo.vc/uwU-uvU.uwU-uwU",
+    "destination": "https://example.com",
+    "method": "OWO_VC",
+    "metadata": "OWOIFY",
+    "visits": 0,
+    "scrapes": 0,
+    "createdAt": "2023-10-24T20:41:21.597Z",
+    "status": "ACTIVE",
+    "commentId": null
+}
+fail:
+{
+    "statusCode": 400,
+    "code": "FST_ERR_VALIDATION",
+    "error": "Bad Request",
+    "message": "body/link must match pattern \"https?:\\/\\/.+\\..+\""
+}
+visit count:
+{
+    "id": "uwu.owo.vc/uwU/uwU_Ovo/uvu",
+    "destination": "https://example.com",
+    "method": "OWO_VC",
+    "metadata": "OWOIFY",
+    "visits": 0,
+    "scrapes": 0,
+    "createdAt": "2024-02-06T16:11:00.509Z",
+    "status": "ACTIVE",
+    "commentId": null,
+    "comment": null
+}
+fail:
+{
+    "statusCode": 404,
+    "error": "Not Found",
+    "message": "link not found"
+}
+ */
+val owovzOwo = Owovz.OwovzOwo()
+val owovzZws = Owovz.OwovzZws()
+val owovzSketchy = Owovz.OwovzSketchy()
+val owovzGay = Owovz.OwovzGay()
 sealed class Owovz : ShortURLProvider {
     override val enabled = true
     final override val group = "owo.vc (zws, sketchy, gay)"
@@ -82,30 +123,15 @@ sealed class Owovz : ShortURLProvider {
                 url,
                 null,
                 { response ->
-                    Log.d(tag, "response: $response")
-                    /*
-                    {
-                        "id": "uwu.owo.vc/uwU/uwU_Ovo/uvu",
-                        "destination": "https://example.com",
-                        "method": "OWO_VC",
-                        "metadata": "OWOIFY",
-                        "visits": 0,
-                        "scrapes": 0,
-                        "createdAt": "2024-02-06T16:11:00.509Z",
-                        "status": "ACTIVE",
-                        "commentId": null,
-                        "comment": null
+                    try {
+                        Log.d(tag, "response: $response")
+                        val visitCount = response.optInt("visits")
+                        Log.d(tag, "visitCount: $visitCount")
+                        callback(visitCount)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        callback(null)
                     }
-                    fail:
-                    {
-                        "statusCode": 404,
-                        "error": "Not Found",
-                        "message": "link not found"
-                    }
-                     */
-                    val visitCount = response.optInt("visits")
-                    Log.d(tag, "visitCount: $visitCount")
-                    callback(visitCount)
                 },
                 { error ->
                     Log.e(tag, "error: $error")
@@ -122,7 +148,7 @@ sealed class Owovz : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
-        val tag = "OwovzCreateRequest_$generator"
+        val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $apiURL")
         return JsonObjectRequest(
             Request.Method.POST,
@@ -136,69 +162,29 @@ sealed class Owovz : ShortURLProvider {
             ),
             { response ->
                 Log.d(tag, "response: $response")
-                /*
-                success:
-                {
-                    "id": "uvu.owo.vc/uwU-uvU.uwU-uwU",
-                    "destination": "https://example.com",
-                    "method": "OWO_VC",
-                    "metadata": "OWOIFY",
-                    "visits": 0,
-                    "scrapes": 0,
-                    "createdAt": "2023-10-24T20:41:21.597Z",
-                    "status": "ACTIVE",
-                    "commentId": null
-                }
-                fail:
-                {
-                    "statusCode": 400,
-                    "code": "FST_ERR_VALIDATION",
-                    "error": "Bad Request",
-                    "message": "body/link must match pattern \"https?:\\/\\/.+\\..+\""
-                }
-                 */
-                if (!response.has("id")) {
+                if (response.has("id")) {
+                    val shortURL = response.getString("id").trim()
+                    Log.d(tag, "shortURL: $shortURL")
+                    successCallback(shortURL)
+                } else {
                     Log.e(tag, "error: no shortURL")
-                    errorCallback(GenerateURLError.Unknown(context))
-                    return@JsonObjectRequest
+                    errorCallback(GenerateURLError.Unknown(context, 200))
                 }
-
-                val shortURL = response.getString("id").trim()
-                Log.d(tag, "shortURL: $shortURL")
-                successCallback(shortURL)
             },
             { error ->
                 try {
                     Log.e(tag, "error: $error")
-                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val networkResponse = error.networkResponse
                     val statusCode = networkResponse?.statusCode
-                    Log.e(tag, "statusCode: $statusCode")
-                    if (networkResponse == null || statusCode == null) {
-                        Log.e(tag, "error.networkResponse == null")
-                        errorCallback(GenerateURLError.Custom(context, error.message))
-                        return@JsonObjectRequest
+                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                    when {
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        statusCode == 400 && data.contains("link must match pattern") -> errorCallback(GenerateURLError.InvalidURL(context))
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
+                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
-                    val data = networkResponse.data
-                    if (data == null) {
-                        Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(
-                            GenerateURLError.Custom(
-                                context,
-                                (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
-                            )
-                        )
-                        return@JsonObjectRequest
-                    }
-                    val message = data.toString(charset("UTF-8"))
-                    Log.e(tag, "error: $message ($statusCode)")
-                    if (statusCode == 400 && message.contains("link must match pattern")) {
-                        errorCallback(GenerateURLError.InvalidURL(context))
-                        return@JsonObjectRequest
-                    } else if (statusCode == 503) {
-                        errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        return@JsonObjectRequest
-                    }
-                    errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                 } catch (e: Exception) {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))
@@ -209,6 +195,10 @@ sealed class Owovz : ShortURLProvider {
 
     class OwovzOwo : Owovz() {
         override val name = "owo.vc"
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.info),
+            context.getString(R.string.owovc_fun_text)
+        )
 
         override fun getCreateRequest(
             context: Context,
@@ -219,15 +209,15 @@ sealed class Owovz : ShortURLProvider {
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "owo", longURL, successCallback, errorCallback)
 
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.info),
-            context.getString(R.string.owovc_fun_text)
-        )
-
     }
 
     class OwovzZws : Owovz() {
         override val name = "owo.vc (zws)"
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.info),
+            context.getString(R.string.owovc_zws)
+        )
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
@@ -236,15 +226,15 @@ sealed class Owovz : ShortURLProvider {
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "zws", longURL, successCallback, errorCallback)
-
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.info),
-            context.getString(R.string.owovc_zws)
-        )
     }
 
     class OwovzSketchy : Owovz() {
         override val name = "owo.vc (sketchy)"
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.info),
+            context.getString(R.string.owovc_sketchy)
+        )
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
@@ -253,15 +243,15 @@ sealed class Owovz : ShortURLProvider {
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "sketchy", longURL, successCallback, errorCallback)
-
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.info),
-            context.getString(R.string.owovc_sketchy)
-        )
     }
 
     class OwovzGay : Owovz() {
         override val name = "owo.vc (gay)"
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.warning),
+            context.getString(R.string.owovc_gay)
+        )
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
@@ -270,10 +260,5 @@ sealed class Owovz : ShortURLProvider {
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
             getOwovzCreateRequest(context, "gay", longURL, successCallback, errorCallback)
-
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.warning),
-            context.getString(R.string.owovc_gay)
-        )
     }
 }

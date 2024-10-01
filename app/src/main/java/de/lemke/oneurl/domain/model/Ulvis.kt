@@ -2,7 +2,6 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
-import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -15,6 +14,7 @@ example:
 https://ulvis.net/api.php?url=https://example.com&custom=alias&private=1
 https://ulvis.net/API/write/get?url=https://example.com&custom=alias&private=1
  */
+val ulvis = Ulvis()
 
 class Ulvis : ShortURLProvider {
     override val enabled = false //added cloudflare :/
@@ -82,7 +82,7 @@ class Ulvis : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
-        val tag = "UlvisCreateRequest"
+        val tag = "CreateRequest_$name"
         val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&custom=$alias&private=1")
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
@@ -105,12 +105,10 @@ class Ulvis : ShortURLProvider {
                     Log.e(tag, "error: ${response.optJSONObject("error")}")
                     val error = response.optJSONObject("error")
                     if (error != null) {
-                        val code = error.optInt("code")
-                        val msg = error.optString("msg")
-                        when (code) {
+                        when (val code = error.optInt("code")) {
                             0 -> errorCallback(GenerateURLError.DomainNotAllowed(context))
                             1 -> errorCallback(GenerateURLError.InvalidURL(context))
-                            else -> errorCallback(GenerateURLError.Custom(context, "$msg ($code)"))
+                            else -> errorCallback(GenerateURLError.Custom(context, code, error.optString("msg")))
                         }
                         return@JsonObjectRequest
                     }
@@ -120,7 +118,7 @@ class Ulvis : ShortURLProvider {
                 val data = response.optJSONObject("data")
                 if (data == null) {
                     Log.e(tag, "error, response does not contain data")
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown(context, 200))
                     return@JsonObjectRequest
                 }
                 if (data.optString("status") == "custom-taken") {
@@ -130,7 +128,7 @@ class Ulvis : ShortURLProvider {
                 }
                 if (!data.has("url")) {
                     Log.e(tag, "error, response does not contain url")
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown(context, 200))
                     return@JsonObjectRequest
                 }
                 val shortURL = data.getString("url").trim()
@@ -140,34 +138,16 @@ class Ulvis : ShortURLProvider {
             { error ->
                 try {
                     Log.e(tag, "error: $error")
-                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val networkResponse = error.networkResponse
                     val statusCode = networkResponse?.statusCode
-                    Log.e(tag, "statusCode: $statusCode")
-                    if (networkResponse == null || statusCode == null) {
-                        Log.e(tag, "error.networkResponse == null")
-                        errorCallback(GenerateURLError.Custom(context, error.message))
-                        return@JsonObjectRequest
+                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                    when {
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        statusCode == 403 -> errorCallback(GenerateURLError.HumanVerificationRequired(context, this)) //Doesn't work, different cookies
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
-                    if (statusCode == 403) {
-                        Log.e(tag, "error: 403")
-                        //Doesn't work, different cookies
-                        errorCallback(GenerateURLError.HumanVerificationRequired(context, this))
-                        return@JsonObjectRequest
-                    }
-                    val data = networkResponse.data
-                    if (data == null) {
-                        Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(
-                            GenerateURLError.Custom(
-                                context,
-                                (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
-                            )
-                        )
-                        return@JsonObjectRequest
-                    }
-                    val message = data.toString(charset("UTF-8"))
-                    Log.e(tag, "error: $message ($statusCode)")
-                    errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()

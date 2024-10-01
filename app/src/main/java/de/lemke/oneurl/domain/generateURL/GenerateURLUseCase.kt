@@ -63,11 +63,15 @@ sealed class GenerateURLError(
     val actionOne: ErrorAction? = null,
     val actionTwo: ErrorAction? = null,
 ) {
-    class Unknown(context: Context) : GenerateURLError(context.getString(R.string.error), context.getString(R.string.error_unknown))
-    class Custom(context: Context, customMessage: String? = null, customTitle: String? = null) :
+    class Unknown(context: Context, statusCode: Int? = null) : GenerateURLError(
+        context.getString(R.string.error) + if (statusCode != null) " ($statusCode)" else "",
+        context.getString(R.string.error_unknown)
+    )
+
+    class Custom(context: Context, statusCode: Int, customMessage: String, customTitle: String? = null) :
         GenerateURLError(
-            (customTitle ?: context.getString(R.string.error)).ifBlank { context.getString(R.string.error) },
-            (customMessage ?: context.getString(R.string.error_unknown)).ifBlank { context.getString(R.string.error_unknown) }
+            if (customTitle.isNullOrBlank()) context.getString(R.string.error) + " ($statusCode)" else customTitle,
+            customMessage.ifBlank { context.getString(R.string.error_unknown) }
         )
 
     class NoInternet(context: Context) : GenerateURLError(
@@ -109,24 +113,40 @@ sealed class GenerateURLError(
         context.getString(R.string.error_invalid_url)
     )
 
-    class BlacklistedURL(context: Context, message: String? = null, urlhausLink: String? = null, virustotalLink: String? = null) : GenerateURLError(
-        context.getString(R.string.warning),
-        message ?: context.getString(R.string.error_blacklisted_url),
-        if (urlhausLink != null) ErrorAction("URLhaus") {
-            try {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(urlhausLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-            }
-        } else null,
-        if (virustotalLink != null) ErrorAction("VirusTotal") {
-            try {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(virustotalLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-            }
-        } else null
+    class InvalidAlias(context: Context) : GenerateURLError(
+        context.getString(R.string.error),
+        context.getString(R.string.error_invalid_alias)
     )
+
+    class InvalidURLOrAlias(context: Context) : GenerateURLError(
+        context.getString(R.string.error),
+        context.getString(R.string.error_invalid_url_or_alias)
+    )
+
+    class URLExistsWithDifferentAlias(context: Context) : GenerateURLError(
+        context.getString(R.string.error),
+        context.getString(R.string.error_url_already_exists_with_different_alias)
+    )
+
+    class BlacklistedURL(context: Context, message: String? = null, urlhausLink: String? = null, virustotalLink: String? = null) :
+        GenerateURLError(
+            context.getString(R.string.warning),
+            message ?: context.getString(R.string.error_blacklisted_url),
+            if (urlhausLink != null) ErrorAction("URLhaus") {
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(urlhausLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (e: ActivityNotFoundException) {
+                    Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
+                }
+            } else null,
+            if (virustotalLink != null) ErrorAction("VirusTotal") {
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(virustotalLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (e: ActivityNotFoundException) {
+                    Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
+                }
+            } else null
+        )
 
     class AliasAlreadyExists(context: Context) : GenerateURLError(
         context.getString(R.string.error),

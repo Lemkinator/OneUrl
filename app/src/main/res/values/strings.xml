@@ -24,28 +24,36 @@
 
     <!--Provider info-->
     <string name="provider_info">Provider info</string>
-    <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
-    <string name="alias_dagd">The individual aliases can have a length between 1 and 10 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="redirect_hint">Hint before redirecting</string>
+    <string name="redirect_hint_text">Before redirecting, this provider displays a hint that informs the user about the destination URL.</string>
     <string name="redirect_hint_vgd">Before redirecting, v.gd displays a hint that informs the user about the destination URL. The user has the option to click on the displayed URL before the redirection takes place. It is also possible to skip this notice in future.</string>
+    <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
     <string name="analytics_vgd_isgd">The providers v.gd and is.gd offer the possibility to use analytics to get insights into the performance of the shortened links.</string>
+    <string name="analytics_owovc">The provider owo.vc offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
+    <string name="analytics_spoome">The provider spoo.me offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
+    <string name="alias_dagd">The individual aliases can have a length between 1 and 10 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="alias_vgd_isgd_tinyurl">The individual aliases can have a length between 5 and 30 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="alias_kurzelinks">The individual aliases can have a length between 5 and 100 characters and may only consist of the characters a–z, A–Z, 0–9, -, _. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="alias_ulvis">The individual aliases can have a length between 1 and 60 characters and may only consist of the characters a–z, A–Z and 0–9. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="alias_oneptco">The individual aliases may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
+    <string name="alias_spoome">The individual aliases can have a length between 1 and 15 characters and may only consist of the characters a–z, A–Z, 0–9, -, _. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
+    <string name="alias_l4f">The individual aliases can have a length between 3 and 100 characters and may only consist of the characters a–z, A–Z and 0–9. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="privacy_kurzelinks">These providers have been designed to be as data efficient as possible. They are operated from Germany and comply with the applicable privacy regulations in Germany and Europe.</string>
     <string name="currently_disabled">Currently disabled</string>
     <string name="currently_disabled_ulvis">The provider ulvis.net is currently disabled because a security check has been added which makes it more difficult to use.</string>
-    <string name="analytics_owovc">The provider owo.vc offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
+    <string name="emoji">Emoji</string>
+    <string name="emoji_text">This URL shortener uses emojis to create personalized and easy-to-remember links. When specifying an alias, only emojis are allowed.</string>
     <string name="owovc_fun">Entertainment</string>
     <string name="owovc_fun_text">In addition to the normal URL shortener, owo.vc also offers other URL shorteners. These are intended for entertainment purposes and should be used respectfully, responsibly and with caution.</string>
     <string name="owovc_zws">The URL shortener \"owo.vc (zws)\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"owo.vc/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard owo.vc page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
     <string name="owovc_sketchy">The URL shortener \"owo.vc (sketchy)\" generates suspicious-looking URLs containing keywords like \"bank-login\", \"password\", \"hidden\", \"grab\" or \"account\" along with popular website names.</string>
     <string name="owovc_gay">The URL shortener \"owo.vc (gay)\" employs offensive and sexist language and may represent inappropriate or offensive content. Be aware that the generated links may contain sexist terms and could be considered offensive and disrespectful by others. Use this service with respect and responsibility.</string>
     <string name="zwsim_zws">The URL shortener \"zws.im\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"zws.im/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard zws.im page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
+    <string name="tly_info">This URL shortener utilizes multiple domains for the same service, meaning it may generate short URLs with different domain names (e.g., tinyurl.com). As a result, please use this service with caution.</string>
 
     <string name="warning">Warning</string>
     <string name="info">Info</string>
+    <string name="experimental">Experimental</string>
 
     <!--About-->
     <string name="app_description">A URL-Shortener and QR code generator with OneUI-Design.</string>
@@ -129,11 +137,13 @@
     <string name="error_vgd_isgd">It seems that there is a problem with v.gd/is.gd. Please choose another provider.</string>
     <string name="error_empty_url">Empty URL.</string>
     <string name="error_url_already_exists">URL already shortened</string>
+    <string name="error_url_already_exists_with_different_alias">This URL has already been shortened with a different alias. Please try shortening a different URL or leave the alias unspecified.</string>
     <string name="error_alias_already_exists">Alias already exists.</string>
-    <string name="error_alias_too_short">Alias too short (min. 5 characters).</string>
+    <string name="error_alias_too_short">Alias too short (min. %1$d characters).</string>
     <string name="error_alias_too_long">Alias too long (max. %1$d characters).</string>
     <string name="error_invalid_url">Invalid URL.</string>
-    <string name="error_invalid_alias">Invalid alias (allowed characters: %1$s).</string>
+    <string name="error_invalid_alias">Invalid alias.</string>
+    <string name="error_invalid_alias_allowed_characters">Invalid alias (allowed characters: %1$s).</string>
     <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
     <string name="error_blacklisted_url">This URL is blacklisted. It may have been used abusively in the past, or it may link to another URL redirection service. If you continue trying to shorten blacklisted URLs, you may be blocked from using this service.</string>
     <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>

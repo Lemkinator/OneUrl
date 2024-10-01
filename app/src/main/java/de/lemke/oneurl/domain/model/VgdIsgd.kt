@@ -2,7 +2,6 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
-import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -17,6 +16,8 @@ example:
 https://v.gd/create.php?format=json&url=www.example.com&shorturl=example
 https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
  */
+val vgd = VgdIsgd.Vgd()
+val isgd = VgdIsgd.Isgd()
 
 sealed class VgdIsgd : ShortURLProvider {
     override val enabled = true
@@ -103,7 +104,7 @@ sealed class VgdIsgd : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
-        val tag = "VgdIsgdCreateRequest_$name"
+        val tag = "CreateRequest_$name"
         val url = apiURL + "?format=json&url=" + longURL + (if (alias.isBlank()) "" else "&shorturl=$alias&logstats=1")
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
@@ -140,6 +141,7 @@ sealed class VgdIsgd : ShortURLProvider {
                         else -> errorCallback(
                             GenerateURLError.Custom(
                                 context,
+                                200,
                                 response.optString("errormessage") + " (${response.getString("errorcode")})"
                             )
                         )
@@ -148,7 +150,7 @@ sealed class VgdIsgd : ShortURLProvider {
                 }
                 if (!response.has("shorturl")) {
                     Log.e(tag, "error, response does not contain shorturl, response: $response")
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown(context, 200))
                     return@JsonObjectRequest
                 }
                 val shortURL = response.getString("shorturl").trim()
@@ -158,33 +160,21 @@ sealed class VgdIsgd : ShortURLProvider {
             { error ->
                 try {
                     Log.e(tag, "error: $error")
-                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val networkResponse = error.networkResponse
                     val statusCode = networkResponse?.statusCode
-                    Log.e(tag, "statusCode: $statusCode")
-                    if (error.message == "org.json.JSONException: Value Error of type java.lang.String cannot be converted to JSONObject") {
-                        //https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
-                        Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
-                        errorCallback(GenerateURLError.Custom(context, context.getString(R.string.error_vgd_isgd)))
-                        return@JsonObjectRequest
+                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                    when {
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error.message?.contains("JSONException", true) == true -> {
+                            //https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
+                            //Update: Works fine now?
+                            Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
+                            errorCallback(GenerateURLError.Custom(context, statusCode, context.getString(R.string.error_vgd_isgd)))
+                        }
+                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
-                    if (networkResponse == null || statusCode == null) {
-                        Log.e(tag, "error.networkResponse == null")
-                        errorCallback(GenerateURLError.Custom(context, error.message))
-                        return@JsonObjectRequest
-                    }
-                    val data = networkResponse.data
-                    if (data == null) {
-                        Log.e(tag, "error.networkResponse.data == null")
-                        errorCallback(
-                            GenerateURLError.Custom(
-                                context, (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
-                            )
-                        )
-                        return@JsonObjectRequest
-                    }
-                    val message = data.toString(charset("UTF-8"))
-                    Log.e(tag, "error: $message ($statusCode)")
-                    errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()

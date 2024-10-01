@@ -9,45 +9,54 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.urlEncodeAmpersand
 
 /*
-https://github.com/1pt-co/api
-example: https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl?long=test.com&short=test
-
-success: {
-    "message": "Added!",
-    "short": "ajodd",
-    "long": "t"
+https://l4f.com
+https://l4f.com/developers //requires api key
+but example:
+https://l4f.com/shorten?url=example.com&custom=asdf
+response:
+{
+  "error": false,
+  "message": "Link has been shortened",
+  "data": {
+    "id": 7498,
+    "shorturl": "https://l4f.com/asdfasdfasdf"
+  }
 }
-alias already exists: {
-    "message": "Added!",
-    "short": "asdfg",
-    "long": "asdfasdf",
-    "receivedRequestedShort": false
+error (still return 200):
+{
+  "error": true,
+  "message": "That alias is taken. Please choose another one."
 }
-fail: {
-    "message": "Bad request"
+{
+  "error": true,
+  "message": "Inappropriate aliases are not allowed."
 }
-*/
-val oneptco = Oneptco()
-
-class Oneptco : ShortURLProvider {
+{
+  "error": true,
+  "message": "Please enter a valid URL."
+}
+{
+  "error": 429,
+  "message": "Too Many Requests. Please retry later.",
+  "Retry-After": 41
+}
+ */
+val l4f = L4f()
+class L4f : ShortURLProvider {
     override val enabled = true
-    override val name = "1pt.co"
+    override val name = "l4f.com"
     override val group = name
-    override val baseURL = "https://1pt.co/"
-    override val apiURL = "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl"
+    override val baseURL = "https://l4f.com/"
+    override val apiURL = "${baseURL}shorten"
     override val infoURL = baseURL
     override val privacyURL = null
     override val termsURL = null
     override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 0
-        override val maxAliasLength = AliasConfig.NO_MAX_ALIAS_SPECIFIED
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+        override val minAliasLength = 3
+        override val maxAliasLength = 100
+        override val allowedAliasCharacters = "a-z, A-Z, 0-9"
+        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
     }
-
-    override fun getAnalyticsURL(alias: String) = null
-
-    override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     //Info
     override val infoIcons: List<Int> = listOf(
@@ -58,7 +67,7 @@ class Oneptco : ShortURLProvider {
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_oneptco)
+            context.getString(R.string.alias_l4f)
         )
     )
 
@@ -72,6 +81,10 @@ class Oneptco : ShortURLProvider {
 
     override fun getTipsCardTitleAndInfo(context: Context) = null
 
+    override fun getAnalyticsURL(alias: String) = null
+
+    override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
+
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -79,8 +92,8 @@ class Oneptco : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
-        val tag = "CreateRequest_$name"
-        val url = apiURL + "?long=$longURL" + (if (alias.isBlank()) "" else "&short=$alias")
+        val tag = "CreateRequest_check_$name"
+        val url = "$apiURL?url=$longURL&custom=$alias"
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.POST,
@@ -88,31 +101,20 @@ class Oneptco : ShortURLProvider {
             null,
             { response ->
                 Log.d(tag, "response: $response")
-                when {
-                    !response.has("message") -> {
-                        Log.e(tag, "error: no message")
-                        errorCallback(GenerateURLError.Unknown(context, 200))
-                    }
-
-                    response.getString("message") != "Added!" -> {
-                        Log.e(tag, "error: ${response.getString("message")}")
-                        errorCallback(GenerateURLError.Custom(context, 200, response.getString("message")))
-                    }
-
-                    !response.has("short") -> {
-                        Log.e(tag, "error: no short")
-                        errorCallback(GenerateURLError.Unknown(context, 200))
-                    }
-
-                    response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort") -> {
-                        Log.e(tag, "error: alias already exists")
-                        errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                    }
-
-                    else -> {
-                        val shortURL = baseURL + response.getString("short").trim()
-                        Log.d(tag, "shortURL: $shortURL")
-                        successCallback(shortURL)
+                val error = response.optBoolean("error")
+                val message = response.optString("message")
+                val shortURL = response.optJSONObject("data")?.optString("shorturl")
+                if (!error && shortURL != null) {
+                    if (alias.isBlank() || shortURL == baseURL + alias) successCallback(shortURL)
+                    else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
+                } else {
+                    Log.e(tag, "error: $message")
+                    when {
+                        message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
+                        message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
+                        message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
+                        else -> errorCallback(GenerateURLError.Custom(context, 200, message))
                     }
                 }
             },
@@ -126,7 +128,6 @@ class Oneptco : ShortURLProvider {
                     when {
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 500 && data.contains("Internal server error") -> errorCallback(GenerateURLError.InternalServerError(context))
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {

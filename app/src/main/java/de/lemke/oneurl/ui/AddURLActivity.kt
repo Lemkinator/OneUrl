@@ -103,7 +103,7 @@ class AddURLActivity : AppCompatActivity() {
 
     private suspend fun initViews() {
         val userSettings = getUserSettings()
-        val availableShortURLProvider = ShortURLProviderCompanion.available
+        val availableShortURLProvider = ShortURLProviderCompanion.enabled
         selectedShortURLProvider = availableShortURLProvider.find { it.name == userSettings.selectedShortURLProvider.name }
             ?: availableShortURLProvider.find { it == ShortURLProviderCompanion.default }
                     ?: availableShortURLProvider.first()
@@ -183,7 +183,7 @@ class AddURLActivity : AppCompatActivity() {
         if (alias.isNotBlank()) {
             provider.aliasConfig?.let {
                 if (alias.length < it.minAliasLength) {
-                    binding.editTextAlias.error = getString(R.string.error_alias_too_short)
+                    binding.editTextAlias.error = getString(R.string.error_alias_too_short, it.minAliasLength)
                     return
                 }
                 if (alias.length > it.maxAliasLength) {
@@ -191,7 +191,7 @@ class AddURLActivity : AppCompatActivity() {
                     return
                 }
                 if (!it.isAliasValid(alias)) {
-                    binding.editTextAlias.error = getString(R.string.error_invalid_alias, it.allowedAliasCharacters)
+                    binding.editTextAlias.error = getString(R.string.error_invalid_alias_allowed_characters, it.allowedAliasCharacters)
                     return
                 }
             }

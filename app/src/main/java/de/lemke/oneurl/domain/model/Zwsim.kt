@@ -2,7 +2,6 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
-import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -27,7 +26,7 @@ answer:
     "statusCode": 422
 }
  */
-
+val zwsim = Zwsim()
 class Zwsim : ShortURLProvider {
     override val enabled = true
     override val name = "zws.im"
@@ -76,7 +75,7 @@ class Zwsim : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
-        val tag = "ZwsimCreateRequest"
+        val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $longURL")
         return JsonObjectRequest(
             Request.Method.POST,
@@ -89,46 +88,24 @@ class Zwsim : ShortURLProvider {
                     response.has("url") -> successCallback(response.getString("url"))
                     else -> {
                         Log.e(tag, "error, response does not contain short url")
-                        errorCallback(GenerateURLError.Unknown(context))
+                        errorCallback(GenerateURLError.Unknown(context, 200))
                     }
                 }
             },
             { error ->
                 try {
                     Log.e(tag, "error: $error")
-                    val networkResponse: NetworkResponse? = error.networkResponse
+                    val message = error.message
+                    val networkResponse = error.networkResponse
                     val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data
-                    val message = data?.toString(charset("UTF-8"))
+                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                    Log.e(tag, "$statusCode: message: $message data: $data")
                     when {
-                        networkResponse == null || statusCode == null -> {
-                            Log.e(tag, "error.networkResponse == null")
-                            errorCallback(GenerateURLError.Custom(context, error.message))
-                            return@JsonObjectRequest
-                        }
-
-                        data == null || message == null -> {
-                            Log.e(tag, "error.networkResponse.data == null")
-                            errorCallback(
-                                GenerateURLError.Custom(
-                                    context,
-                                    (error.message ?: context.getString(R.string.error_unknown)) + " ($statusCode)"
-                                )
-                            )
-                            return@JsonObjectRequest
-                        }
-
-                        statusCode == 422 && message.contains("Invalid url") -> {
-                            errorCallback(GenerateURLError.InvalidURL(context))
-                            return@JsonObjectRequest
-                        }
-
-                        statusCode == 503 -> {
-                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                            return@JsonObjectRequest
-                        }
-
-                        else -> errorCallback(GenerateURLError.Custom(context, "$message ($statusCode)"))
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        statusCode == 422 && data.contains("Invalid url") -> errorCallback(GenerateURLError.InvalidURL(context))
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
+                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
