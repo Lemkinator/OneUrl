@@ -42,11 +42,6 @@ class Zwsim : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
-    //Info
-    override val infoIcons = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space
-    )
-
     override fun getInfoContents(context: Context) = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,

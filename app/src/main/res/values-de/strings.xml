@@ -6,26 +6,20 @@
 
     <!--Provider info-->
     <string name="provider_info">Anbieter-Informationen</string>
+    <string name="select_provider">Anbieter auswählen</string>
+    <string name="group">Gruppe</string>
     <string name="redirect_hint">Hinweis vor Weiterleitung</string>
     <string name="redirect_hint_text">Vor der Weiterleitung zeigt dieser Anbieter einen Hinweis an, der den Benutzer über die Ziel-URL informiert.</string>
-    <string name="redirect_hint_vgd">Vor der Weiterleitung zeigt v.gd einen Hinweis an, der dem Benutzer die Ziel-URL mitteilt. Der Nutzer hat die Option, auf die angezeigte URL zu klicken, bevor die Weiterleitung erfolgt. Zudem besteht die Möglichkeit, diesen Hinweis zukünftig zu überspringen.</string>
+    <string name="privacy_text">Dieser Anbieter wurde so konzipiert, dass er so datensparsam arbeitet, wie möglich. Er wird von Deutschland aus betrieben und hält sich an die geltenden Datenschutzregelungen in Deutschland und Europa.</string>
+    <string name="emoji">Emoji</string>
+    <string name="emoji_text">Dieser URL-Verkürzer verwendet Emojis, um personalisierte und leicht zu merkende Links zu erstellen. Falls ein eigenes Kürzel angegeben wird, sind nur Emojis erlaubt.</string>
+    <string name="entertainment">Unterhaltung</string>
+    <string name="alias_text">Die individuellen Kürzel können eine Länge zwischen %1$d und %2$d Zeichen haben und dürfen ausschließlich aus den Zeichen \"%3$s\" bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <string name="analytics">Analytics</string>
+    <string name="analytics_text">Dieser Anbieter bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
     <string name="analytics_dagd">Der Anbieter da.gd bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten. Bei da.gd müssen die Links innerhalb der letzten 60 Tage mindestens einmal aufgerufen worden sein, ansonsten wird ein Fehler angezeigt (404).</string>
-    <string name="analytics_vgd_isgd">Die Anbieter v.gd und is.gd bieten die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
-    <string name="analytics_owovc">Der Anbieter owo.vc bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
-    <string name="analytics_spoome">Der Anbieter spoo.me bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
-    <string name="alias_dagd">Die individuellen Kürzel können eine Länge zwischen 1 und 10 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
-    <string name="alias_vgd_isgd_tinyurl">Die individuellen Kürzel können eine Länge zwischen 5 und 30 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
-    <string name="alias_kurzelinks">Die individuellen Kürzel können eine Länge zwischen 5 und 100 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9, -, _ bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
-    <string name="alias_ulvis">Die individuellen Kürzel können eine Länge zwischen 1 und 60 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z und 0–9 bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
-    <string name="alias_oneptco">Die individuellen Kürzel dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9 und dem Unterstrich (_) bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
-    <string name="alias_spoome">Die individuellen Kürzel können eine Länge zwischen 1 und 15 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z, 0–9, -, _ bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
-    <string name="alias_l4f">Die individuellen Kürzel können eine Länge zwischen 1 und 100 Zeichen haben und dürfen ausschließlich aus den Zeichen a–z, A–Z und 0–9 bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
-    <string name="privacy_kurzelinks">Diese Anbieter wurden so konzipiert, dass sie so datensparsam arbeiten, wie möglich. Sie werden von Deutschland aus betrieben und halten sich an die geltenden Datenschutzregelungen in Deutschland und Europa.</string>
     <string name="currently_disabled">Aktuell deaktiviert</string>
     <string name="currently_disabled_ulvis">Der Anbieter ulvis.net ist derzeit deaktiviert, da eine Sicherheitsüberprüfung hinzugefügt wurde, welche die Nutzung erschwert.</string>
-    <string name="emoji">Unterhaltung</string>
-    <string name="emoji_text">Dieser URL-Verkürzer verwendet Emojis, um personalisierte und leicht zu merkende Links zu erstellen. Falls ein eigenes Kürzel angegeben wird, sind nur Emojis erlaubt.</string>
-    <string name="owovc_fun">Unterhaltung</string>
     <string name="owovc_fun_text">Neben dem normalen URL-Verkürzer bietet owo.vc auch weitere URL-Verkürzer an. Diese sind für Unterhaltungszwecke gedacht und sollten respektvoll, verantwortungsbewusst und mit Vorsicht verwendet werden.</string>
     <string name="owovc_zws">Der URL-Verkürzer \"owo.vc (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"owo.vc/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von owo.vc anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
     <string name="owovc_sketchy">Der URL-Verkürzer \"owo.vc (sketchy)\" generiert verdächtig aussehende URLs, die Schlüsselwörter wie \"bank-login\", \"password\", \"hidden\", \"grab\" oder \"account\" zusammen mit populären Website-Namen enthalten.</string>
@@ -166,7 +160,6 @@
 
     <!--Others-->
     <string name="url">URL</string>
-    <string name="analytics">Analytics</string>
     <string name="remove_from_fav">Aus Favoriten löschen</string>
     <string name="add_to_fav">Zu Favoriten hinzufügen</string>
     <string name="delete">Löschen</string>

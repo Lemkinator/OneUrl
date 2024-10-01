@@ -1,19 +1,21 @@
 package de.lemke.oneurl.ui
 
+import android.app.ActivityOptions
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
+import android.util.Pair
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
@@ -23,11 +25,13 @@ import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLTitleUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
+import de.lemke.oneurl.domain.ObserveUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -40,6 +44,9 @@ class AddURLActivity : AppCompatActivity() {
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
+
+    @Inject
+    lateinit var observeUserSettings: ObserveUserSettingsUseCase
 
     @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
@@ -71,9 +78,8 @@ class AddURLActivity : AppCompatActivity() {
             )
             finishAfterTransition()
         }
-        binding.root.tooltipText = getString(R.string.sesl_navigate_up)
-        lifecycleScope.launch { initViews() }
         initFooterButton()
+        lifecycleScope.launch { initViews() }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -103,22 +109,11 @@ class AddURLActivity : AppCompatActivity() {
 
     private suspend fun initViews() {
         val userSettings = getUserSettings()
-        val availableShortURLProvider = ShortURLProviderCompanion.enabled
-        selectedShortURLProvider = availableShortURLProvider.find { it.name == userSettings.selectedShortURLProvider.name }
-            ?: availableShortURLProvider.find { it == ShortURLProviderCompanion.default }
-                    ?: availableShortURLProvider.first()
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, availableShortURLProvider.map { it.name })
-        adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item)
-        binding.providerSpinner.adapter = adapter
-        binding.providerSpinner.setSelection(availableShortURLProvider.indexOf(selectedShortURLProvider))
-        onProviderChanged(userSettings.selectedShortURLProvider)
-        binding.providerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                lifecycleScope.launch { onProviderChanged(availableShortURLProvider[p2]) }
-            }
-
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
-        }
+        val availableProvider = ShortURLProviderCompanion.enabled
+        selectedShortURLProvider = availableProvider.find { it.name == userSettings.selectedShortURLProvider.name }
+            ?: availableProvider.find { it == ShortURLProviderCompanion.default }
+                    ?: availableProvider.first()
+        updateViews()
         val url = intent.getStringExtra("url") ?: userSettings.lastURL
         lifecycleScope.launch { updateUserSettings { it.copy(lastURL = url) } }
         binding.editTextURL.setText(url)
@@ -135,20 +130,47 @@ class AddURLActivity : AppCompatActivity() {
         binding.editTextDescription.addTextChangedListener { text ->
             lifecycleScope.launch { updateUserSettings { it.copy(lastDescription = text.toString()) } }
         }
+        binding.providerSelection.setOnClickListener {
+            startActivity(
+                Intent(this, ProviderActivity::class.java),
+                ActivityOptions.makeSceneTransitionAnimation(
+                    this,
+                    Pair.create(binding.providerSelection, "provider_selection"),
+                ).toBundle()
+            )
+        }
+        observeUserSettings().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
+            if (it.selectedShortURLProvider != selectedShortURLProvider) {
+                selectedShortURLProvider = it.selectedShortURLProvider
+                updateViews()
+            }
+        }
     }
 
-    private suspend fun onProviderChanged(provider: ShortURLProvider) {
-        selectedShortURLProvider = provider
-        if (provider.aliasConfig != null) binding.textInputLayoutAlias.visibility = View.VISIBLE
+    private fun updateViews() {
+        binding.providerTitle.text = selectedShortURLProvider.name
+        val infoContents = selectedShortURLProvider.getInfoContents(this)
+        listOf(
+            binding.providerIcon1,
+            binding.providerIcon2,
+            binding.providerIcon3,
+            binding.providerIcon4
+        ).forEachIndexed { index, iconView ->
+            if (index < infoContents.size) {
+                iconView.setImageResource(infoContents[index].icon)
+                iconView.visibility = View.VISIBLE
+            } else iconView.visibility = View.GONE
+        }
+        binding.providerIconLayout.setOnClickListener { ProviderInfoDialog(selectedShortURLProvider).show(supportFragmentManager, null) }
+        if (selectedShortURLProvider.aliasConfig != null) binding.textInputLayoutAlias.visibility = View.VISIBLE
         else binding.textInputLayoutAlias.visibility = View.GONE
-        val tipsCardInfo = provider.getTipsCardTitleAndInfo(this)
+        val tipsCardInfo = selectedShortURLProvider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {
             binding.tipsCard.titleText = tipsCardInfo.first
             binding.tipsCardText.text = tipsCardInfo.second
             binding.tipsCardText.setTextColor(getColor(R.color.primary_text_icon_color))
             binding.tipsCard.visibility = View.VISIBLE
         } else binding.tipsCard.visibility = View.GONE
-        updateUserSettings { it.copy(selectedShortURLProvider = provider) }
     }
 
     private fun initFooterButton() {
@@ -165,7 +187,7 @@ class AddURLActivity : AppCompatActivity() {
         binding.addUrlFooterProgress.visibility = if (loading) View.VISIBLE else View.GONE
         binding.addUrlFooterProgressText.text = message
         binding.addUrlFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
-        binding.providerSpinner.isEnabled = !loading
+        binding.providerSelection.isEnabled = !loading
         binding.editTextURL.isEnabled = !loading
         binding.editTextAlias.isEnabled = !loading
         binding.editTextDescription.isEnabled = !loading

@@ -69,8 +69,6 @@ class ShortURLProviderCompanion {
 
         val enabled = all.filter { it.enabled }
 
-        val infoList = all.distinctBy(ShortURLProvider::group)
-
         val default: ShortURLProvider = enabled.first()
 
         private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
@@ -111,7 +109,6 @@ class Unknown : ShortURLProvider {
     }
 
     //Info
-    override val infoIcons = emptyList<Int>()
     override fun getInfoContents(context: Context) = emptyList<ProviderInfo>()
     override fun getInfoButtons(context: Context) = emptyList<ProviderInfo>()
     override fun getTipsCardTitleAndInfo(context: Context) = null
@@ -141,7 +138,6 @@ interface ShortURLProvider {
     ): Request<*>
 
     //Info
-    val infoIcons: List<Int>
     fun getInfoContents(context: Context): List<ProviderInfo>
     fun getInfoButtons(context: Context): List<ProviderInfo>
     fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>?

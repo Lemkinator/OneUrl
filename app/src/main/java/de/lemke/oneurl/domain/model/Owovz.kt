@@ -71,40 +71,6 @@ sealed class Owovz : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
-    //Info
-    override val infoIcons: List<Int> = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-        dev.oneuiproject.oneui.R.drawable.ic_oui_report
-    )
-
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-            context.getString(R.string.owovc_fun),
-            context.getString(R.string.owovc_fun_text)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_owovc)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,
-            "zws",
-            context.getString(R.string.owovc_zws)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_basic,
-            "sketchy",
-            context.getString(R.string.owovc_sketchy)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_long_legs,
-            "gay",
-            context.getString(R.string.owovc_gay)
-        )
-    )
-
     override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
@@ -200,6 +166,19 @@ sealed class Owovz : ShortURLProvider {
             context.getString(R.string.owovc_fun_text)
         )
 
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
+                context.getString(R.string.entertainment),
+                context.getString(R.string.owovc_fun_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            )
+        )
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
@@ -216,6 +195,24 @@ sealed class Owovz : ShortURLProvider {
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(R.string.info),
             context.getString(R.string.owovc_zws)
+        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
+                context.getString(R.string.entertainment),
+                context.getString(R.string.owovc_fun_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,
+                "zws",
+                context.getString(R.string.owovc_zws)
+            )
         )
 
         override fun getCreateRequest(
@@ -235,6 +232,24 @@ sealed class Owovz : ShortURLProvider {
             context.getString(R.string.owovc_sketchy)
         )
 
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
+                context.getString(R.string.entertainment),
+                context.getString(R.string.owovc_fun_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_basic,
+                "sketchy",
+                context.getString(R.string.owovc_sketchy)
+            )
+        )
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
@@ -250,6 +265,24 @@ sealed class Owovz : ShortURLProvider {
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(R.string.warning),
             context.getString(R.string.owovc_gay)
+        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
+                context.getString(R.string.entertainment),
+                context.getString(R.string.owovc_fun_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_long_legs,
+                "gay",
+                context.getString(R.string.owovc_gay)
+            )
         )
 
         override fun getCreateRequest(

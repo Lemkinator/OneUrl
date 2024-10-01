@@ -337,7 +337,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
         val qrOption = findViewById<LinearLayout>(R.id.draweritem_generate_qr_code)
-        val providerOption = findViewById<LinearLayout>(R.id.draweritem_provider)
         val helpOption = findViewById<LinearLayout>(R.id.draweritem_help)
         val aboutAppOption = findViewById<LinearLayout>(R.id.draweritem_about_app)
         val aboutMeOption = findViewById<LinearLayout>(R.id.draweritem_about_me)
@@ -346,7 +345,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         qrOption.setOnClickListener {
             startActivity(Intent(this@MainActivity, GenerateQRCodeActivity::class.java))
         }
-        providerOption.setOnClickListener { startActivity(Intent(this@MainActivity, ProviderActivity::class.java)) }
         helpOption.setOnClickListener { startActivity(Intent(this@MainActivity, HelpActivity::class.java)) }
         aboutAppOption.setOnClickListener { startActivity(Intent(this@MainActivity, AboutActivity::class.java)) }
         aboutMeOption.setOnClickListener { startActivity(Intent(this@MainActivity, AboutMeActivity::class.java)) }
@@ -559,7 +557,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                         Intent(this@MainActivity, URLActivity::class.java)
                             .putExtra("shortURL", currentList[position].shortURL)
                             .putExtra("boldText", search),
-
                         ActivityOptions
                             .makeSceneTransitionAnimation(
                                 this@MainActivity,

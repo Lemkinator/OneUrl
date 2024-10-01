@@ -39,12 +39,6 @@ class Dagd : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
     }
 
-    //Info
-    override val infoIcons: List<Int> = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
-    )
-
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_report,
@@ -54,7 +48,7 @@ class Dagd : ShortURLProvider {
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_dagd)
+            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
         )
     )
 

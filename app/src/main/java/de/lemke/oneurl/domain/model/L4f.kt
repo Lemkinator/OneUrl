@@ -58,16 +58,11 @@ class L4f : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
     }
 
-    //Info
-    override val infoIcons: List<Int> = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
-    )
-
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_l4f)
+            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
         )
     )
 

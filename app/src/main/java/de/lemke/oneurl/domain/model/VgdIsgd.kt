@@ -18,7 +18,6 @@ https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
  */
 val vgd = VgdIsgd.Vgd()
 val isgd = VgdIsgd.Isgd()
-
 sealed class VgdIsgd : ShortURLProvider {
     override val enabled = true
     final override val group = "v.gd, is.gd"
@@ -33,69 +32,23 @@ sealed class VgdIsgd : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
-    //Info
-    override val infoIcons: List<Int> = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
-        dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
-    )
-
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
-            context.getString(R.string.redirect_hint),
-            context.getString(R.string.redirect_hint_vgd)
+            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
+            context.getString(R.string.privacy_policy),
+            privacyURL!!
         ),
         ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_vgd_isgd)
+            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
+            context.getString(R.string.tos),
+            termsURL!!
         ),
         ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(R.string.alias_vgd_isgd_tinyurl)
-        )
+            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+            context.getString(R.string.more_information),
+            infoURL
+        ),
     )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> {
-        val vgd = Vgd()
-        val isgd = Isgd()
-        return listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-                context.getString(R.string.privacy_policy) + " (v.gd)",
-                vgd.privacyURL
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-                context.getString(R.string.privacy_policy) + " (is.gd)",
-                isgd.privacyURL
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-                context.getString(R.string.tos) + " (v.gd)",
-                vgd.termsURL
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-                context.getString(R.string.tos) + " (is.gd)",
-                isgd.termsURL
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-                context.getString(R.string.more_information) + " (v.gd)",
-                vgd.infoURL
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-                context.getString(R.string.more_information) + " (is.gd)",
-                isgd.infoURL
-            )
-        )
-    }
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
 
     fun getVgdIsgdCreateRequest(
         context: Context,
@@ -192,6 +145,29 @@ sealed class VgdIsgd : ShortURLProvider {
         override val privacyURL = "${baseURL}privacy.php"
         override val termsURL = "${baseURL}terms.php"
 
+        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
+            context.getString(R.string.info),
+            context.getString(R.string.redirect_hint_text)
+        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
+                context.getString(R.string.redirect_hint),
+                context.getString(R.string.redirect_hint_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            )
+        )
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
@@ -208,6 +184,21 @@ sealed class VgdIsgd : ShortURLProvider {
         override val infoURL = baseURL
         override val privacyURL = "${baseURL}privacy.php"
         override val termsURL = "${baseURL}terms.php"
+
+        override fun getTipsCardTitleAndInfo(context: Context) = null
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            )
+        )
 
         override fun getCreateRequest(
             context: Context,

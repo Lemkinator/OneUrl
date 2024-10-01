@@ -68,30 +68,6 @@ sealed class Spoome : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().withHttps().trim()
 
-    //Info
-    override val infoIcons: List<Int> = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-        dev.oneuiproject.oneui.R.drawable.ic_oui_report
-    )
-
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-            context.getString(R.string.emoji),
-            context.getString(R.string.emoji_text)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_spoome)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(R.string.alias_spoome)
-        )
-    )
-
     override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
@@ -206,6 +182,19 @@ sealed class Spoome : ShortURLProvider {
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
         }
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            )
+        )
     }
 
     class Emoji : Spoome() {
@@ -214,13 +203,31 @@ sealed class Spoome : ShortURLProvider {
         override val aliasConfig = object : AliasConfig {
             override val minAliasLength = 0
             override val maxAliasLength = 30 //returns invalid alias if more than 30
-            override val allowedAliasCharacters = "Emojies"
+            override val allowedAliasCharacters = "Emojis"
             override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+")) //one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
         }
 
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(R.string.info),
             context.getString(R.string.emoji_text)
+        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
+                context.getString(R.string.emoji),
+                context.getString(R.string.emoji_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text)
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            )
         )
     }
 }

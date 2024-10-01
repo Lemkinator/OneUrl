@@ -42,49 +42,42 @@ sealed class Kurzelinksde : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.trim()
 
-    //Info
-    override val infoIcons: List<Int> = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-        dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline
-    )
-
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
             context.getString(R.string.privacy_policy),
-            context.getString(R.string.privacy_kurzelinks)
+            context.getString(R.string.privacy_text)
         ),
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_kurzelinks)
+            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
         )
     )
 
     override fun getInfoButtons(context: Context): List<ProviderInfo> {
-        val kurzelinks = Kurzelinks()
         return listOf(
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
                 context.getString(R.string.privacy_policy),
-                kurzelinks.privacyURL
+                privacyURL!!
             ),
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
                 context.getString(R.string.tos),
-                kurzelinks.termsURL
+                termsURL!!
             ),
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
                 context.getString(R.string.more_information),
-                kurzelinks.infoURL
+                infoURL
             )
         )
     }
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
         context.getString(R.string.info),
-        context.getString(R.string.privacy_kurzelinks)
+        context.getString(R.string.privacy_text)
     )
 
     fun getKurzelinksCreateRequest(

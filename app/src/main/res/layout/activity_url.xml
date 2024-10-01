@@ -183,7 +183,7 @@
                         android:layout_marginStart="18dp"
                         android:text="@string/title_"
                         android:textSize="18sp"
-                        android:transitionName="description" />
+                        android:transitionName="title" />
 
                     <TextView
                         android:id="@+id/url_title_textview"
@@ -194,7 +194,7 @@
                         android:layout_marginEnd="18dp"
                         android:layout_weight="1"
                         android:textSize="18sp"
-                        android:transitionName="description" />
+                        android:transitionName="title" />
 
                 </LinearLayout>
 
@@ -300,8 +300,7 @@
                         android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
                         android:text="@string/visits"
-                        android:textSize="18sp"
-                        android:transitionName="added" />
+                        android:textSize="18sp" />
 
                     <TextView
                         android:id="@+id/url_visits_textview"
@@ -311,8 +310,7 @@
                         android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
                         android:layout_weight="1"
-                        android:textSize="18sp"
-                        android:transitionName="added" />
+                        android:textSize="18sp" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_visits_refresh_button"

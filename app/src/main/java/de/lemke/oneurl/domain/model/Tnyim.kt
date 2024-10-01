@@ -120,9 +120,6 @@ class Tnyim : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
-    //Info
-    override val infoIcons: List<Int> = listOf()
-
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf()
 
     override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(

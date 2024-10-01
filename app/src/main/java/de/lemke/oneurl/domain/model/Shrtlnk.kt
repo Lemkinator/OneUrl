@@ -46,11 +46,6 @@ class Shrtlnk : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.trim()
 
-    //Info
-    override val infoIcons: List<Int> = listOf(
-        dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action
-    )
-
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,

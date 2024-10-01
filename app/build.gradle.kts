@@ -103,7 +103,7 @@ dependencies {
     implementation(project(":lib"))
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("com.airbnb.android:lottie:6.4.1")
+    implementation("com.airbnb.android:lottie:6.5.2")
     implementation("com.google.android.play:review-ktx:2.0.1")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.android.volley:volley:1.2.1")

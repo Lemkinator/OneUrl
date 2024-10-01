@@ -24,26 +24,20 @@
 
     <!--Provider info-->
     <string name="provider_info">Provider info</string>
+    <string name="select_provider">Select provider</string>
+    <string name="group">Group</string>
     <string name="redirect_hint">Hint before redirecting</string>
     <string name="redirect_hint_text">Before redirecting, this provider displays a hint that informs the user about the destination URL.</string>
-    <string name="redirect_hint_vgd">Before redirecting, v.gd displays a hint that informs the user about the destination URL. The user has the option to click on the displayed URL before the redirection takes place. It is also possible to skip this notice in future.</string>
-    <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
-    <string name="analytics_vgd_isgd">The providers v.gd and is.gd offer the possibility to use analytics to get insights into the performance of the shortened links.</string>
-    <string name="analytics_owovc">The provider owo.vc offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
-    <string name="analytics_spoome">The provider spoo.me offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
-    <string name="alias_dagd">The individual aliases can have a length between 1 and 10 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
-    <string name="alias_vgd_isgd_tinyurl">The individual aliases can have a length between 5 and 30 characters and may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
-    <string name="alias_kurzelinks">The individual aliases can have a length between 5 and 100 characters and may only consist of the characters a–z, A–Z, 0–9, -, _. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
-    <string name="alias_ulvis">The individual aliases can have a length between 1 and 60 characters and may only consist of the characters a–z, A–Z and 0–9. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
-    <string name="alias_oneptco">The individual aliases may only consist of the characters a–z, A–Z, 0–9 and the underscore (_). This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
-    <string name="alias_spoome">The individual aliases can have a length between 1 and 15 characters and may only consist of the characters a–z, A–Z, 0–9, -, _. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
-    <string name="alias_l4f">The individual aliases can have a length between 3 and 100 characters and may only consist of the characters a–z, A–Z and 0–9. This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
-    <string name="privacy_kurzelinks">These providers have been designed to be as data efficient as possible. They are operated from Germany and comply with the applicable privacy regulations in Germany and Europe.</string>
-    <string name="currently_disabled">Currently disabled</string>
-    <string name="currently_disabled_ulvis">The provider ulvis.net is currently disabled because a security check has been added which makes it more difficult to use.</string>
+    <string name="privacy_text">This provider has been designed to be as data efficient as possible. It is operated from Germany and complies with the applicable privacy regulations in Germany and Europe.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">This URL shortener uses emojis to create personalized and easy-to-remember links. When specifying an alias, only emojis are allowed.</string>
-    <string name="owovc_fun">Entertainment</string>
+    <string name="entertainment">Entertainment</string>
+    <string name="alias_text">The individual aliases can have a length between %1$d and %2$d characters and may only consist of the characters \"%3$s\". This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
+    <string name="analytics">Analytics</string>
+    <string name="analytics_text">This provider offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
+    <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
+    <string name="currently_disabled">Currently disabled</string>
+    <string name="currently_disabled_ulvis">The provider ulvis.net is currently disabled because a security check has been added which makes it more difficult to use.</string>
     <string name="owovc_fun_text">In addition to the normal URL shortener, owo.vc also offers other URL shorteners. These are intended for entertainment purposes and should be used respectfully, responsibly and with caution.</string>
     <string name="owovc_zws">The URL shortener \"owo.vc (zws)\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"owo.vc/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard owo.vc page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
     <string name="owovc_sketchy">The URL shortener \"owo.vc (sketchy)\" generates suspicious-looking URLs containing keywords like \"bank-login\", \"password\", \"hidden\", \"grab\" or \"account\" along with popular website names.</string>
@@ -185,7 +179,6 @@
 
     <!--Others-->
     <string name="url">URL</string>
-    <string name="analytics">Analytics</string>
     <string name="remove_from_fav">Remove from favorites</string>
     <string name="add_to_fav">Add to favorites</string>
     <string name="delete">Delete</string>

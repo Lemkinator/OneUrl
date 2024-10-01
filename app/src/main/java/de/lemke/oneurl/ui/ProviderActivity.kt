@@ -1,160 +1,151 @@
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.LayoutInflater
 import android.view.View
-import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.Animation
-import android.view.animation.Transformation
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.util.SeslRoundedCorner
+import androidx.appcompat.util.SeslSubheaderRoundedCorner
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
-import de.lemke.oneurl.domain.model.*
-import java.util.Locale
+import de.lemke.oneurl.domain.GetUserSettingsUseCase
+import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import dev.oneuiproject.oneui.widget.Separator
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProviderBinding
+    private lateinit var adapter: ProviderAdapter
+    private var provider: List<ShortURLProvider> = ShortURLProviderCompanion.enabled
+
+    @Inject
+    lateinit var getUserSettings: GetUserSettingsUseCase
+
+    @Inject
+    lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.toolbarLayout.setNavigationButtonOnClickListener { finish() }
-        binding.toolbarLayout.tooltipText = getString(R.string.sesl_navigate_up)
-        initProvider()
+        binding.root.setNavigationButtonOnClickListener { finish() }
+        initRecycler()
     }
 
-    private fun toggleGroup(group: LinearLayout, groupArrow: ImageView, vararg content: LinearLayout) {
-        if (group.isSelected) {
-            group.isSelected = false
-            groupArrow.animate().rotation(if (group.isSelected) 180f else 0f).setDuration(300)
-                .setInterpolator(AccelerateDecelerateInterpolator()).start()
-            content.forEach { it.collapse() }
-        } else {
-            group.isSelected = true
-            groupArrow.animate().rotation(if (group.isSelected) 180f else 0f).setDuration(300)
-                .setInterpolator(AccelerateDecelerateInterpolator()).start()
-            content.forEach { it.expand() }
-        }
+    private fun initRecycler() {
+        binding.providerList.layoutManager = LinearLayoutManager(this)
+        adapter = ProviderAdapter()
+        binding.providerList.adapter = adapter
+        binding.providerList.itemAnimator = null
+        binding.providerList.addItemDecoration(ItemDecoration(this))
+        binding.providerList.seslSetFastScrollerEnabled(true)
+        binding.providerList.seslSetFillBottomEnabled(true)
+        binding.providerList.seslSetGoToTopEnabled(true)
+        binding.providerList.seslSetLastRoundedCorner(true)
+        binding.providerList.seslSetSmoothScrollEnabled(true)
     }
 
-    private fun openLink(link: String?) = try {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
-    } catch (e: ActivityNotFoundException) {
-        Toast.makeText(this, getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-    }
+    private fun openInfoDialog(provider: ShortURLProvider) =
+        ProviderInfoDialog(provider).show(supportFragmentManager, "providerInfoDialog")
 
-    @SuppressLint("SetTextI18n")
-    private fun initProvider() {
-        binding.dagdGroup.setOnClickListener { toggleGroup(binding.dagdGroup, binding.dagdGroupArrow, binding.dagdContent) }
-        binding.dagdContentButtonMoreInformation.setOnClickListener { openLink(dagd.infoURL) }
+    inner class ProviderAdapter internal constructor() : RecyclerView.Adapter<ProviderAdapter.ViewHolder>() {
+        override fun getItemCount(): Int = provider.size
+        override fun getItemViewType(position: Int): Int = 0
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = if (viewType == 0) {
+            val inflater = LayoutInflater.from(this@ProviderActivity)
+            val view = inflater.inflate(R.layout.listview_item_provider, parent, false)
+            ViewHolder(view, false)
+        } else ViewHolder(Separator(this@ProviderActivity), true)
 
-        binding.vgdIsgdGroup.setOnClickListener { toggleGroup(binding.vgdIsgdGroup, binding.vgdIsgdGroupArrow, binding.vgdIsgdContent) }
-        binding.vgdContentButtonMoreInformation.text = getString(R.string.more_information) + " (${vgd.name})"
-        binding.vgdContentButtonMoreInformation.setOnClickListener { openLink(vgd.infoURL) }
-        binding.vgdContentButtonPrivacy.text = getString(R.string.privacy_policy) + " (${vgd.name})"
-        binding.vgdContentButtonPrivacy.setOnClickListener { openLink(vgd.privacyURL) }
-        binding.vgdContentButtonTerms.text = getString(R.string.tos) + " (${vgd.name})"
-        binding.vgdContentButtonTerms.setOnClickListener { openLink(vgd.termsURL) }
-        binding.isgdContentButtonMoreInformation.text = getString(R.string.more_information) + " (${isgd.name})"
-        binding.isgdContentButtonMoreInformation.setOnClickListener { openLink(isgd.infoURL) }
-        binding.isgdContentButtonPrivacy.text = getString(R.string.privacy_policy) + " (${isgd.name})"
-        binding.isgdContentButtonPrivacy.setOnClickListener { openLink(isgd.privacyURL) }
-        binding.isgdContentButtonTerms.text = getString(R.string.tos) + " (${isgd.name})"
-        binding.isgdContentButtonTerms.setOnClickListener { openLink(isgd.termsURL) }
 
-        binding.tinyurlGroup.setOnClickListener { toggleGroup(binding.tinyurlGroup, binding.tinyurlGroupArrow, binding.tinyurlContent) }
-        binding.tinyurlContentButtonMoreInformation.setOnClickListener { openLink(tinyurl.infoURL) }
-        binding.tinyurlContentButtonPrivacy.setOnClickListener { openLink(tinyurl.privacyURL) }
-        binding.tinyurlContentButtonTerms.setOnClickListener { openLink(tinyurl.termsURL) }
-
-        if (Locale.getDefault().language == "de") {
-            binding.kurzelinksLayout.visibility = View.VISIBLE
-            binding.kurzelinksGroup.setOnClickListener {
-                toggleGroup(binding.kurzelinksGroup, binding.kurzelinksGroupArrow, binding.kurzelinksContent)
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.listItemTitle.text = provider[position].name
+            val infoContents = provider[position].getInfoContents(this@ProviderActivity)
+            listOf(holder.listItemIcon1, holder.listItemIcon2, holder.listItemIcon3, holder.listItemIcon4).forEachIndexed { index, iconView ->
+                if (index < infoContents.size) {
+                    iconView.setImageResource(infoContents[index].icon)
+                    iconView.visibility = View.VISIBLE
+                } else iconView.visibility = View.GONE
             }
-            binding.kurzelinksContentButtonMoreInformation.setOnClickListener { openLink(kurzelinksde.infoURL) }
-            binding.kurzelinksContentButtonPrivacy.setOnClickListener { openLink(kurzelinksde.privacyURL) }
-            binding.kurzelinksContentButtonTerms.setOnClickListener { openLink(kurzelinksde.termsURL) }
-        }
-
-        binding.ulvisGroup.setOnClickListener { toggleGroup(binding.ulvisGroup, binding.ulvisGroupArrow, binding.ulvisContent) }
-        binding.ulvisContentButtonMoreInformation.setOnClickListener { openLink(ulvis.infoURL) }
-        binding.ulvisContentButtonPrivacy.setOnClickListener { openLink(ulvis.privacyURL) }
-        binding.ulvisContentButtonTerms.setOnClickListener { openLink(ulvis.termsURL) }
-
-        binding.oneptcoGroup.setOnClickListener { toggleGroup(binding.oneptcoGroup, binding.oneptcoGroupArrow, binding.oneptcoContent) }
-        binding.oneptcoContentButtonMoreInformation.setOnClickListener { openLink(oneptco.infoURL) }
-
-        binding.l4fGroup.setOnClickListener { toggleGroup(binding.l4fGroup, binding.l4fGroupArrow, binding.l4fContent) }
-        binding.l4fContentButtonMoreInformation.setOnClickListener { openLink(l4f.infoURL) }
-
-        binding.shareaholicGroup.setOnClickListener {
-            toggleGroup(binding.shareaholicGroup, binding.shareaholicGroupArrow, binding.shareaholicContent)
-        }
-        binding.shareaholicContentButtonMoreInformation.setOnClickListener { openLink(shareaholic.infoURL) }
-        binding.shareaholicContentButtonPrivacy.setOnClickListener { openLink(shareaholic.privacyURL) }
-        binding.shareaholicContentButtonTerms.setOnClickListener { openLink(shareaholic.termsURL) }
-
-        binding.zwsimGroup.setOnClickListener { toggleGroup(binding.zwsimGroup, binding.zwsimGroupArrow, binding.zwsimContent) }
-        binding.zwsimContentButtonMoreInformation.setOnClickListener { openLink(zwsim.infoURL) }
-
-        binding.owovcGroup.setOnClickListener { toggleGroup(binding.owovcGroup, binding.owovcGroupArrow, binding.owovcContent) }
-        binding.owovcContentButtonMoreInformation.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(owovzOwo.infoURL)))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
+            holder.parentView.setOnClickListener {
+                lifecycleScope.launch {
+                    updateUserSettings { it.copy(selectedShortURLProvider = provider[position]) }
+                    finishAfterTransition()
+                }
+            }
+            holder.listItemIconLayout.setOnClickListener { openInfoDialog(provider[position]) }
+            holder.parentView.setOnLongClickListener {
+                openInfoDialog(provider[position])
+                true
             }
         }
-    }
-}
 
-fun View.expand() {
-    measure(
-        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-    )
-    val targetHeight = measuredHeight
-    visibility = View.VISIBLE
-    val animation: Animation = object : Animation() {
-        override fun willChangeBounds() = true
-        override fun applyTransformation(interpolatedTime: Float, t: Transformation?) {
-            layoutParams.height =
-                if (interpolatedTime == 1f) LinearLayout.LayoutParams.WRAP_CONTENT else (targetHeight * interpolatedTime).toInt()
-            alpha = interpolatedTime
-            requestLayout()
+        inner class ViewHolder internal constructor(itemView: View, var isSeparator: Boolean) : RecyclerView.ViewHolder(itemView) {
+            var parentView: LinearLayout = itemView as LinearLayout
+            var listItemTitle: TextView = parentView.findViewById(R.id.providerTitle)
+            var listItemIcon1: ImageView = parentView.findViewById(R.id.providerIcon1)
+            var listItemIcon2: ImageView = parentView.findViewById(R.id.providerIcon2)
+            var listItemIcon3: ImageView = parentView.findViewById(R.id.providerIcon3)
+            var listItemIcon4: ImageView = parentView.findViewById(R.id.providerIcon4)
+            var listItemIconLayout: LinearLayout = parentView.findViewById(R.id.providerIconLayout)
         }
     }
-    // Expansion speed of 1dp/ms
-    animation.duration = (targetHeight / context.resources.displayMetrics.density).toInt().toLong()
-    animation.interpolator = AccelerateDecelerateInterpolator()
-    startAnimation(animation)
-}
 
-fun View.collapse() {
-    val initialHeight = measuredHeight
-    val animation: Animation = object : Animation() {
-        override fun willChangeBounds() = true
-        override fun applyTransformation(interpolatedTime: Float, t: Transformation?) {
-            if (interpolatedTime == 1f) visibility = View.GONE
-            else {
-                layoutParams.height = initialHeight - (initialHeight * interpolatedTime).toInt()
-                requestLayout()
+    @SuppressLint("PrivateResource")
+    private inner class ItemDecoration(context: Context) : RecyclerView.ItemDecoration() {
+        private val divider: Drawable?
+        private val roundedCorner: SeslSubheaderRoundedCorner
+
+        init {
+            val outValue = TypedValue()
+            context.theme.resolveAttribute(androidx.appcompat.R.attr.isLightTheme, outValue, true)
+            divider = AppCompatResources.getDrawable(
+                context,
+                if (outValue.data == 0) androidx.appcompat.R.drawable.sesl_list_divider_dark
+                else androidx.appcompat.R.drawable.sesl_list_divider_light
+            )!!
+            roundedCorner = SeslSubheaderRoundedCorner(this@ProviderActivity)
+            roundedCorner.roundedCorners = SeslRoundedCorner.ROUNDED_CORNER_ALL
+        }
+
+        override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+            super.onDraw(c, parent, state)
+            for (i in 0 until parent.childCount) {
+                val child = parent.getChildAt(i)
+                val holder = binding.providerList.getChildViewHolder(child) as ProviderAdapter.ViewHolder
+                if (!holder.isSeparator) {
+                    val top = (child.bottom + (child.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin)
+                    val bottom = divider!!.intrinsicHeight + top
+                    divider.setBounds(parent.left, top, parent.right, bottom)
+                    divider.draw(c)
+                }
             }
-            alpha = 1 - interpolatedTime
+        }
+
+        override fun seslOnDispatchDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+            for (i in 0 until parent.childCount) {
+                val child = parent.getChildAt(i)
+                val holder = binding.providerList.getChildViewHolder(child) as ProviderAdapter.ViewHolder
+                if (holder.isSeparator) roundedCorner.drawRoundedCorner(child, c)
+            }
         }
     }
-    // Collapse speed of 1dp/ms
-    animation.duration = (initialHeight / context.resources.displayMetrics.density).toInt().toLong()
-    animation.interpolator = AccelerateDecelerateInterpolator()
-    startAnimation(animation)
 }
