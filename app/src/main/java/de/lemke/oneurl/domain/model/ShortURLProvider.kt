@@ -43,6 +43,7 @@ class ShortURLProviderCompanion {
             shareaholic,
             shrtlnk, //disabled
             tinyim,
+            tinube,
             tly,
             tlyIbitly,
             tlyTwtrto, //disabled

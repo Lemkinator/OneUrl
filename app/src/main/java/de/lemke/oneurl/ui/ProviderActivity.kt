@@ -46,7 +46,7 @@ class ProviderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.root.setNavigationButtonOnClickListener { finish() }
+        binding.root.setNavigationButtonOnClickListener { finishAfterTransition() }
         initRecycler()
     }
 

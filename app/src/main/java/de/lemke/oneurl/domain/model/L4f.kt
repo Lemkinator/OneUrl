@@ -95,22 +95,27 @@ class L4f : ShortURLProvider {
             url,
             null,
             { response ->
-                Log.d(tag, "response: $response")
-                val error = response.optBoolean("error")
-                val message = response.optString("message")
-                val shortURL = response.optJSONObject("data")?.optString("shorturl")
-                if (!error && shortURL != null) {
-                    if (alias.isBlank() || shortURL == baseURL + alias) successCallback(shortURL)
-                    else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
-                } else {
-                    Log.e(tag, "error: $message")
-                    when {
-                        message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
-                        message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                        else -> errorCallback(GenerateURLError.Custom(context, 200, message))
+                try {
+                    Log.d(tag, "response: $response")
+                    val error = response.optBoolean("error")
+                    val message = response.optString("message")
+                    val shortURL = response.optJSONObject("data")?.optString("shorturl")
+                    if (!error && shortURL != null) {
+                        if (alias.isBlank() || shortURL == baseURL + alias) successCallback(shortURL)
+                        else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
+                    } else {
+                        Log.e(tag, "error: $message")
+                        when {
+                            message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                            message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
+                            message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
+                            message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
+                            else -> errorCallback(GenerateURLError.Custom(context, 200, message))
+                        }
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    errorCallback(GenerateURLError.Unknown(context, 200))
                 }
             },
             { error ->
