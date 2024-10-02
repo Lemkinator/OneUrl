@@ -9,6 +9,7 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import de.lemke.oneurl.domain.urlEncodeAmpersand
 import de.lemke.oneurl.domain.withHttps
+import org.json.JSONObject
 
 /*
 https://tinu.be/en
@@ -68,13 +69,13 @@ class Tinube : ShortURLProvider {
 
     override fun getTipsCardTitleAndInfo(context: Context) = null
 
-    override fun getAnalyticsURL(alias: String) = "$baseURL/$alias/stats"
+    override fun getAnalyticsURL(alias: String) = null
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
     fun getURLVisitCount(context: Context, alias: String, callback: (visitCount: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
-        val url = getAnalyticsURL(alias)
+        val url = "https://api.tinu.be/$alias/stats"
         Log.d(tag, "start request: $url")
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
             StringRequest(
@@ -83,9 +84,9 @@ class Tinube : ShortURLProvider {
                 { response ->
                     try {
                         Log.d(tag, "response: $response")
-                        val visitCount = response.split("clicks\":")[1].split(",")[0].toInt()
-                        Log.d(tag, "visitCount: $visitCount")
-                        callback(visitCount)
+                        val clicks = JSONObject(response).getInt("clicks")
+                        Log.d(tag, "clicks: $clicks")
+                        callback(clicks)
                     } catch (e: Exception) {
                         e.printStackTrace()
                         callback(null)
