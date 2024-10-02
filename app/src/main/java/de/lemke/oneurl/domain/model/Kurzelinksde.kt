@@ -55,25 +55,23 @@ sealed class Kurzelinksde : ShortURLProvider {
         )
     )
 
-    override fun getInfoButtons(context: Context): List<ProviderInfo> {
-        return listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-                context.getString(R.string.privacy_policy),
-                privacyURL!!
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-                context.getString(R.string.tos),
-                termsURL!!
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-                context.getString(R.string.more_information),
-                infoURL
-            )
+    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
+            context.getString(R.string.privacy_policy),
+            privacyURL!!
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
+            context.getString(R.string.tos),
+            termsURL!!
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+            context.getString(R.string.more_information),
+            infoURL
         )
-    }
+    )
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
         context.getString(R.string.info),

@@ -42,7 +42,7 @@ class Tinube : ShortURLProvider {
     override val baseURL = "https://tinu.be"
     override val apiURL = "$baseURL/en"
     override val infoURL = baseURL
-    override val privacyURL = null
+    override val privacyURL = "$baseURL/terms"
     override val termsURL = "$baseURL/terms"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 0

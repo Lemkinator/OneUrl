@@ -43,7 +43,8 @@
     <string name="owovc_sketchy">The URL shortener \"owo.vc (sketchy)\" generates suspicious-looking URLs containing keywords like \"bank-login\", \"password\", \"hidden\", \"grab\" or \"account\" along with popular website names.</string>
     <string name="owovc_gay">The URL shortener \"owo.vc (gay)\" employs offensive and sexist language and may represent inappropriate or offensive content. Be aware that the generated links may contain sexist terms and could be considered offensive and disrespectful by others. Use this service with respect and responsibility.</string>
     <string name="zwsim_zws">The URL shortener \"zws.im\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"zws.im/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard zws.im page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
-    <string name="tly_info">This URL shortener utilizes multiple domains for the same service, meaning it may generate short URLs with different domain names (e.g., tinyurl.com). As a result, please use this service with caution.</string>
+    <string name="tly_info">This URL shortener utilizes multiple domains for the same service, meaning it may generate short URLs with different domain names (e.g., tinyurl.com). Therefore, use this service with caution.</string>
+    <string name="shorturlat_info">The URL shortener shorturl.at does not offer an API and is therefore not as reliable as other providers in this app. In addition, links with less than one click per month are deactivated. Therefore, use this service with caution.</string>
 
     <string name="warning">Warning</string>
     <string name="info">Info</string>

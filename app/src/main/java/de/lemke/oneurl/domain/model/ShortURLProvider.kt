@@ -16,14 +16,21 @@ https://github.com/738/awesome-url-shortener
 https://cleanuri.com/docs //no alias, sometimes redirects to suspicious sites???
 https://vurl.com/developers/ //no alias, shows hint before redirecting
 https://turl.ca/api.php?url=https://example.com 500 (Internal Server Error)
+https://reduced.to/ (These links will automatically be deleted after 30 minutes. Open a free account to keep them longer.)
 
-offline: nl.cm, 2.gp, turl.ca
+offline:
+https://nl.cm
+https://2.gp
+https://turl.ca
 
-requires api key: kutt.it (also: Anonymous link creation has been disabled temporarily. Please log in.)
+shutting down:
+https://gotiny.cc/ (https://github.com/robvanbakel/gotiny-api)
+https://chilp.it/
 
-shut down: gotiny.cc/ (https://github.com/robvanbakel/gotiny-api)
+requires api key:
+https://kutt.it (also: Anonymous link creation has been disabled temporarily. Please log in.)
+https://t2mio.com/
 
-CHILPIT -> "${baseURL}api.php?url=" + longURL + (if (alias.isNullOrBlank()) "" else "&slug=$alias")
  */
 
 class ShortURLProviderCompanion {
@@ -42,6 +49,7 @@ class ShortURLProviderCompanion {
             l4f,
             shareaholic,
             shrtlnk, //disabled
+            shorturlat, //disabled
             tinyim,
             tinube,
             tly,
