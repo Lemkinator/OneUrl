@@ -26,9 +26,6 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
-import de.lemke.oneurl.domain.model.Owovz
-import de.lemke.oneurl.domain.model.Spoome
-import de.lemke.oneurl.domain.model.Tinube
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
@@ -109,17 +106,6 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateVisitCount(count: Int?) {
-        if (count != null) {
-            binding.urlVisitsDivider.visibility = View.VISIBLE
-            binding.urlVisitsLayout.visibility = View.VISIBLE
-            binding.urlVisitsTextview.text = count.toString()
-        } else {
-            binding.urlVisitsDivider.visibility = View.GONE
-            binding.urlVisitsLayout.visibility = View.GONE
-        }
-    }
-
     private fun refreshVisitCount() {
         binding.urlVisitsRefreshButton.isEnabled = false
         binding.urlVisitsRefreshButton.alpha = 0.5f
@@ -128,9 +114,16 @@ class URLActivity : AppCompatActivity() {
                 binding.urlVisitsRefreshButton.isEnabled = true
                 binding.urlVisitsRefreshButton.alpha = 1f
             }
-        (url.shortURLProvider as? Owovz)?.getURLVisitCount(this, url.shortURL) { count -> updateVisitCount(count) }
-        (url.shortURLProvider as? Spoome)?.getURLVisitCount(this, url.alias) { count -> updateVisitCount(count) }
-        (url.shortURLProvider as? Tinube)?.getURLVisitCount(this, url.alias) { count -> updateVisitCount(count) }
+        url.shortURLProvider.getURLClickCount(this, url) { count ->
+            if (count != null) {
+                binding.urlVisitsDivider.visibility = View.VISIBLE
+                binding.urlVisitsLayout.visibility = View.VISIBLE
+                binding.urlVisitsTextview.text = count.toString()
+            } else {
+                binding.urlVisitsDivider.visibility = View.GONE
+                binding.urlVisitsLayout.visibility = View.GONE
+            }
+        }
     }
 
 

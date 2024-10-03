@@ -108,6 +108,16 @@ sealed class GenerateURLError(
         context.getString(R.string.error_domain_not_allowed)
     )
 
+    class AliasAlreadyExists(context: Context) : GenerateURLError(
+        context.getString(R.string.error),
+        context.getString(R.string.error_alias_already_exists)
+    )
+
+    class URLExistsWithDifferentAlias(context: Context) : GenerateURLError(
+        context.getString(R.string.error),
+        context.getString(R.string.error_url_already_exists_with_different_alias)
+    )
+
     class InvalidURL(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_invalid_url)
@@ -121,11 +131,6 @@ sealed class GenerateURLError(
     class InvalidURLOrAlias(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_invalid_url_or_alias)
-    )
-
-    class URLExistsWithDifferentAlias(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
-        context.getString(R.string.error_url_already_exists_with_different_alias)
     )
 
     class BlacklistedURL(context: Context, message: String? = null, urlhausLink: String? = null, virustotalLink: String? = null) :
@@ -147,11 +152,6 @@ sealed class GenerateURLError(
                 }
             } else null
         )
-
-    class AliasAlreadyExists(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
-        context.getString(R.string.error_alias_already_exists)
-    )
 
     class RateLimitExceeded(context: Context) : GenerateURLError(
         context.getString(R.string.error),

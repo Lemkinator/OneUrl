@@ -7,7 +7,6 @@ import com.android.volley.Request
 import com.android.volley.RetryPolicy
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
-import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import de.lemke.oneurl.domain.urlEncodeAmpersand
@@ -103,12 +102,9 @@ val tinyim = Tnyim()
 class Tnyim : ShortURLProvider {
     override val enabled = false
     override val name = "tny.im"
-    override val group = name
-    override val baseURL = "https://tny.im/"
-    override val apiURL = "${baseURL}yourls-api.php"
-    override val infoURL = baseURL
-    override val privacyURL = null
-    override val termsURL = "${baseURL}rules.php"
+    override val baseURL = "https://tny.im"
+    override val apiURL = "$baseURL/yourls-api.php"
+    override val termsURL = "$baseURL/rules.php"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 5
         override val maxAliasLength = 100 // no info, tested upto 100
@@ -116,35 +112,16 @@ class Tnyim : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9-]+"))
     }
 
-    override fun getAnalyticsURL(alias: String) = null
-
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf()
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
-
-    fun getURLVisitCount(context: Context, alias: String, callback: (visitCount: Int?) -> Unit) {
+    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
-        val url = "$apiURL?action=url-stats&format=json&shorturl=$alias"
+        val requestURL = "$apiURL?action=url-stats&format=json&shorturl=${url.alias}"
         Log.d(tag, "start request: $url")
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
             JsonObjectRequest(
                 Request.Method.POST,
-                url,
+                requestURL,
                 null,
                 { response ->
                     try {
@@ -185,7 +162,7 @@ class Tnyim : ShortURLProvider {
                     if (json.has("shorturl")) {
                         val shortURL = json.getString("shorturl").trim()
                         Log.d(tag, "shortURL: $shortURL")
-                        if (alias.isBlank() || shortURL == baseURL + alias) successCallback(shortURL)
+                        if (alias.isBlank() || shortURL == "$baseURL/alias") successCallback(shortURL)
                         else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
                     } else {
                         Log.d(tag, "error: response does not contain short url or errors")

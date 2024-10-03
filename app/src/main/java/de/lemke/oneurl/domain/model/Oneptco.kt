@@ -2,7 +2,8 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
-import com.android.volley.Request
+import com.android.volley.DefaultRetryPolicy
+import com.android.volley.RetryPolicy
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -26,18 +27,15 @@ alias already exists: {
 fail: {
     "message": "Bad request"
 }
+
+2024/10/03: request took 14 seconds :/
 */
 val oneptco = Oneptco()
 
 class Oneptco : ShortURLProvider {
-    override val enabled = true
     override val name = "1pt.co"
-    override val group = name
-    override val baseURL = "https://1pt.co/"
+    override val baseURL = "https://1pt.co"
     override val apiURL = "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl"
-    override val infoURL = baseURL
-    override val privacyURL = null
-    override val termsURL = null
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 0
         override val maxAliasLength = AliasConfig.NO_MAX_ALIAS_SPECIFIED
@@ -45,27 +43,20 @@ class Oneptco : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
     }
 
-    override fun getAnalyticsURL(alias: String) = null
-
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
         )
     )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
 
     override fun getCreateRequest(
         context: Context,
@@ -77,38 +68,43 @@ class Oneptco : ShortURLProvider {
         val tag = "CreateRequest_$name"
         val url = apiURL + "?long=$longURL" + (if (alias.isBlank()) "" else "&short=$alias")
         Log.d(tag, "start request: $url")
-        return JsonObjectRequest(
-            Request.Method.POST,
+        return object : JsonObjectRequest(
+            Method.POST,
             url,
             null,
             { response ->
-                Log.d(tag, "response: $response")
-                when {
-                    !response.has("message") -> {
-                        Log.e(tag, "error: no message")
-                        errorCallback(GenerateURLError.Unknown(context, 200))
-                    }
+                try {
+                    Log.d(tag, "response: $response")
+                    when {
+                        !response.has("message") -> {
+                            Log.e(tag, "error: no message")
+                            errorCallback(GenerateURLError.Unknown(context, 200))
+                        }
 
-                    response.getString("message") != "Added!" -> {
-                        Log.e(tag, "error: ${response.getString("message")}")
-                        errorCallback(GenerateURLError.Custom(context, 200, response.getString("message")))
-                    }
+                        response.getString("message") != "Added!" -> {
+                            Log.e(tag, "error: ${response.getString("message")}")
+                            errorCallback(GenerateURLError.Custom(context, 200, response.getString("message")))
+                        }
 
-                    !response.has("short") -> {
-                        Log.e(tag, "error: no short")
-                        errorCallback(GenerateURLError.Unknown(context, 200))
-                    }
+                        !response.has("short") -> {
+                            Log.e(tag, "error: no short")
+                            errorCallback(GenerateURLError.Unknown(context, 200))
+                        }
 
-                    response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort") -> {
-                        Log.e(tag, "error: alias already exists")
-                        errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                    }
+                        response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort") -> {
+                            Log.e(tag, "error: alias already exists")
+                            errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        }
 
-                    else -> {
-                        val shortURL = baseURL + response.getString("short").trim()
-                        Log.d(tag, "shortURL: $shortURL")
-                        successCallback(shortURL)
+                        else -> {
+                            val shortURL = "$baseURL/${response.getString("short").trim()}"
+                            Log.d(tag, "shortURL: $shortURL")
+                            successCallback(shortURL)
+                        }
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    errorCallback(GenerateURLError.Unknown(context, 200))
                 }
             },
             { error ->
@@ -121,7 +117,10 @@ class Oneptco : ShortURLProvider {
                     when {
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 500 && data.contains("Internal server error") -> errorCallback(GenerateURLError.InternalServerError(context))
+                        statusCode == 500 && data.contains("Internal server error") -> errorCallback(
+                            GenerateURLError.InternalServerError(context)
+                        )
+
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {
@@ -129,6 +128,15 @@ class Oneptco : ShortURLProvider {
                     errorCallback(GenerateURLError.Unknown(context))
                 }
             }
-        )
+        ) {
+            override fun getRetryPolicy(): RetryPolicy {
+                return DefaultRetryPolicy(
+                    20000, // set timeout to 20 seconds
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                )
+
+            }
+        }
     }
 }

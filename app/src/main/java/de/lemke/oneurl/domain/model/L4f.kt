@@ -42,15 +42,11 @@ error (still return 200):
 }
  */
 val l4f = L4f()
+
 class L4f : ShortURLProvider {
-    override val enabled = true
     override val name = "l4f.com"
-    override val group = name
-    override val baseURL = "https://l4f.com/"
-    override val apiURL = "${baseURL}shorten"
-    override val infoURL = baseURL
-    override val privacyURL = null
-    override val termsURL = null
+    override val baseURL = "https://l4f.com"
+    override val apiURL = "$baseURL/shorten"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 3
         override val maxAliasLength = 100
@@ -62,21 +58,14 @@ class L4f : ShortURLProvider {
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
         )
     )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
-
-    override fun getAnalyticsURL(alias: String) = null
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
@@ -100,18 +89,16 @@ class L4f : ShortURLProvider {
                     val error = response.optBoolean("error")
                     val message = response.optString("message")
                     val shortURL = response.optJSONObject("data")?.optString("shorturl")
+                    Log.d(tag, "error: $error message: $message shortURL: $shortURL")
                     if (!error && shortURL != null) {
-                        if (alias.isBlank() || shortURL == baseURL + alias) successCallback(shortURL)
+                        if (alias.isBlank() || shortURL == "$baseURL/$alias") successCallback(shortURL)
                         else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
-                    } else {
-                        Log.e(tag, "error: $message")
-                        when {
-                            message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                            message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
-                            message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                            message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                            else -> errorCallback(GenerateURLError.Custom(context, 200, message))
-                        }
+                    } else when {
+                        message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
+                        message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
+                        message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
+                        else -> errorCallback(GenerateURLError.Custom(context, 200, message))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()

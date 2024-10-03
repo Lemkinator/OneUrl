@@ -58,6 +58,7 @@ class UrlhausCheckUseCase @Inject constructor(
             checkUrlApi,
             { response ->
                 try {
+                    Log.d(tag, "response: $response")
                     val responseJson = JSONObject(response)
                     val queryStatus = responseJson.optString("query_status")
                     if (queryStatus == "ok") {

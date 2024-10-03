@@ -8,7 +8,7 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import org.json.JSONObject
 
 /*
-login required, but:
+login required (also for alias), but:
 https://t.ly/api/v1/link/shorten
 https://t.ly/api/v1/link/providers
 t.ly, ibit.ly, twtr.to, jpeg.ly, is.gd, rebrand.ly, tinyurl, bit.ly
@@ -68,17 +68,13 @@ val tlyTwtrto = Tly.TlyTwtrto()
 val tlyJpegly = Tly.TlyJpegly()
 val tlyRebrandly = Tly.TlyRebrandly()
 val tlyBitly = Tly.TlyBitly()
+
 sealed class Tly : ShortURLProvider {
     final override val group = "t.ly [experimental]"
-    final override val baseURL = "https://t.ly/"
-    final override val apiURL = "${baseURL}api/v1/link/shorten"
-    final override val infoURL = baseURL
+    final override val baseURL = "https://t.ly"
+    final override val apiURL = "$baseURL/api/v1/link/shorten"
     final override val privacyURL = "$baseURL/privacy"
     final override val termsURL = "$baseURL/terms"
-    final override val aliasConfig = null //login required
-    override fun getAnalyticsURL(alias: String) = null
-
-    override fun sanitizeLongURL(url: String) = url.trim()
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
@@ -86,24 +82,6 @@ sealed class Tly : ShortURLProvider {
             context.getString(R.string.experimental),
             context.getString(R.string.tly_info)
         ),
-    )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
-            privacyURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL
-        )
     )
 
     override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = Pair(
@@ -153,7 +131,7 @@ sealed class Tly : ShortURLProvider {
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         message.contains("long url field is required", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        message.contains("T.LY account and API key required", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
+                        message.contains("T.LY account and API key", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
                         statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, message))
                     }
@@ -172,7 +150,6 @@ sealed class Tly : ShortURLProvider {
     }
 
     class TlyDefault : Tly() {
-        override val enabled = true
         override val name = "t.ly"
 
         override fun getCreateRequest(
@@ -185,7 +162,6 @@ sealed class Tly : ShortURLProvider {
     }
 
     class TlyIbitly : Tly() {
-        override val enabled = true
         override val name = "t.ly (ibit.ly)"
         override fun getCreateRequest(
             context: Context,
@@ -209,7 +185,6 @@ sealed class Tly : ShortURLProvider {
     }
 
     class TlyJpegly : Tly() {
-        override val enabled = true
         override val name = "t.ly (jpeg.ly)"
         override fun getCreateRequest(
             context: Context,

@@ -6,6 +6,7 @@ import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.Response
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import java.util.Locale
 
@@ -37,19 +38,15 @@ class ShortURLProviderCompanion {
     companion object {
         private val provider: List<ShortURLProvider> = listOf(
             dagd,
-            vgd,
             isgd,
-            tinyurl,
+            vgd,
             kurzelinksde,
             kurzelinksdeOcn,
             kurzelinksdeT1p,
             kurzelinksdeOgy,
-            ulvis, //disabled
-            oneptco,
+            tinyurl,
             l4f,
-            shareaholic,
-            shrtlnk, //disabled
-            shorturlat, //disabled
+            oneptco,
             tinyim,
             tinube,
             tly,
@@ -58,6 +55,10 @@ class ShortURLProviderCompanion {
             tlyJpegly,
             tlyRebrandly, //disabled
             tlyBitly, //disabled
+            shrtlnk, //disabled
+            shorturlat, //disabled
+            ulvis, //disabled
+            shareaholic,
             zwsim,
             spoome,
             spoomeEmoji,
@@ -91,16 +92,7 @@ class ShortURLProviderCompanion {
 class Unknown : ShortURLProvider {
     override val enabled = false
     override val name = "Unknown"
-    override val group = name
-    override val baseURL = ""
-    override val apiURL = ""
-    override val infoURL = "https://www.leonard-lemke.com/apps/oneurl"
-    override val privacyURL = null
-    override val termsURL = null
-    override val aliasConfig = null
-    override fun getAnalyticsURL(alias: String) = null
-
-    override fun sanitizeLongURL(url: String) = url.trim()
+    override val baseURL = "https://www.leonard-lemke.com/apps/oneurl"
 
     override fun getCreateRequest(
         context: Context,
@@ -116,27 +108,31 @@ class Unknown : ShortURLProvider {
             override fun parseNetworkResponse(response: NetworkResponse?) = null
         }
     }
-
-    //Info
-    override fun getInfoContents(context: Context) = emptyList<ProviderInfo>()
-    override fun getInfoButtons(context: Context) = emptyList<ProviderInfo>()
-    override fun getTipsCardTitleAndInfo(context: Context) = null
 }
 
 interface ShortURLProvider {
     val enabled: Boolean
-    val group: String
+        get() = true
     val name: String
+    val group: String
+        get() = name
     val baseURL: String
     val apiURL: String
+        get() = baseURL
     val infoURL: String
+        get() = baseURL
     val privacyURL: String?
+        get() = null
     val termsURL: String?
+        get() = null
     val aliasConfig: AliasConfig?
+        get() = null
 
-    fun getAnalyticsURL(alias: String): String?
+    fun getAnalyticsURL(alias: String): String? = null
 
-    fun sanitizeLongURL(url: String): String
+    fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) = callback(null)
+
+    fun sanitizeLongURL(url: String): String = url.trim()
 
     fun getCreateRequest(
         context: Context,
@@ -146,10 +142,14 @@ interface ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): Request<*>
 
-    //Info
-    fun getInfoContents(context: Context): List<ProviderInfo>
-    fun getInfoButtons(context: Context): List<ProviderInfo>
-    fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>?
+    fun getInfoContents(context: Context): List<ProviderInfo> = emptyList()
+    fun getInfoButtons(context: Context): List<ProviderInfo> = listOfNotNull(
+        privacyURL?.let { ProviderInfo(dev.oneuiproject.oneui.R.drawable.ic_oui_privacy, context.getString(R.string.privacy_policy), it) },
+        termsURL?.let { ProviderInfo(dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline, context.getString(R.string.tos), it) },
+        ProviderInfo(dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline, context.getString(R.string.more_information), infoURL)
+    )
+
+    fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = null
 }
 
 class ProviderInfo(

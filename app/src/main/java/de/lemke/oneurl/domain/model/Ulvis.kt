@@ -19,20 +19,16 @@ val ulvis = Ulvis()
 class Ulvis : ShortURLProvider {
     override val enabled = false //added cloudflare :/
     override val name = "ulvis.net"
-    override val group = name
-    override val baseURL = "https://ulvis.net/"
-    override val apiURL = "${baseURL}API/write/get"
-    override val infoURL = baseURL
-    override val privacyURL = "${baseURL}privacy.html"
-    override val termsURL = "${baseURL}disclaimer.html"
+    override val baseURL = "https://ulvis.net"
+    override val apiURL = "$baseURL/API/write/get"
+    override val privacyURL = "$baseURL/privacy.html"
+    override val termsURL = "$baseURL/disclaimer.html"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 0
         override val maxAliasLength = 60
         override val allowedAliasCharacters = "a-z, A-Z, 0-9"
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
     }
-
-    override fun getAnalyticsURL(alias: String) = null
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
@@ -45,29 +41,14 @@ class Ulvis : ShortURLProvider {
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
         )
     )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
-            privacyURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
 
     override fun getCreateRequest(
         context: Context,
@@ -138,7 +119,7 @@ class Ulvis : ShortURLProvider {
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        statusCode == 403 -> errorCallback(GenerateURLError.HumanVerificationRequired(context, this)) //Doesn't work, different cookies
+                        statusCode == 403 -> errorCallback(GenerateURLError.HumanVerificationRequired(context, this)) //not working: cookies
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }

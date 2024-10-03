@@ -48,6 +48,9 @@ class ProviderActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.root.setNavigationButtonOnClickListener { finishAfterTransition() }
         initRecycler()
+        lifecycleScope.launch {
+            binding.providerList.scrollToPosition(provider.indexOf(getUserSettings().selectedShortURLProvider))
+        }
     }
 
     private fun initRecycler() {

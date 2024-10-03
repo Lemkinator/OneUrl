@@ -24,14 +24,9 @@ errors:
 val dagd = Dagd()
 
 class Dagd : ShortURLProvider {
-    override val enabled = true
     override val name = "da.gd"
-    override val group = name
-    override val baseURL = "https://da.gd/"
-    override val apiURL = "${baseURL}shorten"
-    override val infoURL = baseURL
-    override val privacyURL = null
-    override val termsURL = null
+    override val baseURL = "https://da.gd"
+    override val apiURL = "$baseURL/shorten"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 0
         override val maxAliasLength = 10
@@ -41,28 +36,23 @@ class Dagd : ShortURLProvider {
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+            context.getString(R.string.alias),
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
+        ),
+        ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_report,
             context.getString(R.string.analytics),
             context.getString(R.string.analytics_dagd)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
         )
     )
 
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
-
-    override fun getAnalyticsURL(alias: String) = "${baseURL}stats/$alias"
+    override fun getAnalyticsURL(alias: String) = "$baseURL/stats/$alias"
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
@@ -75,19 +65,22 @@ class Dagd : ShortURLProvider {
     ): StringRequest {
         val tag = "CreateRequest_check_$name"
         if (alias.isBlank()) return requestCreateDAGD(context, longURL, "", successCallback, errorCallback)
-        val checkUrlApi = "${baseURL}coshorten/$alias"
+        val checkUrlApi = "$baseURL/coshorten/$alias"
         Log.d(tag, "start request: $checkUrlApi")
         return StringRequest(
             Request.Method.GET,
             checkUrlApi,
             { response ->
                 if (sanitizeLongURL(response) != longURL) {
-                    Log.e(tag, "error, shortURL already exists, but has different longURL, longURL: $longURL, response: ${sanitizeLongURL(response)} ($response)")
+                    Log.e(
+                        tag,
+                        "error, shortURL already exists, but has different longURL, longURL: $longURL, response: ${sanitizeLongURL(response)} ($response)"
+                    )
                     errorCallback(GenerateURLError.AliasAlreadyExists(context))
                     return@StringRequest
                 }
                 Log.d(tag, "shortURL already exists (but is not in local db): $response")
-                val shortURL = baseURL + alias
+                val shortURL = "$baseURL/$alias"
                 Log.d(tag, "shortURL: $shortURL")
                 successCallback(shortURL)
             },
@@ -151,11 +144,11 @@ class Dagd : ShortURLProvider {
                     when {
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        data.contains("Long URL cannot be empty") -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Long URL must have http:// or https:// scheme") -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Long URL is not a valid URL") -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Short URL already taken") -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        data.contains("Custom short URL contained invalid characters") -> errorCallback(GenerateURLError.InvalidAlias(context))
+                        data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL(context))
+                        data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL(context))
+                        data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
+                        data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        data.contains("Custom short URL contained invalid", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {

@@ -58,35 +58,22 @@ val owovzOwo = Owovz.OwovzOwo()
 val owovzZws = Owovz.OwovzZws()
 val owovzSketchy = Owovz.OwovzSketchy()
 val owovzGay = Owovz.OwovzGay()
+
 sealed class Owovz : ShortURLProvider {
-    override val enabled = true
     final override val group = "owo.vc (zws, sketchy, gay)"
-    final override val baseURL = "https://owo.vc/"
-    final override val apiURL = "${baseURL}api/v2/link/"
-    final override val infoURL = baseURL
-    final override val privacyURL = null
-    final override val termsURL = null
-    final override val aliasConfig = null
-    override fun getAnalyticsURL(alias: String) = null
+    final override val baseURL = "https://owo.vc"
+    final override val apiURL = "$baseURL/api/v2/link"
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    fun getURLVisitCount(context: Context, shortURL: String, callback: (visitCount: Int?) -> Unit) {
+    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
-        val url = apiURL + Uri.encode(shortURL)
+        val requestURL = "$apiURL/${Uri.encode(url.shortURL)}"
         Log.d(tag, "start request: $url")
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
             JsonObjectRequest(
                 Request.Method.GET,
-                url,
+                requestURL,
                 null,
                 { response ->
                     try {
@@ -168,11 +155,6 @@ sealed class Owovz : ShortURLProvider {
 
         override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-                context.getString(R.string.entertainment),
-                context.getString(R.string.owovc_fun_text)
-            ),
-            ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
@@ -199,20 +181,15 @@ sealed class Owovz : ShortURLProvider {
 
         override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-                context.getString(R.string.entertainment),
-                context.getString(R.string.owovc_fun_text)
+                dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,
+                "zws",
+                context.getString(R.string.owovc_zws)
             ),
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
             ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,
-                "zws",
-                context.getString(R.string.owovc_zws)
-            )
         )
 
         override fun getCreateRequest(
@@ -234,19 +211,14 @@ sealed class Owovz : ShortURLProvider {
 
         override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-                context.getString(R.string.entertainment),
-                context.getString(R.string.owovc_fun_text)
+                dev.oneuiproject.oneui.R.drawable.ic_oui_basic,
+                "sketchy",
+                context.getString(R.string.owovc_sketchy)
             ),
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_basic,
-                "sketchy",
-                context.getString(R.string.owovc_sketchy)
             )
         )
 
@@ -269,19 +241,14 @@ sealed class Owovz : ShortURLProvider {
 
         override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-                context.getString(R.string.entertainment),
-                context.getString(R.string.owovc_fun_text)
+                dev.oneuiproject.oneui.R.drawable.ic_oui_long_legs,
+                "gay",
+                context.getString(R.string.owovc_gay)
             ),
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_long_legs,
-                "gay",
-                context.getString(R.string.owovc_gay)
             )
         )
 

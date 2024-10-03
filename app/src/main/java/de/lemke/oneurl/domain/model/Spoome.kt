@@ -57,35 +57,21 @@ val spoome = Spoome.Default()
 val spoomeEmoji = Spoome.Emoji()
 
 sealed class Spoome : ShortURLProvider {
-    override val enabled = true
     final override val group = "spoo.me, spoo.me (emoji)"
-    final override val baseURL = "https://spoo.me/"
-    final override val infoURL = baseURL
-    final override val privacyURL = null
-    final override val termsURL = null
+    final override val baseURL = "https://spoo.me"
 
-    override fun getAnalyticsURL(alias: String) = "${baseURL}stats/$alias"
+    override fun getAnalyticsURL(alias: String) = "$baseURL/stats/$alias"
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().withHttps().trim()
 
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = null
-
-    fun getURLVisitCount(context: Context, alias: String, callback: (visitCount: Int?) -> Unit) {
+    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
-        val url = getAnalyticsURL(alias)
+        val requestURL = getAnalyticsURL(url.alias)
         Log.d(tag, "start request: $url")
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
             JsonObjectRequest(
                 Request.Method.POST,
-                url,
+                requestURL,
                 null,
                 { response ->
                     try {
@@ -114,8 +100,8 @@ sealed class Spoome : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
         val tag = "SpoomeCreateRequest_$name"
-        val url = if (this is Default) "$apiURL?url=$longURL&alias=$alias"
-        else "$apiURL?url=$longURL&emojies=$alias"
+        val url = if (this is Default) "$apiURL?alias=$alias&url=$longURL"
+        else "$apiURL?emojies=$alias&url=$longURL"
         Log.d(tag, "start request: $url")
         return object : JsonObjectRequest(
             Method.POST,
@@ -152,6 +138,7 @@ sealed class Spoome : ShortURLProvider {
                                 else -> errorCallback(GenerateURLError.Custom(context, statusCode, aliasError))
                             }
                         }
+
                         response?.has("EmojiError") == true -> {
                             val emojiError = response.getString("EmojiError")
                             when {
@@ -160,6 +147,7 @@ sealed class Spoome : ShortURLProvider {
                                 else -> errorCallback(GenerateURLError.Custom(context, statusCode, emojiError))
                             }
                         }
+
                         statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded(context))
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
@@ -185,14 +173,19 @@ sealed class Spoome : ShortURLProvider {
 
         override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
             ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters
+                )
+            ),
+            ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
             )
         )
     }
@@ -204,7 +197,8 @@ sealed class Spoome : ShortURLProvider {
             override val minAliasLength = 0
             override val maxAliasLength = 30 //returns invalid alias if more than 30
             override val allowedAliasCharacters = "Emojis"
-            override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+")) //one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
+            //one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
+            override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+"))
         }
 
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
@@ -219,14 +213,19 @@ sealed class Spoome : ShortURLProvider {
                 context.getString(R.string.emoji_text)
             ),
             ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters
+                )
+            ),
+            ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
             )
         )
     }

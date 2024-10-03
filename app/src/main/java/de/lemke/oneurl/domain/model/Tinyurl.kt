@@ -11,17 +11,17 @@ import de.lemke.oneurl.domain.urlEncodeAmpersand
 /*
 https://tinyurl.com/app
 example: https://tinyurl.com/api-create.php?url=https://example.com&alias=example // json body: https://api.tinyurl.com/create
+
+analytics require api token
  */
 val tinyurl = Tinyurl()
+
 class Tinyurl : ShortURLProvider {
-    override val enabled = true
     override val name = "tinyurl.com"
-    override val group = name
-    override val baseURL = "https://tinyurl.com/"
-    override val apiURL = "${baseURL}api-create.php"
-    override val infoURL = baseURL
-    override val privacyURL = "${baseURL}app/privacy-policy"
-    override val termsURL = "${baseURL}app/terms"
+    override val baseURL = "https://tinyurl.com"
+    override val apiURL = "$baseURL/api-create.php"
+    override val privacyURL = "$baseURL/app/privacy-policy"
+    override val termsURL = "$baseURL/app/terms"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 5
         override val maxAliasLength = 30
@@ -29,37 +29,20 @@ class Tinyurl : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
     }
 
-    override fun getAnalyticsURL(alias: String) = null //requires api token
-
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
         )
     )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
-            privacyURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
 
     override fun getCreateRequest(
         context: Context,
@@ -99,6 +82,7 @@ class Tinyurl : ShortURLProvider {
                             if (alias.isBlank()) errorCallback(GenerateURLError.InvalidURL(context))
                             else errorCallback(GenerateURLError.InvalidURLOrAlias(context))
                         }
+
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {

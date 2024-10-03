@@ -85,16 +85,14 @@ response:
 <p>
  */
 val shorturlat = Shorturlat()
+
 class Shorturlat : ShortURLProvider {
-    override val enabled = false
+    override val enabled = false // form-urlencoded?
     override val name = "shorturl.at"
-    override val group = name
     override val baseURL = "https://shorturl.at"
     override val apiURL = "$baseURL/shortener.php"
-    override val infoURL = baseURL
     override val privacyURL = "$baseURL/privacy-policy.php"
     override val termsURL = "$baseURL/terms-of-service.php"
-    override val aliasConfig = null
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
@@ -104,41 +102,19 @@ class Shorturlat : ShortURLProvider {
         )
     )
 
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
-            privacyURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
         context.getString(R.string.info),
         context.getString(R.string.shorturlat_info)
     )
 
-    override fun getAnalyticsURL(alias: String) = null
-
-    override fun sanitizeLongURL(url: String) = url.trim()
-
-    fun getURLVisitCount(context: Context, shortURL: String, callback: (visitCount: Int?) -> Unit) {
+    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
-        val url = "https://www.shorturl.at/url-total-clicks.php?u=$shortURL"
+        val requestURL = "https://www.shorturl.at/url-total-clicks.php?u=${url.shortURL}"
         Log.d(tag, "start request: $url")
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
             StringRequest(
                 Request.Method.GET,
-                url,
+                requestURL,
                 { response ->
                     try {
                         Log.d(tag, "response: $response")

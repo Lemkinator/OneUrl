@@ -31,7 +31,6 @@
     <string name="privacy_text">This provider has been designed to be as data efficient as possible. It is operated from Germany and complies with the applicable privacy regulations in Germany and Europe.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">This URL shortener uses emojis to create personalized and easy-to-remember links. When specifying an alias, only emojis are allowed.</string>
-    <string name="entertainment">Entertainment</string>
     <string name="alias_text">The individual aliases can have a length between %1$d and %2$d characters and may only consist of the characters \"%3$s\". This feature allows users to create personalized and easy-to-remember aliases for their links.</string>
     <string name="analytics">Analytics</string>
     <string name="analytics_text">This provider offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
@@ -133,7 +132,7 @@
     <string name="error_empty_url">Empty URL.</string>
     <string name="error_url_already_exists">URL already shortened</string>
     <string name="error_url_already_exists_with_different_alias">This URL has already been shortened with a different alias. Please try shortening a different URL or leave the alias unspecified.</string>
-    <string name="error_alias_already_exists">Alias already exists.</string>
+    <string name="error_alias_already_exists">Alias already exists. Try another one or leave it empty to generate a random one.</string>
     <string name="error_alias_too_short">Alias too short (min. %1$d characters).</string>
     <string name="error_alias_too_long">Alias too long (max. %1$d characters).</string>
     <string name="error_invalid_url">Invalid URL.</string>

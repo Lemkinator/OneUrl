@@ -31,20 +31,12 @@ and sometimes shows ads?
 
  */
 val shrtlnk = Shrtlnk()
+
 class Shrtlnk : ShortURLProvider {
     override val enabled = false
     override val name = "shrtlnk.dev"
-    override val group = name
-    override val baseURL = "https://www.shrtlnk.dev/"
-    override val apiURL = "${baseURL}?index=&_data=routes%2F_index"
-    override val infoURL = baseURL
-    override val privacyURL = null
-    override val termsURL = null
-    override val aliasConfig = null
-
-    override fun getAnalyticsURL(alias: String) = null
-
-    override fun sanitizeLongURL(url: String) = url.trim()
+    override val baseURL = "https://www.shrtlnk.dev"
+    override val apiURL = "$baseURL?index=&_data=routes%2F_index"
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
@@ -53,16 +45,6 @@ class Shrtlnk : ShortURLProvider {
             context.getString(R.string.redirect_hint_text)
         )
     )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
 
     override fun getCreateRequest(
         context: Context,
@@ -87,7 +69,7 @@ class Shrtlnk : ShortURLProvider {
                     val redirect = headers?.get("X-Remix-Redirect")
                     val key = redirect?.substringAfter("key=")
                     if (key != null) {
-                        val shortURL = "${baseURL}${key}"
+                        val shortURL = "$baseURL/$key"
                         Log.d(tag, "shortURL: $shortURL")
                         successCallback(shortURL)
                         return Response.success(shortURL, null)

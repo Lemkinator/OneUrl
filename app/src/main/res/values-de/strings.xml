@@ -13,7 +13,6 @@
     <string name="privacy_text">Dieser Anbieter wurde so konzipiert, dass er so datensparsam arbeitet, wie möglich. Er wird von Deutschland aus betrieben und hält sich an die geltenden Datenschutzregelungen in Deutschland und Europa.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">Dieser URL-Verkürzer verwendet Emojis, um personalisierte und leicht zu merkende Links zu erstellen. Falls ein eigenes Kürzel angegeben wird, sind nur Emojis erlaubt.</string>
-    <string name="entertainment">Unterhaltung</string>
     <string name="alias_text">Die individuellen Kürzel können eine Länge zwischen %1$d und %2$d Zeichen haben und dürfen ausschließlich aus den Zeichen \"%3$s\" bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
     <string name="analytics">Analytics</string>
     <string name="analytics_text">Dieser Anbieter bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
@@ -114,7 +113,7 @@
     <string name="error_empty_url">Keine URL eingegeben.</string>
     <string name="error_url_already_exists">URL bereits gekürzt</string>
     <string name="error_url_already_exists_with_different_alias">Diese URL wurde bereits mit einem anderen Kürzel verkürzt. Versuche, eine andere URL zu verkürzen oder keinen Kürzel anzugeben.</string>
-    <string name="error_alias_already_exists">Kürzel existiert bereits.</string>
+    <string name="error_alias_already_exists">Kürzel existiert bereits. Bitte wähle ein anderes Kürzel oder lasse das Feld leer, um ein zufälliges Kürzel zu generieren.</string>
     <string name="error_alias_too_short">Kürzel zu kurz (min. %1$d Zeichen).</string>
     <string name="error_alias_too_long">Kürzel zu lang (max. %1$d Zeichen).</string>
     <string name="error_invalid_url">Ungültige URL.</string>

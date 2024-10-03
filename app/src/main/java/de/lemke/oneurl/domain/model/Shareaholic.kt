@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
-import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.urlEncodeAmpersand
 import org.json.JSONObject
@@ -35,41 +34,13 @@ error:
 val shareaholic = Shareaholic()
 
 class Shareaholic : ShortURLProvider {
-    override val enabled = true
     override val name = "go.shr.lc"
-    override val group = name
-    override val baseURL = "https://www.shareaholic.com/"
-    override val apiURL = "${baseURL}v2/share/shorten_link"
-    override val infoURL = baseURL
-    override val privacyURL = "${baseURL}privacy/"
-    override val termsURL = "${baseURL}terms/"
-    override val aliasConfig = null
-
-    override fun getAnalyticsURL(alias: String) = null
+    override val baseURL = "https://www.shareaholic.com"
+    override val apiURL = "$baseURL/v2/share/shorten_link"
+    override val privacyURL = "$baseURL/privacy"
+    override val termsURL = "$baseURL/terms"
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
-
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf()
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
-            privacyURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
 
     override fun getCreateRequest(
         context: Context,
@@ -123,6 +94,7 @@ class Shareaholic : ShortURLProvider {
                                     errorCallback(GenerateURLError.Unknown(context, statusCode))
                             }
                         }
+
                         else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                     }
                 } catch (e: Exception) {

@@ -18,8 +18,8 @@ https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
  */
 val vgd = VgdIsgd.Vgd()
 val isgd = VgdIsgd.Isgd()
+
 sealed class VgdIsgd : ShortURLProvider {
-    override val enabled = true
     final override val group = "v.gd, is.gd"
     final override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 5
@@ -28,27 +28,9 @@ sealed class VgdIsgd : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
     }
 
-    override fun getAnalyticsURL(alias: String) = "${baseURL}stats.php?url=$alias"
+    override fun getAnalyticsURL(alias: String) = "$baseURL/stats.php?url=$alias"
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
-            privacyURL!!
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL!!
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        ),
-    )
 
     fun getVgdIsgdCreateRequest(
         context: Context,
@@ -126,6 +108,7 @@ sealed class VgdIsgd : ShortURLProvider {
                             Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
                             errorCallback(GenerateURLError.Custom(context, statusCode, context.getString(R.string.error_vgd_isgd)))
                         }
+
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {
@@ -139,11 +122,10 @@ sealed class VgdIsgd : ShortURLProvider {
 
     class Vgd : VgdIsgd() {
         override val name = "v.gd"
-        override val baseURL = "https://v.gd/"
-        override val apiURL = "${baseURL}create.php"
-        override val infoURL = baseURL
-        override val privacyURL = "${baseURL}privacy.php"
-        override val termsURL = "${baseURL}terms.php"
+        override val baseURL = "https://v.gd"
+        override val apiURL = "$baseURL/create.php"
+        override val privacyURL = "$baseURL/privacy.php"
+        override val termsURL = "$baseURL/terms.php"
 
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(R.string.info),
@@ -157,14 +139,19 @@ sealed class VgdIsgd : ShortURLProvider {
                 context.getString(R.string.redirect_hint_text)
             ),
             ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters
+                )
+            ),
+            ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
             )
         )
 
@@ -179,24 +166,26 @@ sealed class VgdIsgd : ShortURLProvider {
 
     class Isgd : VgdIsgd() {
         override val name = "is.gd"
-        override val baseURL = "https://is.gd/"
-        override val apiURL = "${baseURL}create.php"
-        override val infoURL = baseURL
-        override val privacyURL = "${baseURL}privacy.php"
-        override val termsURL = "${baseURL}terms.php"
-
-        override fun getTipsCardTitleAndInfo(context: Context) = null
+        override val baseURL = "https://is.gd"
+        override val apiURL = "$baseURL/create.php"
+        override val privacyURL = "$baseURL/privacy.php"
+        override val termsURL = "$baseURL/terms.php"
 
         override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters
+                )
+            ),
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_report,
                 context.getString(R.string.analytics),
                 context.getString(R.string.analytics_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
             )
         )
 

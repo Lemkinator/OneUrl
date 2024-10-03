@@ -28,8 +28,8 @@ val kurzelinksde = Kurzelinksde.Kurzelinks()
 val kurzelinksdeOgy = Kurzelinksde.Ogy()
 val kurzelinksdeT1p = Kurzelinksde.T1p()
 val kurzelinksdeOcn = Kurzelinksde.Ocn()
+
 sealed class Kurzelinksde : ShortURLProvider {
-    override val enabled = true
     final override val group = "kurzelinks.de, 0cn.de, t1p.de, ogy.de"
     final override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 5
@@ -37,10 +37,6 @@ sealed class Kurzelinksde : ShortURLProvider {
         override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
     }
-
-    override fun getAnalyticsURL(alias: String) = null //no analytics
-
-    override fun sanitizeLongURL(url: String) = url.trim()
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
@@ -51,25 +47,12 @@ sealed class Kurzelinksde : ShortURLProvider {
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
-        )
-    )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
-            privacyURL!!
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-            context.getString(R.string.tos),
-            termsURL!!
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
         )
     )
 
@@ -141,11 +124,10 @@ sealed class Kurzelinksde : ShortURLProvider {
 
     class Kurzelinks : Kurzelinksde() {
         override val name = "kurzelinks.de"
-        override val baseURL = "https://kurzelinks.de/"
-        override val apiURL = "${baseURL}api"
-        override val infoURL = baseURL
-        override val privacyURL = baseURL + "datenschutzerklaerung"
-        override val termsURL = baseURL + "nutzungsbedingungen"
+        override val baseURL = "https://kurzelinks.de"
+        override val apiURL = "$baseURL/api"
+        override val privacyURL = "$baseURL/datenschutzerklaerung"
+        override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
             context: Context,
@@ -158,11 +140,10 @@ sealed class Kurzelinksde : ShortURLProvider {
 
     class Ocn : Kurzelinksde() { //o -> 0
         override val name = "0cn.de"
-        override val baseURL = "https://0cn.de/"
-        override val apiURL = "${baseURL}api"
-        override val infoURL = baseURL
-        override val privacyURL = baseURL + "datenschutzerklaerung"
-        override val termsURL = baseURL + "nutzungsbedingungen"
+        override val baseURL = "https://0cn.de"
+        override val apiURL = "$baseURL/api"
+        override val privacyURL = "$baseURL/datenschutzerklaerung"
+        override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
             context: Context,
@@ -175,11 +156,10 @@ sealed class Kurzelinksde : ShortURLProvider {
 
     class T1p : Kurzelinksde() {
         override val name = "t1p.de"
-        override val baseURL = "https://t1p.de/"
-        override val apiURL = "${baseURL}api"
-        override val infoURL = baseURL
-        override val privacyURL = baseURL + "datenschutzerklaerung"
-        override val termsURL = baseURL + "nutzungsbedingungen"
+        override val baseURL = "https://t1p.de"
+        override val apiURL = "$baseURL/api"
+        override val privacyURL = "$baseURL/datenschutzerklaerung"
+        override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
             context: Context,
@@ -192,11 +172,10 @@ sealed class Kurzelinksde : ShortURLProvider {
 
     class Ogy : Kurzelinksde() {
         override val name = "ogy.de"
-        override val baseURL = "https://ogy.de/"
-        override val apiURL = "${baseURL}api"
-        override val infoURL = baseURL
-        override val privacyURL = baseURL + "datenschutzerklaerung"
-        override val termsURL = baseURL + "nutzungsbedingungen"
+        override val baseURL = "https://ogy.de"
+        override val apiURL = "$baseURL/api"
+        override val privacyURL = "$baseURL/datenschutzerklaerung"
+        override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
             context: Context,

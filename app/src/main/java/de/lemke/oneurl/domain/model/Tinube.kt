@@ -35,13 +35,11 @@ https://api.tinu.be/Nx1ByyelU/stats
 }
  */
 val tinube = Tinube()
+
 class Tinube : ShortURLProvider {
-    override val enabled = true
     override val name = "tinu.be"
-    override val group = name
     override val baseURL = "https://tinu.be"
     override val apiURL = "$baseURL/en"
-    override val infoURL = baseURL
     override val privacyURL = "$baseURL/terms"
     override val termsURL = "$baseURL/terms"
     override val aliasConfig = object : AliasConfig {
@@ -55,32 +53,25 @@ class Tinube : ShortURLProvider {
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
-            context.getString(R.string.alias_text, aliasConfig.minAliasLength, aliasConfig.maxAliasLength, aliasConfig.allowedAliasCharacters)
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
         )
     )
-
-    override fun getInfoButtons(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
-        )
-    )
-
-    override fun getTipsCardTitleAndInfo(context: Context) = null
-
-    override fun getAnalyticsURL(alias: String) = null
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    fun getURLVisitCount(context: Context, alias: String, callback: (visitCount: Int?) -> Unit) {
+    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
-        val url = "https://api.tinu.be/$alias/stats"
+        val requestURL = "https://api.tinu.be/${url.alias}/stats"
         Log.d(tag, "start request: $url")
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
             StringRequest(
                 Request.Method.GET,
-                url,
+                requestURL,
                 { response ->
                     try {
                         Log.d(tag, "response: $response")

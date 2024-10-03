@@ -27,18 +27,11 @@ answer:
 }
  */
 val zwsim = Zwsim()
-class Zwsim : ShortURLProvider {
-    override val enabled = true
-    override val name = "zws.im"
-    override val group = name
-    override val baseURL = "https://zws.im/"
-    override val apiURL = "https://api.zws.im/"
-    override val infoURL = baseURL
-    override val privacyURL = null
-    override val termsURL = null
-    override val aliasConfig = null
 
-    override fun getAnalyticsURL(alias: String) = null
+class Zwsim : ShortURLProvider {
+    override val name = "zws.im"
+    override val baseURL = "https://zws.im"
+    override val apiURL = "https://api.zws.im"
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
@@ -47,14 +40,6 @@ class Zwsim : ShortURLProvider {
             dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,
             "zws",
             context.getString(R.string.zwsim_zws)
-        )
-    )
-
-    override fun getInfoButtons(context: Context) = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(R.string.more_information),
-            infoURL
         )
     )
 
