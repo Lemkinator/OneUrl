@@ -99,6 +99,11 @@ class Shorturlat : ShortURLProvider {
             dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
             context.getString(R.string.experimental),
             context.getString(R.string.shorturlat_info)
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+            context.getString(R.string.analytics),
+            context.getString(R.string.analytics_text)
         )
     )
 
@@ -164,11 +169,8 @@ class Shorturlat : ShortURLProvider {
                     val statusCode = networkResponse?.statusCode
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                    }
+                    if (statusCode == null) errorCallback(GenerateURLError.Unknown(context))
+                    else errorCallback(GenerateURLError.Unknown(context, statusCode))
                 } catch (e: Exception) {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))

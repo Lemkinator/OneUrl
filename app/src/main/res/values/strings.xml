@@ -161,6 +161,7 @@
     <string name="error_urlhaus_abused_legit_botnetcc">It is a known compromised website used for botnet C&amp;C hosting.</string>
     <string name="error_urlhaus_abused_redirector">It is a known abused redirector or URL shortener.</string>
 
+    <string name="error_cant_open_link">Error: Link could not be opened.</string>
     <string name="no_urls">No URLs</string>
     <string name="no_search_results">No search results</string>
     <string name="no_favorite_urls">No favorite URLs</string>

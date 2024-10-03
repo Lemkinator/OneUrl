@@ -142,6 +142,7 @@
     <string name="error_urlhaus_abused_legit_botnetcc">Sie ist eine bekannte kompromittierte Website, die für das Hosting von Botnet C&amp;C verwendet wird.</string>
     <string name="error_urlhaus_abused_redirector">Sie ist ein bekannter missbrauchter Redirector oder URL-Verkürzer.</string>
 
+    <string name="error_cant_open_link">Fehler: Link konnte nicht geöffnet werden.</string>
     <string name="no_urls">Keine URLs</string>
     <string name="no_search_results">Keine Suchergebnisse</string>
     <string name="no_favorite_urls">Keine Favoriten</string>

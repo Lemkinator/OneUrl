@@ -3,7 +3,6 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.DefaultRetryPolicy
-import com.android.volley.RetryPolicy
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -129,14 +128,11 @@ class Oneptco : ShortURLProvider {
                 }
             }
         ) {
-            override fun getRetryPolicy(): RetryPolicy {
-                return DefaultRetryPolicy(
-                    20000, // set timeout to 20 seconds
-                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-                )
-
-            }
+            override fun getRetryPolicy() = DefaultRetryPolicy(
+                20000, // set timeout to 20 seconds
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            )
         }
     }
 }

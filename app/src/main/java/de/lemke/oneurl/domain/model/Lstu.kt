@@ -2,49 +2,55 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.DefaultRetryPolicy
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
-import de.lemke.oneurl.domain.urlEncodeAmpersand
 import de.lemke.oneurl.domain.withHttps
 import org.json.JSONObject
 
 /*
-https://tinu.be/en
-header:
-next-action: 1f5652ca890cba09fa370c02bd5123721da16fec
-body: [{"longUrl":"https://example.com","urlCode":""}]
+https://lstu.fr/
+https://lstu.fr/api
+https://framagit.org/fiat-tux/hat-softwares/lstu/blob/master/README.md
 
-response:
-0:["$@1",["RVMyonj2KmbCvJpjXHG0y",null]]
-1:{"status":200,"data":{"urlCode":"Nx1ByyelU","longUrl":"https://example.com"}}
+https://lstu.fr/a {lsturl=https://example.com lsturl-custom=test format=json}
+resonse:
+{
+  "qrcode": "iVBORw0KGgoAAAANSUhEUgAAAGMAAABjAQAAAACnQIM4AAAA7ElEQVQ4jc3Usa3EIAwAUEcUdJcF\nkFiDjpVggRAWuFuJjjUisUDoUljxkeL/pMkZ/eLrLApegWQbA9A14Iu1AkywhAQDp0oYNhVy23BK\nagIcMvgO+VSoU7mtDhFOstQzs1u1+o5zZ7W3arFbNZwdvNVql4eEQILVbnTMNBsYWUl0Ro25RE51\nKzXR04jKiY5O4JiI1Qp6lmI29OJUE46EDxCRFZWn1a+0eFYJBxIzqMCpxWrRkyZO7W6dbfOiK6c2\nL85QpA4lFbZLZh81Wb1Lih0KeXH2pxMfROg35eA3s1sd9R3vr7D675/ob3oDhzG5hss/eO8AAAAA\nSUVORK5CYII=\n",
+  "short": "https://lstu.fr/test-273",
+  "success": true,
+  "url": "https://example.com"
+}
 
-error:
-0:["$@1",["RVMyonj2KmbCvJpjXHG0y",null]]
-1:{"status":208,"data":"The suffix is already in use"}
+fail:
+{
+  "msg": "example.com is not a valid URL.",
+  "success": false
+}
 
 stats:
-https://api.tinu.be/Nx1ByyelU/stats
+https://lstu.fr/stats/test
 {
-  "clicks": 0,
-  "longUrl": "https://example.com",
-  "shortUrl": "https://tinu.be/Nx1ByyelU",
-  "urlCode": "Nx1ByyelU"
+  "counter": 702,
+  "created_at": 1401192086,
+  "short": "https://lstu.fr/test",
+  "success": true,
+  "timestamp": 1727985341,
+  "url": "https://linuxfr.org"
 }
  */
-val tinube = Tinube()
+val lstu = Lstu()
 
-class Tinube : ShortURLProvider {
-    override val name = "tinu.be"
-    override val baseURL = "https://tinu.be"
-    override val apiURL = "$baseURL/en"
-    override val privacyURL = "$baseURL/terms"
-    override val termsURL = "$baseURL/terms"
+class Lstu : ShortURLProvider {
+    override val name = "lstu.fr"
+    override val baseURL = "https://lstu.fr"
+    override val apiURL = "$baseURL/a"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 0
-        override val maxAliasLength = 100 //no info, tested up to 100
+        override val maxAliasLength = 200 //no info, tested up to 500
         override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
     }
@@ -67,11 +73,11 @@ class Tinube : ShortURLProvider {
         )
     )
 
-    override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
+    override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
     override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
-        val requestURL = "https://api.tinu.be/${url.alias}/stats"
+        val requestURL = "$baseURL/stats/${url.alias}"
         Log.d(tag, "start request: $url")
         RequestQueueSingleton.getInstance(context).addToRequestQueue(
             StringRequest(
@@ -80,7 +86,7 @@ class Tinube : ShortURLProvider {
                 { response ->
                     try {
                         Log.d(tag, "response: $response")
-                        val clicks = JSONObject(response).getInt("clicks")
+                        val clicks = JSONObject(response).getInt("counter")
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
                     } catch (e: Exception) {
@@ -104,21 +110,24 @@ class Tinube : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
         val tag = "CreateRequest_$name"
-        Log.d(tag, "start request: $apiURL [{longUrl: $longURL, urlCode: $alias}]")
+        Log.d(tag, "start request: $apiURL {lsturl=$longURL lsturl-custom=$alias format=json}")
         return object : StringRequest(
             Method.POST,
             apiURL,
             { response ->
                 try {
                     Log.d(tag, "response: $response")
-                    val data = response.split("1:")[1]
-                    val status = data.split(",")[0].split(":")[1].toInt()
-                    val urlCode = if (status == 200) data.split("urlCode\":\"")[1].split("\"")[0] else null
-                    Log.d(tag, "status: $status, urlCode: $urlCode")
+                    val json = JSONObject(response)
                     when {
-                        status == 200 && urlCode != null -> successCallback("$baseURL/$urlCode")
-                        status == 208 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        else -> errorCallback(GenerateURLError.Unknown(context, status))
+                        json.optBoolean("success") && json.has("short") -> {
+                            val shortURL = json.getString("short")
+                            Log.d(tag, "shortURL: $shortURL")
+                            if (alias.isEmpty() || shortURL.endsWith("/$alias")) successCallback(shortURL)
+                            else errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        }
+
+                        json.has("msg") -> errorCallback(GenerateURLError.Custom(context, 200, json.getString("msg")))
+                        else -> errorCallback(GenerateURLError.Unknown(context, 200))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -140,8 +149,12 @@ class Tinube : ShortURLProvider {
                 }
             }
         ) {
-            override fun getHeaders() = mapOf("next-action" to "1f5652ca890cba09fa370c02bd5123721da16fec")
-            override fun getBody() = "[{\"longUrl\":\"$longURL\",\"urlCode\":\"$alias\"}]".toByteArray(Charsets.UTF_8)
+            override fun getParams() = mapOf("lsturl" to longURL, "lsturl-custom" to alias, "format" to "json")
+            override fun getRetryPolicy() = DefaultRetryPolicy(
+                10000, // set timeout to 10 seconds
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            )
         }
     }
 }

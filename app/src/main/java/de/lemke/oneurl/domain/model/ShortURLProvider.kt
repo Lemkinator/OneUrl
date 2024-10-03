@@ -27,11 +27,18 @@ https://turl.ca
 shutting down:
 https://gotiny.cc/ (https://github.com/robvanbakel/gotiny-api)
 https://chilp.it/
+https://clicky.me/
 
 requires api key:
 https://kutt.it (also: Anonymous link creation has been disabled temporarily. Please log in.)
 https://t2mio.com/
+https://linksplit.io/
+https://cutt.ly/
 
+human verification:
+https://ulvis.net/
+https://shorturl.73.nu/
+https://sor.bz/
  */
 
 class ShortURLProviderCompanion {
@@ -44,11 +51,14 @@ class ShortURLProviderCompanion {
             kurzelinksdeOcn,
             kurzelinksdeT1p,
             kurzelinksdeOgy,
+            lstu,
+            tinube,
             tinyurl,
+            gg,
             l4f,
             oneptco,
             tinyim,
-            tinube,
+            shareaholic,
             tly,
             tlyIbitly,
             tlyTwtrto, //disabled
@@ -58,7 +68,6 @@ class ShortURLProviderCompanion {
             shrtlnk, //disabled
             shorturlat, //disabled
             ulvis, //disabled
-            shareaholic,
             zwsim,
             spoome,
             spoomeEmoji,

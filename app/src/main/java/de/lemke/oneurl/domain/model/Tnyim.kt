@@ -4,9 +4,9 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.Request
-import com.android.volley.RetryPolicy
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import de.lemke.oneurl.domain.urlEncodeAmpersand
@@ -112,6 +112,24 @@ class Tnyim : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9-]+"))
     }
 
+    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+            context.getString(R.string.alias),
+            context.getString(
+                R.string.alias_text,
+                aliasConfig.minAliasLength,
+                aliasConfig.maxAliasLength,
+                aliasConfig.allowedAliasCharacters
+            )
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+            context.getString(R.string.analytics),
+            context.getString(R.string.analytics_text)
+        )
+    )
+
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
@@ -192,14 +210,11 @@ class Tnyim : ShortURLProvider {
                 }
             }
         ) {
-            override fun getRetryPolicy(): RetryPolicy {
-                return DefaultRetryPolicy(
-                    10000, // set timeout to 10 seconds
-                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-                )
-
-            }
+            override fun getRetryPolicy() = DefaultRetryPolicy(
+                10000, // set timeout to 10 seconds
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            )
         }
     }
 }

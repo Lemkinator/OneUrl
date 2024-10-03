@@ -1,16 +1,13 @@
 package de.lemke.oneurl.ui
 
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +27,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAboutBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.OpenAppUseCase
+import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import dev.oneuiproject.oneui.layout.AppInfoLayout.LOADING
 import dev.oneuiproject.oneui.layout.AppInfoLayout.NOT_UPDATEABLE
@@ -48,6 +46,9 @@ class AboutActivity : AppCompatActivity() {
     private lateinit var appUpdateInfoTask: Task<AppUpdateInfo>
     private lateinit var activityResultLauncher: ActivityResultLauncher<IntentSenderRequest>
     private var clicks = 0
+
+    @Inject
+    lateinit var openLink: OpenLinkUseCase
 
     @Inject
     lateinit var openApp: OpenAppUseCase
@@ -90,13 +91,7 @@ class AboutActivity : AppCompatActivity() {
             }
         }
         binding.aboutBtnOpenInStore.setOnClickListener { openApp(packageName, false) }
-        binding.aboutBtnOpenOneuiGithub.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.oneui_github_link))))
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(this, getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.aboutBtnOpenOneuiGithub.setOnClickListener { openLink(getString(R.string.oneui_github_link)) }
         binding.aboutBtnAboutMe.setOnClickListener {
             startActivity(Intent(this@AboutActivity, AboutMeActivity::class.java))
         }

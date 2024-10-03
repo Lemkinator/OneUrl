@@ -1,29 +1,24 @@
 package de.lemke.oneurl.ui
 
 import android.app.Dialog
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.DialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.DialogProviderInfoBinding
+import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ProviderInfoDialog(private val provider: ShortURLProvider) : DialogFragment() {
     private lateinit var binding: DialogProviderInfoBinding
 
-    private fun openLink(link: String) = try {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
-    } catch (e: ActivityNotFoundException) {
-        Toast.makeText(requireContext(), getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-    }
+    @Inject
+    lateinit var openLink: OpenLinkUseCase
 
     private fun androidx.appcompat.widget.AppCompatButton.setIcon(icon: Int) {
         setCompoundDrawablesRelativeWithIntrinsicBounds(AppCompatResources.getDrawable(requireContext(), icon), null, null, null)

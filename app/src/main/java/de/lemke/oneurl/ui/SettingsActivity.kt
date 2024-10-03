@@ -31,6 +31,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.data.SaveLocation
 import de.lemke.oneurl.databinding.ActivitySettingsBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
+import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import dev.oneuiproject.oneui.preference.HorizontalRadioPreference
 import dev.oneuiproject.oneui.preference.internal.PreferenceRelatedCard
@@ -57,6 +58,9 @@ class SettingsActivity : AppCompatActivity() {
         private lateinit var autoDarkModePref: SwitchPreferenceCompat
         private lateinit var saveLocationPref: DropDownPreference
         private var relatedCard: PreferenceRelatedCard? = null
+
+        @Inject
+        lateinit var openLink: OpenLinkUseCase
 
         @Inject
         lateinit var getUserSettings: GetUserSettingsUseCase
@@ -115,11 +119,7 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             findPreference<PreferenceScreen>("privacy_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
-                try {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_website))))
-                } catch (e: ActivityNotFoundException) {
-                    Toast.makeText(settingsActivity, getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-                }
+                openLink(getString(R.string.privacy_website))
                 true
             }
 

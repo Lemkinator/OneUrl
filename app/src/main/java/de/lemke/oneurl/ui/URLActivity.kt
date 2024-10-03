@@ -1,13 +1,13 @@
 package de.lemke.oneurl.ui
 
-import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -24,6 +24,7 @@ import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
+import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.model.URL
@@ -31,6 +32,7 @@ import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
+import de.lemke.oneurl.domain.urlEncodeAmpersand
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import de.lemke.oneurl.domain.withHttps
 import kotlinx.coroutines.launch
@@ -45,6 +47,9 @@ class URLActivity : AppCompatActivity() {
     private lateinit var saveLocation: SaveLocation
     private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri?>
     private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
+
+    @Inject
+    lateinit var openLink: OpenLinkUseCase
 
     @Inject
     lateinit var getURL: GetURLUseCase
@@ -106,6 +111,37 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.url_toolbar, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.url_toolbar_norton_safe_web -> {
+                openLink("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncodeAmpersand()}")
+                return true
+            }
+            R.id.url_toolbar_google_safe_browsing -> {
+                openLink("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncodeAmpersand()}")
+                return true
+            }
+            R.id.url_toolbar_link_shield -> {
+                openLink("https://linkshieldapi.com/?url=${url.longURL.urlEncodeAmpersand()}")
+                return true
+            }
+            R.id.url_toolbar_urlvoid -> {
+                openLink("https://www.urlvoid.com/scan/${url.longURL.urlEncodeAmpersand()}")
+                return true
+            }
+            R.id.url_toolbar_urlhaus -> {
+                openLink("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncodeAmpersand()}")
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun refreshVisitCount() {
         binding.urlVisitsRefreshButton.isEnabled = false
         binding.urlVisitsRefreshButton.alpha = 0.5f
@@ -136,15 +172,7 @@ class URLActivity : AppCompatActivity() {
             this
         }
         binding.urlShortButton.text = shortURL
-        binding.urlShortButton.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.shortURL.withHttps())))
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.e("URLActivity", "Error: ${e.message}")
-                Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.urlShortButton.setOnClickListener { openLink(url.shortURL.withHttps()) }
         val longURL = with(makeSectionOfTextBold(url.longURL, boldText, color)) {
             setSpan(android.text.style.UnderlineSpan(), 0, url.longURL.length, 0)
             this
@@ -164,15 +192,7 @@ class URLActivity : AppCompatActivity() {
             startActivity(Intent.createChooser(sendIntent, null))
         }
         binding.urlLongButton.text = longURL
-        binding.urlLongButton.setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(longURL.toString().withHttps())))
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.e("URLActivity", "Error: ${e.message}")
-                Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.urlLongButton.setOnClickListener { openLink(url.longURL.withHttps()) }
         binding.urlLongCopyButton.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("long-url", url.longURL)
@@ -218,13 +238,8 @@ class URLActivity : AppCompatActivity() {
         binding.urlBnv.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.url_bnv_analytics -> {
-                    try {
-                        val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return@setOnItemSelectedListener false
-                        Log.d("URLActivity", "analyticsURL: $analyticsURL")
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(analyticsURL)))
-                    } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show()
-                    }
+                    val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return@setOnItemSelectedListener false
+                    openLink(analyticsURL)
                     return@setOnItemSelectedListener true
                 }
 

@@ -7,7 +7,8 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
-import android.view.*
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -19,6 +20,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAboutMeBinding
 import de.lemke.oneurl.databinding.ActivityAboutMeContentBinding
 import de.lemke.oneurl.domain.OpenAppUseCase
+import de.lemke.oneurl.domain.OpenLinkUseCase
 import dev.oneuiproject.oneui.utils.ViewUtils
 import dev.oneuiproject.oneui.utils.internal.ToolbarLayoutUtils
 import javax.inject.Inject
@@ -33,6 +35,9 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
 
     @Inject
     lateinit var openApp: OpenAppUseCase
+
+    @Inject
+    lateinit var openLink: OpenLinkUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,12 +117,6 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
         bottomContent.aboutBottomRelativeTiktok.isEnabled = enabled
         bottomContent.aboutBottomRelativeWebsite.isEnabled = enabled
         bottomContent.aboutBottomRelativePlayStore.isEnabled = enabled
-    }
-
-    private fun openLink(link: String) = try {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
-    } catch (e: ActivityNotFoundException) {
-        Toast.makeText(this@AboutMeActivity, getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
     }
 
     override fun onClick(v: View) {
