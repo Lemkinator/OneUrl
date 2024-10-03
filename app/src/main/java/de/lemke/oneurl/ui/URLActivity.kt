@@ -32,7 +32,7 @@ import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
-import de.lemke.oneurl.domain.urlEncodeAmpersand
+import de.lemke.oneurl.domain.urlEncode
 import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import de.lemke.oneurl.domain.withHttps
 import kotlinx.coroutines.launch
@@ -119,23 +119,27 @@ class URLActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.url_toolbar_norton_safe_web -> {
-                openLink("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncodeAmpersand()}")
+                openLink("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncode()}")
                 return true
             }
             R.id.url_toolbar_google_safe_browsing -> {
-                openLink("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncodeAmpersand()}")
+                openLink("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncode()}")
                 return true
             }
             R.id.url_toolbar_link_shield -> {
-                openLink("https://linkshieldapi.com/?url=${url.longURL.urlEncodeAmpersand()}")
+                openLink("https://linkshieldapi.com/?url=${url.longURL.urlEncode()}")
                 return true
             }
             R.id.url_toolbar_urlvoid -> {
-                openLink("https://www.urlvoid.com/scan/${url.longURL.urlEncodeAmpersand()}")
+                openLink("https://www.urlvoid.com/scan/${url.longURL.urlEncode()}")
                 return true
             }
             R.id.url_toolbar_urlhaus -> {
-                openLink("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncodeAmpersand()}")
+                openLink("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncode()}")
+                return true
+            }
+            R.id.url_toolbar_kaspersky -> {
+                openLink("https://opentip.kaspersky.com/${url.longURL.urlEncode()}/?tab=lookup")
                 return true
             }
         }

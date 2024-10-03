@@ -30,4 +30,10 @@
         android:showAsAction="never"
         android:title="URLhaus"
         tools:ignore="HardcodedText" />
+
+    <item
+        android:id="@+id/url_toolbar_kaspersky"
+        android:showAsAction="never"
+        android:title="Kaspersky"
+        tools:ignore="HardcodedText" />
 </menu>
