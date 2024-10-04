@@ -78,9 +78,9 @@ sealed class Owovz : ShortURLProvider {
                 { response ->
                     try {
                         Log.d(tag, "response: $response")
-                        val visitCount = response.optInt("visits")
-                        Log.d(tag, "visitCount: $visitCount")
-                        callback(visitCount)
+                        val clicks = response.getInt("visits")
+                        Log.d(tag, "clicks: $clicks")
+                        callback(clicks)
                     } catch (e: Exception) {
                         e.printStackTrace()
                         callback(null)

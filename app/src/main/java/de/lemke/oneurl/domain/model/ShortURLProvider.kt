@@ -57,6 +57,7 @@ class ShortURLProviderCompanion {
             gg,
             l4f,
             oneptco,
+            ulvis,
             tinyim,
             shareaholic,
             tly,
@@ -67,7 +68,6 @@ class ShortURLProviderCompanion {
             tlyBitly, //disabled
             shrtlnk, //disabled
             shorturlat, //disabled
-            ulvis, //disabled
             zwsim,
             spoome,
             spoomeEmoji,

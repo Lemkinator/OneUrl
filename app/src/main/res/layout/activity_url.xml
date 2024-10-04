@@ -202,8 +202,7 @@
                     android:id="@+id/url_title_divider"
                     android:layout_width="fill_parent"
                     android:layout_height="@dimen/sesl_list_divider_height"
-                    android:layout_marginStart="@dimen/sesl_list_divider_inset"
-                    android:layout_marginEnd="@dimen/sesl_list_divider_inset"
+                    android:layout_marginHorizontal="@dimen/sesl_list_divider_inset"
                     android:background="@color/oui_list_divider_color"
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
@@ -242,8 +241,7 @@
                     android:id="@+id/url_description_divider"
                     android:layout_width="fill_parent"
                     android:layout_height="@dimen/sesl_list_divider_height"
-                    android:layout_marginStart="@dimen/sesl_list_divider_inset"
-                    android:layout_marginEnd="@dimen/sesl_list_divider_inset"
+                    android:layout_marginHorizontal="@dimen/sesl_list_divider_inset"
                     android:background="@color/oui_list_divider_color"
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
@@ -280,8 +278,7 @@
                     android:id="@+id/url_visits_divider"
                     android:layout_width="fill_parent"
                     android:layout_height="@dimen/sesl_list_divider_height"
-                    android:layout_marginStart="@dimen/sesl_list_divider_inset"
-                    android:layout_marginEnd="@dimen/sesl_list_divider_inset"
+                    android:layout_marginHorizontal="@dimen/sesl_list_divider_inset"
                     android:background="@color/oui_list_divider_color"
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
@@ -291,14 +288,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
+                    android:paddingHorizontal="18dp"
+                    android:paddingVertical="12dp"
                     android:visibility="gone">
 
                     <TextView
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
-                        android:layout_marginStart="18dp"
                         android:text="@string/visits"
                         android:textSize="18sp" />
 
@@ -307,7 +304,6 @@
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
                         android:layout_weight="1"
                         android:textSize="18sp" />
@@ -317,8 +313,6 @@
                         style="@style/ButtonStyle.Transparent"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
-                        android:layout_marginEnd="18dp"
                         android:drawableEnd="@drawable/ic_oui_refresh"
                         android:drawableTint="@color/primary_text_icon_color" />
 

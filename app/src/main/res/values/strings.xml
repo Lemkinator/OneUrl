@@ -35,8 +35,6 @@
     <string name="analytics">Analytics</string>
     <string name="analytics_text">This provider offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
     <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
-    <string name="currently_disabled">Currently disabled</string>
-    <string name="currently_disabled_ulvis">The provider ulvis.net is currently disabled because a security check has been added which makes it more difficult to use.</string>
     <string name="owovc_fun_text">In addition to the normal URL shortener, owo.vc also offers other URL shorteners. These are intended for entertainment purposes and should be used respectfully, responsibly and with caution.</string>
     <string name="owovc_zws">The URL shortener \"owo.vc (zws)\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"owo.vc/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard owo.vc page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
     <string name="owovc_sketchy">The URL shortener \"owo.vc (sketchy)\" generates suspicious-looking URLs containing keywords like \"bank-login\", \"password\", \"hidden\", \"grab\" or \"account\" along with popular website names.</string>
@@ -144,9 +142,6 @@
     <string name="error_service_unavailable">Service unavailable</string>
     <string name="error_service_unavailable_text">Service currently unavailable. Please try again later or use another provider.</string>
     <string name="error_domain_not_allowed">Domain not allowed.</string>
-    <string name="error_human_verification">Human verification required</string>
-    <string name="error_human_verification_text">Boop Boop Beep?! This provider insists you\'re a robot! Strut your stuff and prove them wrong by verifying your human status. If the issue persists, consider using another provider.\n</string>
-    <string name="error_verify">Verify</string>
     <string name="error_internal_server_error">Internal server error.</string>
     <string name="error_creating_file">Error creating file</string>
 

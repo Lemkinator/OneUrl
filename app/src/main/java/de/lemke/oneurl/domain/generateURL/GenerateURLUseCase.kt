@@ -163,21 +163,6 @@ sealed class GenerateURLError(
         context.getString(R.string.error_internal_server_error)
     )
 
-    class HumanVerificationRequired(context: Context, provider: ShortURLProvider) :
-        GenerateURLError(
-            context.getString(R.string.error_human_verification),
-            context.getString(R.string.error_human_verification_text),
-            ErrorAction(
-                context.getString(R.string.error_verify)
-            ) {
-                try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(provider.baseURL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                } catch (e: ActivityNotFoundException) {
-                    Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-                }
-            }
-        )
-
     class ErrorAction(
         val title: String,
         val action: () -> Unit,

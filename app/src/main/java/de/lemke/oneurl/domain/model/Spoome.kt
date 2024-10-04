@@ -76,9 +76,9 @@ sealed class Spoome : ShortURLProvider {
                 { response ->
                     try {
                         Log.d(tag, "response: $response")
-                        val visitCount = response.optInt("total-clicks")
-                        Log.d(tag, "visitCount: $visitCount")
-                        callback(visitCount)
+                        val clicks = response.getInt("total-clicks")
+                        Log.d(tag, "clicks: $clicks")
+                        callback(clicks)
                     } catch (e: Exception) {
                         e.printStackTrace()
                         callback(null)
@@ -197,6 +197,7 @@ sealed class Spoome : ShortURLProvider {
             override val minAliasLength = 0
             override val maxAliasLength = 30 //returns invalid alias if more than 30
             override val allowedAliasCharacters = "Emojis"
+
             //one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
             override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+"))
         }

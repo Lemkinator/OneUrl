@@ -6,21 +6,72 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.domain.urlEncodeAmpersand
 import de.lemke.oneurl.domain.withHttps
 
 /*
-https://ulvis.net/developer.html -> added cloudflare :/ -> removed
+https://ulvis.net/developer.html
 example:
 https://ulvis.net/api.php?url=https://example.com&custom=alias&private=1
-https://ulvis.net/API/write/get?url=https://example.com&custom=alias&private=1
+https://ulvis.net/API/write/get?custom=alias&url=https://example.com
+
+response:
+{
+  "success": true,
+  "data": {
+    "id": "example12",
+    "url": "https://ulvis.net/example12",
+    "full": "https://example.com"
+  }
+}
+
+
+fail:
+200 {
+  "success": false,
+  "error": {
+    "code": 1,
+    "msg": "invalid url"
+  }
+}
+200 {
+  "success": true,
+  "data": {
+    "status": "custom-taken"
+  }
+}
+
+code 0:
+{"success":false,"error":{"code":0,"msg":"domain not allowed"}}
+code 1:
+{"success":false,"error":{"code":1,"msg":"invalid url"}}
+code 2:
+{"success":false,"error":{"code":2,"msg":"custom name must be less than 60 chars"}}
+
+stats: https://ulvis.net/API/read/get?id=example1
+{
+  "success": true,
+  "data": {
+    "id": "example1",
+    "uses": "",
+    "hits": "3",
+    "ads": "1",
+    "url": "https://ulvis.net/example1",
+    "full": "https://example.com",
+    "created": 1728048992,
+    "expire": "",
+    "last": 1728050640
+  }
+}
  */
 val ulvis = Ulvis()
 
 class Ulvis : ShortURLProvider {
-    override val enabled = false //added cloudflare :/
     override val name = "ulvis.net"
     override val baseURL = "https://ulvis.net"
     override val apiURL = "$baseURL/API/write/get"
+
     override val privacyURL = "$baseURL/privacy.html"
     override val termsURL = "$baseURL/disclaimer.html"
     override val aliasConfig = object : AliasConfig {
@@ -30,14 +81,9 @@ class Ulvis : ShortURLProvider {
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
     }
 
-    override fun sanitizeLongURL(url: String) = url.withHttps().trim()
+    override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_block,
-            context.getString(R.string.currently_disabled),
-            context.getString(R.string.currently_disabled_ulvis)
-        ),
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
             context.getString(R.string.alias),
@@ -47,8 +93,41 @@ class Ulvis : ShortURLProvider {
                 aliasConfig.maxAliasLength,
                 aliasConfig.allowedAliasCharacters
             )
+        ),
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+            context.getString(R.string.analytics),
+            context.getString(R.string.analytics_text)
         )
     )
+
+    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+        val tag = "GetURLVisitCount_$name"
+        val requestURL = "$baseURL/API/read/get?id=${url.alias}"
+        Log.d(tag, "start request: $requestURL")
+        RequestQueueSingleton.getInstance(context).addToRequestQueue(
+            JsonObjectRequest(
+                Request.Method.POST,
+                requestURL,
+                null,
+                { response ->
+                    try {
+                        Log.d(tag, "response: $response")
+                        val clicks = response.getJSONObject("data").getInt("hits")
+                        Log.d(tag, "clicks: $clicks")
+                        callback(clicks)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        callback(null)
+                    }
+                },
+                { error ->
+                    Log.e(tag, "error: $error")
+                    callback(null)
+                }
+            )
+        )
+    }
 
     override fun getCreateRequest(
         context: Context,
@@ -58,57 +137,40 @@ class Ulvis : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
-        val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&custom=$alias&private=1")
+        val url = "$apiURL?custom=$alias&url=$longURL"
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.POST,
             url,
             null,
             { response ->
-                Log.d(tag, "response: $response")
-                /*
-                success: response: {"success":true,"data":{"id":"EAZe","url":"https:\/\/ulvis.net\/EAZe","full":"https:\/\/t.com"}}
-                alias already exists: response: {"success":true,"data":{"status":"custom-taken"}}
-                code 0:
-                {"success":false,"error":{"code":0,"msg":"domain not allowed"}}
-                code 1:
-                {"success":false,"error":{"code":1,"msg":"invalid url"}}
-                code 2:
-                {"success":false,"error":{"code":2,"msg":"custom name must be less than 60 chars"}}     //should not happen, checked before
-                 */
-                if (!response.optBoolean("success")) {
-                    Log.e(tag, "error: ${response.optJSONObject("error")}")
+                try {
+                    Log.d(tag, "response: $response")
                     val error = response.optJSONObject("error")
-                    if (error != null) {
-                        when (val code = error.optInt("code")) {
-                            0 -> errorCallback(GenerateURLError.DomainNotAllowed(context))
-                            1 -> errorCallback(GenerateURLError.InvalidURL(context))
-                            else -> errorCallback(GenerateURLError.Custom(context, code, error.optString("msg")))
+                    val data = response.optJSONObject("data")
+                    val shortURL = data?.optString("url")?.trim()
+                    Log.d(tag, "shortURL: $shortURL")
+                    val status = data?.optString("status")
+                    when {
+                        status == "custom-taken" -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        !shortURL.isNullOrBlank() -> successCallback(shortURL)
+                        error != null && error.has("code") -> {
+                            val code = error.getInt("code")
+                            when {
+                                code == 0 -> errorCallback(GenerateURLError.DomainNotAllowed(context))
+                                code == 1 -> errorCallback(GenerateURLError.InvalidURL(context))
+                                code == 2 -> errorCallback(GenerateURLError.InvalidAlias(context))
+                                error.has("msg") -> errorCallback(GenerateURLError.Custom(context, code, error.optString("msg")))
+                                else -> errorCallback(GenerateURLError.Unknown(context, 200))
+                            }
                         }
-                        return@JsonObjectRequest
+
+                        else -> errorCallback(GenerateURLError.Unknown(context, 200))
                     }
-                    errorCallback(GenerateURLError.Unknown(context))
-                    return@JsonObjectRequest
-                }
-                val data = response.optJSONObject("data")
-                if (data == null) {
-                    Log.e(tag, "error, response does not contain data")
+                } catch (e: Exception) {
+                    e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context, 200))
-                    return@JsonObjectRequest
                 }
-                if (data.optString("status") == "custom-taken") {
-                    Log.e(tag, "error, alias already exists")
-                    errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                    return@JsonObjectRequest
-                }
-                if (!data.has("url")) {
-                    Log.e(tag, "error, response does not contain url")
-                    errorCallback(GenerateURLError.Unknown(context, 200))
-                    return@JsonObjectRequest
-                }
-                val shortURL = data.getString("url").trim()
-                Log.d(tag, "shortURL: $shortURL")
-                successCallback(shortURL)
             },
             { error ->
                 try {
@@ -119,12 +181,11 @@ class Ulvis : ShortURLProvider {
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        statusCode == 403 -> errorCallback(GenerateURLError.HumanVerificationRequired(context, this)) //not working: cookies
+                        statusCode == 403 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {
-                    Log.e(tag, "error: $e")
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))
                 }

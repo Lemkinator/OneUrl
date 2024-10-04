@@ -1,5 +1,6 @@
 package de.lemke.oneurl.ui
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -9,6 +10,7 @@ import android.os.Environment
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -146,14 +148,12 @@ class URLActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    @SuppressLint("SetTextI18n")
     private fun refreshVisitCount() {
         binding.urlVisitsRefreshButton.isEnabled = false
         binding.urlVisitsRefreshButton.alpha = 0.5f
-        binding.urlVisitsRefreshButton.animate().rotationBy(-720f).setDuration(1500)
-            .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator()).withEndAction {
-                binding.urlVisitsRefreshButton.isEnabled = true
-                binding.urlVisitsRefreshButton.alpha = 1f
-            }
+        binding.urlVisitsRefreshButton.rotation = 0f
+        binding.urlVisitsRefreshButton.animate().rotationBy(-1080f).setDuration(2500).interpolator = AccelerateDecelerateInterpolator()
         url.shortURLProvider.getURLClickCount(this, url) { count ->
             if (count != null) {
                 binding.urlVisitsDivider.visibility = View.VISIBLE
@@ -163,6 +163,8 @@ class URLActivity : AppCompatActivity() {
                 binding.urlVisitsDivider.visibility = View.GONE
                 binding.urlVisitsLayout.visibility = View.GONE
             }
+            binding.urlVisitsRefreshButton.isEnabled = true
+            binding.urlVisitsRefreshButton.alpha = 1f
         }
     }
 

@@ -17,8 +17,6 @@
     <string name="analytics">Analytics</string>
     <string name="analytics_text">Dieser Anbieter bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
     <string name="analytics_dagd">Der Anbieter da.gd bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten. Bei da.gd müssen die Links innerhalb der letzten 60 Tage mindestens einmal aufgerufen worden sein, ansonsten wird ein Fehler angezeigt (404).</string>
-    <string name="currently_disabled">Aktuell deaktiviert</string>
-    <string name="currently_disabled_ulvis">Der Anbieter ulvis.net ist derzeit deaktiviert, da eine Sicherheitsüberprüfung hinzugefügt wurde, welche die Nutzung erschwert.</string>
     <string name="owovc_fun_text">Neben dem normalen URL-Verkürzer bietet owo.vc auch weitere URL-Verkürzer an. Diese sind für Unterhaltungszwecke gedacht und sollten respektvoll, verantwortungsbewusst und mit Vorsicht verwendet werden.</string>
     <string name="owovc_zws">Der URL-Verkürzer \"owo.vc (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"owo.vc/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von owo.vc anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
     <string name="owovc_sketchy">Der URL-Verkürzer \"owo.vc (sketchy)\" generiert verdächtig aussehende URLs, die Schlüsselwörter wie \"bank-login\", \"password\", \"hidden\", \"grab\" oder \"account\" zusammen mit populären Website-Namen enthalten.</string>
@@ -125,9 +123,6 @@
     <string name="error_service_unavailable">Dienst nicht verfügbar.</string>
     <string name="error_service_unavailable_text">Dienst aktuell nicht verfügbar. Bitte versuche es später erneut oder wähle einen anderen Anbieter.</string>
     <string name="error_domain_not_allowed">Diese Domain ist nicht erlaubt.</string>
-    <string name="error_human_verification">Verifizierung erforderlich</string>
-    <string name="error_human_verification_text">Beep Beep Boop?! Dieser Anbieter behauptet, du wärst ein Roboter! Beweis ihm das Gegenteil und verifiziere, dass du ein Mensch bist. Wenn das Problem weiterhin besteht, wähle bitte einen anderen Anbieter.</string>
-    <string name="error_verify">Verifizieren</string>
     <string name="error_internal_server_error">Interner Serverfehler.</string>
     <string name="error_creating_file">Fehler beim Erstellen der Datei</string>
 
