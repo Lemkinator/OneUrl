@@ -91,6 +91,8 @@ fabric.properties
 
 /build
 /release
+app/release
+!app/release/app-release.apk
 
 /captures
 .externalNativeBuild
