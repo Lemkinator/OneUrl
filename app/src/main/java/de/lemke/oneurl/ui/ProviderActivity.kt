@@ -26,6 +26,7 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.utils.setCustomAnimatedOnBackPressedLogic
 import dev.oneuiproject.oneui.widget.Separator
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -47,10 +48,12 @@ class ProviderActivity : AppCompatActivity() {
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.setNavigationButtonOnClickListener { finishAfterTransition() }
+        binding.root.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
         initRecycler()
         lifecycleScope.launch {
             binding.providerList.scrollToPosition(provider.indexOf(getUserSettings().selectedShortURLProvider))
         }
+        setCustomAnimatedOnBackPressedLogic(binding.providerListContainer)
     }
 
     private fun initRecycler() {
@@ -80,9 +83,9 @@ class ProviderActivity : AppCompatActivity() {
 
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.listItemTitle.text = provider[position].name
+            holder.title.text = provider[position].name
             val infoContents = provider[position].getInfoContents(this@ProviderActivity)
-            listOf(holder.listItemIcon1, holder.listItemIcon2, holder.listItemIcon3, holder.listItemIcon4).forEachIndexed { index, iconView ->
+            listOf(holder.icon1, holder.icon2, holder.icon3, holder.icon4).forEachIndexed { index, iconView ->
                 if (index < infoContents.size) {
                     iconView.setImageResource(infoContents[index].icon)
                     iconView.visibility = View.VISIBLE
@@ -94,7 +97,7 @@ class ProviderActivity : AppCompatActivity() {
                     finishAfterTransition()
                 }
             }
-            holder.listItemIconLayout.setOnClickListener { openInfoDialog(provider[position]) }
+            holder.iconLayout.setOnClickListener { openInfoDialog(provider[position]) }
             holder.parentView.setOnLongClickListener {
                 openInfoDialog(provider[position])
                 true
@@ -103,12 +106,12 @@ class ProviderActivity : AppCompatActivity() {
 
         inner class ViewHolder internal constructor(itemView: View, var isSeparator: Boolean) : RecyclerView.ViewHolder(itemView) {
             var parentView: LinearLayout = itemView as LinearLayout
-            var listItemTitle: TextView = parentView.findViewById(R.id.providerTitle)
-            var listItemIcon1: ImageView = parentView.findViewById(R.id.providerIcon1)
-            var listItemIcon2: ImageView = parentView.findViewById(R.id.providerIcon2)
-            var listItemIcon3: ImageView = parentView.findViewById(R.id.providerIcon3)
-            var listItemIcon4: ImageView = parentView.findViewById(R.id.providerIcon4)
-            var listItemIconLayout: LinearLayout = parentView.findViewById(R.id.providerIconLayout)
+            var title: TextView = parentView.findViewById(R.id.providerTitle)
+            var icon1: ImageView = parentView.findViewById(R.id.providerIcon1)
+            var icon2: ImageView = parentView.findViewById(R.id.providerIcon2)
+            var icon3: ImageView = parentView.findViewById(R.id.providerIcon3)
+            var icon4: ImageView = parentView.findViewById(R.id.providerIcon4)
+            var iconLayout: LinearLayout = parentView.findViewById(R.id.providerIconLayout)
         }
     }
 

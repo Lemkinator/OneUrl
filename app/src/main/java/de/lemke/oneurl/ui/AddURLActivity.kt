@@ -31,6 +31,7 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
+import de.lemke.oneurl.domain.utils.setCustomAnimatedOnBackPressedLogic
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
@@ -80,6 +81,7 @@ class AddURLActivity : AppCompatActivity() {
         }
         initFooterButton()
         lifecycleScope.launch { initViews() }
+        setCustomAnimatedOnBackPressedLogic(binding.root)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

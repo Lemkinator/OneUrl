@@ -417,15 +417,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 lifecycleScope.launch {
                     when (item.itemId) {
                         R.id.menu_item_delete -> {
-                            deleteURL(currentList.filterIndexed { index, _ -> selected[index] ?: false })
+                            deleteURL(currentList.filterIndexed { index, _ -> selected[index] == true })
                         }
 
                         R.id.menu_item_add_to_favorites -> {
-                            updateURL(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = true) })
+                            updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = true) })
                         }
 
                         R.id.menu_item_remove_from_favorites -> {
-                            updateURL(currentList.filterIndexed { index, _ -> selected[index] ?: false }.map { it.copy(favorite = false) })
+                            updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = false) })
                         }
                     }
                 }

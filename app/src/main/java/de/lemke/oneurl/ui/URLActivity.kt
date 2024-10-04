@@ -35,7 +35,7 @@ import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
 import de.lemke.oneurl.domain.urlEncode
-import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
+import de.lemke.oneurl.domain.utils.setCustomAnimatedOnBackPressedLogic
 import de.lemke.oneurl.domain.withHttps
 import kotlinx.coroutines.launch
 import java.io.File
@@ -85,7 +85,7 @@ class URLActivity : AppCompatActivity() {
         binding = ActivityUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
-        binding.root.tooltipText = getString(R.string.sesl_navigate_up)
+        binding.root.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
         val shortURL = intent.getStringExtra("shortURL")
         boldText = intent.getStringExtra("boldText") ?: ""
         if (shortURL == null) {
@@ -107,8 +107,8 @@ class URLActivity : AppCompatActivity() {
             saveLocation = getUserSettings().saveLocation
             binding.root.setTitle(url.shortURL)
             initViews()
-            if (showInAppReviewOrFinish.canShowInAppReview()) {
-                setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
+            setCustomAnimatedOnBackPressedLogic(binding.root, !showInAppReviewOrFinish.canShowInAppReview()) {
+                lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) }
             }
         }
     }
@@ -124,26 +124,32 @@ class URLActivity : AppCompatActivity() {
                 openLink("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncode()}")
                 return true
             }
+
             R.id.url_toolbar_google_safe_browsing -> {
                 openLink("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncode()}")
                 return true
             }
+
             R.id.url_toolbar_link_shield -> {
                 openLink("https://linkshieldapi.com/?url=${url.longURL.urlEncode()}")
                 return true
             }
+
             R.id.url_toolbar_malshare -> {
                 openLink("https://malshare.com/search.php?query=${url.longURL.urlEncode()}")
                 return true
             }
+
             R.id.url_toolbar_urlvoid -> {
                 openLink("https://www.urlvoid.com/scan/${url.longURL.urlEncode()}")
                 return true
             }
+
             R.id.url_toolbar_urlhaus -> {
                 openLink("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncode()}")
                 return true
             }
+
             R.id.url_toolbar_kaspersky -> {
                 openLink("https://opentip.kaspersky.com/${url.longURL.urlEncode()}/?tab=lookup")
                 return true

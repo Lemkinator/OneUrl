@@ -2,18 +2,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:tooltipText="@string/sesl_navigate_up"
     app:expanded="false"
     app:navigationIcon="@drawable/ic_oui_back"
     app:subtitle="@string/app_name"
     app:title="@string/select_provider">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/provider_list"
+    <dev.oneuiproject.oneui.widget.RoundLinearLayout
+        android:id="@+id/provider_list_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/oui_background_color"
-        android:scrollbars="vertical"
-        android:transitionName="provider_selection" />
+        android:orientation="horizontal"
+        android:transitionName="provider_selection">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/provider_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/oui_background_color"
+            android:scrollbars="vertical" />
+
+    </dev.oneuiproject.oneui.widget.RoundLinearLayout>
 
 </dev.oneuiproject.oneui.layout.ToolbarLayout>

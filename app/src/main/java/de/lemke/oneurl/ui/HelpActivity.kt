@@ -19,7 +19,7 @@ class HelpActivity : AppCompatActivity() {
         binding = ActivityHelpBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.toolbarLayout.setNavigationButtonOnClickListener { finish() }
-        binding.toolbarLayout.tooltipText = getString(R.string.sesl_navigate_up)
+        binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
         binding.providerInfoButton.setOnClickListener { startActivity(Intent(this, ProviderActivity::class.java)) }
         binding.contactMeButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_SENDTO)

@@ -82,7 +82,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             if (this::qrCode.isInitialized && this::url.isInitialized) exportQRCode(uri, qrCode, url)
         }
         binding.toolbarLayout.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
-        binding.toolbarLayout.tooltipText = getString(R.string.sesl_navigate_up)
+        binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
         lifecycleScope.launch {
             val userSettings = getUserSettings()
             url = userSettings.qrURL
@@ -125,7 +125,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private suspend fun initViews() {
+    private fun initViews() {
         generateQRCode()
         binding.qrCode.setOnClickListener { copyQRCode(qrCode) }
         binding.editTextURL.setText(url)
