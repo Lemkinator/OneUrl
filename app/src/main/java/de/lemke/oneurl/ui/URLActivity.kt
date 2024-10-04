@@ -132,6 +132,10 @@ class URLActivity : AppCompatActivity() {
                 openLink("https://linkshieldapi.com/?url=${url.longURL.urlEncode()}")
                 return true
             }
+            R.id.url_toolbar_malshare -> {
+                openLink("https://malshare.com/search.php?query=${url.longURL.urlEncode()}")
+                return true
+            }
             R.id.url_toolbar_urlvoid -> {
                 openLink("https://www.urlvoid.com/scan/${url.longURL.urlEncode()}")
                 return true

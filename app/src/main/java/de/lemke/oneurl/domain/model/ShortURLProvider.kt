@@ -13,6 +13,7 @@ import java.util.Locale
 /*
 https://github.com/ShareX/ShareX/tree/develop/ShareX.UploadersLib/URLShorteners
 https://github.com/738/awesome-url-shortener
+https://github.com/public-apis/public-apis?tab=readme-ov-file#url-shorteners
 
 https://cleanuri.com/docs //no alias, sometimes redirects to suspicious sites???
 https://vurl.com/developers/ //no alias, shows hint before redirecting
@@ -34,6 +35,7 @@ https://kutt.it (also: Anonymous link creation has been disabled temporarily. Pl
 https://t2mio.com/
 https://linksplit.io/
 https://cutt.ly/
+https://urlbae.com/
 
 human verification:
 https://ulvis.net/
