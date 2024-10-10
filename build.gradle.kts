@@ -1,27 +1,31 @@
 import java.util.Properties
 
 /**
- * Note: You have to create a "github.properties" file inside your project folder containing the following:
+ * Note: To configure GitHub credentials, you have to do one of the following:
+ * <ul>
+ *      <li>Add `githubUsername` and `githubAccessToken` to Global Gradle Properties</li>
+ *      <li>Set `GITHUB_USERNAME` and `GITHUB_ACCESS_TOKEN` in your environment variables</li>
+ *      <li>Create a `github.properties` file in your project folder with the following content:</li>
+ * </ul>
  *
  * <pre>
  *   githubUsername="YOUR_GITHUB_USERNAME"
- *   githubPassword="YOUR_GITHUB_ACCESS_TOKEN"
+ *   githubAccessToken="YOUR_GITHUB_ACCESS_TOKEN"
  * </pre>
  */
 val githubProperties = Properties().apply {
     rootProject.file("github.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
-/** Or add githubUsername and githubPassword to Global Gradle Properties. **/
-val githubUsername: String? by rootProject
-val githubPassword: String? by rootProject
-val ghUsername: String = githubUsername
-    ?: githubProperties.getProperty("githubUsername")
-    ?: System.getenv("GPR_USER")
+
+val githubUsername: String = rootProject.findProperty("githubUsername") as String? // Global Gradle Properties
+    ?: githubProperties.getProperty("githubUsername") // github.properties file
+    ?: System.getenv("GITHUB_USERNAME") // Environment Variables
     ?: error("GitHub username not found")
-val ghPassword: String = githubPassword
-    ?: githubProperties.getProperty("githubPassword")
-    ?: System.getenv("GPR_API_KEY")
-    ?: error("GitHub password not found")
+
+val githubAccessToken: String = rootProject.findProperty("githubAccessToken") as String? // Global Gradle Properties
+    ?: githubProperties.getProperty("githubAccessToken") // github.properties file
+    ?: System.getenv("GITHUB_ACCESS_TOKEN") // Environment Variables
+    ?: error("GitHub Access Token not found")
 
 buildscript {
     repositories {
@@ -46,19 +50,19 @@ allprojects {
         maven("https://maven.pkg.github.com/tribalfs/sesl-androidx") {
             credentials {
                 username = githubUsername
-                password = githubPassword
+                password = githubAccessToken
             }
         }
         maven("https://maven.pkg.github.com/tribalfs/sesl-material-components-android") {
             credentials {
                 username = githubUsername
-                password = githubPassword
+                password = githubAccessToken
             }
         }
     }
 }
 
 plugins {
-    id("org.jetbrains.kotlin.android") version "1.9.25" apply false
+    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
     id("com.google.dagger.hilt.android") version "2.52" apply false
 }

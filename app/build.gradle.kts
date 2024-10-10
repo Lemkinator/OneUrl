@@ -45,10 +45,7 @@ android {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
             ndk {
                 debugSymbolLevel = "FULL"
@@ -58,20 +55,17 @@ android {
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "17"
     }
 
     buildFeatures {
@@ -109,7 +103,8 @@ dependencies {
     implementation("com.android.volley:volley:1.2.1")
 
     implementation("androidx.core:core-splashscreen:1.2.0-alpha02")
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    //noinspection GradleDependency until https://issuetracker.google.com/u/0/issues/342671895 is fixed
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
