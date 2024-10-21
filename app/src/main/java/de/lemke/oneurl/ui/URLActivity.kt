@@ -140,11 +140,6 @@ class URLActivity : AppCompatActivity() {
                 return true
             }
 
-            R.id.url_toolbar_urlvoid -> {
-                openLink("https://www.urlvoid.com/scan/${url.longURL.urlEncode()}")
-                return true
-            }
-
             R.id.url_toolbar_urlhaus -> {
                 openLink("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncode()}")
                 return true
