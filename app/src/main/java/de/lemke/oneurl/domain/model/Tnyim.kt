@@ -19,7 +19,7 @@ example:
 https://tny.im/yourls-api.php?action=shorturl&url=example.com?a=1%26b=2&format=json
 
 shows a hint before redirecting
-request takes some time :/ (usually 4-5 secconds, timeout needs to be increased)
+request takes some time :/ (usually 4-5 seconds, timeout needs to be increased)
 
 response:
 {
@@ -107,7 +107,7 @@ class Tnyim : ShortURLProvider {
     override val termsURL = "$baseURL/rules.php"
     override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 5
-        override val maxAliasLength = 100 // no info, tested upto 100
+        override val maxAliasLength = 100 // no info, tested up to 100
         override val allowedAliasCharacters = "a-z, A-Z, 0-9, -"
         override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9-]+"))
     }

@@ -17,7 +17,7 @@ https://urlhaus-api.abuse.ch/v1/url/
 url = https://raw.githubusercontent.com/hackirby/discord-injection/main/injection.js
 
 
-query_status	The status of the query. Possibile values are:
+query_status	The status of the query. Possible values are:
 ok	All good!
 http_post_expected	The HTTP request was not HTTP POST
 no_results	The query yield no results

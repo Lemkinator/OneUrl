@@ -9,8 +9,5 @@
     <color name="secondary_text_icon_color">#ff8c8c8c</color>
     <color name="primary_text_icon_color_themed">@color/oui_primary_text_color</color>
     <color name="secondary_text_icon_color_themed">@color/sesl_list_subheader_text_color</color>
-    <color name="round_and_bg_color">@color/oui_round_and_bgcolor</color>
-    <color name="background_color">#fffcfcfc</color>
     <color name="filled_background_color">#e2e2e2</color>
-    <color name="ripple_color">#0d000000</color>
 </resources>

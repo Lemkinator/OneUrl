@@ -3,9 +3,5 @@
     <color name="primary_text_icon_color">#fffafafa</color>
     <color name="secondary_text_icon_color">#ff999999</color>
     <color name="secondary_text_icon_color_themed">@color/sesl_list_subheader_text_color_dark</color>
-    <color name="round_and_bg_color">@color/oui_round_and_bgcolor</color>
-    <color name="background_color">#ff171717</color>
     <color name="filled_background_color">#373737</color>
-    <color name="ripple_color">#0d000000</color>
-
 </resources>

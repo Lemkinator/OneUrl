@@ -12,7 +12,7 @@ import de.lemke.oneurl.domain.withHttps
 https://gg.gg/
 https://gg.gg/check {long_url=https://example.com custom_path=test}
 
-rseponse: 200: ok
+response: 200: ok
 fail: 200: Link with this path already exist. Choose another path.
 
 https://gg.gg/create {long_url=https://example.com custom_path=1cbz0v}

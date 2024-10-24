@@ -1,5 +1,6 @@
 package de.lemke.oneurl.ui
 
+import android.annotation.SuppressLint
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -164,6 +165,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
         initColors()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initSize() {
         binding.sizeEdittext.setText(size.toString())
         binding.sizeEdittext.setOnEditorActionListener { textView, _, _ ->

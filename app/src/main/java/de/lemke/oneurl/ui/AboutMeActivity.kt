@@ -31,7 +31,7 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var binding: ActivityAboutMeBinding
     private lateinit var bottomContent: ActivityAboutMeContentBinding
     private var lastClickTime: Long = 0
-    private val appBarListener: AboutMeActivity.AboutMeAppBarListener = AboutMeAppBarListener()
+    private val appBarListener: AboutMeAppBarListener = AboutMeAppBarListener()
 
     @Inject
     lateinit var openApp: OpenAppUseCase
@@ -144,6 +144,7 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
                     try {
                         startActivity(intent)
                     } catch (e: ActivityNotFoundException) {
+                        e.printStackTrace()
                         Toast.makeText(this@AboutMeActivity, getString(R.string.no_email_app_installed), Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -152,7 +153,6 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
         lastClickTime = uptimeMillis
     }
 
-    // kang from com.sec.android.app.launcher
     private inner class AboutMeAppBarListener : OnOffsetChangedListener {
         override fun onOffsetChanged(appBarLayout: AppBarLayout, verticalOffset: Int) {
             // Handle the SwipeUp anim view
