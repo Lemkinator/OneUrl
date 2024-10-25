@@ -238,13 +238,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 }
             }
 
-            binding.drawerLayoutMain.findViewById<androidx.drawerlayout.widget.DrawerLayout>(dev.oneuiproject.oneui.design.R.id.drawerlayout_drawer)
-                .isDrawerOpen(
-                    binding.drawerLayoutMain.findViewById<LinearLayout>(dev.oneuiproject.oneui.design.R.id.drawerlayout_drawer_content)
-                ) -> {
-                binding.drawerLayoutMain.setDrawerOpen(false, true)
-            }
-
             else -> {
                 //should not get here, callback should be disabled/unregistered
                 finishAffinity()
@@ -381,17 +374,14 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             .addDrawerListener(
                 object : androidx.drawerlayout.widget.DrawerLayout.DrawerListener {
                     override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
+                    override fun onDrawerStateChanged(newState: Int) {}
                     override fun onDrawerOpened(drawerView: View) {
-                        backPressEnabled.value = true
                         binding.addFab.hide()
                     }
 
                     override fun onDrawerClosed(drawerView: View) {
-                        backPressEnabled.value = false
                         binding.addFab.show()
                     }
-
-                    override fun onDrawerStateChanged(newState: Int) {}
                 }
             )
     }
