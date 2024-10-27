@@ -101,8 +101,8 @@ class SettingsActivity : AppCompatActivity() {
                     try {
                         startActivity(intent)
                     } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(settingsActivity, getString(R.string.change_language_not_supported_by_device), Toast.LENGTH_SHORT)
-                            .show()
+                        e.printStackTrace()
+                        Toast.makeText(settingsActivity, getString(R.string.change_language_not_supported_by_device), Toast.LENGTH_SHORT).show()
                     }
                     true
                 }
@@ -115,7 +115,12 @@ class SettingsActivity : AppCompatActivity() {
                 darkModePref.value = if (userSettings.darkMode) "1" else "0"
                 saveLocationPref.entries = SaveLocation.entries.map { it.toLocalizedString(requireContext()) }.toTypedArray()
                 saveLocationPref.entryValues = SaveLocation.entries.map { it.name }.toTypedArray()
-                saveLocationPref.value = userSettings.saveLocation.name
+                if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+                    saveLocationPref.value = SaveLocation.CUSTOM.name
+                    saveLocationPref.isEnabled = false
+                } else {
+                    saveLocationPref.value = userSettings.saveLocation.name
+                }
             }
 
             findPreference<PreferenceScreen>("privacy_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
@@ -140,7 +145,8 @@ class SettingsActivity : AppCompatActivity() {
                 intent.putExtra(Intent.EXTRA_TEXT, "")
                 try {
                     startActivity(intent)
-                } catch (ex: ActivityNotFoundException) {
+                } catch (e: ActivityNotFoundException) {
+                    e.printStackTrace()
                     Toast.makeText(requireContext(), getString(R.string.no_email_app_installed), Toast.LENGTH_SHORT).show()
                 }
                 true

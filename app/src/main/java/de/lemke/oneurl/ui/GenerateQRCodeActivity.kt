@@ -5,6 +5,7 @@ import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.Menu
@@ -110,7 +111,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                if (saveLocation == SaveLocation.CUSTOM) {
+                if (saveLocation == SaveLocation.CUSTOM || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
                     pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
                 } else {
                     exportQRCodeToSaveLocation(saveLocation, qrCode, url)

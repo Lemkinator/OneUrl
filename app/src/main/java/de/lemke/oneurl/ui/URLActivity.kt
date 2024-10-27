@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.Menu
@@ -232,7 +233,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlQrImageview.setImageBitmap(url.qr)
         binding.urlQrCopyButton.setOnClickListener { copyQRCode(url.qr) }
         binding.urlQrSaveButton.setOnClickListener {
-            if (saveLocation == SaveLocation.CUSTOM) {
+            if (saveLocation == SaveLocation.CUSTOM || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
                 pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
             } else {
                 exportQRCodeToSaveLocation(saveLocation, url.qr, url.shortURL)
