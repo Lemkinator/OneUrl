@@ -47,7 +47,7 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
-        binding.toolbarLayout.setNavigationButtonOnClickListener { finish() }
+        binding.toolbarLayout.setNavigationButtonOnClickListener { finishAfterTransition() }
         if (savedInstanceState == null) supportFragmentManager.beginTransaction().replace(R.id.settings, SettingsFragment()).commit()
     }
 

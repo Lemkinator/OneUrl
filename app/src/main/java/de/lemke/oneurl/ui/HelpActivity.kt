@@ -18,7 +18,7 @@ class HelpActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityHelpBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.toolbarLayout.setNavigationButtonOnClickListener { finish() }
+        binding.toolbarLayout.setNavigationButtonOnClickListener { finishAfterTransition() }
         binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
         binding.providerInfoButton.setOnClickListener { startActivity(Intent(this, ProviderActivity::class.java)) }
         binding.contactMeButton.setOnClickListener {

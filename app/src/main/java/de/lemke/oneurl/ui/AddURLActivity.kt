@@ -248,7 +248,7 @@ class AddURLActivity : AppCompatActivity() {
             .setNeutralButton(R.string.ok, null)
             .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
                 startActivity(Intent(this@AddURLActivity, URLActivity::class.java).putExtra("shortURL", shortURL))
-                finish()
+                finishAfterTransition()
             }
             .create()
             .show()
@@ -300,7 +300,7 @@ class AddURLActivity : AppCompatActivity() {
                             )
                             setLoading(null)
                             Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
-                            finish()
+                            finishAfterTransition()
                         }
                     },
                 )

@@ -23,8 +23,6 @@ import androidx.appcompat.util.SeslSubheaderRoundedCorner
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -45,14 +43,12 @@ import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.*
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import dev.oneuiproject.oneui.layout.DrawerLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.utils.internal.ReflectUtils
 import dev.oneuiproject.oneui.widget.Separator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -64,7 +60,6 @@ import android.util.Pair as UtilPair
 class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: URLAdapter
-    private val backPressEnabled = MutableStateFlow(false)
     private var allURLs: List<URL> = emptyList()
     private var urls: List<URL> = emptyList()
     private var searchURLs: List<URL> = emptyList()
@@ -72,7 +67,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private val isSearch get() = search != null
     private val currentList get() = if (isSearch) searchURLs else urls
     private var selected = HashMap<Int, Boolean>()
-    private var selecting = false
     private var checkAllListening = true
     private var time: Long = 0
     private var initListJob: Job? = null
@@ -162,7 +156,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             @Suppress("DEPRECATION")
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
-        finish()
+        finishAfterTransition()
     }
 
     private suspend fun checkTOS(userSettings: UserSettings) {
@@ -172,7 +166,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private fun openMain() {
         lifecycleScope.launch {
-            setCustomOnBackPressedLogic(backPressEnabled) { checkBackPressed() }
             allURLs = getURLs()
             urls = if (filterFavorite) allURLs.filter { it.favorite } else allURLs
             initDrawer()
@@ -220,28 +213,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         lifecycleScope.launch {
             delay(500) //delay, so closing the drawer is not visible for the user
             binding.drawerLayoutMain.setDrawerOpen(false, false)
-        }
-    }
-
-    private fun checkBackPressed() {
-        when {
-            selecting -> setSelecting(false)
-            binding.drawerLayoutMain.isSearchMode -> {
-                if (ViewCompat.getRootWindowInsets(binding.root)?.isVisible(WindowInsetsCompat.Type.ime()) == true) {
-                    (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
-                        currentFocus?.windowToken,
-                        InputMethodManager.HIDE_NOT_ALWAYS
-                    )
-                } else {
-                    search = null
-                    binding.drawerLayoutMain.dismissSearchMode()
-                }
-            }
-
-            else -> {
-                //should not get here, callback should be disabled/unregistered
-                finishAffinity()
-            }
         }
     }
 
@@ -311,7 +282,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 if (visible) {
                     search = getUserSettings().search
                     binding.addFab.hide()
-                    backPressEnabled.value = true
                     searchView.setQuery(search, false)
                     val autoCompleteTextView = searchView.seslGetAutoCompleteView()
                     autoCompleteTextView.setText(search)
@@ -320,7 +290,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 } else {
                     search = null
                     binding.addFab.show()
-                    backPressEnabled.value = false
                     updateRecyclerView()
                 }
             }
@@ -384,6 +353,47 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                     }
                 }
             )
+        binding.drawerLayoutMain.setOnActionModeListener(object : ToolbarLayout.ActionModeCallback {
+            override fun onShow(toolbarLayout: ToolbarLayout?) {
+                binding.addFab.hide()
+                adapter.notifyItemRangeChanged(0, adapter.itemCount)
+            }
+
+            override fun onDismiss(toolbarLayout: ToolbarLayout?) {
+                selected.replaceAll { _, _ -> false }
+                adapter.notifyItemRangeChanged(0, adapter.itemCount)
+                binding.addFab.show()
+            }
+        })
+        binding.drawerLayoutMain.actionModeBottomMenu.clear()
+        binding.drawerLayoutMain.setActionModeMenu(R.menu.menu_select)
+        binding.drawerLayoutMain.setActionModeMenuListener { item: MenuItem ->
+            lifecycleScope.launch {
+                when (item.itemId) {
+                    R.id.menu_item_delete -> {
+                        deleteURL(currentList.filterIndexed { index, _ -> selected[index] == true })
+                    }
+
+                    R.id.menu_item_add_to_favorites -> {
+                        updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = true) })
+                    }
+
+                    R.id.menu_item_remove_from_favorites -> {
+                        updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = false) })
+                    }
+                }
+            }
+            binding.drawerLayoutMain.dismissActionMode()
+            true
+        }
+        binding.drawerLayoutMain.setActionModeCheckboxListener { _, isChecked ->
+            if (checkAllListening) {
+                selected.replaceAll { _, _ -> isChecked }
+                adapter.notifyItemRangeChanged(0, adapter.itemCount)
+            }
+            val count = selected.values.count { it }
+            binding.drawerLayoutMain.setActionModeAllSelector(count, true, count == urls.size)
+        }
     }
 
     fun setSearchList() {
@@ -392,53 +402,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         initListJob = lifecycleScope.launch {
             searchURLs = getSearchList(search, allURLs)
             updateRecyclerView()
-        }
-    }
-
-    fun setSelecting(enabled: Boolean) {
-        if (enabled) {
-            selecting = true
-            backPressEnabled.value = true
-            binding.addFab.hide()
-            adapter.notifyItemRangeChanged(0, adapter.itemCount)
-            binding.drawerLayoutMain.actionModeBottomMenu.clear()
-            binding.drawerLayoutMain.setActionModeMenu(R.menu.menu_select)
-            binding.drawerLayoutMain.setActionModeMenuListener { item: MenuItem ->
-                lifecycleScope.launch {
-                    when (item.itemId) {
-                        R.id.menu_item_delete -> {
-                            deleteURL(currentList.filterIndexed { index, _ -> selected[index] == true })
-                        }
-
-                        R.id.menu_item_add_to_favorites -> {
-                            updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = true) })
-                        }
-
-                        R.id.menu_item_remove_from_favorites -> {
-                            updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = false) })
-                        }
-                    }
-                }
-                setSelecting(false)
-                true
-            }
-            binding.drawerLayoutMain.showActionMode()
-            binding.drawerLayoutMain.setActionModeCheckboxListener { _, isChecked ->
-                if (checkAllListening) {
-                    selected.replaceAll { _, _ -> isChecked }
-                    adapter.notifyItemRangeChanged(0, adapter.itemCount)
-                }
-                val count = selected.values.count { it }
-                binding.drawerLayoutMain.setActionModeAllSelector(count, true, count == urls.size)
-            }
-        } else {
-            selecting = false
-            for (i in 0 until adapter.itemCount) selected[i] = false
-            adapter.notifyItemRangeChanged(0, adapter.itemCount)
-            binding.drawerLayoutMain.setActionModeAllSelector(0, true, false)
-            binding.drawerLayoutMain.dismissActionMode()
-            backPressEnabled.value = false
-            binding.addFab.show()
         }
     }
 
@@ -541,7 +504,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 }
             }
             holder.parentView.setOnClickListener {
-                if (selecting) toggleItemSelected(position)
+                if (binding.drawerLayoutMain.isActionMode) toggleItemSelected(position)
                 else {
                     startActivity(
                         Intent(this@MainActivity, URLActivity::class.java)
@@ -561,7 +524,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             }
             holder.parentView.setOnLongClickListener {
                 if (isSearch) return@setOnLongClickListener false
-                if (!selecting) setSelecting(true)
+                if (!binding.drawerLayoutMain.isActionMode) binding.drawerLayoutMain.showActionMode()
                 toggleItemSelected(position)
                 binding.urlList.seslStartLongPressMultiSelection()
                 true

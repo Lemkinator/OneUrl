@@ -91,7 +91,7 @@ class URLActivity : AppCompatActivity() {
         boldText = intent.getStringExtra("boldText") ?: ""
         if (shortURL == null) {
             Toast.makeText(this, getString(R.string.error_url_not_found), Toast.LENGTH_SHORT).show()
-            finish()
+            finishAfterTransition()
             return
         }
         pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
@@ -101,7 +101,7 @@ class URLActivity : AppCompatActivity() {
             val nullableURL = getURL(shortURL)
             if (nullableURL == null) {
                 Toast.makeText(this@URLActivity, getString(R.string.error_url_not_found), Toast.LENGTH_SHORT).show()
-                finish()
+                finishAfterTransition()
                 return@launch
             }
             url = nullableURL

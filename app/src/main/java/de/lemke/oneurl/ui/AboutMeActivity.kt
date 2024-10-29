@@ -47,7 +47,7 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
         setSupportActionBar(binding.aboutToolbar)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         supportActionBar!!.setDisplayShowTitleEnabled(false)
-        binding.aboutToolbar.setNavigationOnClickListener { finish() }
+        binding.aboutToolbar.setNavigationOnClickListener { finishAfterTransition() }
         resetAppBar(resources.configuration)
         initContent()
     }
