@@ -33,6 +33,7 @@ import de.lemke.oneurl.databinding.ActivitySettingsBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.preference.HorizontalRadioPreference
 import dev.oneuiproject.oneui.preference.internal.PreferenceRelatedCard
 import dev.oneuiproject.oneui.utils.PreferenceUtils.createRelatedCard
@@ -49,6 +50,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
         binding.toolbarLayout.setNavigationButtonOnClickListener { finishAfterTransition() }
         if (savedInstanceState == null) supportFragmentManager.beginTransaction().replace(R.id.settings, SettingsFragment()).commit()
+        setCustomBackPressAnimation(binding.root)
     }
 
     @AndroidEntryPoint

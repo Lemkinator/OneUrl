@@ -21,6 +21,7 @@ import de.lemke.oneurl.databinding.ActivityAboutMeBinding
 import de.lemke.oneurl.databinding.ActivityAboutMeContentBinding
 import de.lemke.oneurl.domain.OpenAppUseCase
 import de.lemke.oneurl.domain.OpenLinkUseCase
+import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.utils.ViewUtils
 import dev.oneuiproject.oneui.utils.internal.ToolbarLayoutUtils
 import javax.inject.Inject
@@ -50,6 +51,7 @@ class AboutMeActivity : AppCompatActivity(), View.OnClickListener {
         binding.aboutToolbar.setNavigationOnClickListener { finishAfterTransition() }
         resetAppBar(resources.configuration)
         initContent()
+        setCustomBackPressAnimation(binding.root)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

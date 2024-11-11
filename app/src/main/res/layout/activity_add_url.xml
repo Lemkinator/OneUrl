@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?roundedCornerColor"
     android:transitionName="transition_fab"
     app:expanded="false"
     app:navigationIcon="@drawable/ic_oui_back"

@@ -7,6 +7,13 @@
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:ignore="NewApi">true</item>
     </style>
 
+    <style name="Theme.OneURL.TransparentWindow" parent="OneUITheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@color/transparent_window_bg_color</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
     <style name="Theme.OneURL.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/oui_round_and_bgcolor</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
@@ -17,6 +24,13 @@
 
     <style name="ButtonStyle.Colored" parent="OneUI.ButtonStyleColored">
         <item name="android:backgroundTint">@color/primary_color_themed</item>
+        <item name="android:textColor">@color/primary_text_icon_color</item>
+        <item name="android:drawableTint">@color/primary_text_icon_color</item>
+        <item name="tint">@color/primary_text_icon_color</item>
+    </style>
+
+    <style name="ButtonStyle.Transparent.NoColor" parent="OneUI.ButtonStyleTransparent">
+        <item name="android:backgroundTint">@android:color/transparent</item>
         <item name="android:textColor">@color/primary_text_icon_color</item>
         <item name="android:drawableTint">@color/primary_text_icon_color</item>
         <item name="tint">@color/primary_text_icon_color</item>

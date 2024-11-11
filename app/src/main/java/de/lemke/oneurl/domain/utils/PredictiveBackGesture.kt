@@ -1,91 +1,52 @@
 package de.lemke.oneurl.domain.utils
 
-import android.os.Build
+import android.graphics.Outline
 import android.view.View
-import android.window.OnBackInvokedCallback
-import android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT
+import android.view.ViewOutlineProvider
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.animation.PathInterpolatorCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.flowWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import de.lemke.oneurl.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 /**
- * Convenience method to implement custom onBackPressed logic with framework predictive gesture api (added in api33)
- * when using unsupported AppCompat version (i.e. < v1.6-alpha05)
- *
- * @param triggerStateFlow - (optional) Boolean StateFlow to trigger enabling (true) and disabling (false)
- * custom [onBackPressedLogic] on either framework onBackInvokedDispatcher(>= api 33) or onBackPressedDispatcher(< api 33).
- * Set none to keep it enabled.
- *
- * @param onBackPressedLogic - lambda to be invoked  for the custom onBackPressed logic
- *
- * Note: android:enableOnBackInvokedCallback="true" must be set in Manifest
+ * Interpolator for gesture animations.
  */
-inline fun AppCompatActivity.setCustomOnBackPressedLogic(
-    triggerStateFlow: StateFlow<Boolean>? = null,
-    crossinline onBackPressedLogic: () -> Unit
-) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val onBackInvokedCallback = OnBackInvokedCallback {
-            onBackPressedLogic.invoke()
-        }
-        onBackInvokedDispatcher.registerOnBackInvokedCallback(PRIORITY_DEFAULT, onBackInvokedCallback)
-        if (triggerStateFlow != null) {
-            lifecycleScope.launch {
-                triggerStateFlow
-                    .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-                    .collectLatest { register ->
-                        if (register) {
-                            onBackInvokedDispatcher.registerOnBackInvokedCallback(
-                                PRIORITY_DEFAULT,
-                                onBackInvokedCallback
-                            )
-                        } else {
-                            onBackInvokedDispatcher.unregisterOnBackInvokedCallback(
-                                onBackInvokedCallback
-                            )
-                        }
-                    }
-            }
-        }
-    } else {
-        val onBackPressedCallback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                onBackPressedLogic.invoke()
-            }
-        }
-        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
-        if (triggerStateFlow != null) {
-            lifecycleScope.launch {
-                triggerStateFlow
-                    .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-                    .collectLatest { enable ->
-                        onBackPressedCallback.isEnabled = enable
-                    }
-            }
-        }
-    }
-}
-
 val GestureInterpolator = PathInterpolatorCompat.create(0f, 0f, 0f, 1f)
 
+/**
+ * Sets custom animated onBackPressed logic with optional back press logic enabled state.
+ *
+ * @param animatedView The view to animate.
+ * @param backPressLogicEnabled Optional Boolean to enable or disable custom back press logic.
+ * @param onBackPressedLogic Lambda to be invoked for custom onBackPressed logic.
+ */
 inline fun AppCompatActivity.setCustomAnimatedOnBackPressedLogic(
     animatedView: View,
-    finishActivityEnabled: Boolean,
+    backPressLogicEnabled: Boolean,
     crossinline onBackPressedLogic: () -> Unit = {}
-) = setCustomAnimatedOnBackPressedLogic(animatedView, MutableStateFlow(finishActivityEnabled), onBackPressedLogic)
+) = setCustomAnimatedOnBackPressedLogic(animatedView, MutableStateFlow(backPressLogicEnabled), onBackPressedLogic)
+
+/**
+ * Sets custom back press animation for the given view.
+ *
+ * @param animatedView The view to animate.
+ */
+fun AppCompatActivity.setCustomBackPressAnimation(animatedView: View) = setCustomAnimatedOnBackPressedLogic(animatedView)
+
+/**
+ * Sets custom animated onBackPressed logic with optional back press logic enabled state.
+ *
+ * @param animatedView The view to animate.
+ * @param backPressLogicEnabled Optional StateFlow to enable or disable custom back press logic.
+ * @param onBackPressedLogic Lambda to be invoked for custom onBackPressed logic.
+ */
 
 inline fun AppCompatActivity.setCustomAnimatedOnBackPressedLogic(
     animatedView: View,
-    finishActivityEnabled: StateFlow<Boolean>? = null,
+    backPressLogicEnabled: StateFlow<Boolean>? = null,
     crossinline onBackPressedLogic: () -> Unit = {}
 ) {
     val predictiveBackMargin = resources.getDimension(R.dimen.predictive_back_margin)
@@ -94,7 +55,7 @@ inline fun AppCompatActivity.setCustomAnimatedOnBackPressedLogic(
         this,
         object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (finishActivityEnabled?.value == false) {
+                if (backPressLogicEnabled?.value == true) {
                     onBackPressedLogic.invoke()
                 } else {
                     finishAfterTransition()
@@ -102,7 +63,7 @@ inline fun AppCompatActivity.setCustomAnimatedOnBackPressedLogic(
             }
 
             override fun handleOnBackProgressed(backEvent: BackEventCompat) {
-                if (finishActivityEnabled?.value == false) return
+                if (backPressLogicEnabled?.value == true) return
                 val progress = GestureInterpolator.getInterpolation(backEvent.progress)
                 if (initialTouchY < 0f) {
                     initialTouchY = backEvent.touchY
@@ -127,6 +88,15 @@ inline fun AppCompatActivity.setCustomAnimatedOnBackPressedLogic(
                 val scale = 1f - (0.1f * progress)
                 animatedView.scaleX = scale
                 animatedView.scaleY = scale
+
+                // apply rounded corners
+                animatedView.clipToOutline = true
+                animatedView.outlineProvider = object : ViewOutlineProvider() {
+                    override fun getOutline(view: View, outline: Outline) {
+                        outline.setRoundRect(0, 0, view.width, view.height, progress * 100f)
+                    }
+                }
+
             }
 
             override fun handleOnBackCancelled() {

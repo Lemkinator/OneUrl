@@ -5,6 +5,7 @@
     android:id="@+id/toolbar_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?roundedCornerColor"
     app:expanded="false"
     app:navigationIcon="@drawable/ic_oui_back"
     app:subtitle="@string/app_name"
@@ -22,8 +23,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/oui_background_color"
-            android:paddingHorizontal="16dp"
             android:gravity="center"
+            android:paddingHorizontal="16dp"
             android:paddingVertical="8dp">
 
             <ImageView

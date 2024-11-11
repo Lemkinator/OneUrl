@@ -53,7 +53,6 @@
     <string name="language">Sprache</string>
     <string name="change_language">App Sprache ändern</string>
     <string name="change_language_not_supported_by_device">Das Ändern der Sprache wird von diesem Gerät nicht unterstützt.</string>
-    <string name="press_again_to_exit">Zurück-Taste erneut drücken um zu Beenden.</string>
     <string name="delete_appdata_and_exit">App-Daten löschen und Beenden</string>
     <string name="delete_appdata_and_exit_warning">Achtung: Dadurch werden alle persönlichen Daten gelöscht. Fortfahren? </string>
     <string name="dev_options">Developer options</string>

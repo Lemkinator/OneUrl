@@ -14,7 +14,6 @@ import android.text.style.ClickableSpan
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -23,7 +22,6 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityOobeBinding
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.utils.TipsItemView
-import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -32,7 +30,6 @@ import javax.inject.Inject
 class OOBEActivity : AppCompatActivity() {
     private lateinit var binding: ActivityOobeBinding
     private lateinit var toSDialog: AlertDialog
-    private var time: Long = 0
 
     @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
@@ -44,13 +41,6 @@ class OOBEActivity : AppCompatActivity() {
         }
         binding = ActivityOobeBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setCustomOnBackPressedLogic {
-            if (System.currentTimeMillis() - time < 3000) finishAffinity()
-            else {
-                Toast.makeText(this@OOBEActivity, resources.getString(R.string.press_again_to_exit), Toast.LENGTH_SHORT).show()
-                time = System.currentTimeMillis()
-            }
-        }
         initTipsItems()
         initToSView()
         initFooterButton()

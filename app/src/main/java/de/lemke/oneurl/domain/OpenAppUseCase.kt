@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.oneurl.R
 import javax.inject.Inject
@@ -29,11 +28,12 @@ class OpenAppUseCase @Inject constructor(
         try {
             context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (anfe: ActivityNotFoundException) {
+            anfe.printStackTrace()
             intent.data = Uri.parse(context.getString(R.string.playstore_link) + packageName)
             try {
                 context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             } catch (e: Exception) {
-                Log.e(OpenAppUseCase::class.java.simpleName, "Could not open app on store", e)
+                e.printStackTrace()
             }
         }
     }

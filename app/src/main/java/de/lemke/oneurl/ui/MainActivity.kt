@@ -3,37 +3,27 @@ package de.lemke.oneurl.ui
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.app.SearchManager
-import android.content.Context
 import android.content.Intent
-import android.graphics.Canvas
-import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.util.TypedValue
 import android.view.*
-import android.view.inputmethod.InputMethodManager
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.appcompat.util.SeslRoundedCorner
-import androidx.appcompat.util.SeslSubheaderRoundedCorner
-import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper.END
+import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.LottieProperty
 import com.airbnb.lottie.SimpleColorFilter
 import com.airbnb.lottie.model.KeyPath
 import com.airbnb.lottie.value.LottieValueCallback
-import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.color.MaterialColors
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.UpdateAvailability
@@ -43,36 +33,37 @@ import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.*
 import de.lemke.oneurl.domain.model.URL
-import dev.oneuiproject.oneui.layout.DrawerLayout
+import dev.oneuiproject.oneui.delegates.AllSelectorState
+import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
+import dev.oneuiproject.oneui.delegates.ViewYTranslator
+import dev.oneuiproject.oneui.ktx.configureItemSwipeAnimator
+import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.layout.ToolbarLayout
-import dev.oneuiproject.oneui.utils.internal.ReflectUtils
-import dev.oneuiproject.oneui.widget.Separator
+import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
+import dev.oneuiproject.oneui.layout.startActionMode
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.abs
 import android.util.Pair as UtilPair
 
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(R.layout.activity_main) {
+class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter: URLAdapter
+    private lateinit var urlAdapter: URLAdapter
     private var allURLs: List<URL> = emptyList()
     private var urls: List<URL> = emptyList()
     private var searchURLs: List<URL> = emptyList()
     private var search: String? = null
-    private val isSearch get() = search != null
-    private val currentList get() = if (isSearch) searchURLs else urls
-    private var selected = HashMap<Int, Boolean>()
-    private var checkAllListening = true
+    private val currentList get() = if (binding.drawerLayoutMain.isSearchMode) searchURLs else urls
     private var time: Long = 0
     private var initListJob: Job? = null
     private var isUIReady = false
     private var filterFavorite = false
-    private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
+    private val allSelectorStateFlow: MutableStateFlow<AllSelectorState> = MutableStateFlow(AllSelectorState())
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -173,11 +164,13 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             checkIntent()
             lifecycleScope.launch {
                 observeURLs().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
+                    val previousSize = allURLs.size
                     allURLs = it
-                    if (isSearch) setSearchList()
-                    else {
-                        urls = if (filterFavorite) it.filter { url -> url.favorite } else it
-                        updateRecyclerView()
+                    urls = if (filterFavorite) it.filter { url -> url.favorite } else it
+                    if (binding.drawerLayoutMain.isSearchMode) setSearchList()
+                    else updateRecyclerView()
+                    if (previousSize < it.size) {
+                        binding.urlList.smoothScrollToPosition(0)
                     }
                 }
             }
@@ -195,6 +188,14 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        lifecycleScope.launch {
+            delay(500) //delay, so closing the drawer is not visible for the user
+            binding.drawerLayoutMain.setDrawerOpen(false, false)
+        }
+    }
+
     private fun checkIntent() {
         val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
         if (intent?.action == Intent.ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
@@ -205,14 +206,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         if (intent?.action == Intent.ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
             Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
             startActivity(Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()))
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        lifecycleScope.launch {
-            delay(500) //delay, so closing the drawer is not visible for the user
-            binding.drawerLayoutMain.setDrawerOpen(false, false)
         }
     }
 
@@ -233,7 +226,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_item_search -> {
-                binding.drawerLayoutMain.showSearchMode()
+                binding.drawerLayoutMain.startSearchMode(SearchModeListener(), DISMISS)
                 return true
             }
 
@@ -264,15 +257,14 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     inner class SearchModeListener : ToolbarLayout.SearchModeListener {
         override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query)
-
         override fun onQueryTextChange(query: String?): Boolean = setSearch(query)
-
         private fun setSearch(query: String?): Boolean {
             if (search == null) return false
+            search = query ?: ""
+            setSearchList()
+            urlAdapter.highlightWord = search ?: ""
             lifecycleScope.launch {
-                search = query ?: ""
                 updateUserSettings { it.copy(search = query ?: "") }
-                setSearchList()
             }
             return true
         }
@@ -291,6 +283,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                     search = null
                     binding.addFab.show()
                     updateRecyclerView()
+                    urlAdapter.highlightWord = ""
                 }
             }
         }
@@ -321,24 +314,14 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             startActivity(Intent().setClass(this@MainActivity, AboutActivity::class.java))
         }
         binding.drawerLayoutMain.setDrawerButtonTooltip(getText(R.string.about_app))
-        binding.drawerLayoutMain.setSearchModeListener(SearchModeListener())
         binding.drawerLayoutMain.searchView.setSearchableInfo(
             (getSystemService(SEARCH_SERVICE) as SearchManager).getSearchableInfo(componentName)
         )
         AppUpdateManagerFactory.create(this).appUpdateInfo.addOnSuccessListener { appUpdateInfo: AppUpdateInfo ->
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE)
-                binding.drawerLayoutMain.setButtonBadges(ToolbarLayout.N_BADGE, DrawerLayout.N_BADGE)
+                binding.drawerLayoutMain.setButtonBadges(ToolbarLayout.Badge.Dot(), ToolbarLayout.Badge.Dot())
         }
-        binding.drawerLayoutMain.appBarLayout.addOnOffsetChangedListener { layout: AppBarLayout, verticalOffset: Int ->
-            val totalScrollRange = layout.totalScrollRange
-            val inputMethodWindowVisibleHeight = ReflectUtils.genericInvokeMethod(
-                InputMethodManager::class.java,
-                getSystemService(INPUT_METHOD_SERVICE),
-                "getInputMethodWindowVisibleHeight"
-            ) as Int
-            if (totalScrollRange != 0) binding.urlNoEntryView.translationY = (abs(verticalOffset) - totalScrollRange).toFloat() / 2.0f
-            else binding.urlNoEntryView.translationY = (abs(verticalOffset) - inputMethodWindowVisibleHeight).toFloat() / 2.0f
-        }
+        binding.urlNoEntryView.translateYWithAppBar(binding.drawerLayoutMain.appBarLayout, this)
         binding.drawerLayoutMain.findViewById<androidx.drawerlayout.widget.DrawerLayout>(dev.oneuiproject.oneui.design.R.id.drawerlayout_drawer)
             .addDrawerListener(
                 object : androidx.drawerlayout.widget.DrawerLayout.DrawerListener {
@@ -353,47 +336,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                     }
                 }
             )
-        binding.drawerLayoutMain.setOnActionModeListener(object : ToolbarLayout.ActionModeCallback {
-            override fun onShow(toolbarLayout: ToolbarLayout?) {
-                binding.addFab.hide()
-                adapter.notifyItemRangeChanged(0, adapter.itemCount)
-            }
-
-            override fun onDismiss(toolbarLayout: ToolbarLayout?) {
-                selected.replaceAll { _, _ -> false }
-                adapter.notifyItemRangeChanged(0, adapter.itemCount)
-                binding.addFab.show()
-            }
-        })
-        binding.drawerLayoutMain.actionModeBottomMenu.clear()
-        binding.drawerLayoutMain.setActionModeMenu(R.menu.menu_select)
-        binding.drawerLayoutMain.setActionModeMenuListener { item: MenuItem ->
-            lifecycleScope.launch {
-                when (item.itemId) {
-                    R.id.menu_item_delete -> {
-                        deleteURL(currentList.filterIndexed { index, _ -> selected[index] == true })
-                    }
-
-                    R.id.menu_item_add_to_favorites -> {
-                        updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = true) })
-                    }
-
-                    R.id.menu_item_remove_from_favorites -> {
-                        updateURL(currentList.filterIndexed { index, _ -> selected[index] == true }.map { it.copy(favorite = false) })
-                    }
-                }
-            }
-            binding.drawerLayoutMain.dismissActionMode()
-            true
-        }
-        binding.drawerLayoutMain.setActionModeCheckboxListener { _, isChecked ->
-            if (checkAllListening) {
-                selected.replaceAll { _, _ -> isChecked }
-                adapter.notifyItemRangeChanged(0, adapter.itemCount)
-            }
-            val count = selected.values.count { it }
-            binding.drawerLayoutMain.setActionModeAllSelector(count, true, count == urls.size)
-        }
     }
 
     fun setSearchList() {
@@ -405,45 +347,35 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         }
     }
 
-    fun toggleItemSelected(position: Int) {
-        selected[position] = !selected[position]!!
-        adapter.notifyItemChanged(position)
-        checkAllListening = false
-        val count = selected.values.count { it }
-        binding.drawerLayoutMain.setActionModeAllSelector(count, true, count == urls.size)
-        checkAllListening = true
-    }
-
     private fun initRecycler() {
-        binding.urlList.layoutManager = LinearLayoutManager(this)
-        adapter = URLAdapter()
-        binding.urlList.adapter = adapter
-        binding.urlList.itemAnimator = null
-        binding.urlList.addItemDecoration(ItemDecoration(this))
-        binding.urlList.seslSetFastScrollerEnabled(true)
-        binding.urlList.seslSetFillBottomEnabled(true)
-        binding.urlList.seslSetGoToTopEnabled(true)
-        binding.urlList.seslSetLastRoundedCorner(true)
-        binding.urlList.seslSetSmoothScrollEnabled(true)
-        binding.urlList.seslSetLongPressMultiSelectionListener(object : RecyclerView.SeslLongPressMultiSelectionListener {
-            override fun onItemSelected(view: RecyclerView, child: View, position: Int, id: Long) {
-                if (adapter.getItemViewType(position) == 0) toggleItemSelected(position)
+        binding.urlList.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = URLAdapter(context).also {
+                it.setupOnClickListeners()
+                urlAdapter = it
             }
+            itemAnimator = null
+            addItemDecoration(ItemDecoration(context))
+            enableCoreSeslFeatures()
+        }
 
-            override fun onLongPressMultiSelectionStarted(x: Int, y: Int) {}
-            override fun onLongPressMultiSelectionEnded(x: Int, y: Int) {}
-        })
+        urlAdapter.configure(
+            binding.urlList,
+            URLAdapter.Payload.SELECTION_MODE,
+            onAllSelectorStateChanged = { allSelectorStateFlow.value = it }
+        )
+        configureItemSwipeAnimator()
         updateRecyclerView()
     }
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
-        if (!isSearch && urls.isEmpty() || isSearch && searchURLs.isEmpty()) {
+        if (!binding.drawerLayoutMain.isSearchMode && urls.isEmpty() || binding.drawerLayoutMain.isSearchMode && searchURLs.isEmpty()) {
             binding.urlList.visibility = View.GONE
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
             binding.urlNoEntryText.text = when {
-                isSearch -> getString(R.string.no_search_results)
+                binding.drawerLayoutMain.isSearchMode -> getString(R.string.no_search_results)
                 filterFavorite -> getString(R.string.no_favorite_urls)
                 else -> getString(R.string.no_urls)
             }
@@ -457,127 +389,110 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         } else {
             binding.urlNoEntryScrollView.visibility = View.GONE
             binding.urlList.visibility = View.VISIBLE
-            selected = HashMap()
-            currentList.indices.forEach { i -> selected[i] = false }
-            adapter.notifyDataSetChanged()
+            urlAdapter.submitList(currentList)
         }
     }
 
-    inner class URLAdapter internal constructor() : RecyclerView.Adapter<URLAdapter.ViewHolder>() {
-        override fun getItemCount(): Int = currentList.size
-        override fun getItemViewType(position: Int): Int = 0
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = if (viewType == 0) {
-            val inflater = LayoutInflater.from(this@MainActivity)
-            val view = inflater.inflate(R.layout.listview_item, parent, false)
-            ViewHolder(view, false)
-        } else ViewHolder(Separator(this@MainActivity), true)
-
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val color = MaterialColors.getColor(
-                this@MainActivity,
-                androidx.appcompat.R.attr.colorPrimary,
-                this@MainActivity.getColor(R.color.primary_color_themed)
-            )
-            holder.listItemTitle.text =
-                if (isSearch) makeSectionOfTextBold(currentList[position].shortURL, search, color, 20) else currentList[position].shortURL
-            holder.listItemSubtitle1.text =
-                if (isSearch) makeSectionOfTextBold(currentList[position].longURL, search, color, 20) else currentList[position].longURL
-            val subtitle2 = currentList[position].description.ifBlank { currentList[position].title }
-                .ifBlank { currentList[position].addedFormatMedium }
-            holder.listItemSubtitle2.text = if (isSearch) makeSectionOfTextBold(subtitle2, search, color, 20) else subtitle2
-            if (selected[position]!!) holder.listItemImg.setImageResource(R.drawable.url_selected_icon)
-            else holder.listItemImg.setImageBitmap(currentList[position].qr)
-            holder.listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                null,
-                null,
-                if (currentList[position].favorite) AppCompatResources.getDrawable(
-                    this@MainActivity,
-                    dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on
+    private fun URLAdapter.setupOnClickListeners() {
+        onClickItem = { position, url, viewHolder ->
+            if (isActionMode) onToggleItem(url.id, position)
+            else {
+                startActivity(
+                    Intent(this@MainActivity, URLActivity::class.java)
+                        .putExtra("shortURL", url.shortURL)
+                        .putExtra("boldText", search),
+                    ActivityOptions.makeSceneTransitionAnimation(
+                        this@MainActivity,
+                        UtilPair.create(viewHolder.listItemImg, "qr"),
+                        //UtilPair.create(holder.listItemTitle, "shorturl"), buggy :/
+                        //UtilPair.create(holder.listItemSubtitle1, "longurl"),
+                        //UtilPair.create(holder.listItemSubtitle2, "added"),
+                    ).toBundle()
                 )
-                else AppCompatResources.getDrawable(this@MainActivity, dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off),
-                null
-            )
-            holder.listItemFav.setOnClickListener {
-                lifecycleScope.launch {
-                    updateURL(currentList[position].copy(favorite = !currentList[position].favorite))
-                }
             }
-            holder.parentView.setOnClickListener {
-                if (binding.drawerLayoutMain.isActionMode) toggleItemSelected(position)
-                else {
-                    startActivity(
-                        Intent(this@MainActivity, URLActivity::class.java)
-                            .putExtra("shortURL", currentList[position].shortURL)
-                            .putExtra("boldText", search),
-                        ActivityOptions
-                            .makeSceneTransitionAnimation(
-                                this@MainActivity,
-                                UtilPair.create(holder.listItemImg, "qr"),
-                                //UtilPair.create(holder.listItemTitle, "shorturl"), buggy :/
-                                //UtilPair.create(holder.listItemSubtitle1, "longurl"),
-                                //UtilPair.create(holder.listItemSubtitle2, "added"),
-                            )
-                            .toBundle()
-                    )
+        }
+        onClickItemFavorite = { position, url ->
+            lifecycleScope.launch { updateURL(url.copy(favorite = !url.favorite)) }
+        }
+        onLongClickItem = {
+            if (!isActionMode) launchActionMode()
+            binding.urlList.seslStartLongPressMultiSelection()
+        }
+    }
+
+    private fun configureItemSwipeAnimator() {
+        binding.urlList.configureItemSwipeAnimator(
+            rightToLeftLabel = getString(R.string.add_to_fav),
+            leftToRightLabel = getString(R.string.remove_from_fav),
+            rightToLeftColor = getColor(R.color.primary_color_themed),
+            leftToRightColor = getColor(dev.oneuiproject.oneui.design.R.color.oui_functional_red_color),
+            rightToLeftDrawableRes = dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on,
+            leftToRightDrawableRes = dev.oneuiproject.oneui.R.drawable.ic_oui_delete_outline,
+            isRightSwipeEnabled = { !urlAdapter.isActionMode },
+            isLeftSwipeEnabled = { !urlAdapter.isActionMode },
+            onSwiped = { position, swipeDirection, _ ->
+                val url = urlAdapter.getItemByPosition(position)
+                if (swipeDirection == START) {
+                    Toast.makeText(this, getString(R.string.add_to_fav), Toast.LENGTH_SHORT).show()
+                    lifecycleScope.launch {
+                        updateURL(url.copy(favorite = true))
+                    }
                 }
-            }
-            holder.parentView.setOnLongClickListener {
-                if (isSearch) return@setOnLongClickListener false
-                if (!binding.drawerLayoutMain.isActionMode) binding.drawerLayoutMain.showActionMode()
-                toggleItemSelected(position)
-                binding.urlList.seslStartLongPressMultiSelection()
+                if (swipeDirection == END) {
+                    Toast.makeText(this, getString(R.string.remove_from_fav), Toast.LENGTH_SHORT).show()
+                    lifecycleScope.launch {
+                        updateURL(url.copy(favorite = false))
+                    }
+                }
                 true
             }
-        }
-
-        inner class ViewHolder internal constructor(itemView: View, var isSeparator: Boolean) : RecyclerView.ViewHolder(itemView) {
-            var parentView: LinearLayout = itemView as LinearLayout
-            var listItemImg: ImageView = itemView.findViewById(R.id.list_item_img)
-            var listItemTitle: TextView = parentView.findViewById(R.id.list_item_title)
-            var listItemSubtitle1: TextView = parentView.findViewById(R.id.list_item_subtitle1)
-            var listItemSubtitle2: TextView = parentView.findViewById(R.id.list_item_subtitle2)
-            var listItemFav: AppCompatButton = parentView.findViewById(R.id.list_item_fav)
-        }
+        )
     }
 
-    @SuppressLint("PrivateResource")
-    private inner class ItemDecoration(context: Context) : RecyclerView.ItemDecoration() {
-        private val divider: Drawable?
-        private val roundedCorner: SeslSubheaderRoundedCorner
 
-        init {
-            val outValue = TypedValue()
-            context.theme.resolveAttribute(androidx.appcompat.R.attr.isLightTheme, outValue, true)
-            divider = AppCompatResources.getDrawable(
-                context,
-                if (outValue.data == 0) androidx.appcompat.R.drawable.sesl_list_divider_dark
-                else androidx.appcompat.R.drawable.sesl_list_divider_light
-            )!!
-            roundedCorner = SeslSubheaderRoundedCorner(this@MainActivity)
-            roundedCorner.roundedCorners = SeslRoundedCorner.ROUNDED_CORNER_ALL
-        }
+    private fun launchActionMode(initialSelected: Array<Long>? = null) {
+        binding.drawerLayoutMain.startActionMode(
+            onInflateMenu = { menu ->
+                binding.addFab.hide()
+                urlAdapter.onToggleActionMode(true, initialSelected)
+                menuInflater.inflate(R.menu.menu_select, menu)
+            },
+            onEnd = {
+                urlAdapter.onToggleActionMode(false)
+                if (!binding.drawerLayoutMain.isSearchMode) binding.addFab.show()
+            },
+            onSelectMenuItem = {
+                when (it.itemId) {
+                    R.id.menu_item_delete -> {
+                        lifecycleScope.launch {
+                            deleteURL(currentList.filter { it.id in urlAdapter.getSelectedIds() })
+                            binding.drawerLayoutMain.endActionMode()
+                        }
+                        true
+                    }
 
-        override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
-            super.onDraw(c, parent, state)
-            for (i in 0 until parent.childCount) {
-                val child = parent.getChildAt(i)
-                val holder = binding.urlList.getChildViewHolder(child) as URLAdapter.ViewHolder
-                if (!holder.isSeparator) {
-                    val top = (child.bottom + (child.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin)
-                    val bottom = divider!!.intrinsicHeight + top
-                    divider.setBounds(parent.left, top, parent.right, bottom)
-                    divider.draw(c)
+                    R.id.menu_item_add_to_favorites -> {
+                        lifecycleScope.launch {
+                            updateURL(currentList.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = true) })
+                            binding.drawerLayoutMain.endActionMode()
+                        }
+                        true
+                    }
+
+                    R.id.menu_item_remove_from_favorites -> {
+                        lifecycleScope.launch {
+                            updateURL(currentList.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = false) })
+                            binding.drawerLayoutMain.endActionMode()
+                        }
+                        true
+                    }
+
+                    else -> false
                 }
-            }
-        }
-
-        override fun seslOnDispatchDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
-            for (i in 0 until parent.childCount) {
-                val child = parent.getChildAt(i)
-                val holder = binding.urlList.getChildViewHolder(child) as URLAdapter.ViewHolder
-                if (holder.isSeparator) roundedCorner.drawRoundedCorner(child, c)
-            }
-        }
+            },
+            onSelectAll = { isChecked: Boolean -> urlAdapter.onToggleSelectAll(isChecked) },
+            allSelectorStateFlow = allSelectorStateFlow,
+            keepSearchMode = true
+        )
     }
 }

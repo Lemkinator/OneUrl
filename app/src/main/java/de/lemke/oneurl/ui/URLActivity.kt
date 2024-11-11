@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.text.style.UnderlineSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -18,7 +19,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.SaveLocation
@@ -26,8 +26,8 @@ import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.MakeSectionOfTextBoldUseCase
 import de.lemke.oneurl.domain.OpenLinkUseCase
+import de.lemke.oneurl.domain.SearchHighlighter
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.model.URL
@@ -49,7 +49,7 @@ class URLActivity : AppCompatActivity() {
     private lateinit var boldText: String
     private lateinit var saveLocation: SaveLocation
     private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri?>
-    private val makeSectionOfTextBold: MakeSectionOfTextBoldUseCase = MakeSectionOfTextBoldUseCase()
+    private lateinit var searchHighlighter: SearchHighlighter
 
     @Inject
     lateinit var openLink: OpenLinkUseCase
@@ -108,7 +108,7 @@ class URLActivity : AppCompatActivity() {
             saveLocation = getUserSettings().saveLocation
             binding.root.setTitle(url.shortURL)
             initViews()
-            setCustomAnimatedOnBackPressedLogic(binding.root, !showInAppReviewOrFinish.canShowInAppReview()) {
+            setCustomAnimatedOnBackPressedLogic(binding.root, showInAppReviewOrFinish.canShowInAppReview()) {
                 lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) }
             }
         }
@@ -176,19 +176,13 @@ class URLActivity : AppCompatActivity() {
 
 
     private fun initViews() {
+        searchHighlighter = SearchHighlighter(this)
         refreshVisitCount()
         binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
-        val color = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, this.getColor(R.color.primary_color_themed))
-        val shortURL = with(makeSectionOfTextBold(url.shortURL, boldText, color)) {
-            setSpan(android.text.style.UnderlineSpan(), 0, url.shortURL.length, 0)
-            this
+        binding.urlShortButton.text = searchHighlighter(url.shortURL, boldText).apply {
+            setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
         }
-        binding.urlShortButton.text = shortURL
         binding.urlShortButton.setOnClickListener { openLink(url.shortURL.withHttps()) }
-        val longURL = with(makeSectionOfTextBold(url.longURL, boldText, color)) {
-            setSpan(android.text.style.UnderlineSpan(), 0, url.longURL.length, 0)
-            this
-        }
         binding.urlShortCopyButton.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("short-url", url.shortURL)
@@ -203,7 +197,9 @@ class URLActivity : AppCompatActivity() {
             }
             startActivity(Intent.createChooser(sendIntent, null))
         }
-        binding.urlLongButton.text = longURL
+        binding.urlLongButton.text = searchHighlighter(url.longURL, boldText).apply {
+            setSpan(UnderlineSpan(), 0, url.longURL.length, 0)
+        }
         binding.urlLongButton.setOnClickListener { openLink(url.longURL.withHttps()) }
         binding.urlLongCopyButton.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
@@ -220,16 +216,16 @@ class URLActivity : AppCompatActivity() {
             startActivity(Intent.createChooser(sendIntent, null))
         }
         if (url.title.isNotBlank()) {
-            binding.urlTitleTextview.text = makeSectionOfTextBold(url.title, boldText, color)
+            binding.urlTitleTextview.text = searchHighlighter(url.title, boldText)
             binding.urlTitleLayout.visibility = View.VISIBLE
             binding.urlTitleDivider.visibility = View.VISIBLE
         }
         if (url.description.isNotBlank()) {
-            binding.urlDescriptionTextview.text = makeSectionOfTextBold(url.description, boldText, color)
+            binding.urlDescriptionTextview.text = searchHighlighter(url.description, boldText)
             binding.urlDescriptionLayout.visibility = View.VISIBLE
             binding.urlDescriptionDivider.visibility = View.VISIBLE
         }
-        binding.urlAddedTextview.text = makeSectionOfTextBold(url.addedFormatMedium, boldText, color)
+        binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, boldText)
         binding.urlQrImageview.setImageBitmap(url.qr)
         binding.urlQrCopyButton.setOnClickListener { copyQRCode(url.qr) }
         binding.urlQrSaveButton.setOnClickListener {

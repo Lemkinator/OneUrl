@@ -18,6 +18,7 @@ object Converters {
     fun zonedDateTimeFromDb(zonedDateTimeString: String?): ZonedDateTime? = try {
         ZonedDateTime.parse(zonedDateTimeString)
     } catch (e: Exception) {
+        e.printStackTrace()
         null
     }
 

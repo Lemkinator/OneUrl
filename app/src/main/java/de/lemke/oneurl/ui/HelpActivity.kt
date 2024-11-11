@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityHelpBinding
+import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
 
 @AndroidEntryPoint
 class HelpActivity : AppCompatActivity() {
@@ -29,9 +30,11 @@ class HelpActivity : AppCompatActivity() {
             intent.putExtra(Intent.EXTRA_TEXT, "")
             try {
                 startActivity(intent)
-            } catch (ex: ActivityNotFoundException) {
+            } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
                 Toast.makeText(this, getString(R.string.no_email_app_installed), Toast.LENGTH_SHORT).show()
             }
         }
+        setCustomBackPressAnimation(binding.root)
     }
 }

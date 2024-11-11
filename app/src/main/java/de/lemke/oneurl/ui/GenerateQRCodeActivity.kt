@@ -31,7 +31,7 @@ import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
-import de.lemke.oneurl.domain.utils.setCustomOnBackPressedLogic
+import de.lemke.oneurl.domain.utils.setCustomAnimatedOnBackPressedLogic
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.launch
 import java.io.File
@@ -42,14 +42,14 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri?>
     private lateinit var url: String
-    private lateinit var qrCode: Bitmap
     private lateinit var saveLocation: SaveLocation
+    private var qrCode: Bitmap? = null
     private var backgroundColor = 0
     private var foregroundColor = 0
     private var tintAnchor = false
     private var tintBorder = false
     private var size = 0
-    private var frame = false
+    private var roundedFrame = false
     private var icon = false
 
     private val minSize = 512
@@ -81,7 +81,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
         binding = ActivityGenerateQrCodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
         pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-            if (this::qrCode.isInitialized && this::url.isInitialized) exportQRCode(uri, qrCode, url)
+            if (this::url.isInitialized) qrCode?.let { exportQRCode(uri, it, url) }
         }
         binding.toolbarLayout.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
         binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
@@ -89,7 +89,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             val userSettings = getUserSettings()
             url = userSettings.qrURL
             size = userSettings.qrSize
-            frame = userSettings.qrFrame
+            roundedFrame = userSettings.qrFrame
             icon = userSettings.qrIcon
             tintBorder = userSettings.qrTintBorder
             tintAnchor = userSettings.qrTintAnchor
@@ -97,8 +97,8 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             foregroundColor = userSettings.qrRecentForegroundColors.first()
             saveLocation = userSettings.saveLocation
             initViews()
-            if (showInAppReviewOrFinish.canShowInAppReview()) {
-                setCustomOnBackPressedLogic { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
+            setCustomAnimatedOnBackPressedLogic(binding.root, showInAppReviewOrFinish.canShowInAppReview()) {
+                lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) }
             }
         }
     }
@@ -114,13 +114,13 @@ class GenerateQRCodeActivity : AppCompatActivity() {
                 if (saveLocation == SaveLocation.CUSTOM || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
                     pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
                 } else {
-                    exportQRCodeToSaveLocation(saveLocation, qrCode, url)
+                    qrCode?.let { exportQRCodeToSaveLocation(saveLocation, it, url) }
                 }
                 return true
             }
 
             R.id.menu_item_qr_share -> {
-                shareQRCode(qrCode)
+                qrCode?.let { shareQRCode(it) }
                 return true
             }
         }
@@ -129,7 +129,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
 
     private fun initViews() {
         generateQRCode()
-        binding.qrCode.setOnClickListener { copyQRCode(qrCode) }
+        binding.qrCode.setOnClickListener { qrCode?.let { it1 -> copyQRCode(it1) } }
         binding.editTextURL.setText(url)
         binding.editTextURL.requestFocus()
         binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
@@ -139,9 +139,9 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             lifecycleScope.launch { updateUserSettings { it.copy(qrURL = text.toString()) } }
         }
         initSize()
-        binding.frameCheckbox.isChecked = frame
+        binding.frameCheckbox.isChecked = roundedFrame
         binding.frameCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
-            frame = isChecked
+            roundedFrame = isChecked
             generateQRCode()
             lifecycleScope.launch { updateUserSettings { it.copy(qrFrame = isChecked) } }
         }
@@ -264,10 +264,10 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     private fun generateQRCode() {
         qrCode = with(QREncoder(this, url)) {
             if (icon) setIcon(R.drawable.ic_launcher_themed)
-            setBGColor(backgroundColor)
-            setFGColor(foregroundColor, tintAnchor, tintBorder)
+            setBackgroundColor(backgroundColor)
+            setForegroundColor(foregroundColor, tintAnchor, tintBorder)
             setSize(size)
-            setFrame(frame)
+            roundedFrame(roundedFrame)
             generate()
         }
         binding.qrCode.setImageBitmap(qrCode)

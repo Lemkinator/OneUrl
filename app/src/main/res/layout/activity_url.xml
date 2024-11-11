@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?roundedCornerColor"
     app:expanded="false"
     app:navigationIcon="@drawable/ic_oui_back"
     app:subtitle="@string/app_name">
@@ -45,21 +46,21 @@
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_qr_copy_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:drawableEnd="@drawable/ic_oui_copy_outline" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_qr_save_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:drawableEnd="@drawable/ic_oui_save_outline" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_qr_share_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:drawableEnd="@drawable/ic_oui_share_outline" />
@@ -87,7 +88,7 @@
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_short_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="10dp"
@@ -98,14 +99,14 @@
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_short_copy_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:drawableEnd="@drawable/ic_oui_copy_outline" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_short_share_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:drawableEnd="@drawable/ic_oui_share_outline" />
@@ -129,7 +130,7 @@
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_long_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="10dp"
@@ -140,14 +141,14 @@
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_long_copy_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:drawableEnd="@drawable/ic_oui_copy_outline" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_long_share_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:drawableEnd="@drawable/ic_oui_share_outline" />
@@ -310,11 +311,10 @@
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_visits_refresh_button"
-                        style="@style/ButtonStyle.Transparent"
+                        style="@style/ButtonStyle.Transparent.NoColor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:drawableEnd="@drawable/ic_oui_refresh"
-                        android:drawableTint="@color/primary_text_icon_color" />
+                        android:drawableEnd="@drawable/ic_oui_refresh" />
 
                 </LinearLayout>
 

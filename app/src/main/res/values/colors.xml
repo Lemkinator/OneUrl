@@ -10,4 +10,5 @@
     <color name="primary_text_icon_color_themed">@color/oui_primary_text_color</color>
     <color name="secondary_text_icon_color_themed">@color/sesl_list_subheader_text_color</color>
     <color name="filled_background_color">#e2e2e2</color>
+    <color name="transparent_window_bg_color">#3B000000</color>
 </resources>

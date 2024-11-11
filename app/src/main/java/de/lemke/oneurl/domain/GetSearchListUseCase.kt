@@ -9,16 +9,7 @@ class GetSearchListUseCase @Inject constructor(
     private val getURLs: GetURLsUseCase,
 ) {
     suspend operator fun invoke(search: String?, urls: List<URL>? = null): List<URL> = withContext(Dispatchers.Default) {
-        val result = urls ?: getURLs()
-        when {
-            search.isNullOrBlank() -> return@withContext emptyList()
-            else -> return@withContext result.filter {
-                it.containsKeywords(
-                    if (search.startsWith("\"") && search.endsWith("\"") && search.length > 2) {
-                        search.substring(1, search.length - 1).trim().split(" ").toSet()
-                    } else setOf(search)
-                )
-            }
-        }
+        if (search.isNullOrBlank()) emptyList()
+        else (urls ?: getURLs()).filter { it.contains(search) }
     }
 }

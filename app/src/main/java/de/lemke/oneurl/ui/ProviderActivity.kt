@@ -26,7 +26,7 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
-import de.lemke.oneurl.domain.utils.setCustomAnimatedOnBackPressedLogic
+import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.widget.Separator
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -53,7 +53,7 @@ class ProviderActivity : AppCompatActivity() {
         lifecycleScope.launch {
             binding.providerList.scrollToPosition(provider.indexOf(getUserSettings().selectedShortURLProvider))
         }
-        setCustomAnimatedOnBackPressedLogic(binding.providerListContainer)
+        setCustomBackPressAnimation(binding.root)
     }
 
     private fun initRecycler() {

@@ -42,17 +42,32 @@
             android:name="theming-meta-xml"
             android:value="@xml/meta_998_sesl_app" />
 
+        <activity android:name=".ui.OOBEActivity" />
+        <activity
+            android:name=".ui.ProviderActivity"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
+        <activity
+            android:name=".ui.HelpActivity"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
+        <activity
+            android:name=".ui.AboutMeActivity"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
+        <activity
+            android:name=".ui.AboutActivity"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
+        <activity
+            android:name=".ui.GenerateQRCodeActivity"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
+        <activity
+            android:name=".ui.URLActivity"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
+        <activity
+            android:name=".ui.AddURLActivity"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
         <activity
             android:name=".ui.SettingsActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
-        <activity android:name=".ui.ProviderActivity" />
-        <activity android:name=".ui.HelpActivity" />
-        <activity android:name=".ui.AboutMeActivity" />
-        <activity android:name=".ui.AboutActivity" />
-        <activity android:name=".ui.OOBEActivity" />
-        <activity android:name=".ui.GenerateQRCodeActivity" />
-        <activity android:name=".ui.URLActivity" />
-        <activity android:name=".ui.AddURLActivity" />
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:theme="@style/Theme.OneURL.TransparentWindow" />
         <activity
             android:name=".ui.MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"

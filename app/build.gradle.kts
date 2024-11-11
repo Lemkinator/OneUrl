@@ -19,8 +19,8 @@ android {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.3.3"
+        versionCode = 24
+        versionName = "1.4.1"
         resourceConfigurations += listOf("en", "de")
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
     }
@@ -87,19 +87,19 @@ secrets {
 
 dependencies {
     //SESL6(OneUI 6) Android Jetpack
-    implementation("sesl.androidx.core:core:1.15.0-rc01+1.0.11-sesl6+rev0")
-    implementation("sesl.androidx.core:core-ktx:1.15.0-rc01+1.0.0-sesl6+rev0")
-    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev5")
+    implementation("sesl.androidx.core:core:1.15.0+1.0.11-sesl6+rev0")
+    implementation("sesl.androidx.core:core-ktx:1.15.0+1.0.0-sesl6+rev0")
+    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev6")
     implementation("sesl.androidx.preference:preference:1.2.1+1.0.4-sesl6+rev3")
     //SESL6(OneUI 6) Samsung
     implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl6+rev3")
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev1")
     //SESL6(OneUI 6) Material Components + Design Lib + Icons
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev1")
-    implementation("io.github.tribalfs:oneui-design:0.1.0+oneui6")
+    implementation("io.github.tribalfs:oneui-design:0.1.5+oneui6")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("com.airbnb.android:lottie:6.5.2")
+    implementation("com.airbnb.android:lottie:6.6.0")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.android.volley:volley:1.2.1")
