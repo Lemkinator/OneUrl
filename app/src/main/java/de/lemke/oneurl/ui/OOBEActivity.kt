@@ -29,7 +29,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class OOBEActivity : AppCompatActivity() {
     private lateinit var binding: ActivityOobeBinding
-    private lateinit var toSDialog: AlertDialog
 
     @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
@@ -71,7 +70,11 @@ class OOBEActivity : AppCompatActivity() {
         tosLink.setSpan(
             object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    toSDialog.show()
+                    AlertDialog.Builder(this@OOBEActivity)
+                        .setTitle(getString(R.string.tos))
+                        .setMessage(getString(R.string.tos_content))
+                        .setPositiveButton(R.string.ok) { dialog: DialogInterface, _: Int -> dialog.dismiss() }
+                        .show()
                 }
 
                 override fun updateDrawState(ds: TextPaint) {
@@ -85,15 +88,6 @@ class OOBEActivity : AppCompatActivity() {
         binding.oobeIntroFooterTosText.text = tosLink
         binding.oobeIntroFooterTosText.movementMethod = LinkMovementMethod.getInstance()
         binding.oobeIntroFooterTosText.highlightColor = Color.TRANSPARENT
-        initToSDialog()
-    }
-
-    private fun initToSDialog() {
-        toSDialog = AlertDialog.Builder(this)
-            .setTitle(getString(R.string.tos))
-            .setMessage(getString(R.string.tos_content))
-            .setPositiveButton(R.string.ok) { dialog: DialogInterface, _: Int -> dialog.dismiss() }
-            .create()
     }
 
     private fun initFooterButton() {
