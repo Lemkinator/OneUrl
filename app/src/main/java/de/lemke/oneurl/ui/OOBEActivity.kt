@@ -21,7 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityOobeBinding
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.views.TipsItemView
+import de.lemke.oneurl.ui.view.TipsItemView
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject

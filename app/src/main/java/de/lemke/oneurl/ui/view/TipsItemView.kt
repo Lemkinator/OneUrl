@@ -1,4 +1,4 @@
-package de.lemke.oneurl.domain.views
+package de.lemke.oneurl.ui.view
 
 import android.content.Context
 import android.graphics.Typeface
