@@ -33,7 +33,7 @@ import de.lemke.oneurl.databinding.ActivitySettingsBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
+import de.lemke.oneurl.domain.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.preference.HorizontalRadioPreference
 import dev.oneuiproject.oneui.preference.internal.PreferenceRelatedCard
 import dev.oneuiproject.oneui.utils.PreferenceUtils.createRelatedCard

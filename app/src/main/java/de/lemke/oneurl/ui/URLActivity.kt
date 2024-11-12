@@ -36,7 +36,7 @@ import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
 import de.lemke.oneurl.domain.urlEncode
-import de.lemke.oneurl.domain.utils.setCustomAnimatedOnBackPressedLogic
+import de.lemke.oneurl.domain.setCustomAnimatedOnBackPressedLogic
 import de.lemke.oneurl.domain.withHttps
 import kotlinx.coroutines.launch
 import java.io.File

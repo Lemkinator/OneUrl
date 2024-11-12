@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityHelpBinding
-import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
+import de.lemke.oneurl.domain.setCustomBackPressAnimation
 
 @AndroidEntryPoint
 class HelpActivity : AppCompatActivity() {

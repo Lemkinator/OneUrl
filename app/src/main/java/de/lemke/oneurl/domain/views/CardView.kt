@@ -1,4 +1,4 @@
-package de.lemke.oneurl.domain.utils
+package de.lemke.oneurl.domain.views
 
 import android.content.Context
 import android.graphics.drawable.Drawable

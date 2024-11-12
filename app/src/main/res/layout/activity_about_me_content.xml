@@ -23,14 +23,14 @@
             android:background="@color/oui_background_color"
             android:orientation="vertical">
 
-            <de.lemke.oneurl.domain.utils.CardView
+            <de.lemke.oneurl.domain.views.CardView
                 android:id="@+id/about_bottom_write_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:SummaryText="@string/support_me_text"
                 app:TitleText="@string/write_email" />
 
-            <de.lemke.oneurl.domain.utils.CardView
+            <de.lemke.oneurl.domain.views.CardView
                 android:id="@+id/about_bottom_share_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -51,7 +51,7 @@
             android:background="@color/oui_background_color"
             android:orientation="horizontal">
 
-            <de.lemke.oneurl.domain.utils.CardView
+            <de.lemke.oneurl.domain.views.CardView
                 android:id="@+id/about_bottom_rate_app"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

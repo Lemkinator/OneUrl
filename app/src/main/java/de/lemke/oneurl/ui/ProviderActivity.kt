@@ -26,7 +26,7 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
-import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
+import de.lemke.oneurl.domain.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.widget.Separator
 import kotlinx.coroutines.launch
 import javax.inject.Inject

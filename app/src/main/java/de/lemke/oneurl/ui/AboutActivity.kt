@@ -28,7 +28,7 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.OpenAppUseCase
 import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
+import de.lemke.oneurl.domain.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.layout.AppInfoLayout.LOADING
 import dev.oneuiproject.oneui.layout.AppInfoLayout.NOT_UPDATEABLE
 import dev.oneuiproject.oneui.layout.AppInfoLayout.NO_CONNECTION

@@ -31,7 +31,7 @@ import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
 import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
 import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
-import de.lemke.oneurl.domain.utils.setCustomAnimatedOnBackPressedLogic
+import de.lemke.oneurl.domain.setCustomAnimatedOnBackPressedLogic
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.launch
 import java.io.File

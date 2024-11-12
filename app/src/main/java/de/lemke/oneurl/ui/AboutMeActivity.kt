@@ -21,7 +21,7 @@ import de.lemke.oneurl.databinding.ActivityAboutMeBinding
 import de.lemke.oneurl.databinding.ActivityAboutMeContentBinding
 import de.lemke.oneurl.domain.OpenAppUseCase
 import de.lemke.oneurl.domain.OpenLinkUseCase
-import de.lemke.oneurl.domain.utils.setCustomBackPressAnimation
+import de.lemke.oneurl.domain.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.utils.ViewUtils
 import dev.oneuiproject.oneui.utils.internal.ToolbarLayoutUtils
 import javax.inject.Inject
