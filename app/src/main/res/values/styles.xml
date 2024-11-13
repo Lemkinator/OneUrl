@@ -7,7 +7,7 @@
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:ignore="NewApi">true</item>
     </style>
 
-    <style name="Theme.OneURL.TransparentWindow" parent="OneUITheme">
+    <style name="Theme.OneURL.TransparentWindow" parent="Theme.OneURL">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@color/transparent_window_bg_color</item>
         <item name="android:windowContentOverlay">@null</item>

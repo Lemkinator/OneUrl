@@ -449,7 +449,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         )
     }
 
-
     private fun launchActionMode(initialSelected: Array<Long>? = null) {
         binding.drawerLayoutMain.startActionMode(
             onInflateMenu = { menu ->
