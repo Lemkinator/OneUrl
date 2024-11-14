@@ -21,7 +21,9 @@ class HelpActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.toolbarLayout.setNavigationButtonOnClickListener { finishAfterTransition() }
         binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
-        binding.providerInfoButton.setOnClickListener { startActivity(Intent(this, ProviderActivity::class.java)) }
+        binding.providerInfoButton.setOnClickListener {
+            startActivity(Intent(this, ProviderActivity::class.java).putExtra("infoOnly", true))
+        }
         binding.contactMeButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_SENDTO)
             intent.data = Uri.parse("mailto:") // only email apps should handle this

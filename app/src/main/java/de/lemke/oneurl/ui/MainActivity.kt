@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             initRecycler()
             checkIntent()
             lifecycleScope.launch {
-                observeURLs().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
+                observeURLs().flowWithLifecycle(lifecycle).collectLatest {
                     val previousSize = allURLs.size
                     allURLs = it
                     urls = if (filterFavorite) it.filter { url -> url.favorite } else it

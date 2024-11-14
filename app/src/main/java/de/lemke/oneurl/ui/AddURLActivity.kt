@@ -14,7 +14,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -141,7 +140,7 @@ class AddURLActivity : AppCompatActivity() {
                 ).toBundle()
             )
         }
-        observeUserSettings().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collectLatest {
+        observeUserSettings().flowWithLifecycle(lifecycle).collectLatest {
             if (it.selectedShortURLProvider != selectedShortURLProvider) {
                 selectedShortURLProvider = it.selectedShortURLProvider
                 updateViews()

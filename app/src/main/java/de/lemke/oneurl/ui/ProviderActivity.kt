@@ -36,6 +36,7 @@ class ProviderActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProviderBinding
     private lateinit var adapter: ProviderAdapter
     private var provider: List<ShortURLProvider> = ShortURLProviderCompanion.enabled
+    private var infoOnly = false
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -54,6 +55,7 @@ class ProviderActivity : AppCompatActivity() {
             binding.providerList.scrollToPosition(provider.indexOf(getUserSettings().selectedShortURLProvider))
         }
         setCustomBackPressAnimation(binding.root)
+        infoOnly = intent.getBooleanExtra("infoOnly", false)
     }
 
     private fun initRecycler() {
@@ -92,7 +94,8 @@ class ProviderActivity : AppCompatActivity() {
                 } else iconView.visibility = View.GONE
             }
             holder.parentView.setOnClickListener {
-                lifecycleScope.launch {
+                if (infoOnly) openInfoDialog(provider[position])
+                else lifecycleScope.launch {
                     updateUserSettings { it.copy(selectedShortURLProvider = provider[position]) }
                     finishAfterTransition()
                 }
