@@ -11,7 +11,6 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import de.lemke.commonutils.widget.ItemDecorationViewHolder
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.delegates.MultiSelector
@@ -96,8 +95,7 @@ class URLAdapter(
         holder.bindActionMode(getItemId(position), url)
     }
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), ItemDecorationViewHolder {
-        override val isSeparator = false
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var listItemTitle: TextView = itemView.findViewById(R.id.list_item_title)
         var listItemSubtitle1: TextView = itemView.findViewById(R.id.list_item_subtitle1)
         var listItemSubtitle2: TextView = itemView.findViewById(R.id.list_item_subtitle2)
