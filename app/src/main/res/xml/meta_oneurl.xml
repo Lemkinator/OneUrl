@@ -5,7 +5,7 @@
     <AppMetaData
         Name="OneURL"
         TargetApi="21"
-        TargetPackageName="de.lemke.oneurl.debug"
+        TargetPackageName="de.lemke.oneurl"
         VersionCode="1"
         VersionName="">
         <Include RefName="SESL" />
