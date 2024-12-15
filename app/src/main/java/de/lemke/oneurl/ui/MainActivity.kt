@@ -38,7 +38,6 @@ import de.lemke.commonutils.hideSoftInput
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
 import de.lemke.commonutils.toast
-import de.lemke.commonutils.widget.ItemDecoration
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
@@ -57,6 +56,8 @@ import dev.oneuiproject.oneui.layout.DrawerLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
 import dev.oneuiproject.oneui.layout.startActionMode
+import dev.oneuiproject.oneui.utils.ItemDecorRule
+import dev.oneuiproject.oneui.utils.SemItemDecoration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -464,7 +465,11 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 urlAdapter = it
             }
             itemAnimator = null
-            addItemDecoration(ItemDecoration(context))
+            addItemDecoration(
+                SemItemDecoration(context, dividerRule = ItemDecorRule.ALL, subHeaderRule = ItemDecorRule.NONE).apply {
+                    setDividerInsetStart(92f.dpToPx(resources))
+                }
+            )
             enableCoreSeslFeatures()
         }
 

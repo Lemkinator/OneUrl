@@ -23,20 +23,21 @@
             android:background="@color/oui_background_color"
             android:orientation="vertical">
 
-            <de.lemke.commonutils.widget.CardView
+            <dev.oneuiproject.oneui.widget.CardItemView
                 android:id="@+id/about_bottom_write_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:SummaryText="@string/support_me_text"
-                app:TitleText="@string/write_email" />
+                app:showTopDivider="false"
+                app:summary="@string/support_me_text"
+                app:title="@string/write_email" />
 
-            <de.lemke.commonutils.widget.CardView
+            <dev.oneuiproject.oneui.widget.CardItemView
                 android:id="@+id/about_bottom_share_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:SummaryText="@string/share_app"
-                app:TitleText="@string/share"
-                app:isDividerViewVisible="true" />
+                app:showTopDivider="true"
+                app:summary="@string/share_app"
+                app:title="@string/share" />
 
         </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
@@ -51,13 +52,14 @@
             android:background="@color/oui_background_color"
             android:orientation="horizontal">
 
-            <de.lemke.commonutils.widget.CardView
+            <dev.oneuiproject.oneui.widget.CardItemView
                 android:id="@+id/about_bottom_rate_app"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                app:SummaryText="@string/rate_app"
-                app:TitleText="@string/write_review" />
+                app:showTopDivider="false"
+                app:summary="@string/write_review"
+                app:title="@string/rate_app" />
 
         </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
