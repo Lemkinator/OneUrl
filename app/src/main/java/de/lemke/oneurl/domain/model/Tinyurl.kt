@@ -2,6 +2,7 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
@@ -76,6 +77,7 @@ class Tinyurl : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         statusCode == 422 || statusCode == 400 -> {

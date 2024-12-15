@@ -53,14 +53,6 @@
             android:key="report_bug_pref"
             android:title="@string/report_bug" />
 
-        <PreferenceScreen
-            android:key="about_app_pref"
-            android:title="@string/about_app">
-            <intent
-                android:targetClass="de.lemke.oneurl.ui.AboutActivity"
-                android:targetPackage="de.lemke.oneurl" />
-        </PreferenceScreen>
-
     </PreferenceCategory>
 
 </PreferenceScreen>

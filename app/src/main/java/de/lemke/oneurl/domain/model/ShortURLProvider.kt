@@ -6,7 +6,6 @@ import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.Response
-import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import java.util.Locale
 
@@ -155,9 +154,25 @@ interface ShortURLProvider {
 
     fun getInfoContents(context: Context): List<ProviderInfo> = emptyList()
     fun getInfoButtons(context: Context): List<ProviderInfo> = listOfNotNull(
-        privacyURL?.let { ProviderInfo(dev.oneuiproject.oneui.R.drawable.ic_oui_privacy, context.getString(R.string.privacy_policy), it) },
-        termsURL?.let { ProviderInfo(dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline, context.getString(R.string.tos), it) },
-        ProviderInfo(dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline, context.getString(R.string.more_information), infoURL)
+        privacyURL?.let {
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
+                context.getString(de.lemke.commonutils.R.string.privacy_policy),
+                it
+            )
+        },
+        termsURL?.let {
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
+                context.getString(de.lemke.commonutils.R.string.tos),
+                it
+            )
+        },
+        ProviderInfo(
+            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+            context.getString(de.lemke.commonutils.R.string.more_information),
+            infoURL
+        )
     )
 
     fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = null

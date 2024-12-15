@@ -2,6 +2,7 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -100,6 +101,7 @@ sealed class VgdIsgd : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         error.message?.contains("JSONException", true) == true -> {
@@ -128,7 +130,7 @@ sealed class VgdIsgd : ShortURLProvider {
         override val termsURL = "$baseURL/terms.php"
 
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.info),
+            context.getString(de.lemke.commonutils.R.string.info),
             context.getString(R.string.redirect_hint_text)
         )
 

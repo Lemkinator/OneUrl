@@ -1,19 +1,18 @@
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.view.Menu
 import android.view.MenuItem
-import android.view.inputmethod.InputMethodManager
 import android.widget.CompoundButton
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SeslSeekBar
 import androidx.core.graphics.toColor
@@ -21,26 +20,26 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.SaveLocation
+import de.lemke.commonutils.copyToClipboard
+import de.lemke.commonutils.hideSoftInput
+import de.lemke.commonutils.saveBitmapToUri
+import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
+import de.lemke.commonutils.setWindowTransparent
+import de.lemke.commonutils.share
+import de.lemke.commonutils.exportBitmap
 import de.lemke.oneurl.R
-import de.lemke.oneurl.data.SaveLocation
 import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
-import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
-import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
-import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
-import de.lemke.oneurl.domain.setCustomAnimatedOnBackPressedLogic
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity() {
     private lateinit var binding: ActivityGenerateQrCodeBinding
-    private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri?>
     private lateinit var url: String
     private lateinit var saveLocation: SaveLocation
     private var qrCode: Bitmap? = null
@@ -51,9 +50,15 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     private var size = 0
     private var roundedFrame = false
     private var icon = false
-
     private val minSize = 512
     private val maxSize = 1024
+
+    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
+        StartActivityForResult(),
+        ActivityResultCallback<ActivityResult> { result ->
+            if (result.resultCode == RESULT_OK) saveBitmapToUri(result.data?.data, qrCode)
+        }
+    )
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -62,29 +67,14 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
     @Inject
-    lateinit var exportQRCode: ExportQRCodeUseCase
-
-    @Inject
-    lateinit var exportQRCodeToSaveLocation: ExportQRCodeToSaveLocationUseCase
-
-    @Inject
-    lateinit var copyQRCode: CopyQRCodeUseCase
-
-    @Inject
-    lateinit var shareQRCode: ShareQRCodeUseCase
-
-    @Inject
     lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGenerateQrCodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-            if (this::url.isInitialized) qrCode?.let { exportQRCode(uri, it, url) }
-        }
+        setWindowTransparent(true)
         binding.toolbarLayout.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
-        binding.toolbarLayout.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
         lifecycleScope.launch {
             val userSettings = getUserSettings()
             url = userSettings.qrURL
@@ -111,16 +101,12 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                if (saveLocation == SaveLocation.CUSTOM || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-                    pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
-                } else {
-                    qrCode?.let { exportQRCodeToSaveLocation(saveLocation, it, url) }
-                }
+                qrCode?.let { exportBitmap(saveLocation, it, url, exportQRCodeResultLauncher) }
                 return true
             }
 
             R.id.menu_item_qr_share -> {
-                qrCode?.let { shareQRCode(it) }
+                qrCode?.share(this, "QRCode.png")
                 return true
             }
         }
@@ -129,7 +115,12 @@ class GenerateQRCodeActivity : AppCompatActivity() {
 
     private fun initViews() {
         generateQRCode()
-        binding.qrCode.setOnClickListener { qrCode?.let { it1 -> copyQRCode(it1) } }
+        binding.qrCode.setOnClickListener {
+            lifecycleScope.launch {
+                qrCode?.let { QRBottomSheet.newInstance(url, it, getUserSettings().saveLocation) }?.show(supportFragmentManager, null)
+            }
+        }
+        binding.qrCode.setOnLongClickListener { qrCode?.copyToClipboard(this, "QR Code", "QRCode.png") == true }
         binding.editTextURL.setText(url)
         binding.editTextURL.requestFocus()
         binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
@@ -177,10 +168,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
                 generateQRCode()
                 lifecycleScope.launch { updateUserSettings { it.copy(qrSize = size) } }
             }
-            (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
-                textView.windowToken,
-                InputMethodManager.HIDE_NOT_ALWAYS
-            )
+            hideSoftInput(textView.windowToken)
             textView.clearFocus()
 
             true

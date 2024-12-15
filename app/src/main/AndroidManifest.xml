@@ -21,7 +21,7 @@
         android:localeConfig="@xml/locale_config"
         android:resizeableActivity="true"
         android:supportsRtl="true"
-        android:theme="@style/Theme.OneURL"
+        android:theme="@style/AppTheme"
         tools:targetApi="34">
 
         <meta-data
@@ -36,44 +36,37 @@
 
         <meta-data
             android:name="theming-meta"
-            android:value="meta_998_sesl_app" />
+            android:value="meta_oneurl" />
 
         <meta-data
             android:name="theming-meta-xml"
-            android:value="@xml/meta_998_sesl_app" />
+            android:value="@xml/meta_oneurl" />
 
         <activity android:name=".ui.OOBEActivity" />
+        <activity android:name=".ui.HelpActivity" />
+        <activity android:name=".ui.AboutActivity" />
+        <activity android:name=".ui.AboutMeActivity" />
         <activity
             android:name=".ui.ProviderActivity"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
-        <activity
-            android:name=".ui.HelpActivity"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
-        <activity
-            android:name=".ui.AboutMeActivity"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
-        <activity
-            android:name=".ui.AboutActivity"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
+            android:configChanges="orientation|screenLayout|screenSize" />
         <activity
             android:name=".ui.GenerateQRCodeActivity"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
-        <activity
-            android:name=".ui.URLActivity"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
+            android:configChanges="orientation|screenLayout|screenSize" />
         <activity
             android:name=".ui.AddURLActivity"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
+            android:configChanges="orientation|screenLayout|screenSize" />
+        <activity
+            android:name=".ui.URLActivity"
+            android:configChanges="orientation|screenLayout|screenSize" />
         <activity
             android:name=".ui.SettingsActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:theme="@style/Theme.OneURL.TransparentWindow" />
+            android:configChanges="orientation|screenLayout|screenSize" />
         <activity
             android:name=".ui.MainActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:configChanges="orientation|screenLayout|screenSize"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.OneURL.Splash">
+            android:theme="@style/AppTheme.Starting">
             <meta-data
                 android:name="com.sec.android.app.launcher.icon_theme"
                 android:value="themeColor" />

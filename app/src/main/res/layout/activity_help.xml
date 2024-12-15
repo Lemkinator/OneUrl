@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="?roundedCornerColor"
     app:expanded="false"
-    app:navigationIcon="@drawable/ic_oui_back"
+    app:showNavButtonAsBack="true"
     app:subtitle="@string/app_name"
     app:title="@string/help">
 
@@ -28,12 +28,12 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 android:text="@string/help_text"
-                android:textColor="@color/primary_text_icon_color_themed"
+                android:textColor="@color/commonutils_primary_text_icon_color"
                 android:textSize="17sp" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/providerInfoButton"
-                style="@style/ButtonStyle.Transparent"
+                style="@style/ButtonStyle.Transparent.Themed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -43,7 +43,7 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/contactMeButton"
-                style="@style/ButtonStyle.Transparent"
+                style="@style/ButtonStyle.Transparent.Themed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"

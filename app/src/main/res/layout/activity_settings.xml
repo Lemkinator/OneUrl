@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="?roundedCornerColor"
     app:expanded="false"
-    app:navigationIcon="@drawable/ic_oui_back"
+    app:showNavButtonAsBack="true"
     app:subtitle="@string/app_name"
     app:title="@string/settings">
 

@@ -52,6 +52,8 @@ android {
             }
         }
         debug {
+            applicationIdSuffix = ".debug"
+            resValue("string", "app_name", "OneURL (Debug)")
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
@@ -89,20 +91,23 @@ dependencies {
     //SESL6(OneUI 6) Android Jetpack
     implementation("sesl.androidx.core:core:1.15.0+1.0.11-sesl6+rev0")
     implementation("sesl.androidx.core:core-ktx:1.15.0+1.0.0-sesl6+rev0")
-    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev6")
+    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev7")
     implementation("sesl.androidx.preference:preference:1.2.1+1.0.4-sesl6+rev3")
     //SESL6(OneUI 6) Samsung
     implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl6+rev3")
-    implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev1")
     //SESL6(OneUI 6) Material Components + Design Lib + Icons
-    implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev1")
-    implementation("io.github.tribalfs:oneui-design:0.1.5+oneui6")
+    implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev2")
+    implementation("io.github.tribalfs:oneui-design:0.3.3+oneui6")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("com.airbnb.android:lottie:6.6.0")
+    implementation("io.github.lemkinator:common-utils:0.3.8")
+
+    implementation("com.airbnb.android:lottie:6.6.1")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.android.volley:volley:1.2.1")
+    implementation("com.github.skydoves:transformationlayout:1.1.4")
+    implementation("com.github.skydoves:bundler:1.0.4")
 
     implementation("androidx.core:core-splashscreen:1.2.0-alpha02")
     //noinspection GradleDependency until https://issuetracker.google.com/u/0/issues/342671895 is fixed
@@ -111,8 +116,8 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
-    implementation("com.google.dagger:hilt-android:2.52")
-    ksp("com.google.dagger:hilt-compiler:2.52")
+    implementation("com.google.dagger:hilt-android:2.53")
+    ksp("com.google.dagger:hilt-compiler:2.53")
 }
 
 configurations.implementation {

@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.skydoves.transformationlayout.TransformationLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/itemTransformationLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/listChoiceBackgroundIndicator"
+    app:transformation_duration="400"
+    app:transformation_fadeMode="through"
     tools:viewBindingIgnore="true">
 
     <LinearLayout
@@ -24,7 +28,6 @@
             android:layout_marginVertical="4dp"
             android:layout_marginEnd="12dp"
             android:contentDescription="QR Code"
-            android:transitionName="qr"
             tools:ignore="HardcodedText" />
 
         <LinearLayout
@@ -40,8 +43,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
                 android:maxLines="1"
-                android:textAppearance="?textAppearanceListItem"
-                android:transitionName="shorturl" />
+                android:textAppearance="?textAppearanceListItem" />
 
             <TextView
                 android:id="@+id/list_item_subtitle1"
@@ -50,7 +52,6 @@
                 android:ellipsize="marquee"
                 android:maxLines="1"
                 android:textAppearance="?textAppearanceListItemSecondary"
-                android:transitionName="longurl"
                 tools:ignore="RtlSymmetry" />
 
             <TextView
@@ -60,14 +61,13 @@
                 android:ellipsize="marquee"
                 android:maxLines="1"
                 android:textAppearance="?textAppearanceListItemSecondary"
-                android:transitionName="added"
                 tools:ignore="RtlSymmetry" />
 
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/list_item_fav"
-            style="@style/ButtonStyle.Transparent"
+            style="@style/ButtonStyle.Transparent.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -75,4 +75,4 @@
 
     </LinearLayout>
 
-</FrameLayout>
+</com.skydoves.transformationlayout.TransformationLayout>

@@ -5,9 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?roundedCornerColor"
-    android:transitionName="transition_fab"
     app:expanded="false"
-    app:navigationIcon="@drawable/ic_oui_back"
+    app:showNavButtonAsBack="true"
     app:subtitle="@string/app_name"
     app:title="@string/add_url">
 
@@ -27,7 +26,7 @@
                 style="?android:listSeparatorTextViewStyle"
                 android:text="@string/provider" />
 
-            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+            <dev.oneuiproject.oneui.widget.RoundedLinearLayout
                 android:id="@+id/providerSelection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -99,9 +98,9 @@
 
                 </LinearLayout>
 
-            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+            </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
-            <dev.oneuiproject.oneui.widget.RoundLinearLayout
+            <dev.oneuiproject.oneui.widget.RoundedLinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
@@ -117,7 +116,7 @@
                     android:layout_marginBottom="16dp"
                     android:hint="@string/url"
                     app:endIconMode="clear_text"
-                    app:hintTextColor="@color/secondary_text_icon_color_themed">
+                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editTextURL"
@@ -134,7 +133,7 @@
                     android:layout_marginBottom="16dp"
                     android:hint="@string/alias_optional"
                     app:endIconMode="clear_text"
-                    app:hintTextColor="@color/secondary_text_icon_color_themed"
+                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
                     app:placeholderText="@string/alias_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -150,7 +149,7 @@
                     android:layout_marginHorizontal="16dp"
                     android:hint="@string/description"
                     app:endIconMode="clear_text"
-                    app:hintTextColor="@color/secondary_text_icon_color_themed"
+                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
                     app:placeholderText="@string/description_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -160,7 +159,7 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-            </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+            </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
             <dev.oneuiproject.oneui.widget.RelatedCard
                 android:id="@+id/tipsCard"
@@ -208,15 +207,19 @@
                 android:id="@+id/add_url_footer_progress_text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="4dp"
                 android:layout_weight="1"
-                android:gravity="center" />
+                android:gravity="center"
+                android:textColor="@color/commonutils_secondary_text_icon_color_themed" />
 
             <androidx.appcompat.widget.SeslProgressBar
                 android:id="@+id/add_url_footer_progress_bar"
                 style="@style/Widget.AppCompat.ProgressBar"
                 android:layout_width="32.0dp"
                 android:layout_height="32.0dp"
-                android:layout_gravity="center" />
+                android:layout_gravity="center"
+                android:layout_margin="4dp" />
 
         </LinearLayout>
 

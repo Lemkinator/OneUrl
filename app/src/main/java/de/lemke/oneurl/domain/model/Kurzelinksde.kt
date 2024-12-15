@@ -2,6 +2,7 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
@@ -41,7 +42,7 @@ sealed class Kurzelinksde : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(R.string.privacy_policy),
+            context.getString(de.lemke.commonutils.R.string.privacy_policy),
             context.getString(R.string.privacy_text)
         ),
         ProviderInfo(
@@ -57,7 +58,7 @@ sealed class Kurzelinksde : ShortURLProvider {
     )
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(R.string.info),
+        context.getString(de.lemke.commonutils.R.string.info),
         context.getString(R.string.privacy_text)
     )
 
@@ -97,6 +98,7 @@ sealed class Kurzelinksde : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         statusCode == 400 || statusCode == 403 -> errorCallback(GenerateURLError.Unknown(context, statusCode))

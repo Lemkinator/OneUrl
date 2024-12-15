@@ -2,6 +2,7 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -79,13 +80,13 @@ sealed class Tly : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-            context.getString(R.string.experimental),
+            context.getString(de.lemke.commonutils.R.string.experimental),
             context.getString(R.string.tly_info)
         ),
     )
 
     override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = Pair(
-        context.getString(R.string.info),
+        context.getString(de.lemke.commonutils.R.string.info),
         context.getString(R.string.tly_info)
     )
 
@@ -128,6 +129,7 @@ sealed class Tly : ShortURLProvider {
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     Log.e(tag, "response message: $message")
                     when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         message.contains("long url field is required", true) -> errorCallback(GenerateURLError.InvalidURL(context))

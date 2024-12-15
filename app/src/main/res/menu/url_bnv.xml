@@ -6,30 +6,43 @@
         android:id="@+id/url_bnv_analytics"
         android:icon="@drawable/ic_oui_report"
         android:title="@string/analytics"
-        app:showAsAction="always"
         android:visible="false"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction,AppCompatResource" />
+
+    <item
+        android:id="@+id/url_bnv_provider_info"
+        android:icon="@drawable/ic_oui_info_outline"
+        android:title="@string/provider_info"
+        android:visible="true"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
         tools:ignore="AlwaysShowAction,AppCompatResource" />
 
     <item
         android:id="@+id/url_bnv_add_to_fav"
         android:icon="@drawable/ic_oui_favorite_off"
         android:title="@string/add_to_fav"
-        app:showAsAction="always"
         android:visible="false"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
         tools:ignore="AppCompatResource" />
 
     <item
         android:id="@+id/url_bnv_remove_from_fav"
         android:icon="@drawable/ic_oui_favorite_on"
         android:title="@string/remove_from_fav"
-        app:showAsAction="always"
         android:visible="false"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
         tools:ignore="AppCompatResource" />
 
     <item
         android:id="@+id/url_bnv_delete"
         android:icon="@drawable/ic_oui_delete_outline"
         android:title="@string/delete"
+        app:iconTint="?actionMenuTextColor"
         app:showAsAction="always"
         tools:ignore="AppCompatResource" />
 </menu>

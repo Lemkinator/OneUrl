@@ -3,6 +3,7 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.DefaultRetryPolicy
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
@@ -45,6 +46,7 @@ https://lstu.fr/stats/test
 val lstu = Lstu()
 
 class Lstu : ShortURLProvider {
+    override val enabled: Boolean = false // discontinued because of abuse: https://lstu.fr/
     override val name = "lstu.fr"
     override val baseURL = "https://lstu.fr"
     override val apiURL = "$baseURL/a"
@@ -141,8 +143,11 @@ class Lstu : ShortURLProvider {
                     val statusCode = networkResponse?.statusCode
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    if (statusCode == null) errorCallback(GenerateURLError.Unknown(context))
-                    else errorCallback(GenerateURLError.Unknown(context, statusCode))
+                    when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))

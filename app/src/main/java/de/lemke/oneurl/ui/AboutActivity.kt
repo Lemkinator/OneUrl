@@ -1,6 +1,5 @@
 package de.lemke.oneurl.ui
 
-import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
@@ -21,20 +20,15 @@ import com.google.android.play.core.install.model.ActivityResult
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.openApp
+import de.lemke.commonutils.setCustomBackPressAnimation
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAboutBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.OpenAppUseCase
-import de.lemke.oneurl.domain.OpenLinkUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.domain.setCustomBackPressAnimation
-import dev.oneuiproject.oneui.layout.AppInfoLayout.LOADING
-import dev.oneuiproject.oneui.layout.AppInfoLayout.NOT_UPDATEABLE
-import dev.oneuiproject.oneui.layout.AppInfoLayout.NO_CONNECTION
-import dev.oneuiproject.oneui.layout.AppInfoLayout.NO_UPDATE
 import dev.oneuiproject.oneui.layout.AppInfoLayout.OnClickListener
-import dev.oneuiproject.oneui.layout.AppInfoLayout.UPDATE_AVAILABLE
+import dev.oneuiproject.oneui.layout.AppInfoLayout.Status
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -48,12 +42,6 @@ class AboutActivity : AppCompatActivity() {
     private var clicks = 0
 
     @Inject
-    lateinit var openLink: OpenLinkUseCase
-
-    @Inject
-    lateinit var openApp: OpenAppUseCase
-
-    @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
 
     @Inject
@@ -63,17 +51,17 @@ class AboutActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAboutBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setCustomBackPressAnimation(binding.root)
         appUpdateManager = AppUpdateManagerFactory.create(this)
         binding.appInfoLayout.addOptionalText(getString(R.string.app_description))
-        binding.appInfoLayout.status = LOADING
-        //status: LOADING NO_UPDATE UPDATE_AVAILABLE NOT_UPDATEABLE NO_CONNECTION
+        binding.appInfoLayout.updateStatus = Status.Loading
         binding.appInfoLayout.setMainButtonClickListener(object : OnClickListener {
-            override fun onUpdateClicked(v: View?) {
+            override fun onUpdateClicked(v: View) {
                 startUpdateFlow()
             }
 
-            override fun onRetryClicked(v: View?) {
-                binding.appInfoLayout.status = LOADING
+            override fun onRetryClicked(v: View) {
+                binding.appInfoLayout.updateStatus = Status.Loading
                 checkUpdate()
             }
         })
@@ -90,11 +78,7 @@ class AboutActivity : AppCompatActivity() {
                 }
             }
         }
-        binding.aboutBtnOpenInStore.setOnClickListener { openApp(packageName, false) }
-        binding.aboutBtnOpenOneuiGithub.setOnClickListener { openLink(getString(R.string.oneui_github_link)) }
-        binding.aboutBtnAboutMe.setOnClickListener {
-            startActivity(Intent(this@AboutActivity, AboutMeActivity::class.java))
-        }
+        binding.aboutButtonOpenInStore.setOnClickListener { openApp(packageName, false) }
         activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             when (result.resultCode) {
                 // For immediate updates, you might not receive RESULT_OK because
@@ -105,7 +89,6 @@ class AboutActivity : AppCompatActivity() {
             }
         }
         checkUpdate()
-        setCustomBackPressAnimation(binding.root)
     }
 
     private fun setVersionTextView(textView: TextView, devModeEnabled: Boolean) {
@@ -134,7 +117,7 @@ class AboutActivity : AppCompatActivity() {
         val connectivityManager = getSystemService(ConnectivityManager::class.java)
         val caps = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
         if (caps == null || !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
-            binding.appInfoLayout.status = NO_CONNECTION
+            binding.appInfoLayout.updateStatus = Status.NoConnection
             return
         }
 
@@ -145,14 +128,14 @@ class AboutActivity : AppCompatActivity() {
             .addOnSuccessListener { appUpdateInfo: AppUpdateInfo ->
                 this.appUpdateInfo = appUpdateInfo
                 if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
-                    binding.appInfoLayout.status = UPDATE_AVAILABLE
+                    binding.appInfoLayout.updateStatus = Status.UpdateAvailable
                 }
                 if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_NOT_AVAILABLE) {
-                    binding.appInfoLayout.status = NO_UPDATE
+                    binding.appInfoLayout.updateStatus = Status.NoUpdate
                 }
             }
             .addOnFailureListener { appUpdateInfo: Exception ->
-                binding.appInfoLayout.status = NOT_UPDATEABLE
+                binding.appInfoLayout.updateStatus = Status.NotUpdatable
                 Log.w("AboutActivity", appUpdateInfo.message.toString())
             }
     }
@@ -165,7 +148,7 @@ class AboutActivity : AppCompatActivity() {
                 AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
             )
         } catch (e: Exception) {
-            binding.appInfoLayout.status = NOT_UPDATEABLE
+            binding.appInfoLayout.updateStatus = Status.NotUpdatable
             e.printStackTrace()
         }
     }

@@ -2,6 +2,7 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -76,6 +77,7 @@ class Shareaholic : ShortURLProvider {
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     val response = data?.let { JSONObject(it) }
                     when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         response?.has("errors") == true -> {

@@ -20,19 +20,23 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.setCustomBackPressAnimation
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
-import de.lemke.oneurl.domain.setCustomBackPressAnimation
 import dev.oneuiproject.oneui.widget.Separator
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
+    companion object {
+        const val KEY_INFO_ONLY = "key_info_only"
+    }
+
     private lateinit var binding: ActivityProviderBinding
     private lateinit var adapter: ProviderAdapter
     private var provider: List<ShortURLProvider> = ShortURLProviderCompanion.enabled
@@ -48,14 +52,12 @@ class ProviderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.root.setNavigationButtonOnClickListener { finishAfterTransition() }
-        binding.root.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
+        setCustomBackPressAnimation(binding.root)
         initRecycler()
         lifecycleScope.launch {
             binding.providerList.scrollToPosition(provider.indexOf(getUserSettings().selectedShortURLProvider))
         }
-        setCustomBackPressAnimation(binding.root)
-        infoOnly = intent.getBooleanExtra("infoOnly", false)
+        infoOnly = intent.getBooleanExtra(KEY_INFO_ONLY, false)
     }
 
     private fun initRecycler() {
@@ -72,7 +74,7 @@ class ProviderActivity : AppCompatActivity() {
     }
 
     private fun openInfoDialog(provider: ShortURLProvider) =
-        ProviderInfoDialog(provider).show(supportFragmentManager, "providerInfoDialog")
+        ProviderInfoBottomSheet.newInstance(provider).show(supportFragmentManager, null)
 
     inner class ProviderAdapter internal constructor() : RecyclerView.Adapter<ProviderAdapter.ViewHolder>() {
         override fun getItemCount(): Int = provider.size

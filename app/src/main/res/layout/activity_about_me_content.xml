@@ -17,20 +17,20 @@
             android:layout_height="wrap_content"
             android:text="@string/support_me" />
 
-        <dev.oneuiproject.oneui.widget.RoundLinearLayout
+        <dev.oneuiproject.oneui.widget.RoundedLinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/oui_background_color"
             android:orientation="vertical">
 
-            <de.lemke.oneurl.ui.view.CardView
+            <de.lemke.commonutils.widget.CardView
                 android:id="@+id/about_bottom_write_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:SummaryText="@string/support_me_text"
                 app:TitleText="@string/write_email" />
 
-            <de.lemke.oneurl.ui.view.CardView
+            <de.lemke.commonutils.widget.CardView
                 android:id="@+id/about_bottom_share_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -38,20 +38,20 @@
                 app:TitleText="@string/share"
                 app:isDividerViewVisible="true" />
 
-        </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+        </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
         <dev.oneuiproject.oneui.widget.Separator
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/playstore" />
 
-        <dev.oneuiproject.oneui.widget.RoundLinearLayout
+        <dev.oneuiproject.oneui.widget.RoundedLinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/oui_background_color"
             android:orientation="horizontal">
 
-            <de.lemke.oneurl.ui.view.CardView
+            <de.lemke.commonutils.widget.CardView
                 android:id="@+id/about_bottom_rate_app"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -59,7 +59,7 @@
                 app:SummaryText="@string/rate_app"
                 app:TitleText="@string/write_review" />
 
-        </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+        </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
         <dev.oneuiproject.oneui.widget.RelatedCard
             android:layout_width="match_parent"

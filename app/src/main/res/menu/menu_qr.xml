@@ -5,13 +5,15 @@
     <item
         android:id="@+id/menu_item_qr_save_as_image"
         android:icon="@drawable/ic_oui_save_outline"
-        android:title="@string/save_as_image"
+        android:title="@string/save_image"
+        app:iconTint="?actionMenuTextColor"
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction,AppCompatResource" />
     <item
         android:id="@+id/menu_item_qr_share"
         android:icon="@drawable/ic_oui_share_outline"
         android:title="@string/share"
+        app:iconTint="?actionMenuTextColor"
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction,AppCompatResource" />
 </menu>

@@ -3,6 +3,7 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.NetworkResponse
+import com.android.volley.NoConnectionError
 import com.android.volley.Response
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
@@ -86,7 +87,11 @@ class Shrtlnk : ShortURLProvider {
             }
 
             override fun parseNetworkError(volleyError: VolleyError?): VolleyError {
-                errorCallback(GenerateURLError.Unknown(context))
+                if (volleyError is NoConnectionError) {
+                    errorCallback(GenerateURLError.ServiceOffline(context))
+                } else {
+                    errorCallback(GenerateURLError.Unknown(context))
+                }
                 return volleyError ?: VolleyError("unknown error")
             }
         }

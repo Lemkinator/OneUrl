@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="?roundedCornerColor"
     app:expanded="false"
-    app:navigationIcon="@drawable/ic_oui_back"
+    app:showNavButtonAsBack="true"
     app:subtitle="@string/app_name"
     app:title="@string/generate_qr_code">
 
@@ -19,7 +19,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_location="main_content">
 
-        <dev.oneuiproject.oneui.widget.RoundLinearLayout
+        <dev.oneuiproject.oneui.widget.RoundedLinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/oui_background_color"
@@ -34,11 +34,11 @@
                 android:contentDescription="QR Code"
                 tools:ignore="HardcodedText" />
 
-        </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+        </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
     </androidx.core.widget.NestedScrollView>
 
-    <dev.oneuiproject.oneui.widget.RoundLinearLayout
+    <dev.oneuiproject.oneui.widget.RoundedLinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="8dp"
@@ -61,7 +61,7 @@
                 android:layout_marginBottom="10dp"
                 android:hint="@string/url"
                 app:endIconMode="clear_text"
-                app:hintTextColor="@color/secondary_text_icon_color_themed">
+                app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editTextURL"
@@ -152,7 +152,7 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/color_button_background"
-                style="@style/ButtonStyle.Colored"
+                style="@style/OneUI.ButtonStyleColored"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="6dp"
@@ -162,7 +162,7 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/color_button_foreground"
-                style="@style/ButtonStyle.Colored"
+                style="@style/OneUI.ButtonStyleColored"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="6dp"
@@ -172,7 +172,7 @@
 
         </LinearLayout>
 
-    </dev.oneuiproject.oneui.widget.RoundLinearLayout>
+    </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
 </dev.oneuiproject.oneui.layout.ToolbarLayout>
 

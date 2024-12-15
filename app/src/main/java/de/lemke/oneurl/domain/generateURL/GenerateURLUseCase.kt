@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.Uri
-import android.widget.Toast
 import dagger.hilt.android.qualifiers.ActivityContext
+import de.lemke.commonutils.openURL
+import de.lemke.commonutils.toast
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.UrlhausCheckUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
@@ -78,12 +78,12 @@ sealed class GenerateURLError(
         context.getString(R.string.no_internet),
         context.getString(R.string.no_internet_text),
         ErrorAction(
-            context.getString(R.string.settings)
+            context.getString(de.lemke.commonutils.R.string.settings)
         ) {
             try {
                 context.startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             } catch (e: ActivityNotFoundException) {
-                Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show()
+                context.toast(R.string.error)
             }
         }
     )
@@ -93,13 +93,9 @@ sealed class GenerateURLError(
             context.getString(R.string.error_service_unavailable),
             context.getString(R.string.error_service_unavailable_text),
             ErrorAction(
-                context.getString(R.string.website)
+                context.getString(de.lemke.commonutils.R.string.website)
             ) {
-                try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(provider.baseURL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                } catch (e: ActivityNotFoundException) {
-                    Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-                }
+                context.openURL(provider.baseURL)
             }
         )
 
@@ -135,21 +131,13 @@ sealed class GenerateURLError(
 
     class BlacklistedURL(context: Context, message: String? = null, urlhausLink: String? = null, virustotalLink: String? = null) :
         GenerateURLError(
-            context.getString(R.string.warning),
+            context.getString(de.lemke.commonutils.R.string.warning),
             message ?: context.getString(R.string.error_blacklisted_url),
             if (urlhausLink != null) ErrorAction("URLhaus") {
-                try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(urlhausLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                } catch (e: ActivityNotFoundException) {
-                    Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-                }
+                context.openURL(urlhausLink)
             } else null,
             if (virustotalLink != null) ErrorAction("VirusTotal") {
-                try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(virustotalLink)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                } catch (e: ActivityNotFoundException) {
-                    Toast.makeText(context, context.getString(R.string.no_browser_app_installed), Toast.LENGTH_SHORT).show()
-                }
+                context.openURL(virustotalLink)
             } else null
         )
 
@@ -161,6 +149,11 @@ sealed class GenerateURLError(
     class InternalServerError(context: Context) : GenerateURLError(
         context.getString(R.string.error),
         context.getString(R.string.error_internal_server_error)
+    )
+
+    class ServiceOffline(context: Context) : GenerateURLError(
+        context.getString(R.string.error),
+        context.getString(R.string.error_service_offline)
     )
 
     class ErrorAction(

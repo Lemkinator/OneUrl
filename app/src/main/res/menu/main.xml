@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-        <item
-            android:id="@+id/menu_item_search"
-            android:icon="@drawable/ic_oui_search"
-            app:showAsAction="always"
-            android:title="@string/search"
-            tools:ignore="AlwaysShowAction,AppCompatResource" />
-        <item
-            android:id="@+id/menu_item_show_all"
-            android:icon="@drawable/ic_oui_favorite_on"
-            android:title="@string/show_all"
-            android:visible="false"
-            app:showAsAction="always"
-            tools:ignore="AlwaysShowAction,AppCompatResource" />
-        <item
-            android:id="@+id/menu_item_only_show_favorites"
-            android:icon="@drawable/ic_oui_favorite_off"
-            android:title="@string/only_show_favorites"
-            android:visible="true"
-            app:showAsAction="always"
-            tools:ignore="AppCompatResource" />
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <item
+        android:id="@+id/menu_item_search"
+        android:icon="@drawable/ic_oui_search"
+        android:title="@string/search"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction,AppCompatResource" />
+    <item
+        android:id="@+id/menu_item_show_all"
+        android:icon="@drawable/ic_oui_favorite_on"
+        android:title="@string/show_all"
+        android:visible="false"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction,AppCompatResource" />
+    <item
+        android:id="@+id/menu_item_only_show_favorites"
+        android:icon="@drawable/ic_oui_favorite_off"
+        android:title="@string/only_show_favorites"
+        android:visible="true"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
+        tools:ignore="AppCompatResource" />
 </menu>

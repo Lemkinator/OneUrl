@@ -2,6 +2,7 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -44,7 +45,7 @@ class Zwsim : ShortURLProvider {
     )
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(R.string.info),
+        context.getString(de.lemke.commonutils.R.string.info),
         context.getString(R.string.zwsim_zws)
     )
 
@@ -81,6 +82,7 @@ class Zwsim : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         statusCode == 422 && data.contains("Invalid url") -> errorCallback(GenerateURLError.InvalidURL(context))

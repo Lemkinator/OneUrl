@@ -1,11 +1,9 @@
 <resources>
     <!--Help-->
-    <string name="help">Hilfe</string>
-    <string name="contact_me">Kontaktier mich (E-Mail)</string>
     <string name="help_text">OneURL respektiert Ihre Privatsphäre und speichert keine persönlichen Informationen. Weitere Informationen finden Sie in unserer Datenschutzrichtlinie. \nDie Verwendung von OneURL zum Verkürzen von URLs unterliegt den Nutzungsbedingungen der jeweiligen Dienste, die von Drittanbietern bereitgestellt werden. Bitte konsultieren Sie die Geschäftsbedingungen der jeweiligen Dienstanbieter, um mehr über deren Richtlinien und Einschränkungen zu erfahren.\n\nKosten und Rate Limits:\nDie in der App verfügbaren Anbieter sind kostenlos. Bei einigen Anbietern gibt es daher sogenannte Rate Limits. Das Überschreiten des Rate Limits kann zur vorübergehenden oder dauerhaften Sperrung Ihrer IP-Adresse bei einem Anbieter führen. Bitte beachten Sie, dass diese Sperrung von den Dienstanbietern selbst verwaltet wird.\nIm Normalfall sollten diese Limits als normaler Nutzer nicht erreicht werden. Wir empfehlen, die Rate Limits der Dienstanbieter zu respektieren und sie nicht absichtlich zu überschreiten, um eine reibungslose Nutzung sicherzustellen.</string>
 
     <!--Provider info-->
-    <string name="provider_info">Anbieter-Informationen</string>
+    <string name="provider_info">Anbieter-Info</string>
     <string name="select_provider">Anbieter auswählen</string>
     <string name="group">Gruppe</string>
     <string name="redirect_hint">Hinweis vor Weiterleitung</string>
@@ -25,42 +23,12 @@
     <string name="tly_info">Dieser URL-Shortener verwendet mehrere Domains für denselben Dienst, was bedeutet, dass er Kurz-URLs mit unterschiedlichen Domainnamen (z.B. tinyurl.com) erstellen kann. Nutze diesen Dienst daher mit Vorsicht.</string>
     <string name="shorturlat_info">Der URL-Verkürzer shorturl.at bietet keine Schnittstelle und ist daher nicht so zuverlässig wie andere Anbieter in dieser App. Darüber hinaus werden Links mit weniger als einem Klick pro monat deaktiviert. Nutze diesen Dienst daher mit Vorsicht.</string>
 
-    <string name="warning">Warnung</string>
-    <string name="info">Info</string>
-    <string name="experimental">Experimentell</string>
-
     <!--About-->
     <string name="app_description">Ein URL-Verkürzer und QR-Code Generator mit OneUI-Design.</string>
     <string name="about_app">Über OneURL</string>
-    <string name="open_in_playstore">In Play Store öffnen</string>
-
-    <!--AboutMe-->
-    <string name="about_me">Über mich</string>
-    <string name="write_email">E-Mail schreiben</string>
-    <string name="website">Webseite</string>
-    <string name="support_me_text">Falls du mich in irgendeiner Weise unterstützen möchtest, dann sende mir gerne eine E-Mail</string>
-    <string name="support_me">Unterstütz mich</string>
-    <string name="rate_app">App im Play-Store Bewerten</string>
-    <string name="write_review">Bewertung schreiben</string>
-    <string name="share">Teilen</string>
-    <string name="share_app">OneURL teilen</string>
-    <string name="useful_links">Nützliche Links</string>
 
     <!--Settings-->
-    <string name="design">Design</string>
-    <string name="system_default">Systemeinstellung</string>
-    <string name="general">Allgemein</string>
-    <string name="language">Sprache</string>
-    <string name="change_language">App Sprache ändern</string>
-    <string name="change_language_not_supported_by_device">Das Ändern der Sprache wird von diesem Gerät nicht unterstützt.</string>
-    <string name="delete_appdata_and_exit">App-Daten löschen und Beenden</string>
-    <string name="delete_appdata_and_exit_warning">Achtung: Dadurch werden alle persönlichen Daten gelöscht. Fortfahren? </string>
-    <string name="dev_options">Developer options</string>
-    <string name="more_information">Mehr Informationen</string>
-    <string name="privacy_policy">Datenschutzrichtlinie</string>
-    <string name="report_bug">Bug oder Verbesserung melden</string>
     <string name="save_location">Dateispeicherort</string>
-    <string name="custom">Benutzerdefiniert</string>
 
     <!--OOBE-->
     <string name="oobe_onboard_msg1_title">Schönes Design</string>
@@ -68,21 +36,10 @@
     <string name="oobe_onboard_msg3_title">Keine Werbung</string>
     <string name="oobe_onboard_msg2_summary">Keine Abos, keine In-App-Käufe, keinerlei Kosten.</string>
     <string name="oobe_onboard_msg3_summary">Keine nervige Werbung.</string>
-    <string name="tos">Nutzungsbedingungen</string>
     <string name="tos_content">Die Verwendung von OneURL zum Verkürzen von URLs unterliegt den Nutzungsbedingungen und Datenschutzrichtlinien der jeweiligen Dienste, die von Drittanbietern bereitgestellt werden.\n\nEs ist nicht gestattet, diese App entgegen den guten Sitten oder den geltenden Gesetzen zu verwenden. \n\nSie verpflichten sich außerdem, diese App nicht für Zwecke zu verwenden, die nach dem Recht der Vereinigten Staaten verboten sind, insbesondere nicht für die Entwicklung, Konstruktion, Herstellung oder Produktion von Raketen, chemischen oder biologischen Waffen. \nDiese Einschränkung gilt jedoch nicht für den Fall, dass eine weit verbreitete Virusinfektion auftritt (die von den United States Centers for Disease Control oder einer Nachfolgeorganisation bestätigt wurde), die durch Bisse oder Kontakt mit Körperflüssigkeiten übertragen wird und dazu führt, dass menschliche Leichen wiederbelebt werden und versuchen, lebendes menschliches Fleisch, Blut, Gehirn oder Nervengewebe zu verzehren, und die wahrscheinlich zum Untergang der organisierten Zivilisation führen wird. \n\nEine besondere Gegenleistung, die eine finanzielle Entschädigung beinhalten kann, wird einer begrenzten Anzahl von Nutzern angeboten, die diesen Abschnitt der Nutzungsbedingungen lesen und mich unter eine-email-an-diese-adresse-zu-schreiben-wird-sie-10-euro-kosten@leonard-lemke.com kontaktieren. Dieses Angebot kann jederzeit und ohne Vorankündigung zurückgezogen werden. \n\nWeitere Fragen werden unter diese-email-ist-viel-zu-lang-und-hoffentlich-koennen-sie-nicht-kopieren-und-einfuegen@leonard-lemke.com beantwortet.</string>
-    <string name="oobe_tos_text">Durch die Nutzung der App stimmen Sie den %1$s zu.</string>
-    <string name="continue_button_text">Weiter</string>
 
     <!--General-->
     <string name="shorten_url">URL verkürzen (OneURL)</string>
-    <string name="no_email_app_installed">Keine E-Mail-App installiert…</string>
-    <string name="no_browser_app_installed">Keine Browser-App installiert…</string>
-
-    <!--sesl???-->
-    <string name="search">Suche</string>
-    <string name="settings">Einstellungen</string>
-    <string name="sesl_cancel">Abbrechen</string>
-    <string name="sesl_navigate_up">Zurück</string>
 
     <!--Add URL-->
     <string name="add_url">URL hinzufügen</string>
@@ -105,7 +62,6 @@
     <string name="no_internet_text">Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
     <string name="error_unknown">Unbekannter Fehler…</string>
     <string name="error_url_not_found">URL nicht gefunden</string>
-    <string name="error_no_folder_selected">Fehler: Kein Ordner ausgewählt</string>
     <string name="error_vgd_isgd">Es scheint, dass es ein Problem mit v.gd/is.gd gibt. Bitte wähle einen anderen Anbieter.</string>
     <string name="error_empty_url">Keine URL eingegeben.</string>
     <string name="error_url_already_exists">URL bereits gekürzt</string>
@@ -123,7 +79,7 @@
     <string name="error_service_unavailable_text">Dienst aktuell nicht verfügbar. Bitte versuche es später erneut oder wähle einen anderen Anbieter.</string>
     <string name="error_domain_not_allowed">Diese Domain ist nicht erlaubt.</string>
     <string name="error_internal_server_error">Interner Serverfehler.</string>
-    <string name="error_creating_file">Fehler beim Erstellen der Datei</string>
+    <string name="error_service_offline">Der Dienst dieses Anbieters ist offline. Bitte wähle einen anderen Anbieter.</string>
 
     <string name="error_urlhaus_blacklisted">Diese URL ist auf der Blacklist von: %1$s.\n%2$s\nWenn du weiterhin versuchst, URLs aus der Blacklist zu verkürzen, könntest du von der Nutzung dieser App ausgeschlossen werden.</string>
     <string name="error_urlhaus_default">Sie wurde möglicherweise in der Vergangenheit missbräuchlich verwendet oder verweist auf einen anderen URL-Verkürzungsdienst.</string>
@@ -136,14 +92,12 @@
     <string name="error_urlhaus_abused_legit_botnetcc">Sie ist eine bekannte kompromittierte Website, die für das Hosting von Botnet C&amp;C verwendet wird.</string>
     <string name="error_urlhaus_abused_redirector">Sie ist ein bekannter missbrauchter Redirector oder URL-Verkürzer.</string>
 
-    <string name="error_cant_open_link">Fehler: Link konnte nicht geöffnet werden.</string>
     <string name="no_urls">Keine URLs</string>
     <string name="no_search_results">Keine Suchergebnisse</string>
     <string name="no_favorite_urls">Keine Favoriten</string>
 
     <!--QR Code-->
-    <string name="qr_saved">QR-Code gespeichert</string>
-    <string name="save_as_image">Als Bild speichern</string>
+    <string name="save_image">Bild speichern</string>
     <string name="generate_qr_code">QR-Code generieren</string>
     <string name="size">Größe</string>
     <string name="background">Hintergrund</string>
@@ -152,6 +106,7 @@
     <string name="icon">Icon</string>
     <string name="tint_border">Rahmen einfärben</string>
     <string name="tint_anchor">Anker einfärben</string>
+    <string name="scan_qr">Scanne diesen QR-Code auf einem anderen Gerät, um die URL anzuzeigen.</string>
 
     <!--Others-->
     <string name="url">URL</string>
@@ -161,7 +116,6 @@
     <string name="show_all">Alle anzeigen</string>
     <string name="only_show_favorites">Nur Favoriten anzeigen</string>
     <string name="delete_url_message">Möchtest du diese URL wirklich löschen?</string>
-    <string name="copied_to_clipboard">In Zwischenablage kopiert</string>
     <string name="description">Beschreibung</string>
     <string name="description_">"Beschreibung: "</string>
     <string name="title_">"Titel: "</string>

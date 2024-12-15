@@ -1,19 +1,23 @@
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
-import android.app.ActivityOptions
 import android.app.SearchManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.MarginLayoutParams
 import android.widget.LinearLayout
-import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.children
+import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper.END
@@ -26,43 +30,60 @@ import com.airbnb.lottie.value.LottieValueCallback
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.skydoves.transformationlayout.TransformationCompat
+import com.skydoves.transformationlayout.TransformationLayout
+import com.skydoves.transformationlayout.onTransformationStartContainer
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.hideSoftInput
+import de.lemke.commonutils.restoreSearchAndActionMode
+import de.lemke.commonutils.saveSearchAndActionMode
+import de.lemke.commonutils.toast
+import de.lemke.commonutils.widget.ItemDecoration
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.*
 import de.lemke.oneurl.domain.model.URL
+import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
+import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.delegates.AllSelectorState
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.configureItemSwipeAnimator
+import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
+import dev.oneuiproject.oneui.layout.Badge
+import dev.oneuiproject.oneui.layout.DrawerLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
 import dev.oneuiproject.oneui.layout.startActionMode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import android.util.Pair as UtilPair
 
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var urlAdapter: URLAdapter
+    private lateinit var drawerListView: LinearLayout
     private var allURLs: List<URL> = emptyList()
     private var urls: List<URL> = emptyList()
     private var searchURLs: List<URL> = emptyList()
     private var search: String? = null
-    private val currentList get() = if (binding.drawerLayoutMain.isSearchMode) searchURLs else urls
+    private val currentList get() = if (binding.drawerLayout.isSearchMode) searchURLs else urls
     private var time: Long = 0
     private var initListJob: Job? = null
     private var isUIReady = false
     private var filterFavorite = false
     private val allSelectorStateFlow: MutableStateFlow<AllSelectorState> = MutableStateFlow(AllSelectorState())
+    private val drawerItemTitles: MutableList<TextView> = mutableListOf()
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -90,6 +111,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
+        onTransformationStartContainer()
         time = System.currentTimeMillis()
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= 34) {
@@ -132,10 +154,18 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         lifecycleScope.launch {
             when (checkAppStart()) {
                 AppStart.FIRST_TIME -> openOOBE()
-                AppStart.NORMAL -> checkTOS(getUserSettings())
-                AppStart.FIRST_TIME_VERSION -> checkTOS(getUserSettings())
+                AppStart.NORMAL -> checkTOS(getUserSettings(), savedInstanceState)
+                AppStart.FIRST_TIME_VERSION -> checkTOS(getUserSettings(), savedInstanceState)
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.saveSearchAndActionMode(
+            isActionMode = binding.drawerLayout.isActionMode,
+            selectedIds = urlAdapter.getSelectedIds().asSet().toLongArray()
+        )
+        super.onSaveInstanceState(outState)
     }
 
     private suspend fun openOOBE() {
@@ -149,12 +179,12 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         finishAfterTransition()
     }
 
-    private suspend fun checkTOS(userSettings: UserSettings) {
+    private suspend fun checkTOS(userSettings: UserSettings, savedInstanceState: Bundle?) {
         if (!userSettings.tosAccepted) openOOBE()
-        else openMain()
+        else openMain(savedInstanceState)
     }
 
-    private fun openMain() {
+    private fun openMain(savedInstanceState: Bundle?) {
         lifecycleScope.launch {
             allURLs = getURLs()
             urls = if (filterFavorite) allURLs.filter { it.favorite } else allURLs
@@ -166,20 +196,21 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     val previousSize = allURLs.size
                     allURLs = it
                     urls = if (filterFavorite) it.filter { url -> url.favorite } else it
-                    if (binding.drawerLayoutMain.isSearchMode) setSearchList()
+                    if (binding.drawerLayout.isSearchMode) setSearchList()
                     else updateRecyclerView()
                     if (previousSize < it.size) {
+                        delay(500)
                         binding.urlList.smoothScrollToPosition(0)
                     }
                 }
             }
+            savedInstanceState?.restoreSearchAndActionMode(
+                onSearchMode = { startSearch() },
+                onActionMode = { launchActionMode(it) },
+            )
+            binding.addFab.hideOnScroll(binding.urlList)
             binding.addFab.setOnClickListener {
-                startActivity(
-                    Intent(this@MainActivity, AddURLActivity::class.java),
-                    ActivityOptions
-                        .makeSceneTransitionAnimation(this@MainActivity, binding.addFab, "transition_fab")
-                        .toBundle()
-                )
+                TransformationCompat.startActivity(binding.fabTransformationLayout, Intent(this@MainActivity, AddURLActivity::class.java))
             }
             //manually waiting for the animation to finish :/
             delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
@@ -187,31 +218,29 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        lifecycleScope.launch {
-            delay(500) //delay, so closing the drawer is not visible for the user
-            binding.drawerLayoutMain.setDrawerOpen(false, false)
-        }
-    }
-
     private fun checkIntent() {
         val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
         if (intent?.action == Intent.ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
             Log.d("MainActivity", "extraText: $extraText")
-            startActivity(Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", extraText))
+            TransformationCompat.startActivity(
+                binding.fabTransformationLayout,
+                Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", extraText)
+            )
         }
         val textFromSelectMenu = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
         if (intent?.action == Intent.ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
             Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
-            startActivity(Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()))
+            TransformationCompat.startActivity(
+                binding.fabTransformationLayout,
+                Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString())
+            )
         }
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent?.action == Intent.ACTION_SEARCH) binding.drawerLayoutMain.searchView.setQuery(
+        if (intent?.action == Intent.ACTION_SEARCH) binding.drawerLayout.searchView.setQuery(
             intent.getStringExtra(SearchManager.QUERY),
             true
         )
@@ -222,17 +251,22 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.menu_item_show_all)?.isVisible = filterFavorite
+        menu?.findItem(R.id.menu_item_only_show_favorites)?.isVisible = !filterFavorite
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_item_search -> {
-                binding.drawerLayoutMain.startSearchMode(SearchModeListener(), DISMISS)
+                startSearch()
                 return true
             }
 
             R.id.menu_item_show_all -> {
                 filterFavorite = false
-                item.isVisible = false
-                binding.root.toolbar.menu.findItem(R.id.menu_item_only_show_favorites).isVisible = true
+                invalidateOptionsMenu()
                 lifecycleScope.launch {
                     urls = allURLs
                     updateRecyclerView()
@@ -242,8 +276,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
             R.id.menu_item_only_show_favorites -> {
                 filterFavorite = true
-                item.isVisible = false
-                binding.root.toolbar.menu.findItem(R.id.menu_item_show_all).isVisible = true
+                invalidateOptionsMenu()
                 lifecycleScope.launch {
                     urls = allURLs.filter { it.favorite }
                     updateRecyclerView()
@@ -252,6 +285,10 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun startSearch() {
+        binding.drawerLayout.startSearchMode(SearchModeListener(), DISMISS)
     }
 
     inner class SearchModeListener : ToolbarLayout.SearchModeListener {
@@ -272,7 +309,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             lifecycleScope.launch {
                 if (visible) {
                     search = getUserSettings().search
-                    binding.addFab.hide()
+                    binding.addFab.isVisible = false
                     searchView.setQuery(search, false)
                     val autoCompleteTextView = searchView.seslGetAutoCompleteView()
                     autoCompleteTextView.setText(search)
@@ -280,7 +317,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     setSearchList()
                 } else {
                     search = null
-                    binding.addFab.show()
+                    binding.addFab.isVisible = !binding.drawerLayout.isActionMode
                     updateRecyclerView()
                     urlAdapter.highlightWord = ""
                 }
@@ -288,53 +325,126 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
     }
 
+    fun closeDrawerAfterDelay() {
+        if (binding.drawerLayout.isLargeScreenMode) return
+        lifecycleScope.launch {
+            delay(500) //delay, so closing the drawer is not visible for the user
+            binding.drawerLayout.setDrawerOpen(false, false)
+        }
+    }
+
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
-        val qrOption = findViewById<LinearLayout>(R.id.draweritem_generate_qr_code)
-        val helpOption = findViewById<LinearLayout>(R.id.draweritem_help)
-        val aboutAppOption = findViewById<LinearLayout>(R.id.draweritem_about_app)
-        val aboutMeOption = findViewById<LinearLayout>(R.id.draweritem_about_me)
-        val settingsOption = findViewById<LinearLayout>(R.id.draweritem_settings)
-
+        val qrOption = findViewById<LinearLayout>(R.id.drawerItemQr)
+        val helpOption = findViewById<LinearLayout>(R.id.drawerItemHelp)
+        val aboutAppOption = findViewById<LinearLayout>(R.id.drawerItemAboutApp)
+        val aboutMeOption = findViewById<LinearLayout>(R.id.drawerItemAboutMe)
+        val settingsOption = findViewById<LinearLayout>(R.id.drawerItemSettings)
+        drawerListView = findViewById(R.id.drawerListView)
+        drawerItemTitles.apply {
+            clear()
+            add(findViewById(R.id.drawerItemQrTitle))
+            add(findViewById(R.id.drawerItemHelpTitle))
+            add(findViewById(R.id.drawerItemAboutAppTitle))
+            add(findViewById(R.id.drawerItemAboutMeTitle))
+            add(findViewById(R.id.drawerItemSettingsTitle))
+        }
         qrOption.setOnClickListener {
-            startActivity(Intent(this@MainActivity, GenerateQRCodeActivity::class.java))
+            startActivity(Intent(this, GenerateQRCodeActivity::class.java))
+            closeDrawerAfterDelay()
         }
-        helpOption.setOnClickListener { startActivity(Intent(this@MainActivity, HelpActivity::class.java)) }
-        aboutAppOption.setOnClickListener { startActivity(Intent(this@MainActivity, AboutActivity::class.java)) }
-        aboutMeOption.setOnClickListener { startActivity(Intent(this@MainActivity, AboutMeActivity::class.java)) }
-        settingsOption.setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
-        binding.drawerLayoutMain.setDrawerButtonIcon(
-            AppCompatResources.getDrawable(
-                this@MainActivity,
-                dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline
-            )
-        )
-        binding.drawerLayoutMain.setDrawerButtonOnClickListener {
-            startActivity(Intent().setClass(this@MainActivity, AboutActivity::class.java))
+        helpOption.setOnClickListener {
+            startActivity(Intent(this, HelpActivity::class.java))
+            closeDrawerAfterDelay()
         }
-        binding.drawerLayoutMain.setDrawerButtonTooltip(getText(R.string.about_app))
-        binding.drawerLayoutMain.searchView.setSearchableInfo(
-            (getSystemService(SEARCH_SERVICE) as SearchManager).getSearchableInfo(componentName)
-        )
+        aboutAppOption.setOnClickListener {
+            startActivity(Intent(this, AboutActivity::class.java))
+            closeDrawerAfterDelay()
+        }
+        aboutMeOption.setOnClickListener {
+            startActivity(Intent(this, AboutMeActivity::class.java))
+            closeDrawerAfterDelay()
+        }
+        settingsOption.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+            closeDrawerAfterDelay()
+        }
+        binding.drawerLayout.apply {
+            setHeaderButtonIcon(AppCompatResources.getDrawable(this@MainActivity, dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline))
+            setHeaderButtonTooltip(getString(R.string.about_app))
+            setHeaderButtonOnClickListener {
+                startActivity(Intent(this@MainActivity, AboutActivity::class.java))
+                closeDrawerAfterDelay()
+            }
+            searchView.setSearchableInfo((getSystemService(SEARCH_SERVICE) as SearchManager).getSearchableInfo(componentName))
+            setNavRailContentMinSideMargin(14)
+            lockNavRailOnActionMode = true
+            lockNavRailOnSearchMode = true
+        }
+
         AppUpdateManagerFactory.create(this).appUpdateInfo.addOnSuccessListener { appUpdateInfo: AppUpdateInfo ->
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE)
-                binding.drawerLayoutMain.setButtonBadges(ToolbarLayout.Badge.Dot(), ToolbarLayout.Badge.Dot())
+                binding.drawerLayout.setButtonBadges(Badge.DOT, Badge.DOT)
         }
-        binding.urlNoEntryView.translateYWithAppBar(binding.drawerLayoutMain.appBarLayout, this)
-        binding.drawerLayoutMain.findViewById<androidx.drawerlayout.widget.DrawerLayout>(dev.oneuiproject.oneui.design.R.id.drawerlayout_drawer)
-            .addDrawerListener(
-                object : androidx.drawerlayout.widget.DrawerLayout.DrawerListener {
-                    override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
-                    override fun onDrawerStateChanged(newState: Int) {}
-                    override fun onDrawerOpened(drawerView: View) {
-                        binding.addFab.hide()
+        binding.urlNoEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)
+
+        //setupNavRailFadeEffect
+        binding.drawerLayout.apply {
+            if (!isLargeScreenMode) return
+            setDrawerStateListener {
+                when (it) {
+                    DrawerLayout.DrawerState.OPEN -> {
+                        offsetUpdaterJob?.cancel()
+                        updateOffset(1f)
                     }
 
-                    override fun onDrawerClosed(drawerView: View) {
-                        binding.addFab.show()
+                    DrawerLayout.DrawerState.CLOSE -> {
+                        offsetUpdaterJob?.cancel()
+                        updateOffset(0f)
+                    }
+
+                    DrawerLayout.DrawerState.CLOSING,
+                    DrawerLayout.DrawerState.OPENING -> {
+                        startOffsetUpdater()
                     }
                 }
-            )
+            }
+        }
+
+        //Set initial offset
+        binding.drawerLayout.post {
+            updateOffset(binding.drawerLayout.drawerOffset)
+        }
+    }
+
+    private var offsetUpdaterJob: Job? = null
+    private fun startOffsetUpdater() {
+        //Ensure no duplicate job is running
+        if (offsetUpdaterJob?.isActive == true) return
+        offsetUpdaterJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive) {
+                updateOffset(binding.drawerLayout.drawerOffset)
+                delay(50)
+            }
+        }
+    }
+
+    fun updateOffset(offset: Float) {
+        drawerItemTitles.forEach { it.alpha = offset }
+        drawerListView.children.forEach {
+            if (offset == 0f) {
+                it.post {
+                    it.updateLayoutParams<MarginLayoutParams> {
+                        width = if (it is LinearLayout) 52f.dpToPx(it.context.resources) //drawer item
+                        else 25f.dpToPx(it.context.resources) //divider item
+                    }
+                }
+            } else {
+                it.updateLayoutParams<MarginLayoutParams> {
+                    width = MATCH_PARENT
+                }
+            }
+        }
     }
 
     fun setSearchList() {
@@ -369,12 +479,12 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
-        if (!binding.drawerLayoutMain.isSearchMode && urls.isEmpty() || binding.drawerLayoutMain.isSearchMode && searchURLs.isEmpty()) {
+        if (!binding.drawerLayout.isSearchMode && urls.isEmpty() || binding.drawerLayout.isSearchMode && searchURLs.isEmpty()) {
             binding.urlList.visibility = View.GONE
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
             binding.urlNoEntryText.text = when {
-                binding.drawerLayoutMain.isSearchMode -> getString(R.string.no_search_results)
+                binding.drawerLayout.isSearchMode -> getString(R.string.no_search_results)
                 filterFavorite -> getString(R.string.no_favorite_urls)
                 else -> getString(R.string.no_urls)
             }
@@ -396,17 +506,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         onClickItem = { position, url, viewHolder ->
             if (isActionMode) onToggleItem(url.id, position)
             else {
-                startActivity(
+                val transformationLayout = viewHolder.itemView as TransformationLayout
+                hideSoftInput()
+                TransformationCompat.startActivity(
+                    transformationLayout,
                     Intent(this@MainActivity, URLActivity::class.java)
-                        .putExtra("shortURL", url.shortURL)
-                        .putExtra("boldText", search),
-                    ActivityOptions.makeSceneTransitionAnimation(
-                        this@MainActivity,
-                        UtilPair.create(viewHolder.listItemImg, "qr"),
-                        //UtilPair.create(holder.listItemTitle, "shorturl"), buggy :/
-                        //UtilPair.create(holder.listItemSubtitle1, "longurl"),
-                        //UtilPair.create(holder.listItemSubtitle2, "added"),
-                    ).toBundle()
+                        //.putExtra("com.skydoves.transformationlayout", transformationLayout.getParcelableParams())
+                        .putExtra(KEY_HIGHLIGHT_TEXT, search)
+                        .putExtra(KEY_SHORTURL, url.shortURL)
                 )
             }
         }
@@ -432,13 +539,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             onSwiped = { position, swipeDirection, _ ->
                 val url = urlAdapter.getItemByPosition(position)
                 if (swipeDirection == START) {
-                    Toast.makeText(this, getString(R.string.add_to_fav), Toast.LENGTH_SHORT).show()
+                    toast(R.string.add_to_fav)
                     lifecycleScope.launch {
                         updateURL(url.copy(favorite = true))
                     }
                 }
                 if (swipeDirection == END) {
-                    Toast.makeText(this, getString(R.string.remove_from_fav), Toast.LENGTH_SHORT).show()
+                    toast(R.string.remove_from_fav)
                     lifecycleScope.launch {
                         updateURL(url.copy(favorite = false))
                     }
@@ -449,22 +556,22 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     private fun launchActionMode(initialSelected: Array<Long>? = null) {
-        binding.drawerLayoutMain.startActionMode(
+        binding.drawerLayout.startActionMode(
             onInflateMenu = { menu ->
-                binding.addFab.hide()
+                binding.addFab.isVisible = false
                 urlAdapter.onToggleActionMode(true, initialSelected)
                 menuInflater.inflate(R.menu.menu_select, menu)
             },
             onEnd = {
                 urlAdapter.onToggleActionMode(false)
-                if (!binding.drawerLayoutMain.isSearchMode) binding.addFab.show()
+                binding.addFab.isVisible = !binding.drawerLayout.isSearchMode
             },
             onSelectMenuItem = {
                 when (it.itemId) {
                     R.id.menu_item_delete -> {
                         lifecycleScope.launch {
                             deleteURL(currentList.filter { it.id in urlAdapter.getSelectedIds() })
-                            binding.drawerLayoutMain.endActionMode()
+                            binding.drawerLayout.endActionMode()
                         }
                         true
                     }
@@ -472,7 +579,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     R.id.menu_item_add_to_favorites -> {
                         lifecycleScope.launch {
                             updateURL(currentList.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = true) })
-                            binding.drawerLayoutMain.endActionMode()
+                            binding.drawerLayout.endActionMode()
                         }
                         true
                     }
@@ -480,7 +587,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     R.id.menu_item_remove_from_favorites -> {
                         lifecycleScope.launch {
                             updateURL(currentList.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = false) })
-                            binding.drawerLayoutMain.endActionMode()
+                            binding.drawerLayout.endActionMode()
                         }
                         true
                     }

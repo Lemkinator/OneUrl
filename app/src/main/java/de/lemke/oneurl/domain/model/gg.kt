@@ -2,6 +2,7 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -22,6 +23,7 @@ fail: 200: http://gg.gg/
 val gg = Gg()
 
 class Gg : ShortURLProvider {
+    override val enabled: Boolean = false // offline?
     override val name = "gg.gg"
     override val baseURL = "https://gg.gg"
     val apiURLCheck = "$baseURL/check"
@@ -131,8 +133,11 @@ class Gg : ShortURLProvider {
                     val statusCode = networkResponse?.statusCode
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    if (statusCode == null) errorCallback(GenerateURLError.Unknown(context))
-                    else errorCallback(GenerateURLError.Unknown(context, statusCode))
+                    when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(context))

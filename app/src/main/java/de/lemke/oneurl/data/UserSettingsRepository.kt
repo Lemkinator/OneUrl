@@ -1,6 +1,5 @@
 package de.lemke.oneurl.data
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -8,7 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import de.lemke.oneurl.R
+import de.lemke.commonutils.SaveLocation
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import kotlinx.coroutines.flow.Flow
@@ -164,26 +163,3 @@ data class UserSettings(
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
 )
-
-enum class SaveLocation {
-    CUSTOM,
-    DOWNLOADS,
-    PICTURES,
-    DCIM,
-    ;
-
-    companion object {
-        val default = CUSTOM
-
-        fun fromStringOrDefault(string: String?): SaveLocation = entries.firstOrNull { it.toString() == string } ?: default
-    }
-
-    fun toLocalizedString(context: Context): String {
-        return when (this) {
-            CUSTOM -> context.getString(R.string.custom)
-            DOWNLOADS -> "Downloads"
-            PICTURES -> "Pictures"
-            DCIM -> "DCIM"
-        }
-    }
-}

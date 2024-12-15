@@ -5,18 +5,17 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.util.Pair
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.skydoves.transformationlayout.TransformationAppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.hideSoftInput
+import de.lemke.commonutils.setCustomBackPressAnimation
+import de.lemke.commonutils.toast
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.AddURLUseCase
@@ -30,17 +29,16 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.domain.setCustomBackPressAnimation
+import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class AddURLActivity : AppCompatActivity() {
+class AddURLActivity : TransformationAppCompatActivity() {
     private lateinit var binding: ActivityAddUrlBinding
     private lateinit var selectedShortURLProvider: ShortURLProvider
-    private var addToFavorites = false
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -71,41 +69,13 @@ class AddURLActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setCustomBackPressAnimation(binding.root)
         binding.root.setNavigationButtonOnClickListener {
-            (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
-                currentFocus?.windowToken,
-                InputMethodManager.HIDE_NOT_ALWAYS
-            )
+            hideSoftInput()
             finishAfterTransition()
         }
         initFooterButton()
         lifecycleScope.launch { initViews() }
-        setCustomBackPressAnimation(binding.root)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_fav, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menu_item_add_to_favorites -> {
-                addToFavorites = true
-                item.isVisible = false
-                binding.root.toolbar.menu.findItem(R.id.menu_item_remove_from_favorites).isVisible = true
-                return true
-            }
-
-            R.id.menu_item_remove_from_favorites -> {
-                addToFavorites = false
-                item.isVisible = false
-                binding.root.toolbar.menu.findItem(R.id.menu_item_add_to_favorites).isVisible = true
-                return true
-            }
-
-        }
-        return super.onOptionsItemSelected(item)
     }
 
     private suspend fun initViews() {
@@ -162,14 +132,16 @@ class AddURLActivity : AppCompatActivity() {
                 iconView.visibility = View.VISIBLE
             } else iconView.visibility = View.GONE
         }
-        binding.providerIconLayout.setOnClickListener { ProviderInfoDialog(selectedShortURLProvider).show(supportFragmentManager, null) }
+        binding.providerIconLayout.setOnClickListener {
+            ProviderInfoBottomSheet.newInstance(selectedShortURLProvider).show(supportFragmentManager, null)
+        }
         if (selectedShortURLProvider.aliasConfig != null) binding.textInputLayoutAlias.visibility = View.VISIBLE
         else binding.textInputLayoutAlias.visibility = View.GONE
         val tipsCardInfo = selectedShortURLProvider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {
             binding.tipsCard.titleText = tipsCardInfo.first
             binding.tipsCardText.text = tipsCardInfo.second
-            binding.tipsCardText.setTextColor(getColor(R.color.primary_text_icon_color))
+            binding.tipsCardText.setTextColor(getColor(de.lemke.commonutils.R.color.commonutils_primary_text_icon_color))
             binding.tipsCard.visibility = View.VISIBLE
         } else binding.tipsCard.visibility = View.GONE
     }
@@ -185,15 +157,13 @@ class AddURLActivity : AppCompatActivity() {
 
     private fun setLoading(message: String?) {
         val loading = !message.isNullOrBlank()
-        binding.addUrlFooterProgress.visibility = if (loading) View.VISIBLE else View.GONE
         binding.addUrlFooterProgressText.text = message
+        binding.addUrlFooterProgress.visibility = if (loading) View.VISIBLE else View.GONE
         binding.addUrlFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
         binding.providerSelection.isEnabled = !loading
         binding.editTextURL.isEnabled = !loading
         binding.editTextAlias.isEnabled = !loading
         binding.editTextDescription.isEnabled = !loading
-        binding.root.toolbar.menu.findItem(R.id.menu_item_add_to_favorites).isEnabled = !loading
-        binding.root.toolbar.menu.findItem(R.id.menu_item_remove_from_favorites).isEnabled = !loading
     }
 
     private fun checkAndAddURL() {
@@ -244,9 +214,9 @@ class AddURLActivity : AppCompatActivity() {
         AlertDialog.Builder(this@AddURLActivity)
             .setTitle(R.string.error)
             .setMessage(R.string.error_url_already_exists)
-            .setNeutralButton(R.string.ok, null)
+            .setNeutralButton(de.lemke.commonutils.R.string.ok, null)
             .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
-                startActivity(Intent(this@AddURLActivity, URLActivity::class.java).putExtra("shortURL", shortURL))
+                startActivity(Intent(this@AddURLActivity, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL))
                 finishAfterTransition()
             }
             .create()
@@ -267,7 +237,7 @@ class AddURLActivity : AppCompatActivity() {
                             AlertDialog.Builder(this@AddURLActivity).apply {
                                 setTitle(it.title)
                                 setMessage(it.message)
-                                setNeutralButton(R.string.ok, null)
+                                setNeutralButton(de.lemke.commonutils.R.string.ok, null)
                                 if (it.actionOne != null) {
                                     setPositiveButton(it.actionOne.title) { _: DialogInterface, _: Int ->
                                         it.actionOne.action()
@@ -291,14 +261,14 @@ class AddURLActivity : AppCompatActivity() {
                                     longURL = longURL,
                                     shortURLProvider = provider,
                                     qr = generateQRCode(shortURL),
-                                    favorite = addToFavorites,
+                                    favorite = false,
                                     title = title,
                                     description = binding.editTextDescription.text.toString(),
                                     added = ZonedDateTime.now()
                                 )
                             )
                             setLoading(null)
-                            Toast.makeText(this@AddURLActivity, R.string.url_added, Toast.LENGTH_SHORT).show()
+                            this@AddURLActivity.toast(R.string.url_added)
                             finishAfterTransition()
                         }
                     },

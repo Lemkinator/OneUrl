@@ -3,6 +3,7 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -132,6 +133,7 @@ sealed class Owovz : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                         statusCode == 400 && data.contains("link must match pattern") -> errorCallback(GenerateURLError.InvalidURL(context))
@@ -149,7 +151,7 @@ sealed class Owovz : ShortURLProvider {
     class OwovzOwo : Owovz() {
         override val name = "owo.vc"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.info),
+            context.getString(de.lemke.commonutils.R.string.info),
             context.getString(R.string.owovc_fun_text)
         )
 
@@ -175,7 +177,7 @@ sealed class Owovz : ShortURLProvider {
     class OwovzZws : Owovz() {
         override val name = "owo.vc (zws)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.info),
+            context.getString(de.lemke.commonutils.R.string.info),
             context.getString(R.string.owovc_zws)
         )
 
@@ -205,7 +207,7 @@ sealed class Owovz : ShortURLProvider {
     class OwovzSketchy : Owovz() {
         override val name = "owo.vc (sketchy)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.info),
+            context.getString(de.lemke.commonutils.R.string.info),
             context.getString(R.string.owovc_sketchy)
         )
 
@@ -235,7 +237,7 @@ sealed class Owovz : ShortURLProvider {
     class OwovzGay : Owovz() {
         override val name = "owo.vc (gay)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(R.string.warning),
+            context.getString(de.lemke.commonutils.R.string.warning),
             context.getString(R.string.owovc_gay)
         )
 

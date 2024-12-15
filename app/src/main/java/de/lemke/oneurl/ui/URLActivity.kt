@@ -1,58 +1,63 @@
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.text.style.UnderlineSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.skydoves.bundler.bundleValue
+import com.skydoves.transformationlayout.TransformationAppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.SaveLocation
+import de.lemke.commonutils.copyToClipboard
+import de.lemke.commonutils.exportBitmap
+import de.lemke.commonutils.openURL
+import de.lemke.commonutils.saveBitmapToUri
+import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
+import de.lemke.commonutils.setWindowTransparent
+import de.lemke.commonutils.shareBitmap
+import de.lemke.commonutils.shareText
+import de.lemke.commonutils.toast
 import de.lemke.oneurl.R
-import de.lemke.oneurl.data.SaveLocation
 import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.OpenLinkUseCase
-import de.lemke.oneurl.domain.SearchHighlighter
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.domain.qr.CopyQRCodeUseCase
-import de.lemke.oneurl.domain.qr.ExportQRCodeToSaveLocationUseCase
-import de.lemke.oneurl.domain.qr.ExportQRCodeUseCase
-import de.lemke.oneurl.domain.qr.ShareQRCodeUseCase
 import de.lemke.oneurl.domain.urlEncode
-import de.lemke.oneurl.domain.setCustomAnimatedOnBackPressedLogic
 import de.lemke.oneurl.domain.withHttps
+import dev.oneuiproject.oneui.utils.SearchHighlighter
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class URLActivity : AppCompatActivity() {
+class URLActivity : TransformationAppCompatActivity() {
+    companion object {
+        const val KEY_SHORTURL = "key_shorturl"
+        const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
+    }
+
     private lateinit var binding: ActivityUrlBinding
     private lateinit var url: URL
-    private lateinit var boldText: String
     private lateinit var saveLocation: SaveLocation
-    private lateinit var pickExportFolderActivityResultLauncher: ActivityResultLauncher<Uri?>
     private lateinit var searchHighlighter: SearchHighlighter
-
-    @Inject
-    lateinit var openLink: OpenLinkUseCase
+    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
+        StartActivityForResult(),
+        ActivityResultCallback<ActivityResult> { result ->
+            if (result.resultCode == RESULT_OK) saveBitmapToUri(result.data?.data, url.qr)
+        }
+    )
 
     @Inject
     lateinit var getURL: GetURLUseCase
@@ -67,46 +72,24 @@ class URLActivity : AppCompatActivity() {
     lateinit var getUserSettings: GetUserSettingsUseCase
 
     @Inject
-    lateinit var exportQRCode: ExportQRCodeUseCase
-
-    @Inject
-    lateinit var exportQRCodeToSaveLocation: ExportQRCodeToSaveLocationUseCase
-
-    @Inject
-    lateinit var copyQRCode: CopyQRCodeUseCase
-
-    @Inject
-    lateinit var shareQRCode: ShareQRCodeUseCase
-
-    @Inject
     lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setWindowTransparent(true)
         binding.root.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
-        binding.root.setNavigationButtonTooltip(getString(R.string.sesl_navigate_up))
-        val shortURL = intent.getStringExtra("shortURL")
-        boldText = intent.getStringExtra("boldText") ?: ""
-        if (shortURL == null) {
-            Toast.makeText(this, getString(R.string.error_url_not_found), Toast.LENGTH_SHORT).show()
-            finishAfterTransition()
-            return
-        }
-        pickExportFolderActivityResultLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-            lifecycleScope.launch { exportQRCode(uri, url.qr, url.shortURL) }
-        }
         lifecycleScope.launch {
-            val nullableURL = getURL(shortURL)
-            if (nullableURL == null) {
-                Toast.makeText(this@URLActivity, getString(R.string.error_url_not_found), Toast.LENGTH_SHORT).show()
-                finishAfterTransition()
-                return@launch
+            getURL(bundleValue<String>(KEY_SHORTURL, "")).let {
+                if (it == null) {
+                    toast(R.string.error_url_not_found)
+                    finishAfterTransition()
+                    return@launch
+                }
+                url = it
             }
-            url = nullableURL
             saveLocation = getUserSettings().saveLocation
-            binding.root.setTitle(url.shortURL)
             initViews()
             setCustomAnimatedOnBackPressedLogic(binding.root, showInAppReviewOrFinish.canShowInAppReview()) {
                 lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) }
@@ -122,32 +105,32 @@ class URLActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.url_toolbar_norton_safe_web -> {
-                openLink("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncode()}")
+                openURL("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncode()}")
                 return true
             }
 
             R.id.url_toolbar_google_safe_browsing -> {
-                openLink("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncode()}")
+                openURL("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncode()}")
                 return true
             }
 
             R.id.url_toolbar_link_shield -> {
-                openLink("https://linkshieldapi.com/?url=${url.longURL.urlEncode()}")
+                openURL("https://linkshieldapi.com/?url=${url.longURL.urlEncode()}")
                 return true
             }
 
             R.id.url_toolbar_malshare -> {
-                openLink("https://malshare.com/search.php?query=${url.longURL.urlEncode()}")
+                openURL("https://malshare.com/search.php?query=${url.longURL.urlEncode()}")
                 return true
             }
 
             R.id.url_toolbar_urlhaus -> {
-                openLink("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncode()}")
+                openURL("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncode()}")
                 return true
             }
 
             R.id.url_toolbar_kaspersky -> {
-                openLink("https://opentip.kaspersky.com/${url.longURL.urlEncode()}/?tab=lookup")
+                openURL("https://opentip.kaspersky.com/${url.longURL.urlEncode()}/?tab=lookup")
                 return true
             }
         }
@@ -176,70 +159,50 @@ class URLActivity : AppCompatActivity() {
 
 
     private fun initViews() {
+        binding.root.setTitle(url.shortURL)
         searchHighlighter = SearchHighlighter(this)
+        val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
         refreshVisitCount()
         binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
-        binding.urlShortButton.text = searchHighlighter(url.shortURL, boldText).apply {
+        binding.urlShortButton.text = searchHighlighter(url.shortURL, highlightText).apply {
             setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
         }
-        binding.urlShortButton.setOnClickListener { openLink(url.shortURL.withHttps()) }
-        binding.urlShortCopyButton.setOnClickListener {
-            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("short-url", url.shortURL)
-            clipboard.setPrimaryClip(clip)
-            Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-        }
-        binding.urlShortShareButton.setOnClickListener {
-            val sendIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, url.shortURL)
-                type = "text/plain"
-            }
-            startActivity(Intent.createChooser(sendIntent, null))
-        }
-        binding.urlLongButton.text = searchHighlighter(url.longURL, boldText).apply {
+        binding.urlShortButton.setOnClickListener { openURL(url.shortURL.withHttps()) }
+        binding.urlShortButton.setOnLongClickListener { copyToClipboard("Short URL", url.shortURL) }
+        binding.urlShortShareButton.setOnClickListener { shareText(url.shortURL) }
+        binding.urlLongButton.text = searchHighlighter(url.longURL, highlightText).apply {
             setSpan(UnderlineSpan(), 0, url.longURL.length, 0)
         }
-        binding.urlLongButton.setOnClickListener { openLink(url.longURL.withHttps()) }
-        binding.urlLongCopyButton.setOnClickListener {
-            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("long-url", url.longURL)
-            clipboard.setPrimaryClip(clip)
-            Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-        }
-        binding.urlLongShareButton.setOnClickListener {
-            val sendIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, url.longURL)
-                type = "text/plain"
-            }
-            startActivity(Intent.createChooser(sendIntent, null))
-        }
+        binding.urlLongButton.setOnClickListener { openURL(url.longURL.withHttps()) }
+        binding.urlLongButton.setOnLongClickListener { copyToClipboard("Long URL", url.longURL) }
+        binding.urlLongShareButton.setOnClickListener { shareText(url.longURL) }
         if (url.title.isNotBlank()) {
-            binding.urlTitleTextview.text = searchHighlighter(url.title, boldText)
+            binding.urlTitleTextview.text = searchHighlighter(url.title, highlightText)
             binding.urlTitleLayout.visibility = View.VISIBLE
             binding.urlTitleDivider.visibility = View.VISIBLE
         }
         if (url.description.isNotBlank()) {
-            binding.urlDescriptionTextview.text = searchHighlighter(url.description, boldText)
+            binding.urlDescriptionTextview.text = searchHighlighter(url.description, highlightText)
             binding.urlDescriptionLayout.visibility = View.VISIBLE
             binding.urlDescriptionDivider.visibility = View.VISIBLE
         }
-        binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, boldText)
+        binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, highlightText)
         binding.urlQrImageview.setImageBitmap(url.qr)
-        binding.urlQrCopyButton.setOnClickListener { copyQRCode(url.qr) }
-        binding.urlQrSaveButton.setOnClickListener {
-            if (saveLocation == SaveLocation.CUSTOM || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-                pickExportFolderActivityResultLauncher.launch(Uri.fromFile(File(Environment.getExternalStorageDirectory().absolutePath)))
-            } else {
-                exportQRCodeToSaveLocation(saveLocation, url.qr, url.shortURL)
+        binding.urlQrImageview.setOnClickListener {
+            lifecycleScope.launch {
+                QRBottomSheet.newInstance(url.shortURL, url.qr, saveLocation).show(supportFragmentManager, null)
             }
         }
-        binding.urlQrShareButton.setOnClickListener { shareQRCode(url.qr) }
-        initBNV()
+        binding.urlQrImageview.setOnLongClickListener {
+            url.qr.copyToClipboard(this, "QR Code", "QRCode.png")
+            true
+        }
+        binding.urlQrSaveButton.setOnClickListener { exportBitmap(saveLocation, url.qr, url.shortURL, exportQRCodeResultLauncher) }
+        binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
+        setupBottomNav()
     }
 
-    private fun initBNV() {
+    private fun setupBottomNav() {
         binding.urlBnv.menu.findItem(R.id.url_bnv_analytics)?.isVisible = url.shortURLProvider.getAnalyticsURL(url.shortURL) != null
         binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav)?.isVisible = !url.favorite
         binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav)?.isVisible = url.favorite
@@ -247,7 +210,12 @@ class URLActivity : AppCompatActivity() {
             when (it.itemId) {
                 R.id.url_bnv_analytics -> {
                     val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return@setOnItemSelectedListener false
-                    openLink(analyticsURL)
+                    openURL(analyticsURL)
+                    return@setOnItemSelectedListener true
+                }
+
+                R.id.url_bnv_provider_info -> {
+                    ProviderInfoBottomSheet.newInstance(url.shortURLProvider).show(supportFragmentManager, null)
                     return@setOnItemSelectedListener true
                 }
 
@@ -278,7 +246,7 @@ class URLActivity : AppCompatActivity() {
                                     showInAppReviewOrFinish(this@URLActivity)
                                 }
                             }
-                            .setNegativeButton(R.string.sesl_cancel, null)
+                            .setNegativeButton(de.lemke.commonutils.R.string.sesl_cancel, null)
                             .create()
                             .show()
                     }
