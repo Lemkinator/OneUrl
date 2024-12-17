@@ -22,8 +22,6 @@ class HelpActivity : AppCompatActivity() {
         binding.providerInfoButton.setOnClickListener {
             startActivity(Intent(this, ProviderActivity::class.java).putExtra(KEY_INFO_ONLY, true))
         }
-        binding.contactMeButton.setOnClickListener {
-            sendEmailHelp(getString(R.string.email), getString(R.string.app_name))
-        }
+        binding.contactMeButton.setOnClickListener { sendEmailHelp(getString(R.string.email), getString(R.string.app_name)) }
     }
 }

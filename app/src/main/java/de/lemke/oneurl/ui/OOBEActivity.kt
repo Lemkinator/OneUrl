@@ -18,10 +18,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.widget.TipsItemView
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityOobeBinding
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import dev.oneuiproject.oneui.widget.OnboardingTipsItemView
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -46,20 +46,19 @@ class OOBEActivity : AppCompatActivity() {
     }
 
     private fun initTipsItems() {
-        val defaultLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        val titles = arrayOf(R.string.oobe_onboard_msg1_title, R.string.oobe_onboard_msg2_title, R.string.oobe_onboard_msg3_title)
-        val summaries = arrayOf(R.string.app_description, R.string.oobe_onboard_msg2_summary, R.string.oobe_onboard_msg3_summary)
-        val icons = arrayOf(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_palette,
-            dev.oneuiproject.oneui.R.drawable.ic_oui_credit_card_outline,
-            dev.oneuiproject.oneui.R.drawable.ic_oui_decline
+        val tipsData = listOf(
+            Triple(R.string.oobe_onboard_msg1_title, R.string.app_description, dev.oneuiproject.oneui.R.drawable.ic_oui_palette),
+            Triple(R.string.oobe_onboard_msg2_title, R.string.oobe_onboard_msg2_summary, dev.oneuiproject.oneui.R.drawable.ic_oui_credit_card_outline),
+            Triple(R.string.oobe_onboard_msg3_title, R.string.oobe_onboard_msg3_summary, dev.oneuiproject.oneui.R.drawable.ic_oui_decline)
         )
-        for (i in titles.indices) {
-            val item = TipsItemView(this)
-            item.setIcon(icons[i])
-            item.setTitleText(getString(titles[i]))
-            item.setSummaryText(getString(summaries[i]))
-            binding.oobeIntroTipsContainer.addView(item, defaultLp)
+        val defaultLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        tipsData.forEach { (titleRes, summaryRes, iconRes) ->
+            OnboardingTipsItemView(this).apply {
+                setIcon(iconRes)
+                title = getString(titleRes)
+                summary = getString(summaryRes)
+                binding.oobeIntroTipsContainer.addView(this, defaultLp)
+            }
         }
     }
 
