@@ -163,6 +163,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.saveSearchAndActionMode(
+            isSearchMode = binding.drawerLayout.isSearchMode,
             isActionMode = binding.drawerLayout.isActionMode,
             selectedIds = urlAdapter.getSelectedIds()
         )
@@ -205,10 +206,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     }
                 }
             }
-            savedInstanceState?.restoreSearchAndActionMode(
-                onSearchMode = { startSearch() },
-                onActionMode = { launchActionMode(it) },
-            )
+            savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
             binding.addFab.hideOnScroll(binding.urlList)
             binding.addFab.setOnClickListener {
                 TransformationCompat.startActivity(binding.fabTransformationLayout, Intent(this@MainActivity, AddURLActivity::class.java))
