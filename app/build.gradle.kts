@@ -100,9 +100,9 @@ dependencies {
     implementation("io.github.tribalfs:oneui-design:0.3.4+oneui6")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("io.github.lemkinator:common-utils:0.4.4")
+    implementation("io.github.lemkinator:common-utils:0.5.5")
 
-    implementation("com.airbnb.android:lottie:6.6.1")
+    implementation("com.airbnb.android:lottie:6.6.2")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.android.volley:volley:1.2.1")
@@ -116,8 +116,8 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
-    implementation("com.google.dagger:hilt-android:2.53")
-    ksp("com.google.dagger:hilt-compiler:2.53")
+    implementation("com.google.dagger:hilt-android:2.53.1")
+    ksp("com.google.dagger:hilt-compiler:2.53.1")
 }
 
 configurations.implementation {

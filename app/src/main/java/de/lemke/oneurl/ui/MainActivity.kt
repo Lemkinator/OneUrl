@@ -164,7 +164,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     override fun onSaveInstanceState(outState: Bundle) {
         outState.saveSearchAndActionMode(
             isActionMode = binding.drawerLayout.isActionMode,
-            selectedIds = urlAdapter.getSelectedIds().asSet().toLongArray()
+            selectedIds = urlAdapter.getSelectedIds()
         )
         super.onSaveInstanceState(outState)
     }
