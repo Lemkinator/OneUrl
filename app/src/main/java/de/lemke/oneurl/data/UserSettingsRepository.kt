@@ -40,7 +40,6 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_TOS_ACCEPTED] = newSettings.tosAccepted
             it[KEY_DEV_MODE_ENABLED] = newSettings.devModeEnabled
             it[KEY_SEARCH] = newSettings.search
-            it[KEY_SHOW_ONLY_FAVORITES] = newSettings.showOnlyFavorites
             it[KEY_SELECTED_SHORT_URL_PROVIDER] = newSettings.selectedShortURLProvider.name
             it[KEY_LAST_ALIAS] = newSettings.lastAlias
             it[KEY_LAST_URL] = newSettings.lastURL
@@ -69,7 +68,6 @@ class UserSettingsRepository @Inject constructor(
         tosAccepted = prefs[KEY_TOS_ACCEPTED] == true,
         devModeEnabled = prefs[KEY_DEV_MODE_ENABLED] == true,
         search = prefs[KEY_SEARCH] ?: "",
-        showOnlyFavorites = prefs[KEY_SHOW_ONLY_FAVORITES] == true,
         selectedShortURLProvider = ShortURLProviderCompanion.fromStringOrDefault(prefs[KEY_SELECTED_SHORT_URL_PROVIDER]),
         lastAlias = prefs[KEY_LAST_ALIAS] ?: "",
         lastURL = prefs[KEY_LAST_URL] ?: "",
@@ -95,7 +93,6 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_TOS_ACCEPTED = booleanPreferencesKey("tosAccepted")
         private val KEY_DEV_MODE_ENABLED = booleanPreferencesKey("devModeEnabled")
         private val KEY_SEARCH = stringPreferencesKey("search")
-        private val KEY_SHOW_ONLY_FAVORITES = booleanPreferencesKey("showOnlyFavorites")
         private val KEY_SELECTED_SHORT_URL_PROVIDER = stringPreferencesKey("selectedShortURLProvider")
         private val KEY_LAST_ALIAS = stringPreferencesKey("lastAlias")
         private val KEY_LAST_URL = stringPreferencesKey("lastURL")
@@ -130,8 +127,6 @@ data class UserSettings(
     val tosAccepted: Boolean,
     /** search */
     val search: String,
-    /** show only favorites */
-    val showOnlyFavorites: Boolean,
     /** selected ShortURLProvider */
     val selectedShortURLProvider: ShortURLProvider,
     /** last alias */
