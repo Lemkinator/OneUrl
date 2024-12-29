@@ -155,9 +155,9 @@ class AboutMeActivity : AppCompatActivity() {
                 binding.aboutSwipeUpContainer.alpha = (1 - offsetAlpha * -3).coerceIn(0f, 1f)
             }
             // Handle the bottom part of the UI
-            val alphaRange = binding.aboutCtl.height * 0.143f
+            val alphaRange = binding.aboutCTL.height * 0.143f
             val layoutPosition = abs(appBarLayout.top).toFloat()
-            val bottomAlpha = (150.0f / alphaRange * (layoutPosition - binding.aboutCtl.height * 0.35f)).coerceIn(0f, 255f)
+            val bottomAlpha = (150.0f / alphaRange * (layoutPosition - binding.aboutCTL.height * 0.35f)).coerceIn(0f, 255f)
             binding.aboutBottomContainer.alpha = bottomAlpha / 255
         }
     }

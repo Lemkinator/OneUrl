@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.skydoves.transformationlayout.TransformationAppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.hideSoftInput
+import de.lemke.commonutils.openURL
 import de.lemke.commonutils.setCustomBackPressAnimation
 import de.lemke.commonutils.toast
 import de.lemke.oneurl.R
@@ -139,11 +140,14 @@ class AddURLActivity : TransformationAppCompatActivity() {
         else binding.textInputLayoutAlias.visibility = View.GONE
         val tipsCardInfo = selectedShortURLProvider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {
-            binding.tipsCard.titleText = tipsCardInfo.first
-            binding.tipsCardText.text = tipsCardInfo.second
-            binding.tipsCardText.setTextColor(getColor(de.lemke.commonutils.R.color.commonutils_primary_text_icon_color))
-            binding.tipsCard.visibility = View.VISIBLE
-        } else binding.tipsCard.visibility = View.GONE
+            binding.addUrlBottomTip.setTitle(tipsCardInfo.first)
+            binding.addUrlBottomTip.setContent(tipsCardInfo.second)
+            binding.addUrlBottomTip.setLink(de.lemke.commonutils.R.string.more_information) {
+                openURL(selectedShortURLProvider.infoURL)
+            }
+            //binding.tipsCardText.setTextColor(getColor(de.lemke.commonutils.R.color.commonutils_primary_text_icon_color))
+            binding.addUrlBottomTip.visibility = View.VISIBLE
+        } else binding.addUrlBottomTip.visibility = View.GONE
     }
 
     private fun initFooterButton() {
@@ -255,6 +259,7 @@ class AddURLActivity : TransformationAppCompatActivity() {
                     },
                     successCallback = { shortURL ->
                         lifecycleScope.launch {
+                            MainActivity.scrollToTop = true
                             addURL(
                                 URL(
                                     shortURL = shortURL,

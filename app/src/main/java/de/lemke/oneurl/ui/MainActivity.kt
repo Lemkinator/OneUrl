@@ -34,7 +34,6 @@ import com.skydoves.transformationlayout.TransformationCompat
 import com.skydoves.transformationlayout.TransformationLayout
 import com.skydoves.transformationlayout.onTransformationStartContainer
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.hideSoftInput
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
 import de.lemke.commonutils.toast
@@ -51,10 +50,12 @@ import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.configureItemSwipeAnimator
 import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
+import dev.oneuiproject.oneui.ktx.onSingleClick
 import dev.oneuiproject.oneui.layout.Badge
 import dev.oneuiproject.oneui.layout.DrawerLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
+import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchOnActionMode
 import dev.oneuiproject.oneui.layout.startActionMode
 import dev.oneuiproject.oneui.utils.ItemDecorRule
 import dev.oneuiproject.oneui.utils.SemItemDecoration
@@ -71,18 +72,18 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
+    companion object {
+        var scrollToTop = false
+    }
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var urlAdapter: URLAdapter
     private lateinit var drawerListView: LinearLayout
-    private var allURLs: List<URL> = emptyList()
     private var urls: List<URL> = emptyList()
-    private var searchURLs: List<URL> = emptyList()
-    private var search: String? = null
-    private val currentList get() = if (binding.drawerLayout.isSearchMode) searchURLs else urls
     private var time: Long = 0
-    private var initListJob: Job? = null
     private var isUIReady = false
-    private var filterFavorite = false
+    private var filterFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private var search: MutableStateFlow<String?> = MutableStateFlow(null)
     private val allSelectorStateFlow: MutableStateFlow<AllSelectorState> = MutableStateFlow(AllSelectorState())
     private val drawerItemTitles: MutableList<TextView> = mutableListOf()
 
@@ -96,13 +97,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     lateinit var checkAppStart: CheckAppStartUseCase
 
     @Inject
-    lateinit var getURLs: GetURLsUseCase
-
-    @Inject
     lateinit var observeURLs: ObserveURLsUseCase
-
-    @Inject
-    lateinit var getSearchList: GetSearchListUseCase
 
     @Inject
     lateinit var deleteURL: DeleteURLUseCase
@@ -162,12 +157,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (!this::binding.isInitialized || !this::urlAdapter.isInitialized) return
         outState.saveSearchAndActionMode(
             isSearchMode = binding.drawerLayout.isSearchMode,
             isActionMode = binding.drawerLayout.isActionMode,
             selectedIds = urlAdapter.getSelectedIds()
         )
-        super.onSaveInstanceState(outState)
     }
 
     private suspend fun openOOBE() {
@@ -188,19 +184,15 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     private fun openMain(savedInstanceState: Bundle?) {
         lifecycleScope.launch {
-            allURLs = getURLs()
-            urls = if (filterFavorite) allURLs.filter { it.favorite } else allURLs
             initDrawer()
             initRecycler()
             checkIntent()
             lifecycleScope.launch {
-                observeURLs().flowWithLifecycle(lifecycle).collectLatest {
-                    val previousSize = allURLs.size
-                    allURLs = it
-                    urls = if (filterFavorite) it.filter { url -> url.favorite } else it
-                    if (binding.drawerLayout.isSearchMode) setSearchList()
-                    else updateRecyclerView()
-                    if (previousSize < it.size) {
+                observeURLs(search, filterFavorite).flowWithLifecycle(lifecycle).collectLatest {
+                    urls = it
+                    updateRecyclerView()
+                    if (scrollToTop) {
+                        scrollToTop = false
                         delay(500)
                         binding.urlList.smoothScrollToPosition(0)
                     }
@@ -208,7 +200,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             }
             savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
             binding.addFab.hideOnScroll(binding.urlList)
-            binding.addFab.setOnClickListener {
+            binding.addFab.onSingleClick {
                 TransformationCompat.startActivity(binding.fabTransformationLayout, Intent(this@MainActivity, AddURLActivity::class.java))
             }
             //manually waiting for the animation to finish :/
@@ -238,11 +230,9 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        setIntent(intent)
-        if (intent?.action == Intent.ACTION_SEARCH) binding.drawerLayout.searchView.setQuery(
-            intent.getStringExtra(SearchManager.QUERY),
-            true
-        )
+        if (intent?.action == Intent.ACTION_SEARCH) {
+            binding.drawerLayout.setSearchQueryFromIntent(intent)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -251,8 +241,8 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menu?.findItem(R.id.menu_item_show_all)?.isVisible = filterFavorite
-        menu?.findItem(R.id.menu_item_only_show_favorites)?.isVisible = !filterFavorite
+        menu?.findItem(R.id.menu_item_show_all)?.isVisible = filterFavorite.value
+        menu?.findItem(R.id.menu_item_only_show_favorites)?.isVisible = !filterFavorite.value
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -264,22 +254,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             }
 
             R.id.menu_item_show_all -> {
-                filterFavorite = false
+                filterFavorite.value = false
                 invalidateOptionsMenu()
-                lifecycleScope.launch {
-                    urls = allURLs
-                    updateRecyclerView()
-                }
                 return true
             }
 
             R.id.menu_item_only_show_favorites -> {
-                filterFavorite = true
+                filterFavorite.value = true
                 invalidateOptionsMenu()
-                lifecycleScope.launch {
-                    urls = allURLs.filter { it.favorite }
-                    updateRecyclerView()
-                }
                 return true
             }
         }
@@ -287,17 +269,17 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     private fun startSearch() {
-        binding.drawerLayout.startSearchMode(SearchModeListener(), DISMISS)
+        binding.drawerLayout.startSearchMode(searchModeListener, DISMISS)
     }
 
-    inner class SearchModeListener : ToolbarLayout.SearchModeListener {
+    val searchModeListener = object : ToolbarLayout.SearchModeListener {
         override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query)
         override fun onQueryTextChange(query: String?): Boolean = setSearch(query)
         private fun setSearch(query: String?): Boolean {
-            if (search == null) return false
-            search = query ?: ""
-            setSearchList()
-            urlAdapter.highlightWord = search ?: ""
+            if (search.value == null) return false
+            search.value = query ?: ""
+            updateRecyclerView()
+            urlAdapter.highlightWord = search.value ?: ""
             lifecycleScope.launch {
                 updateUserSettings { it.copy(search = query ?: "") }
             }
@@ -307,15 +289,15 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         override fun onSearchModeToggle(searchView: SearchView, visible: Boolean) {
             lifecycleScope.launch {
                 if (visible) {
-                    search = getUserSettings().search
+                    search.value = getUserSettings().search
                     binding.addFab.isVisible = false
-                    searchView.setQuery(search, false)
+                    searchView.setQuery(search.value, false)
                     val autoCompleteTextView = searchView.seslGetAutoCompleteView()
-                    autoCompleteTextView.setText(search)
+                    autoCompleteTextView.setText(search.value)
                     autoCompleteTextView.setSelection(autoCompleteTextView.text.length)
-                    setSearchList()
+                    updateRecyclerView()
                 } else {
-                    search = null
+                    search.value = null
                     binding.addFab.isVisible = !binding.drawerLayout.isActionMode
                     updateRecyclerView()
                     urlAdapter.highlightWord = ""
@@ -343,23 +325,23 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             add(findViewById(R.id.drawerItemAboutMeTitle))
             add(findViewById(R.id.drawerItemSettingsTitle))
         }
-        findViewById<LinearLayout>(R.id.drawerItemQr).setOnClickListener {
+        findViewById<LinearLayout>(R.id.drawerItemQr).onSingleClick {
             startActivity(Intent(this, GenerateQRCodeActivity::class.java))
             closeDrawerAfterDelay()
         }
-        findViewById<LinearLayout>(R.id.drawerItemHelp).setOnClickListener {
+        findViewById<LinearLayout>(R.id.drawerItemHelp).onSingleClick {
             startActivity(Intent(this, HelpActivity::class.java))
             closeDrawerAfterDelay()
         }
-        findViewById<LinearLayout>(R.id.drawerItemAboutApp).setOnClickListener {
+        findViewById<LinearLayout>(R.id.drawerItemAboutApp).onSingleClick {
             startActivity(Intent(this, AboutActivity::class.java))
             closeDrawerAfterDelay()
         }
-        findViewById<LinearLayout>(R.id.drawerItemAboutMe).setOnClickListener {
+        findViewById<LinearLayout>(R.id.drawerItemAboutMe).onSingleClick {
             startActivity(Intent(this, AboutMeActivity::class.java))
             closeDrawerAfterDelay()
         }
-        findViewById<LinearLayout>(R.id.drawerItemSettings).setOnClickListener {
+        findViewById<LinearLayout>(R.id.drawerItemSettings).onSingleClick {
             startActivity(Intent(this, SettingsActivity::class.java))
             closeDrawerAfterDelay()
         }
@@ -442,15 +424,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
     }
 
-    fun setSearchList() {
-        initListJob?.cancel()
-        if (!this::binding.isInitialized) return
-        initListJob = lifecycleScope.launch {
-            searchURLs = getSearchList(search, allURLs)
-            updateRecyclerView()
-        }
-    }
-
     private fun initRecycler() {
         binding.urlList.apply {
             layoutManager = LinearLayoutManager(context)
@@ -478,13 +451,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
-        if (!binding.drawerLayout.isSearchMode && urls.isEmpty() || binding.drawerLayout.isSearchMode && searchURLs.isEmpty()) {
+        if (urls.isEmpty()) {
             binding.urlList.visibility = View.GONE
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
             binding.urlNoEntryText.text = when {
-                binding.drawerLayout.isSearchMode -> getString(R.string.no_search_results)
-                filterFavorite -> getString(R.string.no_favorite_urls)
+                search.value != null -> getString(R.string.no_search_results)
+                filterFavorite.value -> getString(R.string.no_favorite_urls)
                 else -> getString(R.string.no_urls)
             }
             binding.urlNoEntryScrollView.visibility = View.VISIBLE
@@ -497,7 +470,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         } else {
             binding.urlNoEntryScrollView.visibility = View.GONE
             binding.urlList.visibility = View.VISIBLE
-            urlAdapter.submitList(currentList)
+            urlAdapter.submitList(urls)
         }
     }
 
@@ -505,13 +478,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         onClickItem = { position, url, viewHolder ->
             if (isActionMode) onToggleItem(url.id, position)
             else {
+                binding.drawerLayout.searchView.clearFocus()
                 val transformationLayout = viewHolder.itemView as TransformationLayout
-                hideSoftInput()
                 TransformationCompat.startActivity(
                     transformationLayout,
                     Intent(this@MainActivity, URLActivity::class.java)
                         //.putExtra("com.skydoves.transformationlayout", transformationLayout.getParcelableParams())
-                        .putExtra(KEY_HIGHLIGHT_TEXT, search)
+                        .putExtra(KEY_HIGHLIGHT_TEXT, search.value)
                         .putExtra(KEY_SHORTURL, url.shortURL)
                 )
             }
@@ -563,13 +536,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             },
             onEnd = {
                 urlAdapter.onToggleActionMode(false)
-                binding.addFab.isVisible = !binding.drawerLayout.isSearchMode
+                binding.addFab.isVisible = search.value == null
             },
             onSelectMenuItem = {
                 when (it.itemId) {
                     R.id.menu_item_delete -> {
                         lifecycleScope.launch {
-                            deleteURL(currentList.filter { it.id in urlAdapter.getSelectedIds() })
+                            deleteURL(urls.filter { it.id in urlAdapter.getSelectedIds() })
                             binding.drawerLayout.endActionMode()
                         }
                         true
@@ -577,7 +550,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
                     R.id.menu_item_add_to_favorites -> {
                         lifecycleScope.launch {
-                            updateURL(currentList.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = true) })
+                            updateURL(urls.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = true) })
                             binding.drawerLayout.endActionMode()
                         }
                         true
@@ -585,7 +558,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
                     R.id.menu_item_remove_from_favorites -> {
                         lifecycleScope.launch {
-                            updateURL(currentList.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = false) })
+                            updateURL(urls.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = false) })
                             binding.drawerLayout.endActionMode()
                         }
                         true
@@ -596,7 +569,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             },
             onSelectAll = { isChecked: Boolean -> urlAdapter.onToggleSelectAll(isChecked) },
             allSelectorStateFlow = allSelectorStateFlow,
-            keepSearchMode = true
+            searchOnActionMode = SearchOnActionMode.NoDismiss
         )
     }
 }

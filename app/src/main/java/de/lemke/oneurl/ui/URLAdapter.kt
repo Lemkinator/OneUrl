@@ -83,7 +83,7 @@ class URLAdapter(
             for (payload in payloads.toSet()) {
                 when (payload) {
                     Payload.SELECTION_MODE -> holder.bindActionMode(getItemId(position), currentList[position])
-                    Payload.HIGHLIGHT -> holder.bindURL(currentList[position])
+                    Payload.HIGHLIGHT -> holder.bindHighlight(currentList[position])
                 }
             }
         }
@@ -91,7 +91,7 @@ class URLAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val url = currentList[position]
-        holder.bindURL(url)
+        holder.bind(url)
         holder.bindActionMode(getItemId(position), url)
     }
 
@@ -102,11 +102,10 @@ class URLAdapter(
         var listItemImg: ImageView = itemView.findViewById(R.id.list_item_img)
         var listItemFav: AppCompatButton = itemView.findViewById(R.id.list_item_fav)
 
-        fun bindURL(url: URL) {
+        fun bind(url: URL) {
             listItemTitle.text = searchHighlighter(url.shortURL, highlightWord)
             listItemSubtitle1.text = searchHighlighter(url.longURL, highlightWord)
-            val subtitle2 = url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }
-            listItemSubtitle2.text = searchHighlighter(subtitle2, highlightWord)
+            listItemSubtitle2.text = searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
             listItemImg.setImageBitmap(url.qr)
             listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
                 null,
@@ -120,6 +119,12 @@ class URLAdapter(
         fun bindActionMode(itemId: Long, url: URL) {
             if (isActionMode && isSelected(itemId)) listItemImg.setImageResource(R.drawable.url_selected_icon)
             else listItemImg.setImageBitmap(url.qr)
+        }
+
+        fun bindHighlight(url: URL) {
+            listItemTitle.text = searchHighlighter(url.shortURL, highlightWord)
+            listItemSubtitle1.text = searchHighlighter(url.longURL, highlightWord)
+            listItemSubtitle2.text = searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
         }
     }
 

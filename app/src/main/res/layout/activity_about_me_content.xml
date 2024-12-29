@@ -24,7 +24,7 @@
             android:orientation="vertical">
 
             <dev.oneuiproject.oneui.widget.CardItemView
-                android:id="@+id/about_bottom_write_email"
+                android:id="@+id/aboutBottomWriteEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:showTopDivider="false"
@@ -32,7 +32,7 @@
                 app:title="@string/write_email" />
 
             <dev.oneuiproject.oneui.widget.CardItemView
-                android:id="@+id/about_bottom_share_app"
+                android:id="@+id/aboutBottomShareApp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:showTopDivider="true"
@@ -53,38 +53,38 @@
             android:orientation="horizontal">
 
             <dev.oneuiproject.oneui.widget.CardItemView
-                android:id="@+id/about_bottom_rate_app"
+                android:id="@+id/aboutBottomRateApp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 app:showTopDivider="false"
-                app:summary="@string/write_review"
-                app:title="@string/rate_app" />
+                app:summary="@string/rate_app"
+                app:title="@string/write_review" />
 
         </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
-        <dev.oneuiproject.oneui.widget.RelatedCard
+        <dev.oneuiproject.oneui.widget.RelativeLinksCard
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginVertical="20dp"
             app:title="@string/useful_links">
 
             <TextView
-                android:id="@+id/about_bottom_relative_tiktok"
+                android:id="@+id/aboutBottomRelativeTiktok"
                 style="@style/OneUI.RelativeLinkTextViewStyle"
                 android:text="@string/tiktok" />
 
             <TextView
-                android:id="@+id/about_bottom_relative_website"
+                android:id="@+id/aboutBottomRelativeWebsite"
                 style="@style/OneUI.RelativeLinkTextViewStyle"
                 android:text="@string/website" />
 
             <TextView
-                android:id="@+id/about_bottom_relative_play_store"
+                android:id="@+id/aboutBottomRelativePlayStore"
                 style="@style/OneUI.RelativeLinkTextViewStyle"
                 android:text="@string/playstore" />
 
-        </dev.oneuiproject.oneui.widget.RelatedCard>
+        </dev.oneuiproject.oneui.widget.RelativeLinksCard>
 
     </LinearLayout>
 

@@ -161,27 +161,20 @@
 
             </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
-            <dev.oneuiproject.oneui.widget.RelatedCard
-                android:id="@+id/tipsCard"
+            <dev.oneuiproject.oneui.widget.BottomTipView
+                android:id="@+id/addUrlBottomTip"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginBottom="20dp"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/tipsCardText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-            </dev.oneuiproject.oneui.widget.RelatedCard>
+                android:visibility="gone" />
 
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
 
     <LinearLayout
-        android:id="@+id/add_url_footer_container"
+        android:id="@+id/addUrlFooterContainer"
         android:layout_width="match_parent"
         android:layout_height="44.0dp"
         android:layout_margin="24.0dp"
@@ -189,7 +182,7 @@
         app:layout_location="footer">
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/add_url_footer_button"
+            android:id="@+id/addUrlFooterButton"
             style="@style/OOBE.Button"
             android:layout_width="296.0dp"
             android:layout_height="44.0dp"
@@ -197,14 +190,14 @@
             android:text="@string/add" />
 
         <LinearLayout
-            android:id="@+id/add_url_footer_progress"
+            android:id="@+id/addUrlFooterProgress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:visibility="gone">
 
             <TextView
-                android:id="@+id/add_url_footer_progress_text"
+                android:id="@+id/addUrlFooterProgressText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -214,7 +207,7 @@
                 android:textColor="@color/commonutils_secondary_text_icon_color_themed" />
 
             <androidx.appcompat.widget.SeslProgressBar
-                android:id="@+id/add_url_footer_progress_bar"
+                android:id="@+id/addUrlFooterProgressBar"
                 style="@style/Widget.AppCompat.ProgressBar"
                 android:layout_width="32.0dp"
                 android:layout_height="32.0dp"
