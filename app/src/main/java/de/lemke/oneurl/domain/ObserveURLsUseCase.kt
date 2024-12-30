@@ -1,7 +1,5 @@
 package de.lemke.oneurl.domain
 
-
-import android.util.Log
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.URL
 import kotlinx.coroutines.Dispatchers
