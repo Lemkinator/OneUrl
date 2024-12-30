@@ -22,14 +22,23 @@
             android:background="@drawable/drawer_item_list_ripple"
             android:gravity="center_vertical">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:gravity="start|center"
                 android:paddingEnd="14dp"
-                android:src="@drawable/ic_oui_qr_code"
-                tools:ignore="RtlSymmetry" />
+                tools:ignore="RtlSymmetry">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_oui_qr_code"
+                    app:tint="?android:textColorPrimary" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/drawerItemQrTitle"
@@ -54,14 +63,23 @@
             android:background="@drawable/drawer_item_list_ripple"
             android:gravity="center_vertical">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:gravity="start|center"
                 android:paddingEnd="14dp"
-                android:src="@drawable/ic_oui_help_outline"
-                tools:ignore="RtlSymmetry" />
+                tools:ignore="RtlSymmetry">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_oui_help_outline"
+                    app:tint="?android:textColorPrimary" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/drawerItemHelpTitle"
@@ -84,14 +102,23 @@
             android:background="@drawable/drawer_item_list_ripple"
             android:gravity="center_vertical">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:gravity="start|center"
                 android:paddingEnd="14dp"
-                android:src="@drawable/ic_oui_info_outline"
-                tools:ignore="RtlSymmetry" />
+                tools:ignore="RtlSymmetry">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_oui_info_outline"
+                    app:tint="?android:textColorPrimary" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/drawerItemAboutAppTitle"
@@ -114,14 +141,23 @@
             android:background="@drawable/drawer_item_list_ripple"
             android:gravity="center_vertical">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:gravity="start|center"
                 android:paddingEnd="14dp"
-                android:src="@drawable/ic_oui_contact_outline"
-                tools:ignore="RtlSymmetry" />
+                tools:ignore="RtlSymmetry">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_oui_contact_outline"
+                    app:tint="?android:textColorPrimary" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/drawerItemAboutMeTitle"
@@ -146,14 +182,23 @@
             android:background="@drawable/drawer_item_list_ripple"
             android:gravity="center_vertical">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:gravity="start|center"
                 android:paddingEnd="14dp"
-                android:src="@drawable/ic_oui_settings_outline"
-                tools:ignore="RtlSymmetry" />
+                tools:ignore="RtlSymmetry">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_oui_settings_outline"
+                    app:tint="?android:textColorPrimary" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/drawerItemSettingsTitle"
