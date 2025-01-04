@@ -91,22 +91,22 @@ dependencies {
     //SESL6(OneUI 6) Android Jetpack
     implementation("sesl.androidx.core:core:1.15.0+1.0.11-sesl6+rev0")
     implementation("sesl.androidx.core:core-ktx:1.15.0+1.0.0-sesl6+rev0")
-    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev7")
+    implementation("sesl.androidx.appcompat:appcompat:1.7.0+1.0.34-sesl6+rev8")
     implementation("sesl.androidx.preference:preference:1.2.1+1.0.4-sesl6+rev3")
     //SESL6(OneUI 6) Samsung
     implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl6+rev3")
     //SESL6(OneUI 6) Material Components + Design Lib + Icons
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev2")
-    implementation("io.github.tribalfs:oneui-design:0.3.6+oneui6")
+    implementation("io.github.tribalfs:oneui-design:0.3.8+oneui6")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("io.github.lemkinator:common-utils:0.5.7")
+    implementation("io.github.lemkinator:common-utils:0.6.1")
 
     implementation("com.airbnb.android:lottie:6.6.2")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.android.volley:volley:1.2.1")
-    implementation("com.github.skydoves:transformationlayout:1.1.4")
+    implementation("com.github.skydoves:transformationlayout:1.1.5")
     implementation("com.github.skydoves:bundler:1.0.4")
 
     implementation("androidx.core:core-splashscreen:1.2.0-alpha02")
