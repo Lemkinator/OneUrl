@@ -21,8 +21,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAboutMeBinding
 import dev.oneuiproject.oneui.ktx.isInMultiWindowModeCompat
 import dev.oneuiproject.oneui.ktx.semSetToolTipText
-import dev.oneuiproject.oneui.layout.internal.util.ToolbarLayoutUtils.updateAdaptiveSideMargins
-import dev.oneuiproject.oneui.layout.internal.util.ToolbarLayoutUtils.updateStatusBarVisibility
+import dev.oneuiproject.oneui.widget.AdaptiveCoordinatorLayout.Companion.MARGIN_PROVIDER_ADP_DEFAULT
 import kotlin.math.abs
 
 @AndroidEntryPoint
@@ -35,7 +34,7 @@ class AboutMeActivity : AppCompatActivity() {
         binding = ActivityAboutMeBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setCustomBackPressAnimation(binding.root)
-
+        binding.root.configureAdaptiveMargin(MARGIN_PROVIDER_ADP_DEFAULT, binding.aboutBottomContainer)
         applyInsetIfNeeded()
         setupToolbar()
 
@@ -69,8 +68,6 @@ class AboutMeActivity : AppCompatActivity() {
 
     @SuppressLint("RestrictedApi")
     private fun refreshAppBar(config: Configuration) {
-        updateStatusBarVisibility()
-        binding.aboutBottomContainer.updateAdaptiveSideMargins(this)
         if (config.orientation != Configuration.ORIENTATION_LANDSCAPE && !isInMultiWindowModeCompat) {
             binding.aboutAppBar.apply {
                 seslSetCustomHeightProportion(true, 0.5f)//expanded

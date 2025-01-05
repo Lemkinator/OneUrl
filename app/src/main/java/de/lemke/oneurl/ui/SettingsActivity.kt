@@ -81,24 +81,20 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         private fun initPreferences() {
-            AppCompatDelegate.getDefaultNightMode()
             darkModePref = findPreference("dark_mode_pref")!!
             autoDarkModePref = findPreference("dark_mode_auto_pref")!!
             saveLocationPref = findPreference("save_location_pref")!!
-
             autoDarkModePref.onPreferenceChangeListener = this
             saveLocationPref.onPreferenceChangeListener = this
             darkModePref.onPreferenceChangeListener = this
             darkModePref.setDividerEnabled(false)
             darkModePref.setTouchEffectEnabled(false)
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 findPreference<PreferenceCategory>("general_pref_cat")!!.isVisible = true
                 findPreference<PreferenceScreen>("language_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
                     openAppLocaleSettings()
                 }
             }
-
             lifecycleScope.launch {
                 observeUserSettings().flowWithLifecycle(lifecycle).collectLatest { userSettings ->
                     autoDarkModePref.isChecked = userSettings.autoDarkMode
@@ -115,12 +111,10 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }
             }
-
             findPreference<PreferenceScreen>("privacy_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
                 openURL(getString(R.string.privacy_website))
                 true
             }
-
             findPreference<PreferenceScreen>("tos_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
                 AlertDialog.Builder(requireContext())
                     .setTitle(getString(de.lemke.commonutils.R.string.tos))
