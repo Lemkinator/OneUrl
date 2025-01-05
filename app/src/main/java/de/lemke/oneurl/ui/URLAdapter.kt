@@ -16,6 +16,7 @@ import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.delegates.MultiSelector
 import dev.oneuiproject.oneui.delegates.MultiSelectorDelegate
 import dev.oneuiproject.oneui.utils.SearchHighlighter
+import dev.oneuiproject.oneui.widget.SelectableLinearLayout
 
 class URLAdapter(
     private val context: Context
@@ -82,7 +83,7 @@ class URLAdapter(
         else {
             for (payload in payloads.toSet()) {
                 when (payload) {
-                    Payload.SELECTION_MODE -> holder.bindActionMode(getItemId(position), currentList[position])
+                    Payload.SELECTION_MODE -> holder.bindActionModeAnimate(getItemId(position))
                     Payload.HIGHLIGHT -> holder.bindHighlight(currentList[position])
                 }
             }
@@ -90,17 +91,17 @@ class URLAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val url = currentList[position]
-        holder.bind(url)
-        holder.bindActionMode(getItemId(position), url)
+        holder.bind(currentList[position])
+        holder.bindActionMode(getItemId(position))
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var listItemTitle: TextView = itemView.findViewById(R.id.list_item_title)
-        var listItemSubtitle1: TextView = itemView.findViewById(R.id.list_item_subtitle1)
-        var listItemSubtitle2: TextView = itemView.findViewById(R.id.list_item_subtitle2)
-        var listItemImg: ImageView = itemView.findViewById(R.id.list_item_img)
-        var listItemFav: AppCompatButton = itemView.findViewById(R.id.list_item_fav)
+        var selectableLayout: SelectableLinearLayout = itemView.findViewById(R.id.listItemSelectableLayout)
+        var listItemTitle: TextView = itemView.findViewById(R.id.listItemTitle)
+        var listItemSubtitle1: TextView = itemView.findViewById(R.id.listItemSubtitle1)
+        var listItemSubtitle2: TextView = itemView.findViewById(R.id.listItemSubtitle2)
+        var listItemImg: ImageView = itemView.findViewById(R.id.listItemImg)
+        var listItemFav: AppCompatButton = itemView.findViewById(R.id.listItemFav)
 
         fun bind(url: URL) {
             listItemTitle.text = searchHighlighter(url.shortURL, highlightWord)
@@ -116,9 +117,18 @@ class URLAdapter(
             )
         }
 
-        fun bindActionMode(itemId: Long, url: URL) {
-            if (isActionMode && isSelected(itemId)) listItemImg.setImageResource(R.drawable.url_selected_icon)
-            else listItemImg.setImageBitmap(url.qr)
+        fun bindActionMode(itemId: Long){
+            selectableLayout.apply {
+                isSelectionMode = isActionMode
+                setSelected(isSelected(itemId))
+            }
+        }
+
+        fun bindActionModeAnimate(itemId: Long){
+            selectableLayout.apply {
+                isSelectionMode = isActionMode
+                setSelectedAnimate(isSelected(itemId))
+            }
         }
 
         fun bindHighlight(url: URL) {
