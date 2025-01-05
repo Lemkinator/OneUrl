@@ -31,6 +31,7 @@
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:contentDescription="QR Code"
+            android:scaleType="fitXY"
             tools:ignore="HardcodedText" />
 
         <LinearLayout
