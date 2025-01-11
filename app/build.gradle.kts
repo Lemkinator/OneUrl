@@ -21,9 +21,11 @@ android {
         targetSdk = 35
         versionCode = 26
         versionName = "1.5.2"
-        resourceConfigurations += listOf("en", "de")
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
     }
+
+    @Suppress("UnstableApiUsage")
+    androidResources.localeFilters += listOf("en", "de")
 
     signingConfigs {
         create("release") {
@@ -116,8 +118,8 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
-    implementation("com.google.dagger:hilt-android:2.54")
-    ksp("com.google.dagger:hilt-compiler:2.54")
+    implementation("com.google.dagger:hilt-android:2.55")
+    ksp("com.google.dagger:hilt-compiler:2.55")
 }
 
 configurations.implementation {
