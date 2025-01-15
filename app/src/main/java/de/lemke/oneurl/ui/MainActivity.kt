@@ -1,7 +1,6 @@
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
-import android.app.SearchManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -78,6 +77,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     private lateinit var binding: ActivityMainBinding
     private lateinit var urlAdapter: URLAdapter
     private lateinit var drawerListView: LinearLayout
+    private var searchView: SearchView? = null
     private var urls: List<URL> = emptyList()
     private var time: Long = 0
     private var isUIReady = false
@@ -286,6 +286,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
 
         override fun onSearchModeToggle(searchView: SearchView, visible: Boolean) {
+            this@MainActivity.searchView = searchView
             lifecycleScope.launch {
                 if (visible) {
                     search.value = getUserSettings().search
@@ -351,7 +352,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 startActivity(Intent(this@MainActivity, AboutActivity::class.java))
                 closeDrawerAfterDelay()
             }
-            searchView.setSearchableInfo((getSystemService(SEARCH_SERVICE) as SearchManager).getSearchableInfo(componentName))
             setNavRailContentMinSideMargin(14)
             lockNavRailOnActionMode = true
             lockNavRailOnSearchMode = true
@@ -477,7 +477,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         onClickItem = { position, url, viewHolder ->
             if (isActionMode) onToggleItem(url.id, position)
             else {
-                binding.drawerLayout.searchView.clearFocus()
+                searchView?.clearFocus()
                 val transformationLayout = viewHolder.itemView as TransformationLayout
                 TransformationCompat.startActivity(
                     transformationLayout,
