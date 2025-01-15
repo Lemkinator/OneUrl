@@ -16,7 +16,6 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.children
-import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -290,7 +289,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             lifecycleScope.launch {
                 if (visible) {
                     search.value = getUserSettings().search
-                    binding.addFab.isVisible = false
+                    binding.addFab.hide()
                     searchView.setQuery(search.value, false)
                     val autoCompleteTextView = searchView.seslGetAutoCompleteView()
                     autoCompleteTextView.setText(search.value)
@@ -298,7 +297,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     updateRecyclerView()
                 } else {
                     search.value = null
-                    binding.addFab.isVisible = !binding.drawerLayout.isActionMode
+                    if (!binding.drawerLayout.isActionMode) binding.addFab.show()
                     updateRecyclerView()
                     urlAdapter.highlightWord = ""
                 }
@@ -530,13 +529,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     private fun launchActionMode(initialSelected: Array<Long>? = null) {
         binding.drawerLayout.startActionMode(
             onInflateMenu = { menu ->
-                binding.addFab.isVisible = false
+                binding.addFab.hide()
                 urlAdapter.onToggleActionMode(true, initialSelected)
                 menuInflater.inflate(R.menu.menu_select, menu)
             },
             onEnd = {
                 urlAdapter.onToggleActionMode(false)
-                binding.addFab.isVisible = search.value == null
+                if (!binding.drawerLayout.isSearchMode) binding.addFab.show()
             },
             onSelectMenuItem = {
                 when (it.itemId) {
