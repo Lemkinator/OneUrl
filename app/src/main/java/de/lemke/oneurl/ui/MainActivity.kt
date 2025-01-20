@@ -527,12 +527,10 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     private fun launchActionMode(initialSelected: Array<Long>? = null) {
+        binding.addFab.hide()
+        urlAdapter.onToggleActionMode(true, initialSelected)
         binding.drawerLayout.startActionMode(
-            onInflateMenu = { menu ->
-                binding.addFab.hide()
-                urlAdapter.onToggleActionMode(true, initialSelected)
-                menuInflater.inflate(R.menu.menu_select, menu)
-            },
+            onInflateMenu = { menu, menuInflater -> menuInflater.inflate(R.menu.menu_select, menu) },
             onEnd = {
                 urlAdapter.onToggleActionMode(false)
                 if (!binding.drawerLayout.isSearchMode) binding.addFab.show()
