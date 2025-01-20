@@ -290,7 +290,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             lifecycleScope.launch {
                 if (visible) {
                     search.value = getUserSettings().search
-                    binding.addFab.hide()
+                    binding.addFab.visibility = View.GONE
                     searchView.setQuery(search.value, false)
                     val autoCompleteTextView = searchView.seslGetAutoCompleteView()
                     autoCompleteTextView.setText(search.value)
@@ -298,7 +298,10 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     updateRecyclerView()
                 } else {
                     search.value = null
-                    if (!binding.drawerLayout.isActionMode) binding.addFab.show()
+                    if (!binding.drawerLayout.isActionMode) {
+                        binding.addFab.visibility = View.VISIBLE
+                        binding.addFab.show()
+                    }
                     updateRecyclerView()
                     urlAdapter.highlightWord = ""
                 }
@@ -527,13 +530,16 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     private fun launchActionMode(initialSelected: Array<Long>? = null) {
-        binding.addFab.hide()
+        binding.addFab.visibility = View.GONE
         urlAdapter.onToggleActionMode(true, initialSelected)
         binding.drawerLayout.startActionMode(
             onInflateMenu = { menu, menuInflater -> menuInflater.inflate(R.menu.menu_select, menu) },
             onEnd = {
                 urlAdapter.onToggleActionMode(false)
-                if (!binding.drawerLayout.isSearchMode) binding.addFab.show()
+                if (!binding.drawerLayout.isSearchMode) {
+                    binding.addFab.visibility = View.VISIBLE
+                    binding.addFab.show()
+                }
             },
             onSelectMenuItem = {
                 when (it.itemId) {
