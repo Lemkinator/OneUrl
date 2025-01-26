@@ -12,6 +12,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.skydoves.transformationlayout.TransformationAppCompatActivity
+import com.skydoves.transformationlayout.TransformationCompat
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.hideSoftInput
 import de.lemke.commonutils.openURL
@@ -215,12 +216,15 @@ class AddURLActivity : TransformationAppCompatActivity() {
     }
 
     private fun alreadyShortened(shortURL: String) {
-        AlertDialog.Builder(this@AddURLActivity)
+        AlertDialog.Builder(this)
             .setTitle(R.string.error)
             .setMessage(R.string.error_url_already_exists)
             .setNeutralButton(de.lemke.commonutils.R.string.ok, null)
             .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
-                startActivity(Intent(this@AddURLActivity, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL))
+                TransformationCompat.startActivity(
+                    binding.urlTransformationLayout,
+                    Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL)
+                )
                 finishAfterTransition()
             }
             .create()

@@ -100,66 +100,75 @@
 
             </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
-            <dev.oneuiproject.oneui.widget.RoundedLinearLayout
+            <com.skydoves.transformationlayout.TransformationLayout
+                android:id="@+id/urlTransformationLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginVertical="8dp"
-                android:background="@color/oui_background_color"
-                android:orientation="vertical"
-                android:paddingVertical="16dp">
+                app:transformation_duration="400"
+                app:transformation_fadeMode="through">
 
-                <com.google.android.material.textfield.TextInputLayout
+                <dev.oneuiproject.oneui.widget.RoundedLinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:hint="@string/url"
-                    app:endIconMode="clear_text"
-                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
+                    android:layout_marginVertical="8dp"
+                    android:background="@color/oui_background_color"
+                    android:orientation="vertical"
+                    android:paddingVertical="16dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editTextURL"
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:hint="@string/url"
+                        app:endIconMode="clear_text"
+                        app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editTextURL"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/textInputLayoutAlias"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:hint="@string/alias_optional"
-                    app:endIconMode="clear_text"
-                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
-                    app:placeholderText="@string/alias_hint">
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editTextAlias"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/textInputLayoutAlias"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:hint="@string/alias_optional"
+                        app:endIconMode="clear_text"
+                        app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
+                        app:placeholderText="@string/alias_hint">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editTextAlias"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:hint="@string/description"
-                    app:endIconMode="clear_text"
-                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
-                    app:placeholderText="@string/description_hint">
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editTextDescription"
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:hint="@string/description"
+                        app:endIconMode="clear_text"
+                        app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
+                        app:placeholderText="@string/description_hint">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editTextDescription"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
 
-            </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
+
+            </com.skydoves.transformationlayout.TransformationLayout>
 
             <dev.oneuiproject.oneui.widget.BottomTipView
                 android:id="@+id/addUrlBottomTip"
