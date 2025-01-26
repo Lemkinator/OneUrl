@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dev.oneuiproject.oneui.layout.NavDrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:drawerBackAnimation="true"
     app:expanded="false"
-    app:title="@string/app_name"
-    tools:isOpen="true">
+    app:title="@string/app_name">
 
-    <RelativeLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:layout_location="main_content">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/url_list"
@@ -71,7 +70,7 @@
 
         </androidx.core.widget.NestedScrollView>
 
-    </RelativeLayout>
+    </FrameLayout>
 
     <com.skydoves.transformationlayout.TransformationLayout
         android:id="@+id/fabTransformationLayout"
@@ -79,19 +78,18 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         app:layout_behavior="@null"
-        app:layout_location="root"
+        app:layout_location="root_bounded"
         app:transformation_duration="400">
 
         <dev.oneuiproject.oneui.widget.ScrollAwareFloatingActionButton
             android:id="@+id/add_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
             android:layout_margin="24dp"
             android:contentDescription="@string/add_url"
             android:src="@drawable/ic_oui_add"
-            android:tint="@color/primary_color_themed"
-            app:fabSize="normal" />
+            app:fabSize="normal"
+            app:layout_behavior="@null" />
 
     </com.skydoves.transformationlayout.TransformationLayout>
 
