@@ -85,6 +85,7 @@
             android:id="@+id/add_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
             android:layout_margin="24dp"
             android:contentDescription="@string/add_url"
             android:src="@drawable/ic_oui_add"
