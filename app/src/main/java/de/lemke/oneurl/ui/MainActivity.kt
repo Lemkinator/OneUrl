@@ -49,6 +49,7 @@ import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.configureItemSwipeAnimator
 import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
+import dev.oneuiproject.oneui.ktx.hideSoftInput
 import dev.oneuiproject.oneui.ktx.onSingleClick
 import dev.oneuiproject.oneui.layout.Badge
 import dev.oneuiproject.oneui.layout.DrawerLayout
@@ -78,7 +79,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     private lateinit var binding: ActivityMainBinding
     private lateinit var urlAdapter: URLAdapter
     private lateinit var drawerListView: LinearLayout
-    private var searchView: SearchView? = null
     private var urls: List<URL> = emptyList()
     private var time: Long = 0
     private var isUIReady = false
@@ -273,7 +273,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     val searchModeListener = object : ToolbarLayout.SearchModeListener {
-        override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query)
+        override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query).also { hideSoftInput() }
         override fun onQueryTextChange(query: String?): Boolean = setSearch(query)
         private fun setSearch(query: String?): Boolean {
             if (search.value == null) return false
@@ -287,7 +287,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
 
         override fun onSearchModeToggle(searchView: SearchView, visible: Boolean) {
-            this@MainActivity.searchView = searchView
             lifecycleScope.launch {
                 if (visible) {
                     search.value = getUserSettings().search
@@ -357,6 +356,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             lockNavRailOnActionMode = true
             lockNavRailOnSearchMode = true
             closeNavRailOnBack = true
+            isImmersiveScroll = true
         }
 
         AppUpdateManagerFactory.create(this).appUpdateInfo.addOnSuccessListener { appUpdateInfo: AppUpdateInfo ->
@@ -478,7 +478,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         onClickItem = { position, url, viewHolder ->
             if (isActionMode) onToggleItem(url.id, position)
             else {
-                searchView?.clearFocus()
+                hideSoftInput()
                 val transformationLayout = viewHolder.itemView as TransformationLayout
                 TransformationCompat.startActivity(
                     transformationLayout,

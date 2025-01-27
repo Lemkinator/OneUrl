@@ -13,19 +13,19 @@
         tools:ignore="AlwaysShowAction,AppCompatResource" />
 
     <item
-        android:id="@+id/menu_item_remove_from_favorites"
-        android:icon="@drawable/ic_oui_favorite_off"
-        android:title="@string/remove_from_fav"
-        app:iconTint="?actionMenuTextColor"
-        app:showAsAction="always"
-        tools:ignore="AppCompatResource" />
-
-    <item
         android:id="@+id/menu_item_add_to_favorites"
         android:icon="@drawable/ic_oui_favorite_on"
         android:title="@string/add_to_fav"
         app:iconTint="?actionMenuTextColor"
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction,AppCompatResource" />
+
+    <item
+        android:id="@+id/menu_item_remove_from_favorites"
+        android:icon="@drawable/ic_oui_favorite_off"
+        android:title="@string/remove_from_fav"
+        app:iconTint="?actionMenuTextColor"
+        app:showAsAction="always"
+        tools:ignore="AppCompatResource" />
 
 </menu>

@@ -13,8 +13,8 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.skydoves.transformationlayout.TransformationAppCompatActivity
 import com.skydoves.transformationlayout.TransformationCompat
+import com.skydoves.transformationlayout.onTransformationStartContainer
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.hideSoftInput
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.setCustomBackPressAnimation
 import de.lemke.commonutils.toast
@@ -32,6 +32,7 @@ import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import dev.oneuiproject.oneui.ktx.hideSoftInput
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
@@ -68,6 +69,7 @@ class AddURLActivity : TransformationAppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        onTransformationStartContainer()
         super.onCreate(savedInstanceState)
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -142,11 +144,10 @@ class AddURLActivity : TransformationAppCompatActivity() {
         val tipsCardInfo = selectedShortURLProvider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {
             binding.addUrlBottomTip.setTitle(tipsCardInfo.first)
-            binding.addUrlBottomTip.setContent(tipsCardInfo.second)
+            binding.addUrlBottomTip.setSummary(tipsCardInfo.second)
             binding.addUrlBottomTip.setLink(de.lemke.commonutils.R.string.more_information) {
                 openURL(selectedShortURLProvider.infoURL)
             }
-            //binding.tipsCardText.setTextColor(getColor(de.lemke.commonutils.R.color.commonutils_primary_text_icon_color))
             binding.addUrlBottomTip.visibility = View.VISIBLE
         } else binding.addUrlBottomTip.visibility = View.GONE
     }
@@ -225,7 +226,6 @@ class AddURLActivity : TransformationAppCompatActivity() {
                     binding.urlTransformationLayout,
                     Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL)
                 )
-                finishAfterTransition()
             }
             .create()
             .show()

@@ -22,17 +22,17 @@ import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.SaveLocation
 import de.lemke.commonutils.copyToClipboard
-import de.lemke.commonutils.hideSoftInput
+import de.lemke.commonutils.exportBitmap
 import de.lemke.commonutils.saveBitmapToUri
 import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
 import de.lemke.commonutils.setWindowTransparent
 import de.lemke.commonutils.share
-import de.lemke.commonutils.exportBitmap
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import dev.oneuiproject.oneui.ktx.hideSoftInput
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -168,7 +168,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
                 generateQRCode()
                 lifecycleScope.launch { updateUserSettings { it.copy(qrSize = size) } }
             }
-            hideSoftInput(textView.windowToken)
+            hideSoftInput()
             textView.clearFocus()
 
             true

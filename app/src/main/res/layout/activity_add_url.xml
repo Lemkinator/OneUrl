@@ -128,7 +128,9 @@
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/editTextURL"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:inputType="textUri"
+                            android:maxLines="1" />
 
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -146,7 +148,9 @@
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/editTextAlias"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:maxLines="1" />
 
                     </com.google.android.material.textfield.TextInputLayout>
 
