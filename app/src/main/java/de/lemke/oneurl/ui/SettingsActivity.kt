@@ -101,13 +101,13 @@ class SettingsActivity : AppCompatActivity() {
                     darkModePref.isEnabled = !autoDarkModePref.isChecked
                     darkModePref.value = if (userSettings.darkMode) "1" else "0"
                     findPreference<PreferenceCategory>("dev_options")?.isVisible = userSettings.devModeEnabled
-                    saveLocationPref.entries = SaveLocation.entries.map { it.toLocalizedString(requireContext()) }.toTypedArray()
-                    saveLocationPref.entryValues = SaveLocation.entries.map { it.name }.toTypedArray()
-                    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+                    saveLocationPref.entries = SaveLocation.getLocalizedEntries(requireContext())
+                    saveLocationPref.entryValues = SaveLocation.entryValues
+                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                        saveLocationPref.value = userSettings.saveLocation.name
+                    } else {
                         saveLocationPref.value = SaveLocation.CUSTOM.name
                         saveLocationPref.isEnabled = false
-                    } else {
-                        saveLocationPref.value = userSettings.saveLocation.name
                     }
                 }
             }

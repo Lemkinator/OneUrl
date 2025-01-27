@@ -79,8 +79,8 @@ class QRBottomSheet : BottomSheetDialogFragment() {
         binding.title.text = shortURL
         qr?.let { qrCode ->
             binding.qrCode.setImageBitmap(qrCode)
-            binding.quickShareButton.setOnClickListener { requireContext().quickShareBitmap(qrCode, "QRCode.png") }
-            binding.shareButton.setOnClickListener { requireContext().shareBitmap(qrCode, "QRCode.png") }
+            binding.quickShareButton.setOnClickListener { quickShareBitmap(qrCode, "QRCode.png") }
+            binding.shareButton.setOnClickListener { shareBitmap(qrCode, "QRCode.png") }
             binding.saveButton.setOnClickListener { exportBitmap(saveLocation, qrCode, shortURL, exportQRCodeResultLauncher) }
         }
     }
