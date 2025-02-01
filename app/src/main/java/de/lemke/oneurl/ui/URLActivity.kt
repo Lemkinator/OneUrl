@@ -55,7 +55,7 @@ class URLActivity : TransformationAppCompatActivity() {
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
         StartActivityForResult(),
         ActivityResultCallback<ActivityResult> { result ->
-            if (result.resultCode == RESULT_OK) saveBitmapToUri(result.data?.data, url.qr)
+            if (result.resultCode == RESULT_OK && ::url.isInitialized) saveBitmapToUri(result.data?.data, url.qr)
         }
     )
 
