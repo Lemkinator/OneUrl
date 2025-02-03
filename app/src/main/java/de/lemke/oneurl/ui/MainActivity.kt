@@ -441,6 +441,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 }
             )
             enableCoreSeslFeatures()
+            hideSoftInputOnScroll()
         }
 
         urlAdapter.configure(
