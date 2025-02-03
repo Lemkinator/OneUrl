@@ -91,6 +91,9 @@ class ShortURLProviderCompanion {
 
         val default: ShortURLProvider = enabled.first()
 
+        fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
+            if (shortURLProvider in enabled) shortURLProvider ?: default else default
+
         private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
 
         fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()

@@ -84,10 +84,7 @@ class AddURLActivity : TransformationAppCompatActivity() {
 
     private suspend fun initViews() {
         val userSettings = getUserSettings()
-        val availableProvider = ShortURLProviderCompanion.enabled
-        selectedShortURLProvider = availableProvider.find { it.name == userSettings.selectedShortURLProvider.name }
-            ?: availableProvider.find { it == ShortURLProviderCompanion.default }
-                    ?: availableProvider.first()
+        selectedShortURLProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(userSettings.selectedShortURLProvider)
         updateViews()
         val url = intent.getStringExtra("url") ?: userSettings.lastURL
         lifecycleScope.launch { updateUserSettings { it.copy(lastURL = url) } }
@@ -116,7 +113,7 @@ class AddURLActivity : TransformationAppCompatActivity() {
         }
         observeUserSettings().flowWithLifecycle(lifecycle).collectLatest {
             if (it.selectedShortURLProvider != selectedShortURLProvider) {
-                selectedShortURLProvider = it.selectedShortURLProvider
+                selectedShortURLProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(it.selectedShortURLProvider)
                 updateViews()
             }
         }
