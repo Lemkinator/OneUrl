@@ -144,7 +144,7 @@ class Tinube : ShortURLProvider {
                 }
             }
         ) {
-            override fun getHeaders() = mapOf("next-action" to "1f5652ca890cba09fa370c02bd5123721da16fec")
+            override fun getHeaders() = mapOf("next-action" to "74b2f223fe2b6e65737e07eeabae72c67abf76b2")
             override fun getBody() = "[{\"longUrl\":\"$longURL\",\"urlCode\":\"$alias\"}]".toByteArray(Charsets.UTF_8)
         }
     }
