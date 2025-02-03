@@ -45,6 +45,7 @@ error (still return 200):
 val l4f = L4f()
 
 class L4f : ShortURLProvider {
+    override val enabled = false // redirects to apioption.com ??
     override val name = "l4f.com"
     override val baseURL = "https://l4f.com"
     override val apiURL = "$baseURL/shorten"
@@ -116,8 +117,7 @@ class L4f : ShortURLProvider {
                     when {
                         error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()

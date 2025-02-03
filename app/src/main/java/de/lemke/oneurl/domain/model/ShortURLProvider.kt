@@ -57,7 +57,7 @@ class ShortURLProviderCompanion {
             ulvis,
             tinyurl,
             gg,
-            l4f,
+            l4f, //disabled
             oneptco,
             tinyim,
             shareaholic,
