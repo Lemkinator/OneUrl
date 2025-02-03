@@ -298,7 +298,10 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     updateRecyclerView()
                 } else {
                     search.value = null
-                    if (!binding.drawerLayout.isActionMode) binding.addFab.isVisible = true
+                    if (!binding.drawerLayout.isActionMode) {
+                        binding.addFab.isVisible = true
+                        binding.addFab.show() //sometimes fab does not show after action mode ends
+                    }
                     updateRecyclerView()
                     urlAdapter.highlightWord = ""
                 }
@@ -534,7 +537,10 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             onInflateMenu = { menu, menuInflater -> menuInflater.inflate(R.menu.menu_select, menu) },
             onEnd = {
                 urlAdapter.onToggleActionMode(false)
-                if (!binding.drawerLayout.isSearchMode) binding.addFab.isVisible = true
+                if (!binding.drawerLayout.isSearchMode) {
+                    binding.addFab.isVisible = true
+                    binding.addFab.show() //sometimes fab does not show after action mode ends
+                }
             },
             onSelectMenuItem = {
                 when (it.itemId) {
