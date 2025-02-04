@@ -2,7 +2,7 @@ package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.os.Build
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         prepareActivityTransformationFrom()
         time = System.currentTimeMillis()
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= 34) {
+        if (SDK_INT >= 34) {
             overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, android.R.anim.fade_in, android.R.anim.fade_out)
         }
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -170,7 +170,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         //manually waiting for the animation to finish :/
         delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
         startActivity(Intent(applicationContext, OOBEActivity::class.java))
-        if (Build.VERSION.SDK_INT < 34) {
+        if (SDK_INT < 34) {
             @Suppress("DEPRECATION")
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
@@ -350,7 +350,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             lockNavRailOnActionMode = true
             lockNavRailOnSearchMode = true
             closeNavRailOnBack = true
-            isImmersiveScroll = true
+            //isImmersiveScroll = true
 
             //setupNavRailFadeEffect
             if (isLargeScreenMode) {
