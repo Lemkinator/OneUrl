@@ -10,4 +10,9 @@
         style="@style/OneUI.AppInfoButton"
         android:text="@string/open_in_playstore" />
 
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/aboutButtonOpenSourceLicenses"
+        style="@style/OneUI.AppInfoButton"
+        android:text="@string/open_source_licenses" />
+
 </dev.oneuiproject.oneui.layout.AppInfoLayout>
