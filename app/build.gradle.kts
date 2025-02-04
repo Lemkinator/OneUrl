@@ -99,16 +99,15 @@ dependencies {
     implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl6+rev3")
     //SESL6(OneUI 6) Material Components + Design Lib + Icons
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev3")
-    implementation("io.github.tribalfs:oneui-design:0.5.0+oneui6")
+    implementation("io.github.tribalfs:oneui-design:0.5.2+oneui6")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("io.github.lemkinator:common-utils:0.6.5")
+    implementation("io.github.lemkinator:common-utils:0.6.6")
 
     implementation("com.airbnb.android:lottie:6.6.2")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.android.volley:volley:1.2.1")
-    implementation("com.github.skydoves:transformationlayout:1.1.5")
     implementation("com.github.skydoves:bundler:1.0.4")
 
     implementation("androidx.core:core-splashscreen:1.2.0-alpha02")

@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.skydoves.transformationlayout.TransformationLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/itemTransformationLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/listChoiceBackgroundIndicator"
-    app:transformation_duration="400"
-    app:transformation_fadeMode="through"
     tools:viewBindingIgnore="true">
 
     <dev.oneuiproject.oneui.widget.SelectableLinearLayout
@@ -23,8 +20,7 @@
         app:checkMode="overlayCircle"
         app:cornerRadius="7dp"
         app:selectedHighlightColor="?colorControlHighlight"
-        app:targetImage="@id/listItemImg"
-        tools:ignore="UselessParent">
+        app:targetImage="@id/listItemImg">
 
         <ImageView
             android:id="@+id/listItemImg"
@@ -79,5 +75,4 @@
             android:drawableEnd="@drawable/ic_oui_favorite_off" />
 
     </dev.oneuiproject.oneui.widget.SelectableLinearLayout>
-
-</com.skydoves.transformationlayout.TransformationLayout>
+</FrameLayout>

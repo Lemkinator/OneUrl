@@ -29,13 +29,12 @@ import com.airbnb.lottie.value.LottieValueCallback
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.UpdateAvailability
-import com.skydoves.transformationlayout.TransformationCompat
-import com.skydoves.transformationlayout.TransformationLayout
-import com.skydoves.transformationlayout.onTransformationStartContainer
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.prepareActivityTransformationFrom
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
 import de.lemke.commonutils.toast
+import de.lemke.commonutils.transformToActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
@@ -50,6 +49,7 @@ import dev.oneuiproject.oneui.ktx.configureItemSwipeAnimator
 import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.ktx.hideSoftInput
+import dev.oneuiproject.oneui.ktx.hideSoftInputOnScroll
 import dev.oneuiproject.oneui.ktx.onSingleClick
 import dev.oneuiproject.oneui.layout.Badge
 import dev.oneuiproject.oneui.layout.DrawerLayout
@@ -107,7 +107,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
-        onTransformationStartContainer()
+        prepareActivityTransformationFrom()
         time = System.currentTimeMillis()
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= 34) {
@@ -183,29 +183,26 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     private fun openMain(savedInstanceState: Bundle?) {
+        initDrawer()
+        initRecycler()
+        checkIntent()
+        savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
+        binding.addFab.hideOnScroll(binding.urlList)
+        binding.addFab.onSingleClick { binding.addFab.transformToActivity(Intent(this@MainActivity, AddURLActivity::class.java)) }
         lifecycleScope.launch {
-            initDrawer()
-            initRecycler()
-            checkIntent()
-            lifecycleScope.launch {
-                observeURLs(search, filterFavorite).flowWithLifecycle(lifecycle).collectLatest {
-                    urls = it
-                    updateRecyclerView()
-                    if (scrollToTop) {
-                        scrollToTop = false
-                        delay(500)
-                        binding.urlList.smoothScrollToPosition(0)
-                    }
+            observeURLs(search, filterFavorite).flowWithLifecycle(lifecycle).collectLatest {
+                urls = it
+                updateRecyclerView()
+                if (scrollToTop) {
+                    scrollToTop = false
+                    delay(500)
+                    binding.urlList.smoothScrollToPosition(0)
                 }
+
+                //manually waiting for the splash animation to finish :/
+                if (!isUIReady) delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
+                isUIReady = true
             }
-            savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
-            binding.addFab.hideOnScroll(binding.urlList)
-            binding.addFab.onSingleClick {
-                TransformationCompat.startActivity(binding.fabTransformationLayout, Intent(this@MainActivity, AddURLActivity::class.java))
-            }
-            //manually waiting for the animation to finish :/
-            delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
-            isUIReady = true
         }
     }
 
@@ -213,18 +210,12 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
         if (intent?.action == Intent.ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
             Log.d("MainActivity", "extraText: $extraText")
-            TransformationCompat.startActivity(
-                binding.fabTransformationLayout,
-                Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", extraText)
-            )
+            binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", extraText))
         }
         val textFromSelectMenu = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
         if (intent?.action == Intent.ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
             Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
-            TransformationCompat.startActivity(
-                binding.fabTransformationLayout,
-                Intent(this@MainActivity, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString())
-            )
+            binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()))
         }
     }
 
@@ -360,6 +351,32 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             lockNavRailOnSearchMode = true
             closeNavRailOnBack = true
             isImmersiveScroll = true
+
+            //setupNavRailFadeEffect
+            if (isLargeScreenMode) {
+                setDrawerStateListener {
+                    when (it) {
+                        DrawerLayout.DrawerState.OPEN -> {
+                            offsetUpdaterJob?.cancel()
+                            updateOffset(1f)
+                        }
+
+                        DrawerLayout.DrawerState.CLOSE -> {
+                            offsetUpdaterJob?.cancel()
+                            updateOffset(0f)
+                        }
+
+                        DrawerLayout.DrawerState.CLOSING,
+                        DrawerLayout.DrawerState.OPENING -> {
+                            startOffsetUpdater()
+                        }
+                    }
+                }
+                //Set initial offset
+                post {
+                    updateOffset(binding.drawerLayout.drawerOffset)
+                }
+            }
         }
 
         AppUpdateManagerFactory.create(this).appUpdateInfo.addOnSuccessListener { appUpdateInfo: AppUpdateInfo ->
@@ -367,34 +384,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 binding.drawerLayout.setButtonBadges(Badge.DOT, Badge.DOT)
         }
         binding.urlNoEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)
-
-        //setupNavRailFadeEffect
-        binding.drawerLayout.apply {
-            if (!isLargeScreenMode) return
-            setDrawerStateListener {
-                when (it) {
-                    DrawerLayout.DrawerState.OPEN -> {
-                        offsetUpdaterJob?.cancel()
-                        updateOffset(1f)
-                    }
-
-                    DrawerLayout.DrawerState.CLOSE -> {
-                        offsetUpdaterJob?.cancel()
-                        updateOffset(0f)
-                    }
-
-                    DrawerLayout.DrawerState.CLOSING,
-                    DrawerLayout.DrawerState.OPENING -> {
-                        startOffsetUpdater()
-                    }
-                }
-            }
-        }
-
-        //Set initial offset
-        binding.drawerLayout.post {
-            updateOffset(binding.drawerLayout.drawerOffset)
-        }
     }
 
     private var offsetUpdaterJob: Job? = null
@@ -483,11 +472,9 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             if (isActionMode) onToggleItem(url.id, position)
             else {
                 hideSoftInput()
-                val transformationLayout = viewHolder.itemView as TransformationLayout
-                TransformationCompat.startActivity(
-                    transformationLayout,
+                //viewHolder.itemView.transformToActivity(
+                startActivity(
                     Intent(this@MainActivity, URLActivity::class.java)
-                        //.putExtra("com.skydoves.transformationlayout", transformationLayout.getParcelableParams())
                         .putExtra(KEY_HIGHLIGHT_TEXT, search.value)
                         .putExtra(KEY_SHORTURL, url.shortURL)
                 )
@@ -516,15 +503,11 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 val url = urlAdapter.getItemByPosition(position)
                 if (swipeDirection == START) {
                     toast(R.string.add_to_fav)
-                    lifecycleScope.launch {
-                        updateURL(url.copy(favorite = true))
-                    }
+                    lifecycleScope.launch { updateURL(url.copy(favorite = true)) }
                 }
                 if (swipeDirection == END) {
                     toast(R.string.remove_from_fav)
-                    lifecycleScope.launch {
-                        updateURL(url.copy(favorite = false))
-                    }
+                    lifecycleScope.launch { updateURL(url.copy(favorite = false)) }
                 }
                 true
             }

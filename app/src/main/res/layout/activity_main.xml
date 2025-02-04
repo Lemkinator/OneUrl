@@ -70,17 +70,6 @@
 
         </androidx.core.widget.NestedScrollView>
 
-    </FrameLayout>
-
-    <com.skydoves.transformationlayout.TransformationLayout
-        android:id="@+id/fabTransformationLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        app:layout_behavior="@null"
-        app:layout_location="root_bounded"
-        app:transformation_duration="400">
-
         <dev.oneuiproject.oneui.widget.ScrollAwareFloatingActionButton
             android:id="@+id/add_fab"
             android:layout_width="wrap_content"
@@ -89,10 +78,10 @@
             android:layout_margin="24dp"
             android:contentDescription="@string/add_url"
             android:src="@drawable/ic_oui_add"
-            app:fabSize="normal"
-            app:layout_behavior="@null" />
+            android:transitionName="fabTransition"
+            app:fabSize="normal" />
 
-    </com.skydoves.transformationlayout.TransformationLayout>
+    </FrameLayout>
 
     <include layout="@layout/content_drawer" />
 

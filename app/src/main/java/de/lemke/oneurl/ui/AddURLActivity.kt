@@ -8,16 +8,16 @@ import android.util.Pair
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.skydoves.transformationlayout.TransformationAppCompatActivity
-import com.skydoves.transformationlayout.TransformationCompat
-import com.skydoves.transformationlayout.onTransformationStartContainer
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.openURL
+import de.lemke.commonutils.prepareActivityTransformationBetween
 import de.lemke.commonutils.setCustomBackPressAnimation
 import de.lemke.commonutils.toast
+import de.lemke.commonutils.transformToActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.AddURLUseCase
@@ -39,7 +39,7 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class AddURLActivity : TransformationAppCompatActivity() {
+class AddURLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddUrlBinding
     private lateinit var selectedShortURLProvider: ShortURLProvider
 
@@ -69,7 +69,7 @@ class AddURLActivity : TransformationAppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        onTransformationStartContainer()
+        prepareActivityTransformationBetween()
         super.onCreate(savedInstanceState)
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -219,9 +219,9 @@ class AddURLActivity : TransformationAppCompatActivity() {
             .setMessage(R.string.error_url_already_exists)
             .setNeutralButton(de.lemke.commonutils.R.string.ok, null)
             .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
-                TransformationCompat.startActivity(
-                    binding.urlTransformationLayout,
-                    Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL)
+                binding.urlInputLayout.transformToActivity(
+                    Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL),
+                    transitionName = "alreadyShortenedUrlTransition" //transitionNames should be unique within the view hierarchy
                 )
             }
             .create()

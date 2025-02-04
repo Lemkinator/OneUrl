@@ -13,14 +13,15 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.skydoves.bundler.bundleValue
-import com.skydoves.transformationlayout.TransformationAppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.SaveLocation
 import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.exportBitmap
 import de.lemke.commonutils.openURL
+import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.saveBitmapToUri
 import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
 import de.lemke.commonutils.setWindowTransparent
@@ -42,7 +43,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class URLActivity : TransformationAppCompatActivity() {
+class URLActivity : AppCompatActivity() {
     companion object {
         const val KEY_SHORTURL = "key_shorturl"
         const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
@@ -75,6 +76,7 @@ class URLActivity : TransformationAppCompatActivity() {
     lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
         binding = ActivityUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
