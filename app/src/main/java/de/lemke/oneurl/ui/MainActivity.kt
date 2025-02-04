@@ -472,8 +472,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             if (isActionMode) onToggleItem(url.id, position)
             else {
                 hideSoftInput()
-                //viewHolder.itemView.transformToActivity(
-                startActivity(
+                viewHolder.itemView.transformToActivity(
                     Intent(this@MainActivity, URLActivity::class.java)
                         .putExtra(KEY_HIGHLIGHT_TEXT, search.value)
                         .putExtra(KEY_SHORTURL, url.shortURL)
