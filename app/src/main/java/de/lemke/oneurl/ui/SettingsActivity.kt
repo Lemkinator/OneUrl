@@ -24,6 +24,7 @@ import de.lemke.commonutils.deleteAppDataAndExit
 import de.lemke.commonutils.openApp
 import de.lemke.commonutils.openAppLocaleSettings
 import de.lemke.commonutils.openURL
+import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.sendEmailBugReport
 import de.lemke.commonutils.setCustomBackPressAnimation
 import de.lemke.commonutils.shareApp
@@ -43,6 +44,7 @@ import javax.inject.Inject
 class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     override fun onCreate(savedInstanceState: Bundle?) {
+        prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)

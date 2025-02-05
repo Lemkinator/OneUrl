@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.MarginLayoutParams
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -319,31 +320,42 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             add(findViewById(R.id.drawerItemAboutMeTitle))
             add(findViewById(R.id.drawerItemSettingsTitle))
         }
-        findViewById<LinearLayout>(R.id.drawerItemQr).onSingleClick {
-            startActivity(Intent(this, GenerateQRCodeActivity::class.java))
-            closeDrawerAfterDelay()
+        findViewById<LinearLayout>(R.id.drawerItemQr).apply {
+            onSingleClick {
+                transformToActivity(Intent(this@MainActivity, GenerateQRCodeActivity::class.java))
+                closeDrawerAfterDelay()
+            }
         }
-        findViewById<LinearLayout>(R.id.drawerItemHelp).onSingleClick {
-            startActivity(Intent(this, HelpActivity::class.java))
-            closeDrawerAfterDelay()
+        findViewById<LinearLayout>(R.id.drawerItemHelp).apply {
+            onSingleClick {
+                transformToActivity(Intent(this@MainActivity, HelpActivity::class.java))
+                closeDrawerAfterDelay()
+            }
         }
-        findViewById<LinearLayout>(R.id.drawerItemAboutApp).onSingleClick {
-            startActivity(Intent(this, AboutActivity::class.java))
-            closeDrawerAfterDelay()
+        findViewById<LinearLayout>(R.id.drawerItemAboutApp).apply {
+            onSingleClick {
+                transformToActivity(Intent(this@MainActivity, AboutActivity::class.java))
+                closeDrawerAfterDelay()
+            }
         }
-        findViewById<LinearLayout>(R.id.drawerItemAboutMe).onSingleClick {
-            startActivity(Intent(this, AboutMeActivity::class.java))
-            closeDrawerAfterDelay()
+        findViewById<LinearLayout>(R.id.drawerItemAboutMe).apply {
+            onSingleClick {
+                transformToActivity(Intent(this@MainActivity, AboutMeActivity::class.java))
+                closeDrawerAfterDelay()
+            }
         }
-        findViewById<LinearLayout>(R.id.drawerItemSettings).onSingleClick {
-            startActivity(Intent(this, SettingsActivity::class.java))
-            closeDrawerAfterDelay()
+        findViewById<LinearLayout>(R.id.drawerItemSettings).apply {
+            onSingleClick {
+                transformToActivity(Intent(this@MainActivity, SettingsActivity::class.java))
+                closeDrawerAfterDelay()
+            }
         }
         binding.drawerLayout.apply {
             setHeaderButtonIcon(AppCompatResources.getDrawable(this@MainActivity, dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline))
             setHeaderButtonTooltip(getString(R.string.about_app))
             setHeaderButtonOnClickListener {
-                startActivity(Intent(this@MainActivity, AboutActivity::class.java))
+                findViewById<ImageButton>(dev.oneuiproject.oneui.design.R.id.drawer_header_button)
+                    .transformToActivity(Intent(this@MainActivity, AboutActivity::class.java))
                 closeDrawerAfterDelay()
             }
             setNavRailContentMinSideMargin(14)

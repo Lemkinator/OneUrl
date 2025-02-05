@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.setCustomBackPressAnimation
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
@@ -42,6 +43,7 @@ class ProviderActivity : AppCompatActivity() {
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)

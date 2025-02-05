@@ -23,6 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.SaveLocation
 import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.exportBitmap
+import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.saveBitmapToUri
 import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
 import de.lemke.commonutils.setWindowTransparent
@@ -70,6 +71,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
         binding = ActivityGenerateQrCodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
