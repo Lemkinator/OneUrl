@@ -26,4 +26,8 @@ class RequestQueueSingleton(context: Context) {
     fun <T> addToRequestQueue(req: Request<T>) {
         requestQueue.add(req)
     }
+
+    fun removeCacheEntry(url: String) {
+        requestQueue.cache.remove(url)
+    }
 }

@@ -69,6 +69,7 @@ stats: https://ulvis.net/API/read/get?id=example1
 val ulvis = Ulvis()
 
 class Ulvis : ShortURLProvider {
+    override val enabled = false // deletes short URLs???? https://ulvis.net/bHPs
     override val name = "ulvis.net"
     override val baseURL = "https://ulvis.net"
     override val apiURL = "$baseURL/API/write/get"

@@ -70,7 +70,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
         val tag = "CreateRequest_$name"
-        Log.d(tag, "start request: $apiURL")
+        Log.d(tag, "start request: $apiURL  {url=$longURL, servicedomain=${baseURL.withoutHttps()}, requesturl=$alias}")
         return object : StringRequest(
             Method.POST,
             apiURL,

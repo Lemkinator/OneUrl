@@ -35,7 +35,7 @@ data class URL(
             description == other.description &&
             added == other.added
 
-    val alias: String get() = shortURL.substringAfterLast('/') //does not work for Owovz (e.g. sketchy)
+    val alias: String get() = shortURL.trimEnd('/').substringAfterLast('/').substringBeforeLast('/') //does not work for Owovz(e.g. sketchy)
 
     val addedFormatMedium: String get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
 

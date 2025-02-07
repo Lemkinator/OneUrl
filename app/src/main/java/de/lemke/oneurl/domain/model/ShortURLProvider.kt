@@ -54,13 +54,15 @@ class ShortURLProviderCompanion {
             kurzelinksdeOgy,
             lstu,
             tinube,
-            ulvis,
+            ulvis, //disabled
             tinyurl,
+            onesis,
             gg,
             l4f, //disabled
             oneptco,
             tinyim,
             shareaholic,
+            murl,
             tly,
             tlyIbitly,
             tlyTwtrto, //disabled
