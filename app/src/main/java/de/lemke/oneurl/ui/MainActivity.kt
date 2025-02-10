@@ -365,7 +365,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                         width = if (it is LinearLayout) 52f.dpToPx(it.context.resources) //drawer item
                         else 25f.dpToPx(it.context.resources) //divider item
                     }
-                } else {
+                } else if (it.width != MATCH_PARENT) {
                     it.updateLayoutParams<MarginLayoutParams> { width = MATCH_PARENT }
                 }
             }
