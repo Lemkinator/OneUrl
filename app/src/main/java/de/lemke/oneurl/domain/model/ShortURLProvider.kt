@@ -56,7 +56,7 @@ class ShortURLProviderCompanion {
             Tinube,
             Ulvis, //disabled
             Tinyurl,
-            Onesis,
+            Onesis, //disabled
             Gg,
             L4f, //disabled
             Oneptco,

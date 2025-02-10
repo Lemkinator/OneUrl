@@ -25,6 +25,7 @@ The custom short URL must follow the correct format: no spaces, no accents, only
 Short URL already exists. Please choose another one.
  */
 object Onesis : ShortURLProvider {
+    override val enabled = false // security check failed
     override val name = "1s.is"
     override val baseURL = "https://1s.is"
     override val aliasConfig = object : AliasConfig {
@@ -71,6 +72,7 @@ object Onesis : ShortURLProvider {
                     else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
                 } catch (e: Exception) {
                     e.printStackTrace()
+                    Log.w(tag, "could not find short URL in response")
                     when {
                         response.contains("Short URL already exists. Please choose another one.") ->
                             errorCallback(GenerateURLError.AliasAlreadyExists(context))
