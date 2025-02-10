@@ -2,6 +2,7 @@ package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.util.Log
@@ -29,7 +30,7 @@ import com.airbnb.lottie.model.KeyPath
 import com.airbnb.lottie.value.LottieValueCallback
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
-import com.google.android.play.core.install.model.UpdateAvailability
+import com.google.android.play.core.install.model.UpdateAvailability.UPDATE_AVAILABLE
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.prepareActivityTransformationFrom
 import de.lemke.commonutils.restoreSearchAndActionMode
@@ -46,6 +47,7 @@ import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.delegates.AllSelectorState
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
+import dev.oneuiproject.oneui.ktx.configureImmBottomPadding
 import dev.oneuiproject.oneui.ktx.configureItemSwipeAnimator
 import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
@@ -197,9 +199,9 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 urls = it
                 updateRecyclerView()
                 if (scrollToTop) {
-                    scrollToTop = false
                     delay(500)
                     binding.urlList.smoothScrollToPosition(0)
+                    scrollToTop = false
                 }
 
                 //manually waiting for the splash animation to finish :/
@@ -224,9 +226,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent?.action == Intent.ACTION_SEARCH) {
-            binding.drawerLayout.setSearchQueryFromIntent(intent)
-        }
+        if (intent?.action == Intent.ACTION_SEARCH) binding.drawerLayout.setSearchQueryFromIntent(intent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.main, menu).let { true }
@@ -238,11 +238,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.menu_item_search -> {
-            startSearch()
-            true
-        }
-
+        R.id.menu_item_search -> startSearch().let { true }
         R.id.menu_item_show_all -> {
             filterFavorite.value = false
             invalidateOptionsMenu()
@@ -273,8 +269,8 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
 
         override fun onSearchModeToggle(searchView: SearchView, visible: Boolean) {
-            lifecycleScope.launch {
-                if (visible) {
+            if (visible)
+                lifecycleScope.launch {
                     search.value = getUserSettings().search
                     binding.addFab.isVisible = false
                     searchView.setQuery(search.value, false)
@@ -283,14 +279,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     autoCompleteTextView.setSelection(autoCompleteTextView.text.length)
                     updateRecyclerView()
                 } else {
-                    search.value = null
-                    if (!binding.drawerLayout.isActionMode) {
-                        binding.addFab.isVisible = true
-                        binding.addFab.show() //sometimes fab does not show after action mode ends
-                    }
-                    updateRecyclerView()
-                    urlAdapter.highlightWord = ""
+                search.value = null
+                if (!binding.drawerLayout.isActionMode) {
+                    binding.addFab.isVisible = true
+                    binding.addFab.show() //sometimes fab does not show after action mode ends
                 }
+                updateRecyclerView()
+                urlAdapter.highlightWord = ""
             }
         }
     }
@@ -338,8 +333,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
 
         AppUpdateManagerFactory.create(this).appUpdateInfo.addOnSuccessListener { appUpdateInfo: AppUpdateInfo ->
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE)
-                binding.drawerLayout.setButtonBadges(Badge.DOT, Badge.DOT)
+            if (appUpdateInfo.updateAvailability() == UPDATE_AVAILABLE) binding.drawerLayout.setButtonBadges(Badge.DOT, Badge.DOT)
         }
         binding.urlNoEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)
     }
@@ -387,6 +381,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             )
             enableCoreSeslFeatures()
             hideSoftInputOnScroll()
+            if (SDK_INT >= Build.VERSION_CODES.R) configureImmBottomPadding(binding.drawerLayout)
         }
 
         urlAdapter.configure(
@@ -481,29 +476,20 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             },
             onSelectMenuItem = {
                 when (it.itemId) {
-                    R.id.menu_item_delete -> {
-                        lifecycleScope.launch {
-                            deleteURL(urls.filter { it.id in urlAdapter.getSelectedIds() })
-                            binding.drawerLayout.endActionMode()
-                        }
-                        true
-                    }
+                    R.id.menu_item_delete -> lifecycleScope.launch {
+                        deleteURL(urls.filter { it.id in urlAdapter.getSelectedIds() })
+                        binding.drawerLayout.endActionMode()
+                    }.let { true }
 
-                    R.id.menu_item_add_to_favorites -> {
-                        lifecycleScope.launch {
-                            updateURL(urls.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = true) })
-                            binding.drawerLayout.endActionMode()
-                        }
-                        true
-                    }
+                    R.id.menu_item_add_to_favorites -> lifecycleScope.launch {
+                        updateURL(urls.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = true) })
+                        binding.drawerLayout.endActionMode()
+                    }.let { true }
 
-                    R.id.menu_item_remove_from_favorites -> {
-                        lifecycleScope.launch {
-                            updateURL(urls.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = false) })
-                            binding.drawerLayout.endActionMode()
-                        }
-                        true
-                    }
+                    R.id.menu_item_remove_from_favorites -> lifecycleScope.launch {
+                        updateURL(urls.filter { it.id in urlAdapter.getSelectedIds() }.map { it.copy(favorite = false) })
+                        binding.drawerLayout.endActionMode()
+                    }.let { true }
 
                     else -> false
                 }
