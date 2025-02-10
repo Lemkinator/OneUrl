@@ -45,39 +45,39 @@ https://sor.bz/
 class ShortURLProviderCompanion {
     companion object {
         private val provider: List<ShortURLProvider> = listOf(
-            dagd,
-            isgd,
-            vgd,
-            kurzelinksde,
-            kurzelinksdeOcn,
-            kurzelinksdeT1p,
-            kurzelinksdeOgy,
-            lstu,
-            tinube,
-            ulvis, //disabled
-            tinyurl,
-            onesis,
-            gg,
-            l4f, //disabled
-            oneptco,
-            tinyim,
-            shareaholic,
-            murl,
-            tly,
-            tlyIbitly,
-            tlyTwtrto, //disabled
-            tlyJpegly,
-            tlyRebrandly, //disabled
-            tlyBitly, //disabled
-            shrtlnk, //disabled
-            shorturlat, //disabled
-            zwsim,
-            spoome,
-            spoomeEmoji,
-            owovzOwo,
-            owovzZws,
-            owovzSketchy,
-            owovzGay,
+            Dagd,
+            VgdIsgd.Isgd,
+            VgdIsgd.Vgd,
+            Kurzelinks.Kurzelinksde,
+            Kurzelinks.Ocn,
+            Kurzelinks.T1p,
+            Kurzelinks.Ogy,
+            Lstu,
+            Tinube,
+            Ulvis, //disabled
+            Tinyurl,
+            Onesis,
+            Gg,
+            L4f, //disabled
+            Oneptco,
+            Tnyim,
+            Shareaholic,
+            Murl,
+            Tly.Default,
+            Tly.Ibitly,
+            Tly.Twtrto, //disabled
+            Tly.Jpegly,
+            Tly.Rebrandly, //disabled
+            Tly.Bitly, //disabled
+            Shrtlnk, //disabled
+            Shorturlat, //disabled
+            Zwsim,
+            Spoome.Default,
+            Spoome.Emoji,
+            Owovz.Owo,
+            Owovz.Zws,
+            Owovz.Sketchy,
+            Owovz.Gay,
         )
 
         /*
@@ -87,7 +87,7 @@ class ShortURLProviderCompanion {
         the app will not update the list of available providers until restart
          */
         @SuppressLint("ConstantLocale")
-        val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinksde }
+        val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
 
         val enabled = all.filter { it.enabled }
 

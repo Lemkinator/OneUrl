@@ -85,9 +85,7 @@ response:
 <div class="squarebox"><div class="squareboxtext">0</div></div>
 <p>
  */
-val shorturlat = Shorturlat()
-
-class Shorturlat : ShortURLProvider {
+object Shorturlat : ShortURLProvider {
     override val enabled = false // form-urlencoded?
     override val name = "shorturl.at"
     override val baseURL = "https://shorturl.at"

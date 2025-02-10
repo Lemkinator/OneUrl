@@ -35,9 +35,7 @@ https://api.tinu.be/Nx1ByyelU/stats
   "urlCode": "Nx1ByyelU"
 }
  */
-val tinube = Tinube()
-
-class Tinube : ShortURLProvider {
+object Tinube : ShortURLProvider {
     override val name = "tinu.be"
     override val baseURL = "https://tinu.be"
     override val apiURL = "$baseURL/en"

@@ -15,9 +15,7 @@ example: https://tinyurl.com/api-create.php?url=https://example.com&alias=exampl
 
 analytics require api token
  */
-val tinyurl = Tinyurl()
-
-class Tinyurl : ShortURLProvider {
+object Tinyurl : ShortURLProvider {
     override val name = "tinyurl.com"
     override val baseURL = "https://tinyurl.com"
     override val apiURL = "$baseURL/api-create.php"

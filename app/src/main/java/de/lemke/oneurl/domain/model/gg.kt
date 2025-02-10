@@ -20,9 +20,7 @@ https://gg.gg/create {long_url=https://example.com custom_path=1cbz0v}
 response: 200: http://gg.gg/1cbz0v
 fail: 200: http://gg.gg/
  */
-val gg = Gg()
-
-class Gg : ShortURLProvider {
+object Gg : ShortURLProvider {
     override val enabled: Boolean = false // offline?
     override val name = "gg.gg"
     override val baseURL = "https://gg.gg"

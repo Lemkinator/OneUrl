@@ -42,9 +42,7 @@ error (still return 200):
   "Retry-After": 41
 }
  */
-val l4f = L4f()
-
-class L4f : ShortURLProvider {
+object L4f : ShortURLProvider {
     override val enabled = false // redirects to apioption.com ??
     override val name = "l4f.com"
     override val baseURL = "https://l4f.com"

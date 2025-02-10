@@ -32,9 +32,7 @@ error:
     ]
 }
  */
-val shareaholic = Shareaholic()
-
-class Shareaholic : ShortURLProvider {
+object Shareaholic : ShortURLProvider {
     override val name = "go.shr.lc"
     override val baseURL = "https://www.shareaholic.com"
     override val apiURL = "$baseURL/v2/share/shorten_link"

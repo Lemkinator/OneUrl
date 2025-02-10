@@ -17,9 +17,6 @@ example:
 https://v.gd/create.php?format=json&url=www.example.com&shorturl=example
 https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
  */
-val vgd = VgdIsgd.Vgd()
-val isgd = VgdIsgd.Isgd()
-
 sealed class VgdIsgd : ShortURLProvider {
     final override val group = "v.gd, is.gd"
     final override val aliasConfig = object : AliasConfig {
@@ -122,7 +119,7 @@ sealed class VgdIsgd : ShortURLProvider {
         )
     }
 
-    class Vgd : VgdIsgd() {
+    object Vgd : VgdIsgd() {
         override val name = "v.gd"
         override val baseURL = "https://v.gd"
         override val apiURL = "$baseURL/create.php"
@@ -166,7 +163,7 @@ sealed class VgdIsgd : ShortURLProvider {
         ): JsonObjectRequest = getVgdIsgdCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
-    class Isgd : VgdIsgd() {
+    object Isgd : VgdIsgd() {
         override val name = "is.gd"
         override val baseURL = "https://is.gd"
         override val apiURL = "$baseURL/create.php"

@@ -22,9 +22,7 @@ errors:
 400: Short URL already taken. Pick a different one.
 400: Custom short URL contained invalid characters.     //should not happen, checked before
  */
-val dagd = Dagd()
-
-class Dagd : ShortURLProvider {
+object Dagd : ShortURLProvider {
     override val name = "da.gd"
     override val baseURL = "https://da.gd"
     override val apiURL = "$baseURL/shorten"

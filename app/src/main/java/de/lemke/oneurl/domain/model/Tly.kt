@@ -63,13 +63,6 @@ errors:
   "message": "T.LY account and API key required to create additional short links."
 }
  */
-val tly = Tly.TlyDefault()
-val tlyIbitly = Tly.TlyIbitly()
-val tlyTwtrto = Tly.TlyTwtrto()
-val tlyJpegly = Tly.TlyJpegly()
-val tlyRebrandly = Tly.TlyRebrandly()
-val tlyBitly = Tly.TlyBitly()
-
 sealed class Tly : ShortURLProvider {
     final override val group = "t.ly [experimental]"
     final override val baseURL = "https://t.ly"
@@ -151,7 +144,7 @@ sealed class Tly : ShortURLProvider {
         }
     }
 
-    class TlyDefault : Tly() {
+    object Default : Tly() {
         override val name = "t.ly"
 
         override fun getCreateRequest(
@@ -163,7 +156,7 @@ sealed class Tly : ShortURLProvider {
         ): JsonObjectRequest = getTlyCreateRequest(context, "t.ly", longURL, successCallback, errorCallback)
     }
 
-    class TlyIbitly : Tly() {
+    object Ibitly : Tly() {
         override val name = "t.ly (ibit.ly)"
         override fun getCreateRequest(
             context: Context,
@@ -174,7 +167,7 @@ sealed class Tly : ShortURLProvider {
         ): JsonObjectRequest = getTlyCreateRequest(context, "ibit.ly", longURL, successCallback, errorCallback)
     }
 
-    class TlyTwtrto : Tly() {
+    object Twtrto : Tly() {
         override val enabled = false // useless, only responds with t.ly??
         override val name = "t.ly (twtr.to)"
         override fun getCreateRequest(
@@ -186,7 +179,7 @@ sealed class Tly : ShortURLProvider {
         ): JsonObjectRequest = getTlyCreateRequest(context, "twtr.to", longURL, successCallback, errorCallback)
     }
 
-    class TlyJpegly : Tly() {
+    object Jpegly : Tly() {
         override val name = "t.ly (jpeg.ly)"
         override fun getCreateRequest(
             context: Context,
@@ -197,7 +190,7 @@ sealed class Tly : ShortURLProvider {
         ): JsonObjectRequest = getTlyCreateRequest(context, "jpeg.ly", longURL, successCallback, errorCallback)
     }
 
-    class TlyRebrandly : Tly() {
+    object Rebrandly : Tly() {
         override val enabled = false // useless, only responds with t.ly??
         override val name = "t.ly (rebrand.ly)"
         override fun getCreateRequest(
@@ -209,7 +202,7 @@ sealed class Tly : ShortURLProvider {
         ): JsonObjectRequest = getTlyCreateRequest(context, "rebrand.ly", longURL, successCallback, errorCallback)
     }
 
-    class TlyBitly : Tly() {
+    object Bitly : Tly() {
         override val enabled = false // requires api key after some requests?
         override val name = "t.ly (bit.ly)"
         override fun getCreateRequest(

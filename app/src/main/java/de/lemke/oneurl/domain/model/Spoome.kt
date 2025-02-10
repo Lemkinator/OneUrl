@@ -54,9 +54,6 @@ MaxClicksError	400	The user entered max-clicks is not a positive integer.
 
 
  */
-val spoome = Spoome.Default()
-val spoomeEmoji = Spoome.Emoji()
-
 sealed class Spoome : ShortURLProvider {
     final override val group = "spoo.me, spoo.me (emoji)"
     final override val baseURL = "https://spoo.me"
@@ -163,7 +160,7 @@ sealed class Spoome : ShortURLProvider {
         }
     }
 
-    class Default : Spoome() {
+    object Default : Spoome() {
         override val name = "spoo.me"
         override val apiURL = "https://spoo.me/"
         override val aliasConfig = object : AliasConfig {
@@ -192,7 +189,7 @@ sealed class Spoome : ShortURLProvider {
         )
     }
 
-    class Emoji : Spoome() {
+    object Emoji : Spoome() {
         override val name = "spoo.me (emoji)"
         override val apiURL = "https://spoo.me/emoji"
         override val aliasConfig = object : AliasConfig {

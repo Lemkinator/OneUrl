@@ -22,9 +22,7 @@ You are adding URLs too fast, please slow down
 Enter your URL
 
  */
-val murl = Murl()
-
-class Murl : ShortURLProvider {
+object Murl : ShortURLProvider {
     override val name = "murl.com"
     override val baseURL = "https://murl.com"
     override val apiURL = "$baseURL/api"

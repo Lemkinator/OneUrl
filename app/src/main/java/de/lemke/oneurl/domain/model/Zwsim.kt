@@ -27,9 +27,7 @@ answer:
     "statusCode": 422
 }
  */
-val zwsim = Zwsim()
-
-class Zwsim : ShortURLProvider {
+object Zwsim : ShortURLProvider {
     override val name = "zws.im"
     override val baseURL = "https://zws.im"
     override val apiURL = "https://api.zws.im"

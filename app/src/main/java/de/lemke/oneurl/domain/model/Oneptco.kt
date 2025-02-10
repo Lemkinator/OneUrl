@@ -30,9 +30,7 @@ fail: {
 
 2024/10/03: request took 14 seconds :/
 */
-val oneptco = Oneptco()
-
-class Oneptco : ShortURLProvider {
+object Oneptco : ShortURLProvider {
     override val name = "1pt.co"
     override val baseURL = "https://1pt.co"
     override val apiURL = "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl"

@@ -43,9 +43,7 @@ https://lstu.fr/stats/test
   "url": "https://linuxfr.org"
 }
  */
-val lstu = Lstu()
-
-class Lstu : ShortURLProvider {
+object Lstu : ShortURLProvider {
     override val enabled: Boolean = false // discontinued because of abuse: https://lstu.fr/
     override val name = "lstu.fr"
     override val baseURL = "https://lstu.fr"

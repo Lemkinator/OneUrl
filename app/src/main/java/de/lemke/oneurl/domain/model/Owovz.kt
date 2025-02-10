@@ -55,11 +55,6 @@ fail:
     "message": "link not found"
 }
  */
-val owovzOwo = Owovz.OwovzOwo()
-val owovzZws = Owovz.OwovzZws()
-val owovzSketchy = Owovz.OwovzSketchy()
-val owovzGay = Owovz.OwovzGay()
-
 sealed class Owovz : ShortURLProvider {
     final override val group = "owo.vc (zws, sketchy, gay)"
     final override val baseURL = "https://owo.vc"
@@ -148,7 +143,7 @@ sealed class Owovz : ShortURLProvider {
         )
     }
 
-    class OwovzOwo : Owovz() {
+    object Owo : Owovz() {
         override val name = "owo.vc"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.info),
@@ -174,7 +169,7 @@ sealed class Owovz : ShortURLProvider {
 
     }
 
-    class OwovzZws : Owovz() {
+    object Zws : Owovz() {
         override val name = "owo.vc (zws)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.info),
@@ -204,7 +199,7 @@ sealed class Owovz : ShortURLProvider {
             getOwovzCreateRequest(context, "zws", longURL, successCallback, errorCallback)
     }
 
-    class OwovzSketchy : Owovz() {
+    object Sketchy : Owovz() {
         override val name = "owo.vc (sketchy)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.info),
@@ -234,7 +229,7 @@ sealed class Owovz : ShortURLProvider {
             getOwovzCreateRequest(context, "sketchy", longURL, successCallback, errorCallback)
     }
 
-    class OwovzGay : Owovz() {
+    object Gay : Owovz() {
         override val name = "owo.vc (gay)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.warning),

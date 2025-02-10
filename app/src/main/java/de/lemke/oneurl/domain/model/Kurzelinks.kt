@@ -25,12 +25,7 @@ error:
 444: the API cannot be accessed at the moment (please try again later)
 
 */
-val kurzelinksde = Kurzelinksde.Kurzelinks()
-val kurzelinksdeOgy = Kurzelinksde.Ogy()
-val kurzelinksdeT1p = Kurzelinksde.T1p()
-val kurzelinksdeOcn = Kurzelinksde.Ocn()
-
-sealed class Kurzelinksde : ShortURLProvider {
+sealed class Kurzelinks : ShortURLProvider {
     final override val group = "kurzelinks.de, 0cn.de, t1p.de, ogy.de"
     final override val aliasConfig = object : AliasConfig {
         override val minAliasLength = 5
@@ -124,7 +119,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         }
     }
 
-    class Kurzelinks : Kurzelinksde() {
+    object Kurzelinksde : Kurzelinks() {
         override val name = "kurzelinks.de"
         override val baseURL = "https://kurzelinks.de"
         override val apiURL = "$baseURL/api"
@@ -140,7 +135,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
-    class Ocn : Kurzelinksde() { //o -> 0
+    object Ocn : Kurzelinks() { //o -> 0
         override val name = "0cn.de"
         override val baseURL = "https://0cn.de"
         override val apiURL = "$baseURL/api"
@@ -156,7 +151,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
-    class T1p : Kurzelinksde() {
+    object T1p : Kurzelinks() {
         override val name = "t1p.de"
         override val baseURL = "https://t1p.de"
         override val apiURL = "$baseURL/api"
@@ -172,7 +167,7 @@ sealed class Kurzelinksde : ShortURLProvider {
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
-    class Ogy : Kurzelinksde() {
+    object Ogy : Kurzelinks() {
         override val name = "ogy.de"
         override val baseURL = "https://ogy.de"
         override val apiURL = "$baseURL/api"

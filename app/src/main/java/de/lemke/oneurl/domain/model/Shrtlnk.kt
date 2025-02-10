@@ -31,9 +31,7 @@ but has 10 seconds countdown before redirecting (can be skipped)
 and sometimes shows ads?
 
  */
-val shrtlnk = Shrtlnk()
-
-class Shrtlnk : ShortURLProvider {
+object Shrtlnk : ShortURLProvider {
     override val enabled = false
     override val name = "shrtlnk.dev"
     override val baseURL = "https://www.shrtlnk.dev"

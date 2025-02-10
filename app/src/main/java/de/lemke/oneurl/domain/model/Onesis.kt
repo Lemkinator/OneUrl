@@ -24,9 +24,7 @@ errors:
 The custom short URL must follow the correct format: no spaces, no accents, only letters and numbers, use "-", not at the beginning or end, and no consecutive hyphens.
 Short URL already exists. Please choose another one.
  */
-val onesis = Onesis()
-
-class Onesis : ShortURLProvider {
+object Onesis : ShortURLProvider {
     override val name = "1s.is"
     override val baseURL = "https://1s.is"
     override val aliasConfig = object : AliasConfig {

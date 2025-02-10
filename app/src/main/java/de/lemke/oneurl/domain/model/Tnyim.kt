@@ -98,9 +98,7 @@ https://tny.im/yourls-api.php?action=url-stats&format=json&shorturl=a54321
   "message": "Error: short URL not found"
 }
 */
-val tinyim = Tnyim()
-
-class Tnyim : ShortURLProvider {
+object Tnyim : ShortURLProvider {
     override val enabled = false
     override val name = "tny.im"
     override val baseURL = "https://tny.im"
