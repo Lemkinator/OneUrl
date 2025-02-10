@@ -69,6 +69,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import dev.oneuiproject.oneui.R as iconsR
+import dev.oneuiproject.oneui.design.R as designR
 
 
 @AndroidEntryPoint
@@ -227,10 +229,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main, menu)
-        return true
-    }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.main, menu).let { true }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         menu?.findItem(R.id.menu_item_show_all)?.isVisible = filterFavorite.value
@@ -238,31 +237,28 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         return super.onPrepareOptionsMenu(menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menu_item_search -> {
-                startSearch()
-                return true
-            }
-
-            R.id.menu_item_show_all -> {
-                filterFavorite.value = false
-                invalidateOptionsMenu()
-                return true
-            }
-
-            R.id.menu_item_only_show_favorites -> {
-                filterFavorite.value = true
-                invalidateOptionsMenu()
-                return true
-            }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.menu_item_search -> {
+            startSearch()
+            true
         }
-        return super.onOptionsItemSelected(item)
+
+        R.id.menu_item_show_all -> {
+            filterFavorite.value = false
+            invalidateOptionsMenu()
+            true
+        }
+
+        R.id.menu_item_only_show_favorites -> {
+            filterFavorite.value = true
+            invalidateOptionsMenu()
+            true
+        }
+
+        else -> super.onOptionsItemSelected(item)
     }
 
-    private fun startSearch() {
-        binding.drawerLayout.startSearchMode(searchModeListener, DISMISS)
-    }
+    private fun startSearch() = binding.drawerLayout.startSearchMode(searchModeListener, DISMISS)
 
     val searchModeListener = object : ToolbarLayout.SearchModeListener {
         override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query).also { hideSoftInput() }
@@ -272,9 +268,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             search.value = query ?: ""
             updateRecyclerView()
             urlAdapter.highlightWord = search.value ?: ""
-            lifecycleScope.launch {
-                updateUserSettings { it.copy(search = query ?: "") }
-            }
+            lifecycleScope.launch { updateUserSettings { it.copy(search = query ?: "") } }
             return true
         }
 
@@ -301,14 +295,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
     }
 
-    fun closeDrawerAfterDelay() {
-        if (binding.drawerLayout.isLargeScreenMode) return
-        lifecycleScope.launch {
-            delay(500) //delay, so closing the drawer is not visible for the user
-            binding.drawerLayout.setDrawerOpen(false, false)
-        }
-    }
-
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
         drawerListView = findViewById(R.id.drawerListView)
@@ -320,43 +306,16 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             add(findViewById(R.id.drawerItemAboutMeTitle))
             add(findViewById(R.id.drawerItemSettingsTitle))
         }
-        findViewById<LinearLayout>(R.id.drawerItemQr).apply {
-            onSingleClick {
-                transformToActivity(Intent(this@MainActivity, GenerateQRCodeActivity::class.java))
-                closeDrawerAfterDelay()
-            }
-        }
-        findViewById<LinearLayout>(R.id.drawerItemHelp).apply {
-            onSingleClick {
-                transformToActivity(Intent(this@MainActivity, HelpActivity::class.java))
-                closeDrawerAfterDelay()
-            }
-        }
-        findViewById<LinearLayout>(R.id.drawerItemAboutApp).apply {
-            onSingleClick {
-                transformToActivity(Intent(this@MainActivity, AboutActivity::class.java))
-                closeDrawerAfterDelay()
-            }
-        }
-        findViewById<LinearLayout>(R.id.drawerItemAboutMe).apply {
-            onSingleClick {
-                transformToActivity(Intent(this@MainActivity, AboutMeActivity::class.java))
-                closeDrawerAfterDelay()
-            }
-        }
-        findViewById<LinearLayout>(R.id.drawerItemSettings).apply {
-            onSingleClick {
-                transformToActivity(Intent(this@MainActivity, SettingsActivity::class.java))
-                closeDrawerAfterDelay()
-            }
-        }
+        findViewById<LinearLayout>(R.id.drawerItemQr).apply { onSingleClick { transformToActivity(GenerateQRCodeActivity::class.java) } }
+        findViewById<LinearLayout>(R.id.drawerItemHelp).apply { onSingleClick { transformToActivity(HelpActivity::class.java) } }
+        findViewById<LinearLayout>(R.id.drawerItemAboutApp).apply { onSingleClick { transformToActivity(AboutActivity::class.java) } }
+        findViewById<LinearLayout>(R.id.drawerItemAboutMe).apply { onSingleClick { transformToActivity(AboutMeActivity::class.java) } }
+        findViewById<LinearLayout>(R.id.drawerItemSettings).apply { onSingleClick { transformToActivity(SettingsActivity::class.java) } }
         binding.drawerLayout.apply {
-            setHeaderButtonIcon(AppCompatResources.getDrawable(this@MainActivity, dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline))
+            setHeaderButtonIcon(AppCompatResources.getDrawable(this@MainActivity, iconsR.drawable.ic_oui_info_outline))
             setHeaderButtonTooltip(getString(R.string.about_app))
             setHeaderButtonOnClickListener {
-                findViewById<ImageButton>(dev.oneuiproject.oneui.design.R.id.drawer_header_button)
-                    .transformToActivity(Intent(this@MainActivity, AboutActivity::class.java))
-                closeDrawerAfterDelay()
+                findViewById<ImageButton>(designR.id.drawer_header_button).transformToActivity(AboutActivity::class.java)
             }
             setNavRailContentMinSideMargin(14)
             lockNavRailOnActionMode = true
@@ -368,26 +327,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             if (isLargeScreenMode) {
                 setDrawerStateListener {
                     when (it) {
-                        DrawerLayout.DrawerState.OPEN -> {
-                            offsetUpdaterJob?.cancel()
-                            updateOffset(1f)
-                        }
-
-                        DrawerLayout.DrawerState.CLOSE -> {
-                            offsetUpdaterJob?.cancel()
-                            updateOffset(0f)
-                        }
-
-                        DrawerLayout.DrawerState.CLOSING,
-                        DrawerLayout.DrawerState.OPENING -> {
-                            startOffsetUpdater()
-                        }
+                        DrawerLayout.DrawerState.OPEN -> offsetUpdaterJob?.cancel().also { updateOffset(1f) }
+                        DrawerLayout.DrawerState.CLOSE -> offsetUpdaterJob?.cancel().also { updateOffset(0f) }
+                        DrawerLayout.DrawerState.CLOSING, DrawerLayout.DrawerState.OPENING -> startOffsetUpdater()
                     }
                 }
                 //Set initial offset
-                post {
-                    updateOffset(binding.drawerLayout.drawerOffset)
-                }
+                post { updateOffset(binding.drawerLayout.drawerOffset) }
             }
         }
 
@@ -413,16 +359,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     fun updateOffset(offset: Float) {
         drawerItemTitles.forEach { it.alpha = offset }
         drawerListView.children.forEach {
-            if (offset == 0f) {
-                it.post {
+            it.post {
+                if (offset == 0f) {
                     it.updateLayoutParams<MarginLayoutParams> {
                         width = if (it is LinearLayout) 52f.dpToPx(it.context.resources) //drawer item
                         else 25f.dpToPx(it.context.resources) //divider item
                     }
-                }
-            } else {
-                it.updateLayoutParams<MarginLayoutParams> {
-                    width = MATCH_PARENT
+                } else {
+                    it.updateLayoutParams<MarginLayoutParams> { width = MATCH_PARENT }
                 }
             }
         }
@@ -491,9 +435,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 )
             }
         }
-        onClickItemFavorite = { position, url ->
-            lifecycleScope.launch { updateURL(url.copy(favorite = !url.favorite)) }
-        }
+        onClickItemFavorite = { position, url -> lifecycleScope.launch { updateURL(url.copy(favorite = !url.favorite)) } }
         onLongClickItem = {
             if (!isActionMode) launchActionMode()
             binding.urlList.seslStartLongPressMultiSelection()
@@ -505,9 +447,9 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             rightToLeftLabel = getString(R.string.add_to_fav),
             leftToRightLabel = getString(R.string.remove_from_fav),
             rightToLeftColor = getColor(R.color.primary_color_themed),
-            leftToRightColor = getColor(dev.oneuiproject.oneui.design.R.color.oui_functional_red_color),
-            rightToLeftDrawableRes = dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on,
-            leftToRightDrawableRes = dev.oneuiproject.oneui.R.drawable.ic_oui_delete_outline,
+            leftToRightColor = getColor(designR.color.oui_functional_red_color),
+            rightToLeftDrawableRes = iconsR.drawable.ic_oui_favorite_on,
+            leftToRightDrawableRes = iconsR.drawable.ic_oui_delete_outline,
             isRightSwipeEnabled = { !urlAdapter.isActionMode },
             isLeftSwipeEnabled = { !urlAdapter.isActionMode },
             onSwiped = { position, swipeDirection, _ ->
