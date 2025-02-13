@@ -1,5 +1,7 @@
 package de.lemke.oneurl.ui
 
+import android.R.anim.fade_in
+import android.R.anim.fade_out
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
@@ -115,9 +117,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         prepareActivityTransformationFrom()
         time = System.currentTimeMillis()
         super.onCreate(savedInstanceState)
-        if (SDK_INT >= 34) {
-            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, android.R.anim.fade_in, android.R.anim.fade_out)
-        }
+        if (SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         splashScreen.setKeepOnScreenCondition { !isUIReady }
@@ -177,7 +177,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         startActivity(Intent(applicationContext, OOBEActivity::class.java))
         if (SDK_INT < 34) {
             @Suppress("DEPRECATION")
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+            overridePendingTransition(fade_in, fade_out)
         }
         finishAfterTransition()
     }
