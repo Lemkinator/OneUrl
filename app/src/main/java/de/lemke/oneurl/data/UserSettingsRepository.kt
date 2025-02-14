@@ -55,6 +55,7 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_SAVE_LOCATION] = newSettings.saveLocation.ordinal
             it[KEY_CURRENT_CATEGORY] = newSettings.currentCategory
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
+            it[KEY_SHOW_COPY_HINT] = newSettings.showCopyHint
         }
         return settingsFromPreferences(prefs)
     }
@@ -83,6 +84,7 @@ class UserSettingsRepository @Inject constructor(
         saveLocation = SaveLocation.entries[prefs[KEY_SAVE_LOCATION] ?: SaveLocation.default.ordinal],
         currentCategory = prefs[KEY_CURRENT_CATEGORY] ?: "",
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
+        showCopyHint = prefs[KEY_SHOW_COPY_HINT] != false,
     )
 
     private companion object {
@@ -108,6 +110,7 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_SAVE_LOCATION = intPreferencesKey("saveLocation")
         private val KEY_CURRENT_CATEGORY = stringPreferencesKey("currentCategory")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
+        private val KEY_SHOW_COPY_HINT = booleanPreferencesKey("showCopyHint")
     }
 }
 
@@ -157,4 +160,6 @@ data class UserSettings(
     val currentCategory: String,
     /** last time in app review was requested */
     val lastInAppReviewRequest: Long,
+    /** show copy to clipboard hint */
+    val showCopyHint: Boolean,
 )

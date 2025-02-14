@@ -14,6 +14,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.lifecycleScope
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,6 +28,7 @@ import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
 import de.lemke.commonutils.setWindowTransparent
 import de.lemke.commonutils.shareBitmap
 import de.lemke.commonutils.shareText
+import de.lemke.commonutils.showDimmingTipPopup
 import de.lemke.commonutils.toast
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityUrlBinding
@@ -35,6 +37,7 @@ import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
+import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.urlEncode
 import de.lemke.oneurl.domain.withHttps
@@ -73,6 +76,9 @@ class URLActivity : AppCompatActivity() {
     lateinit var getUserSettings: GetUserSettingsUseCase
 
     @Inject
+    lateinit var updateUserSettings: UpdateUserSettingsUseCase
+
+    @Inject
     lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,8 +97,16 @@ class URLActivity : AppCompatActivity() {
                 }
                 url = it
             }
-            saveLocation = getUserSettings().saveLocation
+            val userSettings = getUserSettings()
+            saveLocation = userSettings.saveLocation
             initViews()
+            if (userSettings.showCopyHint) binding.urlShortButton.doOnLayout {
+                it.postDelayed({
+                    it.showDimmingTipPopup(R.string.copy_to_clipboard_hint, de.lemke.commonutils.R.string.dont_show_again) {
+                        lifecycleScope.launch { updateUserSettings { it.copy(showCopyHint = false) } }
+                    }
+                }, 500)
+            }
             setCustomAnimatedOnBackPressedLogic(binding.root, showInAppReviewOrFinish.canShowInAppReview()) {
                 lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) }
             }
@@ -164,8 +178,13 @@ class URLActivity : AppCompatActivity() {
         binding.root.setTitle(url.shortURL)
         searchHighlighter = SearchHighlighter(this)
         val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
-        refreshVisitCount()
-        binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
+        binding.urlQrImageview.setImageBitmap(url.qr)
+        binding.urlQrImageview.setOnClickListener {
+            lifecycleScope.launch { QRBottomSheet.newInstance(url.shortURL, url.qr, saveLocation).show(supportFragmentManager, null) }
+        }
+        binding.urlQrImageview.setOnLongClickListener { url.qr.copyToClipboard(this, "QR Code", "QRCode.png").let { true } }
+        binding.urlQrSaveButton.setOnClickListener { exportBitmap(saveLocation, url.qr, url.shortURL, exportQRCodeResultLauncher) }
+        binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
         binding.urlShortButton.text = searchHighlighter(url.shortURL, highlightText).apply {
             setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
         }
@@ -189,18 +208,8 @@ class URLActivity : AppCompatActivity() {
             binding.urlDescriptionDivider.visibility = View.VISIBLE
         }
         binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, highlightText)
-        binding.urlQrImageview.setImageBitmap(url.qr)
-        binding.urlQrImageview.setOnClickListener {
-            lifecycleScope.launch {
-                QRBottomSheet.newInstance(url.shortURL, url.qr, saveLocation).show(supportFragmentManager, null)
-            }
-        }
-        binding.urlQrImageview.setOnLongClickListener {
-            url.qr.copyToClipboard(this, "QR Code", "QRCode.png")
-            true
-        }
-        binding.urlQrSaveButton.setOnClickListener { exportBitmap(saveLocation, url.qr, url.shortURL, exportQRCodeResultLauncher) }
-        binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
+        binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
+        refreshVisitCount()
         setupBottomNav()
     }
 
@@ -209,16 +218,16 @@ class URLActivity : AppCompatActivity() {
         binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav)?.isVisible = !url.favorite
         binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav)?.isVisible = url.favorite
         binding.urlBnv.setOnItemSelectedListener {
-            when (it.itemId) {
+            return@setOnItemSelectedListener when (it.itemId) {
                 R.id.url_bnv_analytics -> {
                     val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return@setOnItemSelectedListener false
                     openURL(analyticsURL)
-                    return@setOnItemSelectedListener true
+                    true
                 }
 
                 R.id.url_bnv_provider_info -> {
                     ProviderInfoBottomSheet.newInstance(url.shortURLProvider).show(supportFragmentManager, null)
-                    return@setOnItemSelectedListener true
+                    true
                 }
 
                 R.id.url_bnv_add_to_fav -> {
@@ -226,7 +235,7 @@ class URLActivity : AppCompatActivity() {
                     binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav)?.isVisible = true
                     url = url.copy(favorite = true)
                     lifecycleScope.launch { updateURL(url) }
-                    return@setOnItemSelectedListener true
+                    true
                 }
 
                 R.id.url_bnv_remove_from_fav -> {
@@ -234,28 +243,25 @@ class URLActivity : AppCompatActivity() {
                     binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav)?.isVisible = true
                     url = url.copy(favorite = false)
                     lifecycleScope.launch { updateURL(url) }
-                    return@setOnItemSelectedListener true
+                    true
                 }
 
-                R.id.url_bnv_delete -> {
-                    lifecycleScope.launch {
-                        AlertDialog.Builder(this@URLActivity)
-                            .setTitle(R.string.delete)
-                            .setMessage(R.string.delete_url_message)
-                            .setPositiveButton(R.string.delete) { _, _ ->
-                                lifecycleScope.launch {
-                                    deleteURL(url)
-                                    showInAppReviewOrFinish(this@URLActivity)
-                                }
+                R.id.url_bnv_delete -> lifecycleScope.launch {
+                    AlertDialog.Builder(this@URLActivity)
+                        .setTitle(R.string.delete)
+                        .setMessage(R.string.delete_url_message)
+                        .setPositiveButton(R.string.delete) { _, _ ->
+                            lifecycleScope.launch {
+                                deleteURL(url)
+                                showInAppReviewOrFinish(this@URLActivity)
                             }
-                            .setNegativeButton(de.lemke.commonutils.R.string.sesl_cancel, null)
-                            .create()
-                            .show()
-                    }
-                    return@setOnItemSelectedListener true
-                }
+                        }
+                        .setNegativeButton(de.lemke.commonutils.R.string.sesl_cancel, null)
+                        .create()
+                        .show()
+                }.let { true }
 
-                else -> return@setOnItemSelectedListener false
+                else -> false
             }
         }
     }
