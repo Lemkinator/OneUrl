@@ -313,8 +313,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 findViewById<ImageButton>(designR.id.drawer_header_button).transformToActivity(AboutActivity::class.java)
             }
             setNavRailContentMinSideMargin(14)
-            lockNavRailOnActionMode = true
-            lockNavRailOnSearchMode = true
             closeNavRailOnBack = true
             //isImmersiveScroll = true
 
