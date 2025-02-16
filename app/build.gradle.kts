@@ -20,8 +20,8 @@ android {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 31
-        versionName = "1.5.7"
+        versionCode = 32
+        versionName = "1.5.8"
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
     }
 
