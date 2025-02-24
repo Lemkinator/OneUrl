@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     android:background="?roundedCornerColor"
     app:expanded="false"
-    app:showNavButtonAsBack="true"
-    app:subtitle="@string/app_name">
+    app:showNavButtonAsBack="true">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
