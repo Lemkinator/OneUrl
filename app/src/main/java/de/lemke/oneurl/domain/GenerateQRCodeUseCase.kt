@@ -14,6 +14,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import dev.oneuiproject.oneui.qr.QREncoder
 import javax.inject.Inject
+import androidx.core.graphics.toColorInt
+import androidx.core.graphics.createBitmap
 
 
 class GenerateQRCodeUseCase @Inject constructor(
@@ -34,8 +36,8 @@ class GenerateQRCodeUseCase @Inject constructor(
 
     private fun generateNoSupportBitmap(): Bitmap {
         val size = getPixel(200)
-        val result = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        result.eraseColor(Color.parseColor("#fcfcfc"))
+        val result = createBitmap(size, size)
+        result.eraseColor("#fcfcfc".toColorInt())
         drawIcon(result)
         val canvas = Canvas(result)
         val paint = Paint()
@@ -59,13 +61,13 @@ class GenerateQRCodeUseCase @Inject constructor(
         val radius: Int = getPixel(32)
         val newWidth = qrcode.width + border * 2
         val newHeight = qrcode.height + border * 2
-        val output = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888)
+        val output = createBitmap(newWidth, newHeight)
         val canvas = Canvas(output)
         val paint: Paint = getPaint()
         val rectF = RectF(0f, 0f, newWidth.toFloat(), newHeight.toFloat())
         canvas.drawRoundRect(rectF, radius.toFloat(), radius.toFloat(), paint)
         canvas.drawBitmap(qrcode, border.toFloat(), border.toFloat(), null)
-        paint.color = Color.parseColor("#d0d0d0")
+        paint.color = "#d0d0d0".toColorInt()
         paint.strokeWidth = 2f
         paint.style = Paint.Style.STROKE
         rectF[1.0f, 1.0f, (newWidth - 1).toFloat()] = (newHeight - 1).toFloat()
@@ -96,7 +98,7 @@ class GenerateQRCodeUseCase @Inject constructor(
         val paint = Paint()
         paint.isAntiAlias = true
         paint.style = Paint.Style.FILL
-        paint.color = Color.parseColor("#fcfcfc")
+        paint.color = "#fcfcfc".toColorInt()
         return paint
     }
 
