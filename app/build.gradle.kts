@@ -103,16 +103,16 @@ dependencies {
     implementation("io.github.tribalfs:oneui-design:0.5.9+oneui6")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("io.github.lemkinator:common-utils:0.7.1")
+    implementation("io.github.lemkinator:common-utils:0.7.3")
 
-    implementation("com.airbnb.android:lottie:6.6.2")
+    implementation("com.airbnb.android:lottie:6.6.3")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.github.skydoves:bundler:1.0.4")
 
-    implementation("androidx.core:core-splashscreen:1.2.0-alpha02")
+    implementation("androidx.core:core-splashscreen:1.2.0-beta01")
     //noinspection GradleDependency until https://issuetracker.google.com/u/0/issues/342671895 is fixed
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     val roomVersion = "2.6.1"
