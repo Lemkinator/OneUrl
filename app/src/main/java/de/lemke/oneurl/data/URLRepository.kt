@@ -12,9 +12,6 @@ import javax.inject.Inject
 class URLRepository @Inject constructor(
     private val urlDao: URLDao
 ) {
-
-    suspend fun getURLs(): List<URL> = urlDao.getAll().asReversed().map { urlFromDb(it) }
-
     //get reversed flow
     fun observeURLs(): Flow<List<URL>> = urlDao.observeAll().mapNotNull { it.asReversed().map(::urlFromDb) }
 
