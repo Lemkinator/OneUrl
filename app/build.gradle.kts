@@ -100,12 +100,12 @@ dependencies {
     implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl6+rev3")
     //SESL6(OneUI 6) Material Components + Design Lib + Icons
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.23-sesl6+rev3")
-    implementation("io.github.tribalfs:oneui-design:0.5.9+oneui6")
+    implementation("io.github.tribalfs:oneui-design:0.5.10+oneui6")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
     implementation("io.github.lemkinator:common-utils:0.7.3")
 
-    implementation("com.airbnb.android:lottie:6.6.3")
+    implementation("com.airbnb.android:lottie:6.6.4")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
@@ -119,8 +119,8 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
-    implementation("com.google.dagger:hilt-android:2.55")
-    ksp("com.google.dagger:hilt-compiler:2.55")
+    implementation("com.google.dagger:hilt-android:2.56")
+    ksp("com.google.dagger:hilt-compiler:2.56")
 }
 
 configurations.implementation {
