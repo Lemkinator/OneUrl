@@ -14,12 +14,12 @@ val releaseKeyPassword: String? by rootProject
 
 android {
     namespace = "de.lemke.oneurl"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 32
         versionName = "1.5.8"
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
