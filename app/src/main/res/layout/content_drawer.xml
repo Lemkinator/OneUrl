@@ -54,6 +54,45 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/drawerItemProvider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/drawer_item_list_ripple"
+            android:gravity="center_vertical">
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:gravity="start|center"
+                android:paddingEnd="14dp"
+                tools:ignore="RtlSymmetry">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_oui_open_split_view"
+                    app:tint="?android:textColorPrimary" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/drawerItemProviderTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="marquee"
+                android:paddingVertical="12dp"
+                android:singleLine="true"
+                android:text="@string/provider_info"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="17sp" />
+
+        </LinearLayout>
+
         <View style="@style/DrawerDividerStyle" />
 
         <LinearLayout

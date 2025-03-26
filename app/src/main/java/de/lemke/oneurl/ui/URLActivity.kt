@@ -41,6 +41,7 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.urlEncode
 import de.lemke.oneurl.domain.withHttps
+import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -225,10 +226,7 @@ class URLActivity : AppCompatActivity() {
                     true
                 }
 
-                R.id.url_bnv_provider_info -> {
-                    ProviderInfoBottomSheet.newInstance(url.shortURLProvider).show(supportFragmentManager, null)
-                    true
-                }
+                R.id.url_bnv_provider_info -> showProviderInfoBottomSheet(url.shortURLProvider).let { true }
 
                 R.id.url_bnv_add_to_fav -> {
                     it.isVisible = false

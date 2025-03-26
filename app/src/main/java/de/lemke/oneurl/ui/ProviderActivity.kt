@@ -20,6 +20,7 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.utils.ItemDecorRule
 import dev.oneuiproject.oneui.utils.SemItemDecoration
@@ -29,12 +30,12 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
     companion object {
-        const val KEY_INFO_ONLY = "key_info_only"
+        const val KEY_SELECT_PROVIDER = "key_select_provider"
     }
 
     private lateinit var binding: ActivityProviderBinding
     private var provider: List<ShortURLProvider> = ShortURLProviderCompanion.enabled
-    private var infoOnly = false
+    private var selectProvider = false
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -49,7 +50,7 @@ class ProviderActivity : AppCompatActivity() {
         setContentView(binding.root)
         setCustomBackPressAnimation(binding.root)
         initRecycler()
-        infoOnly = intent.getBooleanExtra(KEY_INFO_ONLY, false)
+        selectProvider = intent.getBooleanExtra(KEY_SELECT_PROVIDER, false)
         lifecycleScope.launch {
             binding.providerList.scrollToPosition(provider.indexOf(getUserSettings().selectedShortURLProvider))
         }
@@ -64,9 +65,6 @@ class ProviderActivity : AppCompatActivity() {
             enableCoreSeslFeatures()
         }
     }
-
-    private fun openInfoDialog(provider: ShortURLProvider) =
-        ProviderInfoBottomSheet.newInstance(provider).show(supportFragmentManager, null)
 
     inner class ProviderAdapter internal constructor() : RecyclerView.Adapter<ProviderAdapter.ViewHolder>() {
         override fun getItemCount(): Int = provider.size
@@ -84,17 +82,14 @@ class ProviderActivity : AppCompatActivity() {
                 } else iconView.visibility = View.GONE
             }
             holder.parentView.setOnClickListener {
-                if (infoOnly) openInfoDialog(provider[position])
+                if (!selectProvider) showProviderInfoBottomSheet(provider[position])
                 else lifecycleScope.launch {
                     updateUserSettings { it.copy(selectedShortURLProvider = provider[position]) }
                     finishAfterTransition()
                 }
             }
-            holder.iconLayout.setOnClickListener { openInfoDialog(provider[position]) }
-            holder.parentView.setOnLongClickListener {
-                openInfoDialog(provider[position])
-                true
-            }
+            holder.iconLayout.setOnClickListener { showProviderInfoBottomSheet(provider[position]) }
+            holder.parentView.setOnLongClickListener { showProviderInfoBottomSheet(provider[position]).let { true } }
         }
 
         inner class ViewHolder internal constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {

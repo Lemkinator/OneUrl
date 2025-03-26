@@ -8,7 +8,9 @@ import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.ImageButton
@@ -42,7 +44,13 @@ import de.lemke.commonutils.transformToActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
-import de.lemke.oneurl.domain.*
+import de.lemke.oneurl.domain.AppStart
+import de.lemke.oneurl.domain.CheckAppStartUseCase
+import de.lemke.oneurl.domain.DeleteURLUseCase
+import de.lemke.oneurl.domain.GetUserSettingsUseCase
+import de.lemke.oneurl.domain.ObserveURLsUseCase
+import de.lemke.oneurl.domain.UpdateURLUseCase
+import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -296,12 +304,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         drawerItemTitles.apply {
             clear()
             add(findViewById(R.id.drawerItemQrTitle))
+            add(findViewById(R.id.drawerItemProviderTitle))
             add(findViewById(R.id.drawerItemHelpTitle))
             add(findViewById(R.id.drawerItemAboutAppTitle))
             add(findViewById(R.id.drawerItemAboutMeTitle))
             add(findViewById(R.id.drawerItemSettingsTitle))
         }
         findViewById<LinearLayout>(R.id.drawerItemQr).apply { onSingleClick { transformToActivity(GenerateQRCodeActivity::class.java) } }
+        findViewById<LinearLayout>(R.id.drawerItemProvider).apply { onSingleClick { transformToActivity(ProviderActivity::class.java) } }
         findViewById<LinearLayout>(R.id.drawerItemHelp).apply { onSingleClick { transformToActivity(HelpActivity::class.java) } }
         findViewById<LinearLayout>(R.id.drawerItemAboutApp).apply { onSingleClick { transformToActivity(AboutActivity::class.java) } }
         findViewById<LinearLayout>(R.id.drawerItemAboutMe).apply { onSingleClick { transformToActivity(AboutMeActivity::class.java) } }

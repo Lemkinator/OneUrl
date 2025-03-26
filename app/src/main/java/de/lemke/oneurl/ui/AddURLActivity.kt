@@ -31,6 +31,8 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
+import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
+import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import kotlinx.coroutines.flow.collectLatest
@@ -104,11 +106,8 @@ class AddURLActivity : AppCompatActivity() {
         }
         binding.providerSelection.setOnClickListener {
             startActivity(
-                Intent(this, ProviderActivity::class.java),
-                ActivityOptions.makeSceneTransitionAnimation(
-                    this,
-                    Pair.create(binding.providerSelection, "provider_selection"),
-                ).toBundle()
+                Intent(this, ProviderActivity::class.java).putExtra(KEY_SELECT_PROVIDER, true),
+                ActivityOptions.makeSceneTransitionAnimation(this, Pair.create(binding.providerSelection, "provider_selection")).toBundle()
             )
         }
         observeUserSettings().flowWithLifecycle(lifecycle).collectLatest {
@@ -133,9 +132,7 @@ class AddURLActivity : AppCompatActivity() {
                 iconView.visibility = View.VISIBLE
             } else iconView.visibility = View.GONE
         }
-        binding.providerIconLayout.setOnClickListener {
-            ProviderInfoBottomSheet.newInstance(selectedShortURLProvider).show(supportFragmentManager, null)
-        }
+        binding.providerIconLayout.setOnClickListener { showProviderInfoBottomSheet(selectedShortURLProvider) }
         if (selectedShortURLProvider.aliasConfig != null) binding.textInputLayoutAlias.visibility = View.VISIBLE
         else binding.textInputLayoutAlias.visibility = View.GONE
         val tipsCardInfo = selectedShortURLProvider.getTipsCardTitleAndInfo(this)

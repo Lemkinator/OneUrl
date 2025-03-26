@@ -6,6 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.widget.AppCompatButton
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -16,22 +19,8 @@ import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 
 @AndroidEntryPoint
-class ProviderInfoBottomSheet: BottomSheetDialogFragment() {
+class ProviderInfoBottomSheet : BottomSheetDialogFragment() {
     private lateinit var binding: ViewProviderInfoBottomsheetBinding
-
-    companion object {
-        fun newInstance(
-            provider: ShortURLProvider
-        ): ProviderInfoBottomSheet {
-            return ProviderInfoBottomSheet().apply{
-                arguments = Bundle().apply {
-                    putString(KEY_PROVIDER, provider.name)
-                }
-            }
-        }
-
-        const val KEY_PROVIDER = "key_provider"
-    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
@@ -40,13 +29,10 @@ class ProviderInfoBottomSheet: BottomSheetDialogFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View = ViewProviderInfoBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        ViewProviderInfoBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
 
-    private fun androidx.appcompat.widget.AppCompatButton.setIcon(icon: Int) {
+    private fun AppCompatButton.setIcon(icon: Int) {
         setCompoundDrawablesRelativeWithIntrinsicBounds(AppCompatResources.getDrawable(requireContext(), icon), null, null, null)
     }
 
@@ -91,5 +77,19 @@ class ProviderInfoBottomSheet: BottomSheetDialogFragment() {
                 visibility = View.VISIBLE
             }
         }
+    }
+
+    companion object {
+        fun FragmentActivity.showProviderInfoBottomSheet(provider: ShortURLProvider) =
+            showProviderInfoBottomSheet(supportFragmentManager, provider)
+
+        fun showProviderInfoBottomSheet(fragmentManager: FragmentManager, provider: ShortURLProvider) =
+            newInstance(provider).show(fragmentManager, ProviderInfoBottomSheet::class.java.simpleName)
+
+        private fun newInstance(provider: ShortURLProvider): ProviderInfoBottomSheet = ProviderInfoBottomSheet().apply {
+            arguments = Bundle().apply { putString(KEY_PROVIDER, provider.name) }
+        }
+
+        const val KEY_PROVIDER = "key_provider"
     }
 }
