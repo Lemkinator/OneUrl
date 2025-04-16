@@ -39,8 +39,6 @@
 
         <activity android:name=".ui.OOBEActivity" />
         <activity android:name=".ui.HelpActivity" />
-        <activity android:name=".ui.AboutActivity" />
-        <activity android:name=".ui.AboutMeActivity" />
         <activity
             android:name=".ui.ProviderActivity"
             android:configChanges="orientation|screenLayout|screenSize" />
