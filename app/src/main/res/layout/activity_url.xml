@@ -254,14 +254,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="18dp"
-                    android:paddingVertical="12dp"
                     android:visibility="gone">
 
                     <TextView
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginVertical="18dp"
+                        android:layout_marginStart="18dp"
                         android:text="@string/visits"
                         android:textSize="18sp" />
 
@@ -270,6 +270,7 @@
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
                         android:layout_weight="1"
                         android:textSize="18sp" />
@@ -278,8 +279,10 @@
                         android:id="@+id/url_visits_refresh_button"
                         style="@style/ButtonStyle.Transparent"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:drawableEnd="@drawable/ic_oui_refresh" />
+                        android:layout_height="match_parent"
+                        android:layout_marginEnd="18dp"
+                        android:drawableEnd="@drawable/ic_oui_refresh"
+                        android:minHeight="24dp" />
 
                 </LinearLayout>
 
