@@ -111,10 +111,10 @@ dependencies {
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.github.skydoves:bundler:1.0.4")
 
-    implementation("androidx.core:core-splashscreen:1.2.0-beta01")
+    implementation("androidx.core:core-splashscreen:1.2.0-beta02")
     //noinspection GradleDependency until https://issuetracker.google.com/u/0/issues/342671895 is fixed
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-    val roomVersion = "2.7.0"
+    val roomVersion = "2.7.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
