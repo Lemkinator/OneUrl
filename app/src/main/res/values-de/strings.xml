@@ -48,7 +48,6 @@
     <string name="alias">Benutzerdefiniertes Kürzel</string>
     <string name="alias_optional">Benutzerdefiniertes Kürzel (Optional)</string>
     <string name="alias_hint">z.B.: xyz123</string>
-    <string name="add">Hinzufügen</string>
     <string name="to_url">Zur URL</string>
     <string name="url_added">URL hinzugefügt</string>
     <string name="checking_duplicates">Überprüfe auf Duplikate…</string>

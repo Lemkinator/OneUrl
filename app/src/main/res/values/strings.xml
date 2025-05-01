@@ -51,7 +51,6 @@
     <string name="alias">Custom alias</string>
     <string name="alias_optional">Custom alias (Optional)</string>
     <string name="alias_hint">e.g.: xyz123</string>
-    <string name="add">Add</string>
     <string name="to_url">To URL</string>
     <string name="url_added">URL added</string>
     <string name="checking_duplicates">Checking for duplicates…</string>
