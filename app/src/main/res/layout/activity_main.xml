@@ -72,6 +72,7 @@
 
         <dev.oneuiproject.oneui.widget.ScrollAwareFloatingActionButton
             android:id="@+id/add_fab"
+            style="@style/ButtonStyle.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
