@@ -36,6 +36,8 @@
 
     <!--Settings-->
     <string name="save_location">File storage location</string>
+    <string name="auto_copy_on_create">Automatic copying</string>
+    <string name="auto_copy_on_create_summary">Automatically copy the shortened URL to the clipboard</string>
 
     <!--OOBE-->
     <string name="oobe_onboard_msg1_title">Beautiful design</string>.

@@ -13,6 +13,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.prepareActivityTransformationBetween
 import de.lemke.commonutils.setCustomBackPressAnimation
@@ -266,7 +267,7 @@ class AddURLActivity : AppCompatActivity() {
                                 )
                             )
                             setLoading(null)
-                            this@AddURLActivity.toast(R.string.url_added)
+                            if (getUserSettings().autoCopyOnCreate) copyToClipboard(shortURL, title) else toast(R.string.url_added)
                             finishAfterTransition()
                         }
                     },

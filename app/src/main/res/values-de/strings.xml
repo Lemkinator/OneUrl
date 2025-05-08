@@ -33,6 +33,8 @@
 
     <!--Settings-->
     <string name="save_location">Dateispeicherort</string>
+    <string name="auto_copy_on_create">Automatisch kopieren</string>
+    <string name="auto_copy_on_create_summary">Automatisch die verkürzte URL in die Zwischenablage kopieren</string>
 
     <!--OOBE-->
     <string name="oobe_onboard_msg1_title">Schönes Design</string>
@@ -54,7 +56,6 @@
     <string name="checking_internet">Überprüfe Internetverbindung…</string>
     <string name="checking_url">Überprüfung der URL auf Blacklisting, Malware, Phishing, Spam oder Missbrauch…</string>
     <string name="generating_url">Generiere URL…</string>
-
 
     <!--Error-->
     <string name="error">Fehler</string>

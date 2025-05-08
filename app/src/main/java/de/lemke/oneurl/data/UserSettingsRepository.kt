@@ -56,6 +56,7 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_CURRENT_CATEGORY] = newSettings.currentCategory
             it[KEY_LAST_IN_APP_REVIEW_REQUEST] = newSettings.lastInAppReviewRequest
             it[KEY_SHOW_COPY_HINT] = newSettings.showCopyHint
+            it[KEY_AUTO_COPY_ON_CREATE] = newSettings.autoCopyOnCreate
         }
         return settingsFromPreferences(prefs)
     }
@@ -85,6 +86,7 @@ class UserSettingsRepository @Inject constructor(
         currentCategory = prefs[KEY_CURRENT_CATEGORY] ?: "",
         lastInAppReviewRequest = prefs[KEY_LAST_IN_APP_REVIEW_REQUEST] ?: System.currentTimeMillis(),
         showCopyHint = prefs[KEY_SHOW_COPY_HINT] != false,
+        autoCopyOnCreate = prefs[KEY_AUTO_COPY_ON_CREATE] == true,
     )
 
     private companion object {
@@ -111,6 +113,7 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_CURRENT_CATEGORY = stringPreferencesKey("currentCategory")
         private val KEY_LAST_IN_APP_REVIEW_REQUEST = longPreferencesKey("lastInAppReviewRequest")
         private val KEY_SHOW_COPY_HINT = booleanPreferencesKey("showCopyHint")
+        private val KEY_AUTO_COPY_ON_CREATE = booleanPreferencesKey("autoCopyOnCreate")
     }
 }
 
@@ -162,4 +165,6 @@ data class UserSettings(
     val lastInAppReviewRequest: Long,
     /** show copy to clipboard hint */
     val showCopyHint: Boolean,
+    /** auto copy short url on create */
+    val autoCopyOnCreate: Boolean,
 )

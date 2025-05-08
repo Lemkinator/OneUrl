@@ -63,6 +63,7 @@ class SettingsActivity : AppCompatActivity() {
         private lateinit var darkModePref: HorizontalRadioPreference
         private lateinit var autoDarkModePref: SwitchPreferenceCompat
         private lateinit var saveLocationPref: DropDownPreference
+        private lateinit var autoCopyOnCreatePref: SwitchPreferenceCompat
 
         @Inject
         lateinit var getUserSettings: GetUserSettingsUseCase
@@ -91,8 +92,10 @@ class SettingsActivity : AppCompatActivity() {
             darkModePref = findPreference("dark_mode_pref")!!
             autoDarkModePref = findPreference("dark_mode_auto_pref")!!
             saveLocationPref = findPreference("save_location_pref")!!
+            autoCopyOnCreatePref = findPreference("auto_copy_on_create_pref")!!
             autoDarkModePref.onPreferenceChangeListener = this
             saveLocationPref.onPreferenceChangeListener = this
+            autoCopyOnCreatePref.onPreferenceChangeListener = this
             darkModePref.onPreferenceChangeListener = this
             darkModePref.setDividerEnabled(false)
             darkModePref.setTouchEffectEnabled(false)
@@ -110,6 +113,7 @@ class SettingsActivity : AppCompatActivity() {
                     findPreference<PreferenceCategory>("dev_options")?.isVisible = userSettings.devModeEnabled
                     saveLocationPref.entries = SaveLocation.getLocalizedEntries(requireContext())
                     saveLocationPref.entryValues = SaveLocation.entryValues
+                    autoCopyOnCreatePref.isChecked = userSettings.autoCopyOnCreate
                     if (SDK_INT > Build.VERSION_CODES.Q) {
                         saveLocationPref.value = userSettings.saveLocation.name
                     } else {
@@ -172,6 +176,12 @@ class SettingsActivity : AppCompatActivity() {
                 "save_location_pref" -> {
                     val saveLocation = SaveLocation.fromStringOrDefault(newValue as String)
                     lifecycleScope.launch { updateUserSettings { it.copy(saveLocation = saveLocation) } }
+                    return true
+                }
+
+                "auto_copy_on_create_pref" -> {
+                    val autoCopyOnCreate = newValue as Boolean
+                    lifecycleScope.launch { updateUserSettings { it.copy(autoCopyOnCreate = autoCopyOnCreate) } }
                     return true
                 }
             }

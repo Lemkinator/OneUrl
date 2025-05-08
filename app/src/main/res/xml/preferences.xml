@@ -24,6 +24,11 @@
             android:title="@string/language"
             android:summary="@string/change_language"/>
 
+        <SwitchPreferenceCompat
+            android:key="auto_copy_on_create_pref"
+            android:title="@string/auto_copy_on_create"
+            android:summary="@string/auto_copy_on_create_summary"/>
+
         <DropDownPreference
             android:key="save_location_pref"
             android:title="@string/save_location"
