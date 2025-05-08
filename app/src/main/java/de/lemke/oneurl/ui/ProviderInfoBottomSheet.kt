@@ -5,11 +5,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,7 +26,7 @@ class ProviderInfoBottomSheet : BottomSheetDialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
             behavior.skipCollapsed = true
-            setOnShowListener { behavior.state = BottomSheetBehavior.STATE_EXPANDED }
+            setOnShowListener { behavior.state = STATE_EXPANDED }
         }
     }
 
@@ -33,7 +34,7 @@ class ProviderInfoBottomSheet : BottomSheetDialogFragment() {
         ViewProviderInfoBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
 
     private fun AppCompatButton.setIcon(icon: Int) {
-        setCompoundDrawablesRelativeWithIntrinsicBounds(AppCompatResources.getDrawable(requireContext(), icon), null, null, null)
+        setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(requireContext(), icon), null, null, null)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -41,8 +42,8 @@ class ProviderInfoBottomSheet : BottomSheetDialogFragment() {
         val provider = ShortURLProviderCompanion.fromString(requireArguments().getString(KEY_PROVIDER)!!)
         binding.providerBottomSheetTitle.text = provider.name
         if (provider.name != provider.group) {
-            binding.providerBottomSheetInfoGroup.visibility = View.VISIBLE
-            binding.providerBottomSheetInfoGroupText.visibility = View.VISIBLE
+            binding.providerBottomSheetInfoGroup.isVisible = true
+            binding.providerBottomSheetInfoGroupText.isVisible = true
             binding.providerBottomSheetInfoGroupText.text = provider.group
         }
         provider.getInfoContents(requireContext()).forEachIndexed { index, info ->
@@ -56,11 +57,11 @@ class ProviderInfoBottomSheet : BottomSheetDialogFragment() {
                 button.apply {
                     text = info.title
                     setIcon(info.icon)
-                    visibility = View.VISIBLE
+                    isVisible = true
                 }
                 textView.apply {
                     text = info.linkOrDescription
-                    visibility = View.VISIBLE
+                    isVisible = true
                 }
             }
         }
@@ -74,7 +75,7 @@ class ProviderInfoBottomSheet : BottomSheetDialogFragment() {
                 text = info.title
                 setIcon(info.icon)
                 setOnClickListener { openURL(info.linkOrDescription) }
-                visibility = View.VISIBLE
+                isVisible = true
             }
         }
     }

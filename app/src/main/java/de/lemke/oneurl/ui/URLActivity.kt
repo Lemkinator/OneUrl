@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.text.style.UnderlineSpan
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
@@ -15,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts.StartActivityFo
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
@@ -162,12 +162,12 @@ class URLActivity : AppCompatActivity() {
         binding.urlVisitsRefreshButton.animate().rotationBy(-1080f).setDuration(2500).interpolator = AccelerateDecelerateInterpolator()
         url.shortURLProvider.getURLClickCount(this, url) { count ->
             if (count != null) {
-                binding.urlVisitsDivider.visibility = View.VISIBLE
-                binding.urlVisitsLayout.visibility = View.VISIBLE
+                binding.urlVisitsDivider.isVisible = true
+                binding.urlVisitsLayout.isVisible = true
                 binding.urlVisitsTextview.text = count.toString()
             } else {
-                binding.urlVisitsDivider.visibility = View.GONE
-                binding.urlVisitsLayout.visibility = View.GONE
+                binding.urlVisitsDivider.isVisible = false
+                binding.urlVisitsLayout.isVisible = false
             }
             binding.urlVisitsRefreshButton.isEnabled = true
             binding.urlVisitsRefreshButton.alpha = 1f
@@ -200,13 +200,13 @@ class URLActivity : AppCompatActivity() {
         binding.urlLongShareButton.setOnClickListener { shareText(url.longURL) }
         if (url.title.isNotBlank()) {
             binding.urlTitleTextview.text = searchHighlighter(url.title, highlightText)
-            binding.urlTitleLayout.visibility = View.VISIBLE
-            binding.urlTitleDivider.visibility = View.VISIBLE
+            binding.urlTitleLayout.isVisible = true
+            binding.urlTitleDivider.isVisible = true
         }
         if (url.description.isNotBlank()) {
             binding.urlDescriptionTextview.text = searchHighlighter(url.description, highlightText)
-            binding.urlDescriptionLayout.visibility = View.VISIBLE
-            binding.urlDescriptionDivider.visibility = View.VISIBLE
+            binding.urlDescriptionLayout.isVisible = true
+            binding.urlDescriptionDivider.isVisible = true
         }
         binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, highlightText)
         binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
@@ -255,7 +255,6 @@ class URLActivity : AppCompatActivity() {
                             }
                         }
                         .setNegativeButton(de.lemke.commonutils.R.string.sesl_cancel, null)
-                        .create()
                         .show()
                 }.let { true }
 

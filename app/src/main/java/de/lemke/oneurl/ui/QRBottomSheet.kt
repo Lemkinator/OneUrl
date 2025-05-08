@@ -13,7 +13,8 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
-import com.google.android.material.bottomsheet.BottomSheetBehavior
+import androidx.core.view.isVisible
+import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.skydoves.bundler.bundleValue
@@ -27,7 +28,6 @@ import de.lemke.commonutils.saveBitmapToUri
 import de.lemke.commonutils.shareBitmap
 import de.lemke.oneurl.databinding.ViewQrBottomsheetBinding
 import java.io.ByteArrayOutputStream
-import kotlin.apply
 
 @AndroidEntryPoint
 class QRBottomSheet : BottomSheetDialogFragment() {
@@ -58,20 +58,20 @@ class QRBottomSheet : BottomSheetDialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
             behavior.skipCollapsed = true
-            setOnShowListener { behavior.state = BottomSheetBehavior.STATE_EXPANDED }
+            setOnShowListener { behavior.state = STATE_EXPANDED }
         }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View = ViewQrBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (requireContext().isSamsungQuickShareAvailable()) {
-            binding.quickShareButton.visibility = View.VISIBLE
+            binding.quickShareButton.isVisible = true
         }
         val shortURL: String = bundleValue(KEY_TITLE, "")
         val saveLocation: SaveLocation = SaveLocation.fromStringOrDefault(bundleValue(KEY_SAVE_LOCATION, ""))

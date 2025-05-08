@@ -7,8 +7,6 @@
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_animated</item>
         <item name="android:windowSplashScreenAnimationDuration">700</item>
         <item name="android:windowSplashScreenBrandingImage">@drawable/ic_branding</item>
-        <!--item name="android:windowSplashScreenIconBackgroundColor">@color/oui_background_color</item-->
-        <!--item name="android:windowSplashScreenBehavior" tools:targetApi="tiramisu">icon_preferred</item-->
     </style>
 
 </resources>

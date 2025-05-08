@@ -5,10 +5,10 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.util.Pair
-import android.view.View
-import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -129,12 +129,11 @@ class AddURLActivity : AppCompatActivity() {
         ).forEachIndexed { index, iconView ->
             if (index < infoContents.size) {
                 iconView.setImageResource(infoContents[index].icon)
-                iconView.visibility = View.VISIBLE
-            } else iconView.visibility = View.GONE
+                iconView.isVisible = true
+            } else iconView.isVisible = false
         }
         binding.providerIconLayout.setOnClickListener { showProviderInfoBottomSheet(selectedShortURLProvider) }
-        if (selectedShortURLProvider.aliasConfig != null) binding.textInputLayoutAlias.visibility = View.VISIBLE
-        else binding.textInputLayoutAlias.visibility = View.GONE
+        binding.textInputLayoutAlias.isVisible = selectedShortURLProvider.aliasConfig != null
         val tipsCardInfo = selectedShortURLProvider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {
             binding.addUrlBottomTip.setTitle(tipsCardInfo.first)
@@ -142,13 +141,13 @@ class AddURLActivity : AppCompatActivity() {
             binding.addUrlBottomTip.setLink(de.lemke.commonutils.R.string.more_information) {
                 openURL(selectedShortURLProvider.infoURL)
             }
-            binding.addUrlBottomTip.visibility = View.VISIBLE
-        } else binding.addUrlBottomTip.visibility = View.GONE
+            binding.addUrlBottomTip.isVisible = true
+        } else binding.addUrlBottomTip.isVisible = false
     }
 
     private fun initFooterButton() {
         if (resources.configuration.screenWidthDp < 360) {
-            binding.addUrlFooterButton.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            binding.addUrlFooterButton.layoutParams.width = MATCH_PARENT
         }
         binding.addUrlFooterButton.setOnClickListener { checkAndAddURL() }
     }
@@ -158,8 +157,8 @@ class AddURLActivity : AppCompatActivity() {
     private fun setLoading(message: String?) {
         val loading = !message.isNullOrBlank()
         binding.addUrlFooterProgressText.text = message
-        binding.addUrlFooterProgress.visibility = if (loading) View.VISIBLE else View.GONE
-        binding.addUrlFooterButton.visibility = if (loading) View.GONE else View.VISIBLE
+        binding.addUrlFooterProgress.isVisible = loading
+        binding.addUrlFooterButton.isVisible = !loading
         binding.providerSelection.isEnabled = !loading
         binding.editTextURL.isEnabled = !loading
         binding.editTextAlias.isEnabled = !loading
@@ -241,14 +240,10 @@ class AddURLActivity : AppCompatActivity() {
                                 setMessage(it.message)
                                 setNeutralButton(de.lemke.commonutils.R.string.ok, null)
                                 if (it.actionOne != null) {
-                                    setPositiveButton(it.actionOne.title) { _: DialogInterface, _: Int ->
-                                        it.actionOne.action()
-                                    }
+                                    setPositiveButton(it.actionOne.title) { _: DialogInterface, _: Int -> it.actionOne.action() }
                                 }
                                 if (it.actionTwo != null) {
-                                    setNegativeButton(it.actionTwo.title) { _: DialogInterface, _: Int ->
-                                        it.actionTwo.action()
-                                    }
+                                    setNegativeButton(it.actionTwo.title) { _: DialogInterface, _: Int -> it.actionTwo.action() }
                                 }
                                 show()
                             }

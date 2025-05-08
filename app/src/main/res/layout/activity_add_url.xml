@@ -30,7 +30,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
-                android:background="@color/oui_background_color"
+                android:background="?android:colorBackground"
                 android:orientation="horizontal"
                 android:transitionName="provider_selection">
 
@@ -105,7 +105,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginVertical="8dp"
-                android:background="@color/oui_background_color"
+                android:background="?android:colorBackground"
                 android:orientation="vertical"
                 android:paddingVertical="16dp">
 

@@ -11,7 +11,6 @@
         <item name="windowSplashScreenBackground">@color/oui_round_and_bgcolor</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
         <item name="windowSplashScreenAnimationDuration">700</item>
-        <!--item name="windowSplashScreenIconBackgroundColor">@color/oui_background_color</item-->
     </style>
 
 </resources>

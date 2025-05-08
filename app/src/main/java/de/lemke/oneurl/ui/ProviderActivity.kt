@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,7 +23,8 @@ import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
-import dev.oneuiproject.oneui.utils.ItemDecorRule
+import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
+import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -61,7 +63,7 @@ class ProviderActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@ProviderActivity)
             adapter = ProviderAdapter()
             itemAnimator = null
-            addItemDecoration(SemItemDecoration(this@ProviderActivity, dividerRule = ItemDecorRule.ALL, subHeaderRule = ItemDecorRule.NONE))
+            addItemDecoration(SemItemDecoration(this@ProviderActivity, dividerRule = ALL, subHeaderRule = NONE))
             enableCoreSeslFeatures()
         }
     }
@@ -78,8 +80,8 @@ class ProviderActivity : AppCompatActivity() {
             listOf(holder.icon1, holder.icon2, holder.icon3, holder.icon4).forEachIndexed { index, iconView ->
                 if (index < infoContents.size) {
                     iconView.setImageResource(infoContents[index].icon)
-                    iconView.visibility = View.VISIBLE
-                } else iconView.visibility = View.GONE
+                    iconView.isVisible = true
+                } else iconView.isVisible = false
             }
             holder.parentView.setOnClickListener {
                 if (!selectProvider) showProviderInfoBottomSheet(provider[position])

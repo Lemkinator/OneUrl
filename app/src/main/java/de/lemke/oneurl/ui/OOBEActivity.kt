@@ -5,7 +5,7 @@ import android.R.anim.fade_out
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
@@ -17,6 +17,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout.LayoutParams
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.oneurl.R
@@ -37,7 +38,7 @@ class OOBEActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
+        if (SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
         binding = ActivityOobeBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initTipsItems()
@@ -89,8 +90,8 @@ class OOBEActivity : AppCompatActivity() {
         }
         binding.oobeIntroFooterButton.setOnClickListener {
             binding.oobeIntroFooterTosText.isEnabled = false
-            binding.oobeIntroFooterButton.visibility = View.GONE
-            binding.oobeIntroFooterButtonProgress.visibility = View.VISIBLE
+            binding.oobeIntroFooterButton.isVisible = false
+            binding.oobeIntroFooterButtonProgress.isVisible = true
             lifecycleScope.launch {
                 updateUserSettings { it.copy(tosAccepted = true) }
                 openNextActivity()
@@ -100,7 +101,7 @@ class OOBEActivity : AppCompatActivity() {
 
     private fun openNextActivity() {
         startActivity(Intent(this@OOBEActivity, MainActivity::class.java))
-        @Suppress("DEPRECATION") if (Build.VERSION.SDK_INT < 34) overridePendingTransition(fade_in, fade_out)
+        @Suppress("DEPRECATION") if (SDK_INT < 34) overridePendingTransition(fade_in, fade_out)
         finishAfterTransition()
     }
 }

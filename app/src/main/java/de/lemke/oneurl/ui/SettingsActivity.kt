@@ -4,11 +4,16 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+import androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+import androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.DropDownPreference
@@ -91,7 +96,7 @@ class SettingsActivity : AppCompatActivity() {
             darkModePref.onPreferenceChangeListener = this
             darkModePref.setDividerEnabled(false)
             darkModePref.setTouchEffectEnabled(false)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (SDK_INT >= TIRAMISU) {
                 findPreference<PreferenceCategory>("general_pref_cat")!!.isVisible = true
                 findPreference<PreferenceScreen>("language_pref")!!.onPreferenceClickListener = OnPreferenceClickListener {
                     openAppLocaleSettings()
@@ -105,7 +110,7 @@ class SettingsActivity : AppCompatActivity() {
                     findPreference<PreferenceCategory>("dev_options")?.isVisible = userSettings.devModeEnabled
                     saveLocationPref.entries = SaveLocation.getLocalizedEntries(requireContext())
                     saveLocationPref.entryValues = SaveLocation.entryValues
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                    if (SDK_INT > Build.VERSION_CODES.Q) {
                         saveLocationPref.value = userSettings.saveLocation.name
                     } else {
                         saveLocationPref.value = SaveLocation.CUSTOM.name
@@ -122,7 +127,6 @@ class SettingsActivity : AppCompatActivity() {
                     .setTitle(getString(de.lemke.commonutils.R.string.tos))
                     .setMessage(getString(R.string.tos_content))
                     .setPositiveButton(de.lemke.commonutils.R.string.ok) { dialog: DialogInterface, _: Int -> dialog.dismiss() }
-                    .create()
                     .show()
                 true
             }
@@ -135,9 +139,6 @@ class SettingsActivity : AppCompatActivity() {
 
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
-            requireView().setBackgroundColor(
-                resources.getColor(dev.oneuiproject.oneui.design.R.color.oui_background_color, settingsActivity.theme)
-            )
             addRelativeLinksCard(
                 RelativeLink(getString(de.lemke.commonutils.R.string.share_app)) { shareApp() },
                 RelativeLink(getString(de.lemke.commonutils.R.string.rate_app)) { openApp(settingsActivity.packageName, false) }
@@ -149,12 +150,8 @@ class SettingsActivity : AppCompatActivity() {
             when (preference.key) {
                 "dark_mode_pref" -> {
                     val darkMode = newValue as String == "1"
-                    AppCompatDelegate.setDefaultNightMode(
-                        if (darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
-                    )
-                    lifecycleScope.launch {
-                        updateUserSettings { it.copy(darkMode = darkMode) }
-                    }
+                    setDefaultNightMode(if (darkMode) MODE_NIGHT_YES else MODE_NIGHT_NO)
+                    lifecycleScope.launch { updateUserSettings { it.copy(darkMode = darkMode) } }
                     return true
                 }
 
@@ -162,10 +159,10 @@ class SettingsActivity : AppCompatActivity() {
                     val autoDarkMode = newValue as Boolean
                     darkModePref.isEnabled = !autoDarkMode
                     lifecycleScope.launch {
-                        if (autoDarkMode) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                        if (autoDarkMode) setDefaultNightMode(MODE_NIGHT_FOLLOW_SYSTEM)
                         else {
-                            if (getUserSettings().darkMode) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                            else AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                            if (getUserSettings().darkMode) setDefaultNightMode(MODE_NIGHT_YES)
+                            else setDefaultNightMode(MODE_NIGHT_NO)
                         }
                         updateUserSettings { it.copy(autoDarkMode = newValue) }
                     }
@@ -174,9 +171,7 @@ class SettingsActivity : AppCompatActivity() {
 
                 "save_location_pref" -> {
                     val saveLocation = SaveLocation.fromStringOrDefault(newValue as String)
-                    lifecycleScope.launch {
-                        updateUserSettings { it.copy(saveLocation = saveLocation) }
-                    }
+                    lifecycleScope.launch { updateUserSettings { it.copy(saveLocation = saveLocation) } }
                     return true
                 }
             }

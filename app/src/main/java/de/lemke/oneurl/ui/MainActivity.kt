@@ -4,13 +4,18 @@ import android.R.anim.fade_in
 import android.R.anim.fade_out
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.Intent.ACTION_PROCESS_TEXT
+import android.content.Intent.ACTION_SEARCH
+import android.content.Intent.ACTION_SEND
+import android.content.Intent.EXTRA_PROCESS_TEXT
+import android.content.Intent.EXTRA_TEXT
+import android.graphics.ColorFilter
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -21,7 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.airbnb.lottie.LottieProperty
+import com.airbnb.lottie.LottieProperty.COLOR_FILTER
 import com.airbnb.lottie.SimpleColorFilter
 import com.airbnb.lottie.model.KeyPath
 import com.airbnb.lottie.value.LottieValueCallback
@@ -63,7 +68,8 @@ import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchOnActionMode
 import dev.oneuiproject.oneui.layout.startActionMode
-import dev.oneuiproject.oneui.utils.ItemDecorRule
+import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
+import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -170,10 +176,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         //manually waiting for the animation to finish :/
         delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
         startActivity(Intent(applicationContext, OOBEActivity::class.java))
-        if (SDK_INT < 34) {
-            @Suppress("DEPRECATION")
-            overridePendingTransition(fade_in, fade_out)
-        }
+        @Suppress("DEPRECATION") if (SDK_INT < 34) overridePendingTransition(fade_in, fade_out)
         finishAfterTransition()
     }
 
@@ -208,13 +211,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     }
 
     private fun checkIntent() {
-        val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
-        if (intent?.action == Intent.ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
+        val extraText = intent.getStringExtra(EXTRA_TEXT)
+        if (intent?.action == ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
             Log.d("MainActivity", "extraText: $extraText")
             binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", extraText))
         }
-        val textFromSelectMenu = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
-        if (intent?.action == Intent.ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
+        val textFromSelectMenu = intent.getCharSequenceExtra(EXTRA_PROCESS_TEXT)
+        if (intent?.action == ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
             Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
             binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()))
         }
@@ -222,7 +225,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent?.action == Intent.ACTION_SEARCH) binding.drawerLayout.setSearchQueryFromIntent(intent)
+        if (intent?.action == ACTION_SEARCH) binding.drawerLayout.setSearchQueryFromIntent(intent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.main, menu).let { true }
@@ -332,7 +335,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             }
             itemAnimator = null
             addItemDecoration(
-                SemItemDecoration(context, dividerRule = ItemDecorRule.ALL, subHeaderRule = ItemDecorRule.NONE).apply {
+                SemItemDecoration(context, dividerRule = ALL, subHeaderRule = NONE).apply {
                     setDividerInsetStart(92f.dpToPx(resources))
                 }
             )
@@ -353,7 +356,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
         if (urls.isEmpty()) {
-            binding.urlList.visibility = View.GONE
+            binding.urlList.isVisible = false
             binding.urlListLottie.cancelAnimation()
             binding.urlListLottie.progress = 0f
             binding.urlNoEntryText.text = when {
@@ -361,16 +364,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 filterFavorite.value -> getString(R.string.no_favorite_urls)
                 else -> getString(R.string.no_urls)
             }
-            binding.urlNoEntryScrollView.visibility = View.VISIBLE
-            binding.urlListLottie.addValueCallback(
-                KeyPath("**"),
-                LottieProperty.COLOR_FILTER,
-                LottieValueCallback(SimpleColorFilter(getColor(R.color.primary_color_themed)))
-            )
+            binding.urlNoEntryScrollView.isVisible = true
+            val callback = LottieValueCallback<ColorFilter>(SimpleColorFilter(getColor(R.color.primary_color_themed)))
+            binding.urlListLottie.addValueCallback(KeyPath("**"), COLOR_FILTER, callback)
             binding.urlListLottie.postDelayed({ binding.urlListLottie.playAnimation() }, 400)
         } else {
-            binding.urlNoEntryScrollView.visibility = View.GONE
-            binding.urlList.visibility = View.VISIBLE
+            binding.urlNoEntryScrollView.isVisible = false
+            binding.urlList.isVisible = true
             urlAdapter.submitList(urls)
         }
     }
