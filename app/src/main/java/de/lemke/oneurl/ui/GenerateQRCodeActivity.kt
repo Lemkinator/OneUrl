@@ -4,7 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
-import android.graphics.Color
+import android.graphics.Color.BLACK
+import android.graphics.Color.WHITE
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -33,13 +34,16 @@ import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
+import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
+import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class GenerateQRCodeActivity : AppCompatActivity() {
+class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private lateinit var url: String
     private lateinit var saveLocation: SaveLocation
@@ -92,6 +96,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             setCustomAnimatedOnBackPressedLogic(binding.root, showInAppReviewOrFinish.canShowInAppReview()) {
                 lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) }
             }
+            binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
         }
     }
 
@@ -119,7 +124,7 @@ class GenerateQRCodeActivity : AppCompatActivity() {
         generateQRCode()
         binding.qrCode.setOnClickListener {
             lifecycleScope.launch {
-                qrCode?.let { QRBottomSheet.newInstance(url, it, getUserSettings().saveLocation) }?.show(supportFragmentManager, null)
+                qrCode?.let { createQRBottomSheet(url, it, getUserSettings().saveLocation) }?.show(supportFragmentManager, null)
             }
         }
         binding.qrCode.setOnLongClickListener { qrCode?.copyToClipboard(this, "QR Code", "QRCode.png") == true }
@@ -172,7 +177,6 @@ class GenerateQRCodeActivity : AppCompatActivity() {
             }
             hideSoftInput()
             textView.clearFocus()
-
             true
         }
         binding.sizeSeekbar.max = maxSize
@@ -195,42 +199,40 @@ class GenerateQRCodeActivity : AppCompatActivity() {
         setButtonColors()
         binding.colorButtonBackground.setOnClickListener {
             lifecycleScope.launch {
-                val userSettingsColor = getUserSettings()
-                val dialog = SeslColorPickerDialog(
+                val userSettings = getUserSettings()
+                SeslColorPickerDialog(
                     this@GenerateQRCodeActivity,
                     { color: Int ->
                         backgroundColor = color
                         generateQRCode()
-                        val recentColors = userSettingsColor.qrRecentBackgroundColors.toMutableList()
-                        if (recentColors.size >= 6) recentColors.removeAt(5)
-                        recentColors.add(0, color)
+                        val recentColors = (listOf(color) + userSettings.qrRecentBackgroundColors).distinct().take(6)
                         lifecycleScope.launch { updateUserSettings { it.copy(qrRecentBackgroundColors = recentColors) } }
                         setButtonColors()
                     },
-                    userSettingsColor.qrRecentBackgroundColors.first(), buildIntArray(userSettingsColor.qrRecentBackgroundColors), true
-                )
-                dialog.setTransparencyControlEnabled(true)
-                dialog.show()
+                    userSettings.qrRecentBackgroundColors.first(), userSettings.qrRecentBackgroundColors.toIntArray(), true
+                ).apply {
+                    setTransparencyControlEnabled(true)
+                    show()
+                }
             }
         }
         binding.colorButtonForeground.setOnClickListener {
             lifecycleScope.launch {
-                val userSettingsColor = getUserSettings()
-                val dialog = SeslColorPickerDialog(
+                val userSettings = getUserSettings()
+                SeslColorPickerDialog(
                     this@GenerateQRCodeActivity,
                     { color: Int ->
                         foregroundColor = color
                         generateQRCode()
-                        val recentColors = userSettingsColor.qrRecentForegroundColors.toMutableList()
-                        if (recentColors.size >= 6) recentColors.removeAt(5)
-                        recentColors.add(0, color)
+                        val recentColors = (listOf(color) + userSettings.qrRecentForegroundColors).distinct().take(6)
                         lifecycleScope.launch { updateUserSettings { it.copy(qrRecentForegroundColors = recentColors) } }
                         setButtonColors()
                     },
-                    userSettingsColor.qrRecentForegroundColors.first(), buildIntArray(userSettingsColor.qrRecentForegroundColors), true
-                )
-                dialog.setTransparencyControlEnabled(true)
-                dialog.show()
+                    userSettings.qrRecentForegroundColors.first(), userSettings.qrRecentForegroundColors.toIntArray(), true
+                ).apply {
+                    setTransparencyControlEnabled(true)
+                    show()
+                }
             }
         }
     }
@@ -238,17 +240,8 @@ class GenerateQRCodeActivity : AppCompatActivity() {
     private fun setButtonColors() {
         binding.colorButtonBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)
         binding.colorButtonForeground.backgroundTintList = ColorStateList.valueOf(foregroundColor)
-        binding.colorButtonBackground.setTextColor(if (backgroundColor.toColor().luminance() >= 0.5) Color.BLACK else Color.WHITE)
-        binding.colorButtonForeground.setTextColor(if (foregroundColor.toColor().luminance() >= 0.5) Color.BLACK else Color.WHITE)
-    }
-
-    private fun buildIntArray(integers: List<Int>): IntArray {
-        val ints = IntArray(integers.size)
-        var i = 0
-        for (n in integers) {
-            ints[i++] = n
-        }
-        return ints
+        binding.colorButtonBackground.setTextColor(if (backgroundColor.toColor().luminance() >= 0.5) BLACK else WHITE)
+        binding.colorButtonForeground.setTextColor(if (foregroundColor.toColor().luminance() >= 0.5) BLACK else WHITE)
     }
 
     private fun generateQRCode() {

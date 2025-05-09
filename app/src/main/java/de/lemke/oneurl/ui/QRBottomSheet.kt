@@ -45,7 +45,7 @@ class QRBottomSheet : BottomSheetDialogFragment() {
         const val KEY_QR = "key_qr"
         const val KEY_SAVE_LOCATION = "key_save_location"
 
-        fun newInstance(title: String, qrCode: Bitmap, saveLocation: SaveLocation): QRBottomSheet =
+        fun createQRBottomSheet(title: String, qrCode: Bitmap, saveLocation: SaveLocation): QRBottomSheet =
             QRBottomSheet().apply {
                 arguments = intentOf {
                     +(KEY_TITLE to title)

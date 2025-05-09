@@ -12,6 +12,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginHorizontal="10dp"
         android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_location="main_content">
@@ -29,7 +30,6 @@
                 android:id="@+id/providerSelection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
                 android:background="?android:colorBackground"
                 android:orientation="horizontal"
                 android:transitionName="provider_selection">
@@ -103,8 +103,7 @@
                 android:id="@+id/urlInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginVertical="8dp"
+                android:layout_marginVertical="10dp"
                 android:background="?android:colorBackground"
                 android:orientation="vertical"
                 android:paddingVertical="16dp">
@@ -112,8 +111,8 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginBottom="10dp"
                     android:hint="@string/url"
                     app:endIconMode="clear_text"
                     app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
@@ -131,8 +130,8 @@
                     android:id="@+id/textInputLayoutAlias"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginBottom="10dp"
                     android:hint="@string/alias_optional"
                     app:endIconMode="clear_text"
                     app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
@@ -150,7 +149,7 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginHorizontal="10dp"
                     android:hint="@string/description"
                     app:endIconMode="clear_text"
                     app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed"
@@ -180,7 +179,7 @@
         android:id="@+id/addUrlFooterContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp"
+        android:layout_margin="10dp"
         android:orientation="vertical"
         app:layout_location="footer">
 

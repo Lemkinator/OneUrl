@@ -42,6 +42,7 @@ import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.urlEncode
 import de.lemke.oneurl.domain.withHttps
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
+import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -181,7 +182,7 @@ class URLActivity : AppCompatActivity() {
         val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
         binding.urlQrImageview.setImageBitmap(url.qr)
         binding.urlQrImageview.setOnClickListener {
-            lifecycleScope.launch { QRBottomSheet.newInstance(url.shortURL, url.qr, saveLocation).show(supportFragmentManager, null) }
+            lifecycleScope.launch { createQRBottomSheet(url.shortURL, url.qr, saveLocation).show(supportFragmentManager, null) }
         }
         binding.urlQrImageview.setOnLongClickListener { url.qr.copyToClipboard(this, "QR Code", "QRCode.png").let { true } }
         binding.urlQrSaveButton.setOnClickListener { exportBitmap(saveLocation, url.qr, url.shortURL, exportQRCodeResultLauncher) }

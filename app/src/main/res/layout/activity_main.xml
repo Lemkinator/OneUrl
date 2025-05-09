@@ -8,17 +8,19 @@
     app:expanded="false"
     app:title="@string/app_name">
 
-    <FrameLayout
+    <dev.oneuiproject.oneui.widget.RoundedFrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_location="main_content">
+        app:edgeInsetLeft="10dp"
+        app:edgeInsetRight="10dp"
+        app:roundedCorners="top_left|top_right">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/url_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?android:colorBackground"
-            android:scrollbars="vertical" />
+            android:paddingHorizontal="10dp" />
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/url_no_entry_scroll_view"
@@ -82,7 +84,7 @@
             android:transitionName="fabTransition"
             app:fabSize="normal" />
 
-    </FrameLayout>
+    </dev.oneuiproject.oneui.widget.RoundedFrameLayout>
 
     <include layout="@layout/content_drawer" />
 
