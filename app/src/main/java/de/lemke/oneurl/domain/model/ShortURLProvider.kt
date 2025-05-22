@@ -74,10 +74,10 @@ class ShortURLProviderCompanion {
             Zwsim,
             Spoome.Default,
             Spoome.Emoji,
-            Owovz.Owo,
-            Owovz.Zws,
-            Owovz.Sketchy,
-            Owovz.Gay,
+            Owovc.Owo, //disabled
+            Owovc.Zws, //disabled
+            Owovc.Sketchy, //disabled
+            Owovc.Gay, //disabled
         )
 
         /*

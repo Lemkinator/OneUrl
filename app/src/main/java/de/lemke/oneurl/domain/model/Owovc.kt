@@ -55,7 +55,8 @@ fail:
     "message": "link not found"
 }
  */
-sealed class Owovz : ShortURLProvider {
+sealed class Owovc : ShortURLProvider {
+    final override val enabled = false //disabled due to abuse :/
     final override val group = "owo.vc (zws, sketchy, gay)"
     final override val baseURL = "https://owo.vc"
     final override val apiURL = "$baseURL/api/v2/link"
@@ -90,7 +91,7 @@ sealed class Owovz : ShortURLProvider {
         )
     }
 
-    fun getOwovzCreateRequest(
+    fun getOwovcCreateRequest(
         context: Context,
         generator: String,
         longURL: String,
@@ -143,7 +144,7 @@ sealed class Owovz : ShortURLProvider {
         )
     }
 
-    object Owo : Owovz() {
+    object Owo : Owovc() {
         override val name = "owo.vc"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.info),
@@ -165,11 +166,11 @@ sealed class Owovz : ShortURLProvider {
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
-            getOwovzCreateRequest(context, "owo", longURL, successCallback, errorCallback)
+            getOwovcCreateRequest(context, "owo", longURL, successCallback, errorCallback)
 
     }
 
-    object Zws : Owovz() {
+    object Zws : Owovc() {
         override val name = "owo.vc (zws)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.info),
@@ -196,10 +197,10 @@ sealed class Owovz : ShortURLProvider {
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
-            getOwovzCreateRequest(context, "zws", longURL, successCallback, errorCallback)
+            getOwovcCreateRequest(context, "zws", longURL, successCallback, errorCallback)
     }
 
-    object Sketchy : Owovz() {
+    object Sketchy : Owovc() {
         override val name = "owo.vc (sketchy)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.info),
@@ -226,10 +227,10 @@ sealed class Owovz : ShortURLProvider {
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
-            getOwovzCreateRequest(context, "sketchy", longURL, successCallback, errorCallback)
+            getOwovcCreateRequest(context, "sketchy", longURL, successCallback, errorCallback)
     }
 
-    object Gay : Owovz() {
+    object Gay : Owovc() {
         override val name = "owo.vc (gay)"
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
             context.getString(de.lemke.commonutils.R.string.warning),
@@ -256,6 +257,6 @@ sealed class Owovz : ShortURLProvider {
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit
         ): JsonObjectRequest =
-            getOwovzCreateRequest(context, "gay", longURL, successCallback, errorCallback)
+            getOwovcCreateRequest(context, "gay", longURL, successCallback, errorCallback)
     }
 }
