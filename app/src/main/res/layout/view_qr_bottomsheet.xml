@@ -19,13 +19,13 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="vertical"
+            android:paddingHorizontal="10dp"
             android:paddingBottom="24dp">
 
             <TextView
                 android:id="@+id/title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
                 android:layout_marginBottom="20dp"
                 android:textAlignment="center"
                 android:textColor="?android:textColorPrimary"
@@ -34,14 +34,12 @@
             <dev.oneuiproject.oneui.widget.QRImageView
                 android:id="@+id/qrCode"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="10dp" />
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:id="@+id/noteTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
                 android:layout_marginVertical="20dp"
                 android:text="@string/scan_qr"
                 android:textAlignment="center"

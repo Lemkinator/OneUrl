@@ -7,16 +7,23 @@
     android:layout_height="match_parent"
     android:background="?roundedCornerColor"
     app:expanded="false"
+    app:expandable="false"
     app:showNavButtonAsBack="true"
     app:title="@string/generate_qr_code">
 
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
         android:fillViewport="true"
         android:paddingHorizontal="10dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layout_location="main_content">
+        android:paddingBottom="10dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,15 +42,16 @@
     </androidx.core.widget.NestedScrollView>
 
     <dev.oneuiproject.oneui.widget.RoundedLinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
         android:layout_marginHorizontal="10dp"
         android:layout_marginBottom="10dp"
+        android:layout_weight="1"
         android:background="?android:colorBackground"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        app:layout_location="footer">
+        android:paddingVertical="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -164,6 +172,8 @@
         </LinearLayout>
 
     </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
+
+    </LinearLayout>
 
 </dev.oneuiproject.oneui.layout.ToolbarLayout>
 

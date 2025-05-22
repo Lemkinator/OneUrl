@@ -4,11 +4,11 @@ import android.R.anim.fade_in
 import android.R.anim.fade_out
 import android.content.DialogInterface
 import android.content.Intent
-import android.graphics.Color
+import android.graphics.Color.TRANSPARENT
 import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.text.SpannableString
-import android.text.Spanned
+import android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.view.View
@@ -77,11 +77,11 @@ class OOBEActivity : AppCompatActivity() {
                 }
             },
             tosText.indexOf(tos), tosText.length - if (Locale.getDefault().language == "de") 4 else 1,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            SPAN_EXCLUSIVE_EXCLUSIVE
         )
         binding.oobeIntroFooterTosText.text = tosLink
         binding.oobeIntroFooterTosText.movementMethod = LinkMovementMethod.getInstance()
-        binding.oobeIntroFooterTosText.highlightColor = Color.TRANSPARENT
+        binding.oobeIntroFooterTosText.highlightColor = TRANSPARENT
     }
 
     private fun initFooterButton() {

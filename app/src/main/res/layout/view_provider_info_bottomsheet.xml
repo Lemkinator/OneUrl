@@ -37,6 +37,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
                 android:drawableStart="@drawable/ic_oui_list"
+                android:enabled="false"
+                android:minWidth="0dp"
                 android:padding="0dp"
                 android:text="@string/group"
                 android:visibility="gone" />
@@ -55,6 +57,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
+                android:enabled="false"
+                android:minWidth="0dp"
                 android:padding="0dp"
                 android:visibility="gone" />
 
@@ -72,6 +76,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
+                android:enabled="false"
+                android:minWidth="0dp"
                 android:padding="0dp"
                 android:visibility="gone" />
 
@@ -89,6 +95,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
+                android:enabled="false"
+                android:minWidth="0dp"
                 android:padding="0dp"
                 android:visibility="gone" />
 
@@ -106,6 +114,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
+                android:enabled="false"
+                android:minWidth="0dp"
                 android:padding="0dp"
                 android:visibility="gone" />
 
@@ -119,7 +129,7 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/providerBottomSheetInfoButton1"
-                style="@style/ButtonStyle.Filled.Themed"
+                style="@style/ButtonStyle.Filled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="30dp"
@@ -127,7 +137,7 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/providerBottomSheetInfoButton2"
-                style="@style/ButtonStyle.Filled.Themed"
+                style="@style/ButtonStyle.Filled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -135,7 +145,7 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/providerBottomSheetInfoButton3"
-                style="@style/ButtonStyle.Filled.Themed"
+                style="@style/ButtonStyle.Filled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"

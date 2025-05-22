@@ -66,7 +66,7 @@
                 style="@style/ButtonStyle.Colored"
                 android:layout_width="296dp"
                 android:layout_height="wrap_content"
-                android:text="@string/oui_common_continue" />
+                android:text="@string/oui_des_common_continue" />
 
             <androidx.appcompat.widget.SeslProgressBar
                 android:id="@+id/oobe_intro_footer_button_progress"

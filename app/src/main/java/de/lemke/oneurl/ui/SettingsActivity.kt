@@ -31,7 +31,7 @@ import de.lemke.commonutils.openAppLocaleSettings
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.sendEmailBugReport
-import de.lemke.commonutils.setCustomBackPressAnimation
+import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.commonutils.shareApp
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivitySettingsBinding
@@ -53,7 +53,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setCustomBackPressAnimation(binding.root)
+        setCustomBackAnimation(binding.root)
         if (savedInstanceState == null) supportFragmentManager.beginTransaction().replace(R.id.settings, SettingsFragment()).commit()
     }
 

@@ -12,7 +12,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginHorizontal="10dp"
+        android:paddingHorizontal="10dp"
         android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_location="main_content">
@@ -188,7 +188,7 @@
             style="@style/ButtonStyle.Colored"
             android:layout_width="296dp"
             android:layout_height="wrap_content"
-            android:text="@string/oui_common_add" />
+            android:text="@string/oui_des_common_add" />
 
         <LinearLayout
             android:id="@+id/addUrlFooterProgress"

@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.prepareActivityTransformationBetween
 import de.lemke.commonutils.sendEmailHelp
-import de.lemke.commonutils.setCustomBackPressAnimation
+import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.commonutils.transformToActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityHelpBinding
@@ -20,7 +20,7 @@ class HelpActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityHelpBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setCustomBackPressAnimation(binding.root)
+        setCustomBackAnimation(binding.root)
         binding.providerInfoButton.apply { onSingleClick { transformToActivity(ProviderActivity::class.java, "ProviderTransformation") } }
         binding.contactMeButton.setOnClickListener { sendEmailHelp(getString(R.string.email), getString(R.string.app_name)) }
     }

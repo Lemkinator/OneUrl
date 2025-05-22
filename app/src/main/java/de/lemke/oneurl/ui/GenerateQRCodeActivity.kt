@@ -26,15 +26,13 @@ import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.exportBitmap
 import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.saveBitmapToUri
-import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
+import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.commonutils.setWindowTransparent
 import de.lemke.commonutils.share
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
-import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
@@ -71,16 +69,12 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
-    @Inject
-    lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
-
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
         binding = ActivityGenerateQrCodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setWindowTransparent(true)
-        binding.toolbarLayout.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) } }
         lifecycleScope.launch {
             val userSettings = getUserSettings()
             url = userSettings.qrURL
@@ -93,9 +87,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             foregroundColor = userSettings.qrRecentForegroundColors.first()
             saveLocation = userSettings.saveLocation
             initViews()
-            setCustomAnimatedOnBackPressedLogic(binding.root, showInAppReviewOrFinish.canShowInAppReview()) {
-                lifecycleScope.launch { showInAppReviewOrFinish(this@GenerateQRCodeActivity) }
-            }
+            setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
             binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
         }
     }
@@ -122,12 +114,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     private fun initViews() {
         generateQRCode()
-        binding.qrCode.setOnClickListener {
-            lifecycleScope.launch {
-                qrCode?.let { createQRBottomSheet(url, it, getUserSettings().saveLocation) }?.show(supportFragmentManager, null)
-            }
-        }
-        binding.qrCode.setOnLongClickListener { qrCode?.copyToClipboard(this, "QR Code", "QRCode.png") == true }
+        binding.qrCode.setOnClickListener { qrCode?.copyToClipboard(this, "QR Code", "QRCode.png") == true }
         binding.editTextURL.setText(url)
         binding.editTextURL.requestFocus()
         binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }

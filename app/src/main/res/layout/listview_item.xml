@@ -72,7 +72,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:drawableEnd="@drawable/ic_oui_favorite_off" />
+            android:drawableEnd="@drawable/ic_oui_favorite_off"
+            android:minWidth="0dp" />
 
     </dev.oneuiproject.oneui.widget.SelectableLinearLayout>
 </FrameLayout>

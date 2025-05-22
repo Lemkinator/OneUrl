@@ -40,10 +40,10 @@
         <activity android:name=".ui.OOBEActivity" />
         <activity android:name=".ui.HelpActivity" />
         <activity
-            android:name=".ui.ProviderActivity"
-            android:configChanges="orientation|screenLayout|screenSize" />
-        <activity
             android:name=".ui.GenerateQRCodeActivity"
+            android:configChanges="screenLayout|screenSize" />
+        <activity
+            android:name=".ui.ProviderActivity"
             android:configChanges="orientation|screenLayout|screenSize" />
         <activity
             android:name=".ui.AddURLActivity"

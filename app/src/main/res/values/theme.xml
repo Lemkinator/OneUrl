@@ -3,12 +3,11 @@
 
     <style name="AppTheme" parent="OneUITheme">
         <item name="colorPrimary">@color/primary_color_themed</item>
-        <item name="colorPrimaryDark">@color/primary_color_themed</item>
     </style>
 
     <style name="AppTheme.Starting" parent="Theme.SplashScreen">
         <item name="postSplashScreenTheme">@style/AppTheme</item>
-        <item name="windowSplashScreenBackground">@color/oui_round_and_bgcolor</item>
+        <item name="windowSplashScreenBackground">@color/oui_des_round_and_bgcolor</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
         <item name="windowSplashScreenAnimationDuration">700</item>
     </style>

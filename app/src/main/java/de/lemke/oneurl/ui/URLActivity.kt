@@ -24,18 +24,18 @@ import de.lemke.commonutils.exportBitmap
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.saveBitmapToUri
-import de.lemke.commonutils.setCustomAnimatedOnBackPressedLogic
+import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.commonutils.setWindowTransparent
 import de.lemke.commonutils.shareBitmap
 import de.lemke.commonutils.shareText
 import de.lemke.commonutils.showDimmingTipPopup
+import de.lemke.commonutils.showInAppReviewOrFinish
 import de.lemke.commonutils.toast
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.ShowInAppReviewOrFinishUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
@@ -46,6 +46,7 @@ import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import dev.oneuiproject.oneui.design.R as designR
 
 @AndroidEntryPoint
 class URLActivity : AppCompatActivity() {
@@ -80,16 +81,12 @@ class URLActivity : AppCompatActivity() {
     @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
 
-    @Inject
-    lateinit var showInAppReviewOrFinish: ShowInAppReviewOrFinishUseCase
-
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
         binding = ActivityUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setWindowTransparent(true)
-        binding.root.setNavigationButtonOnClickListener { lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) } }
         lifecycleScope.launch {
             getURL(bundleValue<String>(KEY_SHORTURL, "")).let {
                 if (it == null) {
@@ -109,50 +106,20 @@ class URLActivity : AppCompatActivity() {
                     }
                 }, 500)
             }
-            setCustomAnimatedOnBackPressedLogic(binding.root, showInAppReviewOrFinish.canShowInAppReview()) {
-                lifecycleScope.launch { showInAppReviewOrFinish(this@URLActivity) }
-            }
+            setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.url_toolbar, menu)
-        return true
-    }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.url_toolbar, menu).let { true }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.url_toolbar_norton_safe_web -> {
-                openURL("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncode()}")
-                return true
-            }
-
-            R.id.url_toolbar_google_safe_browsing -> {
-                openURL("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncode()}")
-                return true
-            }
-
-            R.id.url_toolbar_link_shield -> {
-                openURL("https://linkshieldapi.com/?url=${url.longURL.urlEncode()}")
-                return true
-            }
-
-            R.id.url_toolbar_malshare -> {
-                openURL("https://malshare.com/search.php?query=${url.longURL.urlEncode()}")
-                return true
-            }
-
-            R.id.url_toolbar_urlhaus -> {
-                openURL("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncode()}")
-                return true
-            }
-
-            R.id.url_toolbar_kaspersky -> {
-                openURL("https://opentip.kaspersky.com/${url.longURL.urlEncode()}/?tab=lookup")
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.url_toolbar_norton_safe_web -> openURL("https://safeweb.norton.com/report/show?url=${url.longURL.urlEncode()}").let { true }
+        R.id.url_toolbar_google_safe_browsing -> openURL("https://transparencyreport.google.com/safe-browsing/search?url=${url.longURL.urlEncode()}").let { true }
+        R.id.url_toolbar_link_shield -> openURL("https://linkshieldapi.com/?url=${url.longURL.urlEncode()}").let { true }
+        R.id.url_toolbar_malshare -> openURL("https://malshare.com/search.php?query=${url.longURL.urlEncode()}").let { true }
+        R.id.url_toolbar_urlhaus -> openURL("https://urlhaus.abuse.ch/browse.php?search=${url.longURL.urlEncode()}").let { true }
+        R.id.url_toolbar_kaspersky -> openURL("https://opentip.kaspersky.com/${url.longURL.urlEncode()}/?tab=lookup").let { true }
+        else -> super.onOptionsItemSelected(item)
     }
 
     @SuppressLint("SetTextI18n")
@@ -220,7 +187,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav)?.isVisible = !url.favorite
         binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav)?.isVisible = url.favorite
         binding.urlBnv.setOnItemSelectedListener {
-            return@setOnItemSelectedListener when (it.itemId) {
+            when (it.itemId) {
                 R.id.url_bnv_analytics -> {
                     val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return@setOnItemSelectedListener false
                     openURL(analyticsURL)
@@ -252,10 +219,10 @@ class URLActivity : AppCompatActivity() {
                         .setPositiveButton(R.string.delete) { _, _ ->
                             lifecycleScope.launch {
                                 deleteURL(url)
-                                showInAppReviewOrFinish(this@URLActivity)
+                                showInAppReviewOrFinish()
                             }
                         }
-                        .setNegativeButton(de.lemke.commonutils.R.string.sesl_cancel, null)
+                        .setNegativeButton(designR.string.oui_des_common_cancel, null)
                         .show()
                 }.let { true }
 

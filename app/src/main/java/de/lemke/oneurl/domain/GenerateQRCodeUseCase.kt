@@ -4,18 +4,21 @@ package de.lemke.oneurl.domain
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
+import android.graphics.Color.BLACK
 import android.graphics.Paint
+import android.graphics.Paint.Style.FILL
+import android.graphics.Paint.Style.STROKE
 import android.graphics.RectF
 import android.util.Log
-import android.util.TypedValue
+import android.util.TypedValue.COMPLEX_UNIT_DIP
+import android.util.TypedValue.applyDimension
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.toColorInt
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.R
 import dev.oneuiproject.oneui.qr.QREncoder
 import javax.inject.Inject
-import androidx.core.graphics.toColorInt
-import androidx.core.graphics.createBitmap
 
 
 class GenerateQRCodeUseCase @Inject constructor(
@@ -41,7 +44,7 @@ class GenerateQRCodeUseCase @Inject constructor(
         drawIcon(result)
         val canvas = Canvas(result)
         val paint = Paint()
-        paint.color = Color.BLACK
+        paint.color = BLACK
         paint.alpha = 255
         paint.textSize = getPixel(16).toFloat()
         paint.isAntiAlias = true
@@ -69,7 +72,7 @@ class GenerateQRCodeUseCase @Inject constructor(
         canvas.drawBitmap(qrcode, border.toFloat(), border.toFloat(), null)
         paint.color = "#d0d0d0".toColorInt()
         paint.strokeWidth = 2f
-        paint.style = Paint.Style.STROKE
+        paint.style = STROKE
         rectF[1.0f, 1.0f, (newWidth - 1).toFloat()] = (newHeight - 1).toFloat()
         canvas.drawRoundRect(rectF, radius.toFloat(), radius.toFloat(), paint)
         return output
@@ -97,11 +100,11 @@ class GenerateQRCodeUseCase @Inject constructor(
     private fun getPaint(): Paint {
         val paint = Paint()
         paint.isAntiAlias = true
-        paint.style = Paint.Style.FILL
+        paint.style = FILL
         paint.color = "#fcfcfc".toColorInt()
         return paint
     }
 
     private fun getPixel(dp: Int): Int = if (context.resources == null) 0
-    else TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), context.resources.displayMetrics).toInt()
+    else applyDimension(COMPLEX_UNIT_DIP, dp.toFloat(), context.resources.displayMetrics).toInt()
 }

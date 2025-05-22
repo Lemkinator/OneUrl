@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.prepareActivityTransformationTo
-import de.lemke.commonutils.setCustomBackPressAnimation
+import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
@@ -50,7 +50,7 @@ class ProviderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setCustomBackPressAnimation(binding.root)
+        setCustomBackAnimation(binding.root)
         initRecycler()
         selectProvider = intent.getBooleanExtra(KEY_SELECT_PROVIDER, false)
         lifecycleScope.launch {

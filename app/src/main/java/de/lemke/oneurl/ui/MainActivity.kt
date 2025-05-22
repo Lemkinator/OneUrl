@@ -323,7 +323,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             findViewById(R.id.drawerListView)
         )
         //binding.drawerLayout.isImmersiveScroll = true
-        binding.urlNoEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)
+        binding.noEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)
     }
 
     private fun initRecycler() {
@@ -357,19 +357,19 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     private fun updateRecyclerView() {
         if (urls.isEmpty()) {
             binding.urlList.isVisible = false
-            binding.urlListLottie.cancelAnimation()
-            binding.urlListLottie.progress = 0f
-            binding.urlNoEntryText.text = when {
+            binding.noEntryLottie.cancelAnimation()
+            binding.noEntryLottie.progress = 0f
+            binding.noEntryText.text = when {
                 search.value != null -> getString(R.string.no_search_results)
                 filterFavorite.value -> getString(R.string.no_favorite_urls)
                 else -> getString(R.string.no_urls)
             }
-            binding.urlNoEntryScrollView.isVisible = true
+            binding.noEntryScrollView.isVisible = true
             val callback = LottieValueCallback<ColorFilter>(SimpleColorFilter(getColor(R.color.primary_color_themed)))
-            binding.urlListLottie.addValueCallback(KeyPath("**"), COLOR_FILTER, callback)
-            binding.urlListLottie.postDelayed({ binding.urlListLottie.playAnimation() }, 400)
+            binding.noEntryLottie.addValueCallback(KeyPath("**"), COLOR_FILTER, callback)
+            binding.noEntryLottie.postDelayed({ binding.noEntryLottie.playAnimation() }, 400)
         } else {
-            binding.urlNoEntryScrollView.isVisible = false
+            binding.noEntryScrollView.isVisible = false
             binding.urlList.isVisible = true
             urlAdapter.submitList(urls)
         }
@@ -399,7 +399,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             rightToLeftLabel = getString(R.string.add_to_fav),
             leftToRightLabel = getString(R.string.remove_from_fav),
             rightToLeftColor = getColor(R.color.primary_color_themed),
-            leftToRightColor = getColor(designR.color.oui_functional_red_color),
+            leftToRightColor = getColor(designR.color.oui_des_functional_red_color),
             rightToLeftDrawableRes = iconsR.drawable.ic_oui_favorite_on,
             leftToRightDrawableRes = iconsR.drawable.ic_oui_delete_outline,
             isRightSwipeEnabled = { !urlAdapter.isActionMode },

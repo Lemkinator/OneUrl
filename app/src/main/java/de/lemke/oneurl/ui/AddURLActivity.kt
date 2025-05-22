@@ -16,7 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.prepareActivityTransformationBetween
-import de.lemke.commonutils.setCustomBackPressAnimation
+import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.commonutils.toast
 import de.lemke.commonutils.transformToActivity
 import de.lemke.oneurl.R
@@ -76,7 +76,7 @@ class AddURLActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setCustomBackPressAnimation(binding.root)
+        setCustomBackAnimation(binding.root)
         binding.root.setNavigationButtonOnClickListener {
             hideSoftInput()
             finishAfterTransition()

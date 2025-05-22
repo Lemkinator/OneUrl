@@ -3,9 +3,13 @@ package de.lemke.oneurl.domain.generateURL
 
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
+import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
+import android.provider.Settings.ACTION_WIRELESS_SETTINGS
 import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.toast
@@ -31,10 +35,10 @@ class GenerateURLUseCase @Inject constructor(
         errorCallback: (error: GenerateURLError) -> Unit = { },
     ) = withContext(Dispatchers.Default) {
         setLoadingMessage(R.string.checking_internet)
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-        if (capabilities == null || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
-            !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        if (capabilities == null || !capabilities.hasCapability(NET_CAPABILITY_INTERNET) ||
+            !capabilities.hasCapability(NET_CAPABILITY_VALIDATED)
         ) {
             errorCallback(GenerateURLError.NoInternet(context))
             return@withContext
@@ -81,7 +85,7 @@ sealed class GenerateURLError(
             context.getString(de.lemke.commonutils.R.string.settings)
         ) {
             try {
-                context.startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                context.startActivity(Intent(ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             } catch (e: ActivityNotFoundException) {
                 context.toast(R.string.error)
             }

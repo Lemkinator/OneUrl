@@ -16,64 +16,52 @@
         app:roundedCorners="top_left|top_right">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/url_list"
+            android:id="@+id/urlList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?android:colorBackground"
             android:paddingHorizontal="10dp" />
 
         <androidx.core.widget.NestedScrollView
-            android:id="@+id/url_no_entry_scroll_view"
+            android:id="@+id/noEntryScrollView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <LinearLayout
-                android:id="@+id/url_no_entry_view"
+                android:id="@+id/noEntryView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <FrameLayout
-                    android:layout_width="102.0dp"
-                    android:layout_height="102.0dp">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="82.0dp"
-                        android:layout_height="82.0dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/sad_face_background"
-                        android:elevation="6.0dp" />
-
-                    <com.airbnb.lottie.LottieAnimationView
-                        android:id="@+id/url_list_lottie"
-                        android:layout_width="74.0dp"
-                        android:layout_height="74.0dp"
-                        android:layout_gravity="center"
-                        android:translationZ="7.0dp"
-                        app:lottie_autoPlay="false"
-                        app:lottie_fileName="sad_face.json"
-                        app:lottie_loop="false" />
-
-                </FrameLayout>
+                <com.airbnb.lottie.LottieAnimationView
+                    android:id="@+id/noEntryLottie"
+                    android:layout_width="74dp"
+                    android:layout_height="74dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="10dp"
+                    app:lottie_autoPlay="false"
+                    app:lottie_fileName="sad_face.json"
+                    app:lottie_loop="false" />
 
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/url_no_entry_text"
+                    android:id="@+id/noEntryText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/no_urls"
+                    android:layout_margin="10dp"
+                    android:text="@string/no_entry"
                     android:textColor="@color/commonutils_primary_text_icon_color_themed"
-                    android:textSize="17.0sp" />
+                    android:textSize="17sp" />
 
             </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
 
         <dev.oneuiproject.oneui.widget.ScrollAwareFloatingActionButton
-            android:id="@+id/add_fab"
+            android:id="@+id/addFab"
             style="@style/ButtonStyle.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
