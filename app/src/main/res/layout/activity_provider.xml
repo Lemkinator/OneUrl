@@ -21,7 +21,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?android:colorBackground"
-            android:paddingHorizontal="10dp" />
+            android:paddingHorizontal="10dp"
+            android:scrollbarStyle="outsideOverlay" />
 
     </dev.oneuiproject.oneui.widget.RoundedFrameLayout>
 

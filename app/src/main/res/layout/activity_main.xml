@@ -20,7 +20,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?android:colorBackground"
-            android:paddingHorizontal="10dp" />
+            android:paddingHorizontal="10dp"
+            android:scrollbarStyle="outsideOverlay" />
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/noEntryScrollView"
@@ -70,6 +71,8 @@
             android:contentDescription="@string/add_url"
             android:src="@drawable/ic_oui_add"
             android:transitionName="fabTransition"
+            app:backgroundTint="@color/oui_des_enabled_disabled_primary_color_selector"
+            android:tint="@color/oui_primary_icon_color"
             app:fabSize="normal" />
 
     </dev.oneuiproject.oneui.widget.RoundedFrameLayout>
