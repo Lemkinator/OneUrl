@@ -91,9 +91,7 @@ fabric.properties
 .kotlin/
 
 /build
-/release
-app/release
-!app/release/app-release.apk
+*.aab
 
 /captures
 .externalNativeBuild
