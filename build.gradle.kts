@@ -1,31 +1,29 @@
 import java.util.Properties
 
 /**
- * Note: To configure GitHub credentials, you have to do one of the following:
- * <ul>
- *      <li>Add `githubUsername` and `githubAccessToken` to Global Gradle Properties</li>
- *      <li>Set `GITHUB_USERNAME` and `GITHUB_ACCESS_TOKEN` in your environment variables</li>
- *      <li>Create a `github.properties` file in your project folder with the following content:</li>
- * </ul>
- *
- * <pre>
- *   githubUsername="YOUR_GITHUB_USERNAME"
- *   githubAccessToken="YOUR_GITHUB_ACCESS_TOKEN"
- * </pre>
+ * Converts a camelCase or mixedCase string to ENV_VAR_STYLE (uppercase with underscores).
+ * Example: githubAccessToken -> GITHUB_ACCESS_TOKEN
  */
-val githubProperties = Properties().apply {
-    rootProject.file("github.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
-}
+fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
 
-val githubUsername: String = rootProject.findProperty("githubUsername") as String? // Global Gradle Properties
-    ?: githubProperties.getProperty("githubUsername") // github.properties file
-    ?: System.getenv("GITHUB_USERNAME") // Environment Variables
-    ?: error("GitHub username not found")
+/**
+ * Note: To configure GitHub credentials, you have to generate an access token with at least `read:packages` scope at
+ * https://github.com/settings/tokens/new and then add it to any of the following:
+ *
+ * - Add `ghUsername` and `ghAccessToken` to Global Gradle Properties
+ * - Set `GH_USERNAME` and `GH_ACCESS_TOKEN` in your environment variables or
+ * - Create a `github.properties` file in your project folder with the following content:
+ *      ghUsername=&lt;YOUR_GITHUB_USERNAME&gt;
+ *      ghAccessToken=&lt;YOUR_GITHUB_ACCESS_TOKEN&gt;
+ */
+fun getProperty(key: String): String =
+    Properties().apply { rootProject.file("github.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) } }.getProperty(key)
+        ?: rootProject.findProperty(key)?.toString()
+        ?: System.getenv(key.toEnvVarStyle())
+        ?: throw GradleException("Property $key not found")
 
-val githubAccessToken: String = rootProject.findProperty("githubAccessToken") as String? // Global Gradle Properties
-    ?: githubProperties.getProperty("githubAccessToken") // github.properties file
-    ?: System.getenv("GITHUB_ACCESS_TOKEN") // Environment Variables
-    ?: error("GitHub Access Token not found")
+val githubUsername = getProperty("ghUsername")
+val githubAccessToken = getProperty("ghAccessToken")
 
 buildscript {
     repositories {
