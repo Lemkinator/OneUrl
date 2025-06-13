@@ -99,10 +99,10 @@ dependencies {
     implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl7+rev0")
     //SESL Material Components + Design Lib + Icons
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.39-sesl7+rev5")
-    implementation("io.github.tribalfs:oneui-design:0.5.16+oneui7")
+    implementation("io.github.tribalfs:oneui-design:0.6.3+oneui7")
     implementation("io.github.oneuiproject:icons:1.1.0")
 
-    implementation("io.github.lemkinator:common-utils:0.8.11")
+    implementation("io.github.lemkinator:common-utils:0.8.13")
 
     implementation("com.airbnb.android:lottie:6.6.6")
     implementation("com.google.android.play:review-ktx:2.0.2")
