@@ -141,7 +141,7 @@
             <dev.oneuiproject.oneui.widget.RoundedLinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="5dp"
                 android:background="?android:colorBackground"
                 android:orientation="vertical">
 
@@ -293,6 +293,14 @@
                 </LinearLayout>
 
             </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
+
+            <dev.oneuiproject.oneui.widget.BottomTipView
+                android:id="@+id/bottomTipView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:title="@string/tip"
+                app:linkText="@string/copy_shortened_url"
+                app:summary="@string/copy_to_clipboard_hint" />
 
         </LinearLayout>
 

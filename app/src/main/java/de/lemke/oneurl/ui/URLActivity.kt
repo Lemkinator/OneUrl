@@ -13,7 +13,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.skydoves.bundler.bundleValue
@@ -28,7 +27,6 @@ import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.commonutils.setWindowTransparent
 import de.lemke.commonutils.shareBitmap
 import de.lemke.commonutils.shareText
-import de.lemke.commonutils.showDimmingTipPopup
 import de.lemke.commonutils.showInAppReviewOrFinish
 import de.lemke.commonutils.toast
 import de.lemke.oneurl.R
@@ -99,13 +97,6 @@ class URLActivity : AppCompatActivity() {
             val userSettings = getUserSettings()
             saveLocation = userSettings.saveLocation
             initViews()
-            if (userSettings.showCopyHint) binding.urlShortButton.doOnLayout {
-                it.postDelayed({
-                    it.showDimmingTipPopup(R.string.copy_to_clipboard_hint, de.lemke.commonutils.R.string.dont_show_again) {
-                        lifecycleScope.launch { updateUserSettings { it.copy(showCopyHint = false) } }
-                    }
-                }, 500)
-            }
             setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
         }
     }
@@ -179,6 +170,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, highlightText)
         binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
         refreshVisitCount()
+        binding.bottomTipView.setOnLinkClickListener { copyToClipboard("Short URL", url.shortURL) }
         setupBottomNav()
     }
 

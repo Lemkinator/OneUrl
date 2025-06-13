@@ -53,7 +53,6 @@ class UserSettingsRepository @Inject constructor(
             it[KEY_QR_TINT_BORDER] = newSettings.qrTintBorder
             it[KEY_SAVE_LOCATION] = newSettings.saveLocation.ordinal
             it[KEY_CURRENT_CATEGORY] = newSettings.currentCategory
-            it[KEY_SHOW_COPY_HINT] = newSettings.showCopyHint
             it[KEY_AUTO_COPY_ON_CREATE] = newSettings.autoCopyOnCreate
         }
         return settingsFromPreferences(prefs)
@@ -82,7 +81,6 @@ class UserSettingsRepository @Inject constructor(
         qrTintBorder = prefs[KEY_QR_TINT_BORDER] == true,
         saveLocation = SaveLocation.entries[prefs[KEY_SAVE_LOCATION] ?: SaveLocation.default.ordinal],
         currentCategory = prefs[KEY_CURRENT_CATEGORY] ?: "",
-        showCopyHint = prefs[KEY_SHOW_COPY_HINT] != false,
         autoCopyOnCreate = prefs[KEY_AUTO_COPY_ON_CREATE] == true,
     )
 
@@ -108,7 +106,6 @@ class UserSettingsRepository @Inject constructor(
         private val KEY_QR_TINT_BORDER = booleanPreferencesKey("qrTintBorder")
         private val KEY_SAVE_LOCATION = intPreferencesKey("saveLocation")
         private val KEY_CURRENT_CATEGORY = stringPreferencesKey("currentCategory")
-        private val KEY_SHOW_COPY_HINT = booleanPreferencesKey("showCopyHint")
         private val KEY_AUTO_COPY_ON_CREATE = booleanPreferencesKey("autoCopyOnCreate")
     }
 }
@@ -157,8 +154,6 @@ data class UserSettings(
     val saveLocation: SaveLocation,
     /** current category */
     val currentCategory: String,
-    /** show copy to clipboard hint */
-    val showCopyHint: Boolean,
     /** auto copy short url on create */
     val autoCopyOnCreate: Boolean,
 )
