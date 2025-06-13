@@ -20,7 +20,6 @@ android {
         targetSdk = 36
         versionCode = 36
         versionName = "1.6.3"
-        ksp { arg("room.schemaLocation", "$projectDir/schemas") }
     }
 
     @Suppress("UnstableApiUsage")
@@ -84,6 +83,8 @@ android {
         }
     }
 }
+
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
 secrets {
     propertiesFileName = "secrets.properties"
