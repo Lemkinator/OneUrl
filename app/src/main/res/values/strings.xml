@@ -4,6 +4,7 @@
     <string name="email" translatable="false">oneurl@leonard-lemke.com</string>
     <string name="privacy_website" translatable="false">https://www.leonard-lemke.com/apps/oneurl/privacy-policy</string>
     <string name="shorten_url">Shorten URL (OneURL)</string>
+    <string name="copy_shortened_url">Copy shortened URL</string>
     <string name="copy_to_clipboard_hint">Long press URLs or QR codes to copy them to the clipboard.</string>
 
     <!--Help-->
@@ -53,12 +54,21 @@
     <string name="alias">Custom alias</string>
     <string name="alias_optional">Custom alias (Optional)</string>
     <string name="alias_hint">e.g.: xyz123</string>
+    <string name="description">Description (Optional)</string>
+    <string name="description_hint">e.g.: My website</string>
     <string name="to_url">To URL</string>
     <string name="url_added">URL added</string>
     <string name="checking_duplicates">Checking for duplicates…</string>
     <string name="checking_internet">Checking internet connection…</string>
     <string name="checking_url">Checking the URL for blacklisting, malware, phishing, spam or abuse…</string>
     <string name="generating_url">Generating URL…</string>
+
+    <!--URL-->
+    <string name="url">URL</string>
+    <string name="description_">"Description: "</string>
+    <string name="title_">"Title: "</string>
+    <string name="created">"Created: "</string>
+    <string name="visits">"Visits: "</string>
 
     <!--Error-->
     <string name="error">Error</string>
@@ -113,18 +123,11 @@
     <string name="scan_qr">Scan this QR code on another device to view the url.</string>
 
     <!--Others-->
-    <string name="url">URL</string>
     <string name="remove_from_fav">Remove from favorites</string>
     <string name="add_to_fav">Add to favorites</string>
     <string name="delete">Delete</string>
     <string name="show_all">Show all</string>
     <string name="only_show_favorites">Only show favorites</string>
     <string name="delete_url_message">Do you really want to delete this URL?</string>
-    <string name="description">Description</string>
-    <string name="description_">"Description: "</string>
-    <string name="title_">"Title: "</string>
-    <string name="created">"Created: "</string>
-    <string name="visits">"Visits: "</string>
-    <string name="description_hint">e.g.: My website</string>
 
 </resources>
