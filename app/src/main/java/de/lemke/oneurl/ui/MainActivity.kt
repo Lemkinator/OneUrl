@@ -10,8 +10,8 @@ import android.content.Intent.ACTION_SEND
 import android.content.Intent.EXTRA_PROCESS_TEXT
 import android.content.Intent.EXTRA_TEXT
 import android.graphics.ColorFilter
-import android.os.Build
 import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -54,6 +54,7 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.URLAdapter.Payload.SELECTION_MODE
 import dev.oneuiproject.oneui.delegates.AllSelectorState
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
@@ -202,7 +203,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     binding.urlList.smoothScrollToPosition(0)
                     scrollToTop = false
                 }
-
                 //manually waiting for the splash animation to finish :/
                 if (!isUIReady) delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
                 isUIReady = true
@@ -261,29 +261,22 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         private fun setSearch(query: String?): Boolean {
             if (search.value == null) return false
             search.value = query ?: ""
-            updateRecyclerView()
             urlAdapter.highlightWord = search.value ?: ""
             lifecycleScope.launch { updateUserSettings { it.copy(search = query ?: "") } }
             return true
         }
 
-        override fun onSearchModeToggle(searchView: SearchView, visible: Boolean) {
-            if (visible)
-                lifecycleScope.launch {
-                    search.value = getUserSettings().search
-                    binding.addFab.isVisible = false
-                    searchView.setQuery(search.value, false)
-                    val autoCompleteTextView = searchView.seslGetAutoCompleteView()
-                    autoCompleteTextView.setText(search.value)
-                    autoCompleteTextView.setSelection(autoCompleteTextView.text.length)
-                    updateRecyclerView()
-                } else {
+        override fun onSearchModeToggle(searchView: SearchView, isActive: Boolean) {
+            if (isActive) lifecycleScope.launch {
+                search.value = getUserSettings().search
+                binding.addFab.isVisible = false
+                searchView.setQuery(search.value, false)
+            } else {
                 search.value = null
                 if (!binding.drawerLayout.isActionMode) {
                     binding.addFab.isVisible = true
                     binding.addFab.show() //sometimes fab does not show after action mode ends
                 }
-                updateRecyclerView()
                 urlAdapter.highlightWord = ""
             }
         }
@@ -329,26 +322,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     private fun initRecycler() {
         binding.urlList.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = URLAdapter(context).also {
-                it.setupOnClickListeners()
-                urlAdapter = it
-            }
+            adapter = URLAdapter(context).also { it.setupOnClickListeners(); urlAdapter = it }
             itemAnimator = null
-            addItemDecoration(
-                SemItemDecoration(context, dividerRule = ALL, subHeaderRule = NONE).apply {
-                    setDividerInsetStart(92f.dpToPx(resources))
-                }
-            )
+            addItemDecoration(SemItemDecoration(context, ALL, NONE).apply { setDividerInsetStart(92f.dpToPx(resources)) })
             enableCoreSeslFeatures()
             hideSoftInputOnScroll()
-            if (SDK_INT >= Build.VERSION_CODES.R) configureImmBottomPadding(binding.drawerLayout)
+            if (SDK_INT >= VERSION_CODES.R) configureImmBottomPadding(binding.drawerLayout)
         }
-
-        urlAdapter.configure(
-            binding.urlList,
-            URLAdapter.Payload.SELECTION_MODE,
-            onAllSelectorStateChanged = { allSelectorStateFlow.value = it }
-        )
+        urlAdapter.configure(binding.urlList, SELECTION_MODE, onAllSelectorStateChanged = { allSelectorStateFlow.value = it })
         configureItemSwipeAnimator()
         updateRecyclerView()
     }
