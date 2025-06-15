@@ -16,7 +16,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.LinearLayout
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -33,11 +33,12 @@ import com.airbnb.lottie.value.LottieValueCallback
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.AboutActivity
 import de.lemke.commonutils.AboutMeActivity
+import de.lemke.commonutils.onNavigationSingleClick
 import de.lemke.commonutils.prepareActivityTransformationFrom
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
-import de.lemke.commonutils.setup
 import de.lemke.commonutils.setupCommonActivities
+import de.lemke.commonutils.setupHeaderAndNavRail
 import de.lemke.commonutils.toast
 import de.lemke.commonutils.transformToActivity
 import de.lemke.oneurl.BuildConfig
@@ -297,24 +298,19 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
-        findViewById<LinearLayout>(R.id.drawerItemQr).apply { onSingleClick { transformToActivity(GenerateQRCodeActivity::class.java) } }
-        findViewById<LinearLayout>(R.id.drawerItemProvider).apply { onSingleClick { transformToActivity(ProviderActivity::class.java) } }
-        findViewById<LinearLayout>(R.id.drawerItemHelp).apply { onSingleClick { transformToActivity(HelpActivity::class.java) } }
-        findViewById<LinearLayout>(R.id.drawerItemAboutApp).apply { onSingleClick { transformToActivity(AboutActivity::class.java) } }
-        findViewById<LinearLayout>(R.id.drawerItemAboutMe).apply { onSingleClick { transformToActivity(AboutMeActivity::class.java) } }
-        findViewById<LinearLayout>(R.id.drawerItemSettings).apply { onSingleClick { transformToActivity(SettingsActivity::class.java) } }
-        binding.drawerLayout.setup(
-            getString(R.string.about_app),
-            mutableListOf(
-                findViewById(R.id.drawerItemQrTitle),
-                findViewById(R.id.drawerItemProviderTitle),
-                findViewById(R.id.drawerItemHelpTitle),
-                findViewById(R.id.drawerItemAboutAppTitle),
-                findViewById(R.id.drawerItemAboutMeTitle),
-                findViewById(R.id.drawerItemSettingsTitle),
-            ),
-            findViewById(R.id.drawerListView)
-        )
+        binding.navigationView.onNavigationSingleClick { item ->
+            when (item.itemId) {
+                R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
+                R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToActivity(ProviderActivity::class.java)
+                R.id.help_dest -> findViewById<View>(R.id.help_dest).transformToActivity(HelpActivity::class.java)
+                R.id.about_app_dest -> findViewById<View>(R.id.about_app_dest).transformToActivity(AboutActivity::class.java)
+                R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(AboutMeActivity::class.java)
+                R.id.settings_dest -> findViewById<View>(R.id.settings_dest).transformToActivity(SettingsActivity::class.java)
+                else -> return@onNavigationSingleClick false
+            }
+            true
+        }
+        binding.drawerLayout.setupHeaderAndNavRail(getString(R.string.about_app))
         //binding.drawerLayout.isImmersiveScroll = true
         binding.noEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)
     }

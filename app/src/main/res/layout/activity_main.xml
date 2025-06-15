@@ -8,6 +8,13 @@
     app:expanded="false"
     app:title="@string/app_name">
 
+    <dev.oneuiproject.oneui.navigation.widget.DrawerNavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_location="drawer_panel"
+        app:menu="@menu/menu_navigation" />
+
     <dev.oneuiproject.oneui.widget.RoundedFrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -76,7 +83,5 @@
             app:fabSize="normal" />
 
     </dev.oneuiproject.oneui.widget.RoundedFrameLayout>
-
-    <include layout="@layout/content_drawer" />
 
 </dev.oneuiproject.oneui.layout.NavDrawerLayout>

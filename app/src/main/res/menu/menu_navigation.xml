@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="AppCompatResource,HardcodedText,AlwaysShowAction">
+
+    <item
+        android:id="@+id/qr_code_dest"
+        android:icon="@drawable/ic_oui_qr_code"
+        android:title="@string/generate_qr_code"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/provider_dest"
+        android:icon="@drawable/ic_oui_open_split_view"
+        android:title="@string/provider_info"
+        app:showAsAction="always" />
+
+    <group android:id="@+id/navigation_about_group">
+
+        <item
+            android:id="@+id/help_dest"
+            android:icon="@drawable/ic_oui_help_outline"
+            android:title="@string/help"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/about_app_dest"
+            android:icon="@drawable/ic_oui_info_outline"
+            android:title="@string/about_app"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/about_me_dest"
+            android:icon="@drawable/ic_oui_contact_outline"
+            android:title="@string/about_me"
+            app:showAsAction="always" />
+
+    </group>
+
+    <item
+        android:id="@+id/settings_dest"
+        android:icon="@drawable/ic_oui_settings_outline"
+        android:title="@string/settings"
+        app:showAsAction="always" />
+
+</menu>
