@@ -16,6 +16,7 @@
 [![](https://img.shields.io/github/contributors/Lemkinator/OneURL)](https://github.com/Lemkinator/OneURL/graphs/contributors)
 [![](https://img.shields.io/github/repo-size/Lemkinator/OneURL)](https://github.com/Lemkinator/OneURL)
 [![](https://sloc.xyz/github/Lemkinator/OneURL)](https://github.com/Lemkinator/OneURL)
+[![CodeFactor](https://www.codefactor.io/repository/github/lemkinator/oneurl/badge)](https://www.codefactor.io/repository/github/lemkinator/oneurl)
 
 # OneURL
 
