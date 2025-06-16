@@ -64,7 +64,7 @@ object Oneptco : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
-        val url = apiURL + "?long=$longURL" + (if (alias.isBlank()) "" else "&short=$alias")
+        val url = apiURL + "?long=$longURL" + if (alias.isBlank()) "" else "&short=$alias"
         Log.d(tag, "start request: $url")
         return object : JsonObjectRequest(
             Method.POST,

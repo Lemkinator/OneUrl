@@ -118,7 +118,7 @@ object Dagd : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
         val tag = "CreateRequest_create_$name"
-        val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&shorturl=$alias")
+        val url = apiURL + "?url=" + longURL + if (alias.isBlank()) "" else "&shorturl=$alias"
         Log.d(tag, "start request: $url")
         return StringRequest(
             Request.Method.GET,

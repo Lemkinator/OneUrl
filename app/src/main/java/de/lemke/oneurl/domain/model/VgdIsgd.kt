@@ -38,7 +38,7 @@ sealed class VgdIsgd : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
-        val url = apiURL + "?format=json&url=" + longURL + (if (alias.isBlank()) "" else "&shorturl=$alias&logstats=1")
+        val url = apiURL + "?format=json&url=" + longURL + if (alias.isBlank()) "" else "&shorturl=$alias&logstats=1"
         Log.d(tag, "start request: $url")
         return JsonObjectRequest(
             Request.Method.GET,

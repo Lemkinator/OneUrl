@@ -51,7 +51,7 @@ object Tinyurl : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit
     ): StringRequest {
         val tag = "CreateRequest_$name"
-        val url = apiURL + "?url=" + longURL + (if (alias.isBlank()) "" else "&alias=$alias")
+        val url = apiURL + "?url=" + longURL + if (alias.isBlank()) "" else "&alias=$alias"
         Log.d(tag, "start request: $url")
         return StringRequest(
             Request.Method.POST,
