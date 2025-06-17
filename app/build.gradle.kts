@@ -105,7 +105,7 @@ dependencies {
 
     implementation("io.github.lemkinator:common-utils:0.8.16")
 
-    implementation("com.airbnb.android:lottie:6.6.6")
+    implementation("com.airbnb.android:lottie:6.6.7")
     implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
     implementation("com.android.volley:volley:1.2.1")
