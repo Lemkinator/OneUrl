@@ -79,7 +79,7 @@ jobs:
       - name: Prepare Play Store release
         if: steps.version_info.outputs.changed == 'true'
         run: |
-          ./gradlew bundleRelease
+          ./gradlew :app:bundleRelease
           mkdir -p app/build/outputs/whatsNew
           echo "Automated Upload" > app/build/outputs/whatsNew/whatsnew-en-US
           echo "Automatischer Upload" > app/build/outputs/whatsNew/whatsnew-de-DE
