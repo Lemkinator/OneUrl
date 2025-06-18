@@ -113,7 +113,7 @@ dependencies {
 
     implementation("androidx.core:core-splashscreen:1.2.0-beta02")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
-    val roomVersion = "2.7.1"
+    val roomVersion = "2.7.2"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
