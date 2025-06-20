@@ -5,12 +5,13 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
+import de.lemke.commonutils.urlEncodeAmpersand
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
-import de.lemke.oneurl.domain.urlEncodeAmpersand
-import de.lemke.oneurl.domain.withHttps
 import org.json.JSONObject
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 https://spoo.me/api
@@ -60,7 +61,7 @@ sealed class Spoome : ShortURLProvider {
 
     override fun getAnalyticsURL(alias: String) = "$baseURL/stats/$alias"
 
-    override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().withHttps().trim()
+    override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
     override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
         val tag = "GetURLVisitCount_$name"
@@ -95,7 +96,7 @@ sealed class Spoome : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "SpoomeCreateRequest_$name"
         val url = if (this is Default) "$apiURL?alias=$alias&url=$longURL"
@@ -202,7 +203,7 @@ sealed class Spoome : ShortURLProvider {
         }
 
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(de.lemke.commonutils.R.string.info),
+            context.getString(commonutilsR.string.commonutils_info),
             context.getString(R.string.emoji_text)
         )
 

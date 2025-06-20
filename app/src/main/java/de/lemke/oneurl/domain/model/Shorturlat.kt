@@ -8,6 +8,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 https://shorturl.at/
@@ -96,7 +97,7 @@ object Shorturlat : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-            context.getString(de.lemke.commonutils.R.string.experimental),
+            context.getString(commonutilsR.string.commonutils_experimental),
             context.getString(R.string.shorturlat_info)
         ),
         ProviderInfo(
@@ -107,7 +108,7 @@ object Shorturlat : ShortURLProvider {
     )
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(de.lemke.commonutils.R.string.info),
+        context.getString(commonutilsR.string.commonutils_info),
         context.getString(R.string.shorturlat_info)
     )
 
@@ -143,7 +144,7 @@ object Shorturlat : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $apiURL {u=$longURL}")

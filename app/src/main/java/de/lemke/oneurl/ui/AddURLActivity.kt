@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
 class AddURLActivity : AppCompatActivity() {
@@ -139,7 +140,7 @@ class AddURLActivity : AppCompatActivity() {
         if (tipsCardInfo != null) {
             binding.addUrlBottomTip.setTitle(tipsCardInfo.first)
             binding.addUrlBottomTip.setSummary(tipsCardInfo.second)
-            binding.addUrlBottomTip.setLink(de.lemke.commonutils.R.string.more_information) {
+            binding.addUrlBottomTip.setLink(commonutilsR.string.commonutils_more_information) {
                 openURL(selectedShortURLProvider.infoURL)
             }
             binding.addUrlBottomTip.isVisible = true
@@ -212,9 +213,9 @@ class AddURLActivity : AppCompatActivity() {
 
     private fun alreadyShortened(shortURL: String) {
         AlertDialog.Builder(this)
-            .setTitle(R.string.error)
+            .setTitle(commonutilsR.string.commonutils_error)
             .setMessage(R.string.error_url_already_exists)
-            .setNeutralButton(de.lemke.commonutils.R.string.ok, null)
+            .setNeutralButton(commonutilsR.string.commonutils_ok, null)
             .setPositiveButton(R.string.to_url) { _: DialogInterface, _: Int ->
                 binding.urlInputLayout.transformToActivity(
                     Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL),
@@ -239,7 +240,7 @@ class AddURLActivity : AppCompatActivity() {
                             AlertDialog.Builder(this@AddURLActivity).apply {
                                 setTitle(it.title)
                                 setMessage(it.message)
-                                setNeutralButton(de.lemke.commonutils.R.string.ok, null)
+                                setNeutralButton(commonutilsR.string.commonutils_ok, null)
                                 if (it.actionOne != null) {
                                     setPositiveButton(it.actionOne.title) { _: DialogInterface, _: Int -> it.actionOne.action() }
                                 }

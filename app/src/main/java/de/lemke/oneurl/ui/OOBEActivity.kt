@@ -2,7 +2,6 @@ package de.lemke.oneurl.ui
 
 import android.R.anim.fade_in
 import android.R.anim.fade_out
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color.TRANSPARENT
 import android.os.Build.VERSION.SDK_INT
@@ -20,13 +19,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityOobeBinding
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import dev.oneuiproject.oneui.widget.OnboardingTipsItemView
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.Locale
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.R as oneuiR
 
 @AndroidEntryPoint
@@ -63,23 +64,24 @@ class OOBEActivity : AppCompatActivity() {
     }
 
     private fun initToSView() {
-        val tos = getString(de.lemke.commonutils.R.string.tos)
-        val tosText = getString(de.lemke.commonutils.R.string.oobe_tos_text, tos)
-        val tosLink = SpannableString(tosText)
-        tosLink.setSpan(
-            object : ClickableSpan() {
-                override fun onClick(widget: View) {
-                    AlertDialog.Builder(this@OOBEActivity)
-                        .setTitle(getString(de.lemke.commonutils.R.string.tos))
-                        .setMessage(getString(R.string.tos_content))
-                        .setPositiveButton(de.lemke.commonutils.R.string.ok) { dialog: DialogInterface, _: Int -> dialog.dismiss() }
-                        .show()
-                }
-            },
-            tosText.indexOf(tos), tosText.length - if (Locale.getDefault().language == "de") 4 else 1,
-            SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-        binding.oobeIntroFooterTosText.text = tosLink
+        val tos = getString(commonutilsR.string.commonutils_tos)
+        val tosText = getString(commonutilsR.string.commonutils_oobe_tos_text, tos)
+        val tosIndex = tosText.indexOf(tos)
+        binding.oobeIntroFooterTosText.text = SpannableString(tosText).apply {
+            setSpan(
+                object : ClickableSpan() {
+                    override fun onClick(widget: View) {
+                        AlertDialog.Builder(this@OOBEActivity)
+                            .setTitle(getString(commonutilsR.string.commonutils_tos))
+                            .setMessage(getString(commonutilsR.string.commonutils_tos_content))
+                            .setPositiveButton(commonutilsR.string.commonutils_ok, null)
+                            .show()
+                    }
+                },
+                tosIndex, tosIndex + tos.length,
+                SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
         binding.oobeIntroFooterTosText.movementMethod = LinkMovementMethod.getInstance()
         binding.oobeIntroFooterTosText.highlightColor = TRANSPARENT
     }
@@ -93,7 +95,8 @@ class OOBEActivity : AppCompatActivity() {
             binding.oobeIntroFooterButton.isVisible = false
             binding.oobeIntroFooterButtonProgress.isVisible = true
             lifecycleScope.launch {
-                updateUserSettings { it.copy(tosAccepted = true) }
+                commonUtilsSettings.tosAccepted = true
+                delay(500)
                 openNextActivity()
             }
         }

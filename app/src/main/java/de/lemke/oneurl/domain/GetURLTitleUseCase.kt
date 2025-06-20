@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.toolbox.StringRequest
 import dagger.hilt.android.qualifiers.ActivityContext
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import javax.inject.Inject
 

@@ -7,10 +7,10 @@ import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
+import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
-import de.lemke.oneurl.domain.urlEncodeAmpersand
 import org.json.JSONObject
 
 /*
@@ -164,7 +164,7 @@ object Tnyim : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_$name"
         val url = "$apiURL?action=shorturl&format=json&url=$longURL&keyword=$alias"

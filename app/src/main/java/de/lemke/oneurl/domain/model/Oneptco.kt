@@ -5,9 +5,9 @@ import android.util.Log
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.JsonObjectRequest
+import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.urlEncodeAmpersand
 
 /*
 https://github.com/1pt-co/api
@@ -61,7 +61,7 @@ object Oneptco : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
         val url = apiURL + "?long=$longURL" + if (alias.isBlank()) "" else "&short=$alias"
@@ -119,6 +119,7 @@ object Oneptco : ShortURLProvider {
                         statusCode == 500 -> errorCallback(
                             GenerateURLError.InternalServerError(context)
                         )
+
                         statusCode == 503 -> errorCallback(
                             GenerateURLError.ServiceTemporarilyUnavailable(context, this)
                         )

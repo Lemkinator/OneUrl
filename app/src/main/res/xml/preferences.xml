@@ -2,27 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="@string/design">
-        <dev.oneuiproject.oneui.preference.HorizontalRadioPreference
-            android:key="dark_mode_pref"
-            app:entries="@array/preferences_darkmode_entries"
-            app:entriesImage="@array/preferences_darkmode_entries_image"
-            app:entryValues="@array/preferences_darkmode_values"
-            app:viewType="image" />
-        <SwitchPreferenceCompat
-            android:key="dark_mode_auto_pref"
-            android:title="@string/system_default" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="general_pref_cat"
-        android:title="@string/general"
-        app:isPreferenceVisible="false">
+    <PreferenceCategory android:title="@string/commonutils_general">
 
         <PreferenceScreen
-            android:key="language_pref"
-            android:title="@string/language"
-            android:summary="@string/change_language"/>
+            android:key="@string/commonutils_preference_key_language"
+            android:summary="@string/commonutils_change_language"
+            android:title="@string/commonutils_language"
+            app:isPreferenceVisible="false" />
 
         <SwitchPreferenceCompat
             android:key="auto_copy_on_create_pref"
@@ -30,33 +16,9 @@
             android:summary="@string/auto_copy_on_create_summary"/>
 
         <DropDownPreference
-            android:key="save_location_pref"
-            android:title="@string/save_location"
+            android:key="@string/commonutils_preference_key_image_save_location"
+            android:title="@string/commonutils_image_save_location"
             app:useSimpleSummaryProvider="true" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="dev_options"
-        android:title="@string/dev_options"
-        app:isPreferenceVisible="false">
-        <PreferenceScreen
-            android:key="delete_app_data_pref"
-            android:title="@string/delete_appdata_and_exit" />
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/more_information">
-        <PreferenceScreen
-            android:key="tos_pref"
-            android:title="@string/tos" />
-
-        <PreferenceScreen
-            android:key="privacy_pref"
-            android:title="@string/privacy_policy" />
-
-        <PreferenceScreen
-            android:key="report_bug_pref"
-            android:title="@string/report_bug" />
 
     </PreferenceCategory>
 

@@ -4,10 +4,10 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
-import de.lemke.oneurl.domain.withHttps
 
 /*
 https://gg.gg/
@@ -53,7 +53,7 @@ object Gg : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_check_$name"
         Log.d(tag, "start request: $apiURLCheck {long_url=$longURL custom_path=$alias}")
@@ -104,7 +104,7 @@ object Gg : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_create_$name"
         Log.d(tag, "start request: $apiURL {long_url=$longURL custom_path=$alias}")

@@ -7,7 +7,7 @@
     android:background="?roundedCornerColor"
     app:expanded="false"
     app:showNavButtonAsBack="true"
-    app:title="@string/help">
+    app:title="@string/commonutils_help">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
                 android:drawableStart="@drawable/ic_oui_email_outline"
-                android:text="@string/contact_me" />
+                android:text="@string/commonutils_contact_me" />
 
         </LinearLayout>
 

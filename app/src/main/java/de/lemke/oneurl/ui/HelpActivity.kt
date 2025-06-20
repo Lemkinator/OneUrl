@@ -22,6 +22,6 @@ class HelpActivity : AppCompatActivity() {
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
         binding.providerInfoButton.apply { onSingleClick { transformToActivity(ProviderActivity::class.java, "ProviderTransformation") } }
-        binding.contactMeButton.setOnClickListener { sendEmailHelp(getString(R.string.email), getString(R.string.app_name)) }
+        binding.contactMeButton.setOnClickListener { sendEmailHelp(getString(R.string.commonutils_email), getString(R.string.app_name)) }
     }
 }

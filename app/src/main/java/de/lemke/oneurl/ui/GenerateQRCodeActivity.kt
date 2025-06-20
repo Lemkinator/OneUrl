@@ -21,8 +21,8 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.SaveLocation
 import de.lemke.commonutils.copyToClipboard
+import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.exportBitmap
 import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.saveBitmapToUri
@@ -44,7 +44,6 @@ import javax.inject.Inject
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private lateinit var url: String
-    private lateinit var saveLocation: SaveLocation
     private var qrCode: Bitmap? = null
     private var backgroundColor = 0
     private var foregroundColor = 0
@@ -85,7 +84,6 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             tintAnchor = userSettings.qrTintAnchor
             backgroundColor = userSettings.qrRecentBackgroundColors.first()
             foregroundColor = userSettings.qrRecentForegroundColors.first()
-            saveLocation = userSettings.saveLocation
             initViews()
             setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
             binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
@@ -100,7 +98,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                qrCode?.let { exportBitmap(saveLocation, it, url, exportQRCodeResultLauncher) }
+                qrCode?.let { exportBitmap(commonUtilsSettings.imageSaveLocation, it, url, exportQRCodeResultLauncher) }
                 return true
             }
 

@@ -5,9 +5,9 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
+import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.urlEncodeAmpersand
 
 /*
 https://tinyurl.com/app
@@ -48,7 +48,7 @@ object Tinyurl : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_$name"
         val url = apiURL + "?url=" + longURL + if (alias.isBlank()) "" else "&alias=$alias"

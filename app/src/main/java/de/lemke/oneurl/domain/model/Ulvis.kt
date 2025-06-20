@@ -5,11 +5,11 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
+import de.lemke.commonutils.urlEncodeAmpersand
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
-import de.lemke.oneurl.domain.urlEncodeAmpersand
-import de.lemke.oneurl.domain.withHttps
 
 /*
 https://ulvis.net/developer.html
@@ -134,7 +134,7 @@ object Ulvis : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
         val url = "$apiURL?custom=$alias&url=$longURL"

@@ -6,20 +6,20 @@ import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.Intent
 import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import android.provider.Settings.ACTION_WIRELESS_SETTINGS
 import dagger.hilt.android.qualifiers.ActivityContext
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.toast
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.UrlhausCheckUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.withHttps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
 
 
 class GenerateURLUseCase @Inject constructor(
@@ -68,26 +68,26 @@ sealed class GenerateURLError(
     val actionTwo: ErrorAction? = null,
 ) {
     class Unknown(context: Context, statusCode: Int? = null) : GenerateURLError(
-        context.getString(R.string.error) + if (statusCode != null) " ($statusCode)" else "",
-        context.getString(R.string.error_unknown)
+        context.getString(commonutilsR.string.commonutils_error) + if (statusCode != null) " ($statusCode)" else "",
+        context.getString(commonutilsR.string.commonutils_error_unknown)
     )
 
     class Custom(context: Context, statusCode: Int, customMessage: String, customTitle: String? = null) :
         GenerateURLError(
-            if (customTitle.isNullOrBlank()) context.getString(R.string.error) + " ($statusCode)" else customTitle,
-            customMessage.ifBlank { context.getString(R.string.error_unknown) }
+            if (customTitle.isNullOrBlank()) context.getString(commonutilsR.string.commonutils_error) + " ($statusCode)" else customTitle,
+            customMessage.ifBlank { context.getString(commonutilsR.string.commonutils_error_unknown) }
         )
 
     class NoInternet(context: Context) : GenerateURLError(
         context.getString(R.string.no_internet),
         context.getString(R.string.no_internet_text),
         ErrorAction(
-            context.getString(de.lemke.commonutils.R.string.settings)
+            context.getString(commonutilsR.string.commonutils_settings)
         ) {
             try {
                 context.startActivity(Intent(ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             } catch (e: ActivityNotFoundException) {
-                context.toast(R.string.error)
+                context.toast(commonutilsR.string.commonutils_error)
             }
         }
     )
@@ -97,7 +97,7 @@ sealed class GenerateURLError(
             context.getString(R.string.error_service_unavailable),
             context.getString(R.string.error_service_unavailable_text),
             ErrorAction(
-                context.getString(de.lemke.commonutils.R.string.website)
+                context.getString(commonutilsR.string.commonutils_website)
             ) {
                 context.openURL(provider.baseURL)
             }
@@ -109,33 +109,33 @@ sealed class GenerateURLError(
     )
 
     class AliasAlreadyExists(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_alias_already_exists)
     )
 
     class URLExistsWithDifferentAlias(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_url_already_exists_with_different_alias)
     )
 
     class InvalidURL(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_invalid_url)
     )
 
     class InvalidAlias(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_invalid_alias)
     )
 
     class InvalidURLOrAlias(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_invalid_url_or_alias)
     )
 
     class BlacklistedURL(context: Context, message: String? = null, urlhausLink: String? = null, virustotalLink: String? = null) :
         GenerateURLError(
-            context.getString(de.lemke.commonutils.R.string.warning),
+            context.getString(commonutilsR.string.commonutils_warning),
             message ?: context.getString(R.string.error_blacklisted_url),
             if (urlhausLink != null) ErrorAction("URLhaus") {
                 context.openURL(urlhausLink)
@@ -146,17 +146,17 @@ sealed class GenerateURLError(
         )
 
     class RateLimitExceeded(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_rate_limit_exceeded)
     )
 
     class InternalServerError(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_internal_server_error)
     )
 
     class ServiceOffline(context: Context) : GenerateURLError(
-        context.getString(R.string.error),
+        context.getString(commonutilsR.string.commonutils_error),
         context.getString(R.string.error_service_offline)
     )
 

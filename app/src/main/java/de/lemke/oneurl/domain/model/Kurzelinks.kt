@@ -4,11 +4,12 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
+import de.lemke.commonutils.withoutHttps
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.withoutHttps
 import org.json.JSONObject
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 docs: https://kurzelinks.de/ https://ogy.de/ https://t1p.de/ https://0cn.de/ -> pdf
@@ -37,7 +38,7 @@ sealed class Kurzelinks : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(de.lemke.commonutils.R.string.privacy_policy),
+            context.getString(commonutilsR.string.commonutils_privacy_policy),
             context.getString(R.string.privacy_text)
         ),
         ProviderInfo(
@@ -53,7 +54,7 @@ sealed class Kurzelinks : ShortURLProvider {
     )
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(de.lemke.commonutils.R.string.info),
+        context.getString(commonutilsR.string.commonutils_info),
         context.getString(R.string.privacy_text)
     )
 
@@ -62,7 +63,7 @@ sealed class Kurzelinks : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $apiURL  {url=$longURL, servicedomain=${baseURL.withoutHttps()}, requesturl=$alias}")
@@ -131,7 +132,7 @@ sealed class Kurzelinks : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
@@ -147,7 +148,7 @@ sealed class Kurzelinks : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
@@ -163,7 +164,7 @@ sealed class Kurzelinks : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
@@ -179,7 +180,7 @@ sealed class Kurzelinks : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 }

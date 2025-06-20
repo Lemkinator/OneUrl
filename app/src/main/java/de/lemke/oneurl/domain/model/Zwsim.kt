@@ -5,10 +5,11 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.withHttps
 import org.json.JSONObject
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 docs: https://zws.im/api-docs
@@ -43,7 +44,7 @@ object Zwsim : ShortURLProvider {
     )
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(de.lemke.commonutils.R.string.info),
+        context.getString(commonutilsR.string.commonutils_info),
         context.getString(R.string.zwsim_zws)
     )
 
@@ -52,7 +53,7 @@ object Zwsim : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $longURL")

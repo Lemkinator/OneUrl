@@ -5,11 +5,12 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
+import de.lemke.commonutils.urlEncodeAmpersand
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
-import de.lemke.oneurl.domain.urlEncodeAmpersand
-import de.lemke.oneurl.domain.withHttps
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 https://murl.com
@@ -30,7 +31,7 @@ object Murl : ShortURLProvider {
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
     override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(de.lemke.commonutils.R.string.info),
+        context.getString(commonutilsR.string.commonutils_info),
         context.getString(R.string.redirect_hint_text)
     )
 
@@ -85,7 +86,7 @@ object Murl : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_$name"
         val url = "$apiURL?url=$longURL"

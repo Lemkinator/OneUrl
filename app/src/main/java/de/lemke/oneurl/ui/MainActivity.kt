@@ -23,6 +23,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.isVisible
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.SwitchPreferenceCompat
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -31,22 +32,25 @@ import com.airbnb.lottie.SimpleColorFilter
 import com.airbnb.lottie.model.KeyPath
 import com.airbnb.lottie.value.LottieValueCallback
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.AboutActivity
-import de.lemke.commonutils.AboutMeActivity
+import de.lemke.commonutils.AppStart
+import de.lemke.commonutils.checkAppStart
+import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.onNavigationSingleClick
+import de.lemke.commonutils.onPrefChange
 import de.lemke.commonutils.prepareActivityTransformationFrom
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
-import de.lemke.commonutils.setupCommonActivities
+import de.lemke.commonutils.setupCommonUtilsAboutActivity
+import de.lemke.commonutils.setupCommonUtilsSettingsActivity
 import de.lemke.commonutils.setupHeaderAndNavRail
 import de.lemke.commonutils.toast
 import de.lemke.commonutils.transformToActivity
+import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
+import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
+import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
-import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.databinding.ActivityMainBinding
-import de.lemke.oneurl.domain.AppStart
-import de.lemke.oneurl.domain.CheckAppStartUseCase
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.ObserveURLsUseCase
@@ -78,6 +82,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.R as iconsR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -102,9 +107,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     @Inject
     lateinit var updateUserSettings: UpdateUserSettingsUseCase
-
-    @Inject
-    lateinit var checkAppStart: CheckAppStartUseCase
 
     @Inject
     lateinit var observeURLs: ObserveURLsUseCase
@@ -155,12 +157,9 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             }
         }*/
 
-        lifecycleScope.launch {
-            when (checkAppStart()) {
-                AppStart.FIRST_TIME -> openOOBE()
-                AppStart.NORMAL -> checkTOS(getUserSettings(), savedInstanceState)
-                AppStart.FIRST_TIME_VERSION -> checkTOS(getUserSettings(), savedInstanceState)
-            }
+        when (checkAppStart(BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME)) {
+            AppStart.FIRST_TIME -> openOOBE()
+            else -> checkTOS(savedInstanceState)
         }
     }
 
@@ -174,21 +173,36 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         )
     }
 
-    private suspend fun openOOBE() {
-        //manually waiting for the animation to finish :/
-        delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
-        startActivity(Intent(applicationContext, OOBEActivity::class.java))
-        @Suppress("DEPRECATION") if (SDK_INT < 34) overridePendingTransition(fade_in, fade_out)
-        finishAfterTransition()
+    private fun openOOBE() {
+        lifecycleScope.launch {
+            //manually waiting for the animation to finish :/
+            delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
+            startActivity(Intent(applicationContext, OOBEActivity::class.java))
+            @Suppress("DEPRECATION") if (SDK_INT < 34) overridePendingTransition(fade_in, fade_out)
+            finishAfterTransition()
+        }
     }
 
-    private suspend fun checkTOS(userSettings: UserSettings, savedInstanceState: Bundle?) {
-        if (!userSettings.tosAccepted) openOOBE()
+    private fun checkTOS(savedInstanceState: Bundle?) {
+        if (!commonUtilsSettings.tosAccepted) openOOBE()
         else openMain(savedInstanceState)
     }
 
     private fun openMain(savedInstanceState: Bundle?) {
-        setupCommonUtilsActivities()
+        setupCommonUtilsAboutActivity(appVersion = BuildConfig.VERSION_NAME)
+        setupCommonUtilsSettingsActivity(
+            commonutilsR.xml.preferences_design,
+            R.xml.preferences,
+            commonutilsR.xml.preferences_dev_options_delete_app_data,
+            commonutilsR.xml.preferences_more_info
+        ) {
+            findPreference<SwitchPreferenceCompat>("auto_copy_on_create_pref")?.let { autoCopyOnCreatePref ->
+                autoCopyOnCreatePref.isChecked = getUserSettings().autoCopyOnCreate
+                autoCopyOnCreatePref.onPrefChange { newValue: Boolean ->
+                    lifecycleScope.launch { updateUserSettings { it.copy(autoCopyOnCreate = newValue) } }
+                }
+            }
+        }
         initDrawer()
         initRecycler()
         checkIntent()
@@ -262,14 +276,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         private fun setSearch(query: String?): Boolean {
             if (search.value == null) return false
             search.value = query ?: ""
-            urlAdapter.highlightWord = search.value ?: ""
-            lifecycleScope.launch { updateUserSettings { it.copy(search = query ?: "") } }
+            urlAdapter.highlightWord = query ?: ""
+            commonUtilsSettings.search = query ?: ""
             return true
         }
 
         override fun onSearchModeToggle(searchView: SearchView, isActive: Boolean) {
-            if (isActive) lifecycleScope.launch {
-                search.value = getUserSettings().search
+            if (isActive) {
+                search.value = commonUtilsSettings.search
                 binding.addFab.isVisible = false
                 searchView.setQuery(search.value, false)
             } else {
@@ -283,19 +297,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
     }
 
-    private fun setupCommonUtilsActivities() {
-        lifecycleScope.launch {
-            setupCommonActivities(
-                appName = getString(R.string.app_name),
-                appVersion = BuildConfig.VERSION_NAME,
-                optionalText = getString(R.string.app_description),
-                email = getString(R.string.email),
-                devModeEnabled = getUserSettings().devModeEnabled,
-                onDevModeChanged = { newDevModeEnabled: Boolean -> updateUserSettings { it.copy(devModeEnabled = newDevModeEnabled) } }
-            )
-        }
-    }
-
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
         binding.navigationView.onNavigationSingleClick { item ->
@@ -303,9 +304,9 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
                 R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToActivity(ProviderActivity::class.java)
                 R.id.help_dest -> findViewById<View>(R.id.help_dest).transformToActivity(HelpActivity::class.java)
-                R.id.about_app_dest -> findViewById<View>(R.id.about_app_dest).transformToActivity(AboutActivity::class.java)
-                R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(AboutMeActivity::class.java)
-                R.id.settings_dest -> findViewById<View>(R.id.settings_dest).transformToActivity(SettingsActivity::class.java)
+                R.id.about_app_dest -> findViewById<View>(R.id.about_app_dest).transformToActivity(CommonUtilsAboutActivity::class.java)
+                R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(CommonUtilsAboutMeActivity::class.java)
+                R.id.settings_dest -> findViewById<View>(R.id.settings_dest).transformToActivity(CommonUtilsSettingsActivity::class.java)
                 else -> return@onNavigationSingleClick false
             }
             true
@@ -373,8 +374,8 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     private fun configureItemSwipeAnimator() {
         binding.urlList.configureItemSwipeAnimator(
-            rightToLeftLabel = getString(R.string.add_to_fav),
-            leftToRightLabel = getString(R.string.remove_from_fav),
+            rightToLeftLabel = getString(commonutilsR.string.commonutils_add_to_fav),
+            leftToRightLabel = getString(commonutilsR.string.commonutils_remove_from_fav),
             rightToLeftColor = getColor(R.color.primary_color_themed),
             leftToRightColor = getColor(designR.color.oui_des_functional_red_color),
             rightToLeftDrawableRes = iconsR.drawable.ic_oui_favorite_on,
@@ -384,11 +385,11 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             onSwiped = { position, swipeDirection, _ ->
                 val url = urlAdapter.getItemByPosition(position)
                 if (swipeDirection == START) {
-                    toast(R.string.add_to_fav)
+                    toast(commonutilsR.string.commonutils_add_to_fav)
                     lifecycleScope.launch { updateURL(url.copy(favorite = true)) }
                 }
                 if (swipeDirection == END) {
-                    toast(R.string.remove_from_fav)
+                    toast(commonutilsR.string.commonutils_remove_from_fav)
                     lifecycleScope.launch { updateURL(url.copy(favorite = false)) }
                 }
                 true

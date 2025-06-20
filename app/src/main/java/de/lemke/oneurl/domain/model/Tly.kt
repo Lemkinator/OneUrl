@@ -7,6 +7,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import org.json.JSONObject
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 login required (also for alias), but:
@@ -73,13 +74,13 @@ sealed class Tly : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-            context.getString(de.lemke.commonutils.R.string.experimental),
+            context.getString(commonutilsR.string.commonutils_experimental),
             context.getString(R.string.tly_info)
         ),
     )
 
     override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = Pair(
-        context.getString(de.lemke.commonutils.R.string.info),
+        context.getString(commonutilsR.string.commonutils_info),
         context.getString(R.string.tly_info)
     )
 
@@ -88,7 +89,7 @@ sealed class Tly : ShortURLProvider {
         provider: String,
         longURL: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $apiURL {long_url=$longURL provider=$provider}")
@@ -152,7 +153,7 @@ sealed class Tly : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getTlyCreateRequest(context, "t.ly", longURL, successCallback, errorCallback)
     }
 
@@ -163,7 +164,7 @@ sealed class Tly : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getTlyCreateRequest(context, "ibit.ly", longURL, successCallback, errorCallback)
     }
 
@@ -175,7 +176,7 @@ sealed class Tly : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getTlyCreateRequest(context, "twtr.to", longURL, successCallback, errorCallback)
     }
 
@@ -186,7 +187,7 @@ sealed class Tly : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getTlyCreateRequest(context, "jpeg.ly", longURL, successCallback, errorCallback)
     }
 
@@ -198,7 +199,7 @@ sealed class Tly : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getTlyCreateRequest(context, "rebrand.ly", longURL, successCallback, errorCallback)
     }
 
@@ -210,7 +211,7 @@ sealed class Tly : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getTlyCreateRequest(context, "bit.ly", longURL, successCallback, errorCallback)
     }
 }

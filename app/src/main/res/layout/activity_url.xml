@@ -136,7 +136,7 @@
             <dev.oneuiproject.oneui.widget.Separator
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/info" />
+                android:text="@string/commonutils_info" />
 
             <dev.oneuiproject.oneui.widget.RoundedLinearLayout
                 android:layout_width="match_parent"
@@ -230,7 +230,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
-                        android:text="@string/created"
+                        android:text="@string/created_"
                         android:textSize="18sp" />
 
                     <TextView
@@ -267,7 +267,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
-                        android:text="@string/visits"
+                        android:text="@string/visits_"
                         android:textSize="18sp" />
 
                     <TextView
@@ -298,7 +298,7 @@
                 android:id="@+id/bottomTipView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:title="@string/tip"
+                app:title="@string/commonutils_tip"
                 app:linkText="@string/copy_shortened_url"
                 app:summary="@string/copy_to_clipboard_hint" />
 

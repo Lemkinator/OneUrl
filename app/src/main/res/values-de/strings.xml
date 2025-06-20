@@ -1,8 +1,9 @@
 <resources>
-    <!--General-->
-    <string name="shorten_url">URL verkürzen (OneURL)</string>
-    <string name="copy_shortened_url">Verkürzte URL kopieren</string>
-    <string name="copy_to_clipboard_hint">Lange drücken, um URLs oder QR-Codes in die Zwischenablage zu kopieren.</string>
+    <string name="app_description">Ein URL-Verkürzer und QR-Code Generator mit OneUI-Design.</string>
+    <string name="about_app">Über OneURL</string>
+
+    <!--Override commonutils strings-->
+    <string name="commonutils_tos_content">Die Verwendung von OneURL zum Verkürzen von URLs unterliegt den Nutzungsbedingungen und Datenschutzrichtlinien der jeweiligen Dienste, die von Drittanbietern bereitgestellt werden.\n\nEs ist nicht gestattet, diese App entgegen den guten Sitten oder den geltenden Gesetzen zu verwenden. \n\nSie verpflichten sich außerdem, diese App nicht für Zwecke zu verwenden, die nach dem Recht der Vereinigten Staaten verboten sind, insbesondere nicht für die Entwicklung, Konstruktion, Herstellung oder Produktion von Raketen, chemischen oder biologischen Waffen. \nDiese Einschränkung gilt jedoch nicht für den Fall, dass eine weit verbreitete Virusinfektion auftritt (die von den United States Centers for Disease Control oder einer Nachfolgeorganisation bestätigt wurde), die durch Bisse oder Kontakt mit Körperflüssigkeiten übertragen wird und dazu führt, dass menschliche Leichen wiederbelebt werden und versuchen, lebendes menschliches Fleisch, Blut, Gehirn oder Nervengewebe zu verzehren, und die wahrscheinlich zum Untergang der organisierten Zivilisation führen wird. \n\nEine besondere Gegenleistung, die eine finanzielle Entschädigung beinhalten kann, wird einer begrenzten Anzahl von Nutzern angeboten, die diesen Abschnitt der Nutzungsbedingungen lesen und mich unter eine-email-an-diese-adresse-zu-schreiben-wird-sie-10-euro-kosten@leonard-lemke.com kontaktieren. Dieses Angebot kann jederzeit und ohne Vorankündigung zurückgezogen werden. \n\nWeitere Fragen werden unter diese-email-ist-viel-zu-lang-und-hoffentlich-koennen-sie-nicht-kopieren-und-einfuegen@leonard-lemke.com beantwortet.</string>
 
     <!--Help-->
     <string name="help_text">OneURL respektiert Ihre Privatsphäre und speichert keine persönlichen Informationen. Weitere Informationen finden Sie in unserer Datenschutzrichtlinie. \nDie Verwendung von OneURL zum Verkürzen von URLs unterliegt den Nutzungsbedingungen der jeweiligen Dienste, die von Drittanbietern bereitgestellt werden. Bitte konsultieren Sie die Geschäftsbedingungen der jeweiligen Dienstanbieter, um mehr über deren Richtlinien und Einschränkungen zu erfahren.\n\nKosten und Rate Limits:\nDie in der App verfügbaren Anbieter sind kostenlos. Bei einigen Anbietern gibt es daher sogenannte Rate Limits. Das Überschreiten des Rate Limits kann zur vorübergehenden oder dauerhaften Sperrung Ihrer IP-Adresse bei einem Anbieter führen. Bitte beachten Sie, dass diese Sperrung von den Dienstanbietern selbst verwaltet wird.\nIm Normalfall sollten diese Limits als normaler Nutzer nicht erreicht werden. Wir empfehlen, die Rate Limits der Dienstanbieter zu respektieren und sie nicht absichtlich zu überschreiten, um eine reibungslose Nutzung sicherzustellen.</string>
@@ -28,12 +29,7 @@
     <string name="tly_info">Dieser URL-Shortener verwendet mehrere Domains für denselben Dienst, was bedeutet, dass er Kurz-URLs mit unterschiedlichen Domainnamen (z.B. tinyurl.com) erstellen kann. Nutze diesen Dienst daher mit Vorsicht.</string>
     <string name="shorturlat_info">Der URL-Verkürzer shorturl.at bietet keine Schnittstelle und ist daher nicht so zuverlässig wie andere Anbieter in dieser App. Darüber hinaus werden Links mit weniger als einem Klick pro monat deaktiviert. Nutze diesen Dienst daher mit Vorsicht.</string>
 
-    <!--About-->
-    <string name="app_description">Ein URL-Verkürzer und QR-Code Generator mit OneUI-Design.</string>
-    <string name="about_app">Über OneURL</string>
-
     <!--Settings-->
-    <string name="save_location">Dateispeicherort</string>
     <string name="auto_copy_on_create">Automatisch kopieren</string>
     <string name="auto_copy_on_create_summary">Automatisch die verkürzte URL in die Zwischenablage kopieren</string>
 
@@ -43,7 +39,6 @@
     <string name="oobe_onboard_msg3_title">Keine Werbung</string>
     <string name="oobe_onboard_msg2_summary">Keine Abos, keine In-App-Käufe, keinerlei Kosten.</string>
     <string name="oobe_onboard_msg3_summary">Keine nervige Werbung.</string>
-    <string name="tos_content">Die Verwendung von OneURL zum Verkürzen von URLs unterliegt den Nutzungsbedingungen und Datenschutzrichtlinien der jeweiligen Dienste, die von Drittanbietern bereitgestellt werden.\n\nEs ist nicht gestattet, diese App entgegen den guten Sitten oder den geltenden Gesetzen zu verwenden. \n\nSie verpflichten sich außerdem, diese App nicht für Zwecke zu verwenden, die nach dem Recht der Vereinigten Staaten verboten sind, insbesondere nicht für die Entwicklung, Konstruktion, Herstellung oder Produktion von Raketen, chemischen oder biologischen Waffen. \nDiese Einschränkung gilt jedoch nicht für den Fall, dass eine weit verbreitete Virusinfektion auftritt (die von den United States Centers for Disease Control oder einer Nachfolgeorganisation bestätigt wurde), die durch Bisse oder Kontakt mit Körperflüssigkeiten übertragen wird und dazu führt, dass menschliche Leichen wiederbelebt werden und versuchen, lebendes menschliches Fleisch, Blut, Gehirn oder Nervengewebe zu verzehren, und die wahrscheinlich zum Untergang der organisierten Zivilisation führen wird. \n\nEine besondere Gegenleistung, die eine finanzielle Entschädigung beinhalten kann, wird einer begrenzten Anzahl von Nutzern angeboten, die diesen Abschnitt der Nutzungsbedingungen lesen und mich unter eine-email-an-diese-adresse-zu-schreiben-wird-sie-10-euro-kosten@leonard-lemke.com kontaktieren. Dieses Angebot kann jederzeit und ohne Vorankündigung zurückgezogen werden. \n\nWeitere Fragen werden unter diese-email-ist-viel-zu-lang-und-hoffentlich-koennen-sie-nicht-kopieren-und-einfuegen@leonard-lemke.com beantwortet.</string>
 
     <!--Add URL-->
     <string name="add_url">URL hinzufügen</string>
@@ -64,14 +59,18 @@
     <string name="url">URL</string>
     <string name="description_">"Beschreibung: "</string>
     <string name="title_">"Titel: "</string>
-    <string name="created">"Erstellt: "</string>
-    <string name="visits">"Klicks: "</string>
+    <string name="created_">"Erstellt: "</string>
+    <string name="visits_">"Klicks: "</string>
+    <string name="shorten_url">URL verkürzen (OneURL)</string>
+    <string name="copy_shortened_url">Verkürzte URL kopieren</string>
+    <string name="copy_to_clipboard_hint">Lange drücken, um URLs oder QR-Codes in die Zwischenablage zu kopieren.</string>
+    <string name="no_urls">Keine URLs</string>
+    <string name="no_search_results">Keine Suchergebnisse</string>
+    <string name="no_favorite_urls">Keine Favoriten</string>
 
     <!--Error-->
-    <string name="error">Fehler</string>
     <string name="no_internet">Keine Internetverbindung verfügbar…</string>
     <string name="no_internet_text">Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
-    <string name="error_unknown">Unbekannter Fehler…</string>
     <string name="error_url_not_found">URL nicht gefunden</string>
     <string name="error_vgd_isgd">Es scheint, dass es ein Problem mit v.gd/is.gd gibt. Bitte wähle einen anderen Anbieter.</string>
     <string name="error_empty_url">Keine URL eingegeben.</string>
@@ -103,28 +102,9 @@
     <string name="error_urlhaus_abused_legit_botnetcc">Sie ist eine bekannte kompromittierte Website, die für das Hosting von Botnet C&amp;C verwendet wird.</string>
     <string name="error_urlhaus_abused_redirector">Sie ist ein bekannter missbrauchter Redirector oder URL-Verkürzer.</string>
 
-    <string name="no_urls">Keine URLs</string>
-    <string name="no_search_results">Keine Suchergebnisse</string>
-    <string name="no_favorite_urls">Keine Favoriten</string>
-
-    <!--QR Code-->
-    <string name="save_image">Bild speichern</string>
-    <string name="generate_qr_code">QR-Code generieren</string>
-    <string name="size">Größe</string>
-    <string name="background">Hintergrund</string>
-    <string name="foreground">Vordergrund</string>
-    <string name="frame">Rahmen</string>
-    <string name="icon">Icon</string>
-    <string name="tint_border">Rahmen einfärben</string>
-    <string name="tint_anchor">Anker einfärben</string>
-    <string name="scan_qr">Scanne diesen QR-Code auf einem anderen Gerät, um die URL anzuzeigen.</string>
-
     <!--Others-->
-    <string name="remove_from_fav">Aus Favoriten löschen</string>
-    <string name="add_to_fav">Zu Favoriten hinzufügen</string>
-    <string name="delete">Löschen</string>
-    <string name="show_all">Alle anzeigen</string>
-    <string name="only_show_favorites">Nur Favoriten anzeigen</string>
+    <string name="generate_qr_code">QR-Code generieren</string>
+    <string name="scan_qr">Scanne diesen QR-Code auf einem anderen Gerät, um die URL anzuzeigen.</string>
     <string name="delete_url_message">Möchtest du diese URL wirklich löschen?</string>
 
 </resources>

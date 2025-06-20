@@ -21,7 +21,7 @@
         <item
             android:id="@+id/help_dest"
             android:icon="@drawable/ic_oui_help_outline"
-            android:title="@string/help"
+            android:title="@string/commonutils_help"
             app:showAsAction="always" />
 
         <item
@@ -33,7 +33,7 @@
         <item
             android:id="@+id/about_me_dest"
             android:icon="@drawable/ic_oui_contact_outline"
-            android:title="@string/about_me"
+            android:title="@string/commonutils_about_me"
             app:showAsAction="always" />
 
     </group>
@@ -41,7 +41,7 @@
     <item
         android:id="@+id/settings_dest"
         android:icon="@drawable/ic_oui_settings_outline"
-        android:title="@string/settings"
+        android:title="@string/commonutils_settings"
         app:showAsAction="always" />
 
 </menu>

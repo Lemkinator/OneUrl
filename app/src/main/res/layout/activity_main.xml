@@ -60,7 +60,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
-                    android:text="@string/no_entry"
+                    android:text="@string/commonutils_no_entry"
                     android:textColor="@color/commonutils_primary_text_icon_color_themed"
                     android:textSize="17sp" />
 

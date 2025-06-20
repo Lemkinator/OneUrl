@@ -52,9 +52,6 @@
             android:name=".ui.URLActivity"
             android:configChanges="orientation|screenLayout|screenSize" />
         <activity
-            android:name=".ui.SettingsActivity"
-            android:configChanges="orientation|screenLayout|screenSize" />
-        <activity
             android:name=".ui.MainActivity"
             android:configChanges="orientation|screenLayout|screenSize"
             android:exported="true"

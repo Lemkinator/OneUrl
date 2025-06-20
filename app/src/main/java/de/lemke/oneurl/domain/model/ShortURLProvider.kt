@@ -8,6 +8,7 @@ import com.android.volley.Request
 import com.android.volley.Response
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import java.util.Locale
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 https://github.com/ShareX/ShareX/tree/develop/ShareX.UploadersLib/URLShorteners
@@ -114,7 +115,7 @@ class Unknown : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): Request<*> {
         Log.e("UnknownProvider", "Tried to generate short URL with unknown provider")
         errorCallback(GenerateURLError.Unknown(context))
@@ -154,7 +155,7 @@ interface ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): Request<*>
 
     fun getInfoContents(context: Context): List<ProviderInfo> = emptyList()
@@ -162,20 +163,20 @@ interface ShortURLProvider {
         privacyURL?.let {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-                context.getString(de.lemke.commonutils.R.string.privacy_policy),
+                context.getString(commonutilsR.string.commonutils_privacy_policy),
                 it
             )
         },
         termsURL?.let {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-                context.getString(de.lemke.commonutils.R.string.tos),
+                context.getString(commonutilsR.string.commonutils_tos),
                 it
             )
         },
         ProviderInfo(
             dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(de.lemke.commonutils.R.string.more_information),
+            context.getString(commonutilsR.string.commonutils_more_information),
             infoURL
         )
     )
@@ -186,7 +187,7 @@ interface ShortURLProvider {
 class ProviderInfo(
     val icon: Int,
     val title: String,
-    val linkOrDescription: String
+    val linkOrDescription: String,
 )
 
 interface AliasConfig {

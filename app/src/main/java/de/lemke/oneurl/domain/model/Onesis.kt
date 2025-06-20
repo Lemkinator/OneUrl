@@ -4,9 +4,9 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.withHttps
 
 /*
 https://1s.is/
@@ -55,7 +55,7 @@ object Onesis : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $apiURL {original_url=$longURL, custom_short_url=$alias}")

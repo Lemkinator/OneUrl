@@ -5,9 +5,10 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
+import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.urlEncodeAmpersand
+import de.lemke.commonutils.R as commonutilsR
 
 /*
 docs:
@@ -35,7 +36,7 @@ sealed class VgdIsgd : ShortURLProvider {
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
         val url = apiURL + "?format=json&url=" + longURL + if (alias.isBlank()) "" else "&shorturl=$alias&logstats=1"
@@ -127,7 +128,7 @@ sealed class VgdIsgd : ShortURLProvider {
         override val termsURL = "$baseURL/terms.php"
 
         override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(de.lemke.commonutils.R.string.info),
+            context.getString(commonutilsR.string.commonutils_info),
             context.getString(R.string.redirect_hint_text)
         )
 
@@ -159,7 +160,7 @@ sealed class VgdIsgd : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getVgdIsgdCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 
@@ -193,7 +194,7 @@ sealed class VgdIsgd : ShortURLProvider {
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit
+            errorCallback: (error: GenerateURLError) -> Unit,
         ): JsonObjectRequest = getVgdIsgdCreateRequest(context, longURL, alias, successCallback, errorCallback)
     }
 }

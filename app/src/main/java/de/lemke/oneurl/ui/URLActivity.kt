@@ -17,8 +17,8 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.SaveLocation
 import de.lemke.commonutils.copyToClipboard
+import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.exportBitmap
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.prepareActivityTransformationTo
@@ -29,6 +29,8 @@ import de.lemke.commonutils.shareBitmap
 import de.lemke.commonutils.shareText
 import de.lemke.commonutils.showInAppReviewOrFinish
 import de.lemke.commonutils.toast
+import de.lemke.commonutils.urlEncode
+import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.domain.DeleteURLUseCase
@@ -37,13 +39,12 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.domain.urlEncode
-import de.lemke.oneurl.domain.withHttps
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
 @AndroidEntryPoint
@@ -55,7 +56,6 @@ class URLActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUrlBinding
     private lateinit var url: URL
-    private lateinit var saveLocation: SaveLocation
     private lateinit var searchHighlighter: SearchHighlighter
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
         StartActivityForResult(),
@@ -94,8 +94,6 @@ class URLActivity : AppCompatActivity() {
                 }
                 url = it
             }
-            val userSettings = getUserSettings()
-            saveLocation = userSettings.saveLocation
             initViews()
             setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
         }
@@ -140,10 +138,14 @@ class URLActivity : AppCompatActivity() {
         val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
         binding.urlQrImageview.setImageBitmap(url.qr)
         binding.urlQrImageview.setOnClickListener {
-            lifecycleScope.launch { createQRBottomSheet(url.shortURL, url.qr, saveLocation).show(supportFragmentManager, null) }
+            lifecycleScope.launch {
+                createQRBottomSheet(url.shortURL, url.qr, commonUtilsSettings.imageSaveLocation).show(supportFragmentManager, null)
+            }
         }
         binding.urlQrImageview.setOnLongClickListener { url.qr.copyToClipboard(this, "QR Code", "QRCode.png").let { true } }
-        binding.urlQrSaveButton.setOnClickListener { exportBitmap(saveLocation, url.qr, url.shortURL, exportQRCodeResultLauncher) }
+        binding.urlQrSaveButton.setOnClickListener {
+            exportBitmap(commonUtilsSettings.imageSaveLocation, url.qr, url.shortURL, exportQRCodeResultLauncher)
+        }
         binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
         binding.urlShortButton.text = searchHighlighter(url.shortURL, highlightText).apply {
             setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
@@ -206,9 +208,9 @@ class URLActivity : AppCompatActivity() {
 
                 R.id.url_bnv_delete -> lifecycleScope.launch {
                     AlertDialog.Builder(this@URLActivity)
-                        .setTitle(R.string.delete)
+                        .setTitle(commonutilsR.string.commonutils_delete)
                         .setMessage(R.string.delete_url_message)
-                        .setPositiveButton(R.string.delete) { _, _ ->
+                        .setPositiveButton(commonutilsR.string.commonutils_delete) { _, _ ->
                             lifecycleScope.launch {
                                 deleteURL(url)
                                 showInAppReviewOrFinish()

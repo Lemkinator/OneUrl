@@ -1,11 +1,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
-    <!--General-->
     <string name="app_name" translatable="false">OneURL</string>
-    <string name="email" translatable="false">oneurl@leonard-lemke.com</string>
-    <string name="privacy_website" translatable="false">https://www.leonard-lemke.com/apps/oneurl/privacy-policy</string>
-    <string name="shorten_url">Shorten URL (OneURL)</string>
-    <string name="copy_shortened_url">Copy shortened URL</string>
-    <string name="copy_to_clipboard_hint">Long press URLs or QR codes to copy them to the clipboard.</string>
+    <string name="app_description">A URL-Shortener and QR code generator with OneUI-Design.</string>
+    <string name="about_app">About OneURL</string>
+
+    <!--Override commonutils strings-->
+    <string name="commonutils_app_name" translatable="false">@string/app_name</string>
+    <string name="commonutils_app_description" translatable="false">@string/app_description</string>
+    <string name="commonutils_email" translatable="false">oneurl@leonard-lemke.com</string>
+    <string name="commonutils_privacy_website" translatable="false">https://www.leonard-lemke.com/apps/oneurl/privacy-policy</string>
+    <string name="commonutils_tos_content">The use of OneURL for URL shortening is subject to the terms of use and privacy policy of the respective services provided by third parties.\n\nIt is not permitted to use this app contrary to morality or the laws in force. \n\nYou also agree that you will not use this app for any purposes prohibited by United States law, including, without limitation, the development, design, manufacture, or production of missile, chemical or biological weapons. \nHowever, this restriction will not apply in the event of the occurrence (certified by the United States Centers for Disease Control or successor body) of a widespread viral infection transmitted via bites or contact with bodily fluids that causes human corpses to reanimate and seek to consume living human flesh, blood, brain or nerve tissue and is likely to result in the fall of organized civilization. \n\nA special consideration, which may include monetary compensation, will be provided to a limited number of users who read this section of the Terms and Services and contact me at writing-an-email-to-this-address-will-cost-you-10-euro@leonard-lemke.com. This offer may be withdrawn at any time without any notice. \n\nAdditional questions will be answered at this-email-is-way-too-long-and-hopefully-you-cannot-copy-paste@leonard-lemke.com.</string>
 
     <!--Help-->
     <string name="help_text">OneURL respects your privacy and does not store any personal information. For more information, please refer to our Privacy Policy. \nThe use of OneURL to shorten URLs is subject to the terms of use of the respective services provided by third-party providers. Please consult the terms and conditions of each service provider to learn more about their policies and restrictions.\n\nCosts and Rate Limits:\nThe providers available in the app are free of charge. Some providers therefore have rate limits. Exceeding the rate limit can lead to temporary or permanent blocking of your IP address with a provider. Please note that this blocking is managed by the service providers themselves.\nNormally, these limits should not be reached as a normal user. We recommend to respect the rate limits of the service providers and not to exceed them intentionally to ensure a seamless usage.</string>
@@ -31,12 +34,7 @@
     <string name="tly_info">This URL shortener utilizes multiple domains for the same service, meaning it may generate short URLs with different domain names (e.g., tinyurl.com). Therefore, use this service with caution.</string>
     <string name="shorturlat_info">The URL shortener shorturl.at does not offer an API and is therefore not as reliable as other providers in this app. In addition, links with less than one click per month are deactivated. Therefore, use this service with caution.</string>
 
-    <!--About-->
-    <string name="app_description">A URL-Shortener and QR code generator with OneUI-Design.</string>
-    <string name="about_app">About OneURL</string>
-
     <!--Settings-->
-    <string name="save_location">File storage location</string>
     <string name="auto_copy_on_create">Automatic copying</string>
     <string name="auto_copy_on_create_summary">Automatically copy the shortened URL to the clipboard</string>
 
@@ -46,8 +44,6 @@
     <string name="oobe_onboard_msg3_title">No ads</string>
     <string name="oobe_onboard_msg2_summary">No subscriptions, no in-app purchases, no costs at all.</string>
     <string name="oobe_onboard_msg3_summary">No annoying ads.</string>
-    <string name="tos_content">The use of OneURL for URL shortening is subject to the terms of use and privacy policy of the respective services provided by third parties.\n\nIt is not permitted to use this app contrary to morality or the laws in force. \n\nYou also agree that you will not use this app for any purposes prohibited by United States law, including, without limitation, the development, design, manufacture, or production of missile, chemical or biological weapons. \nHowever, this restriction will not apply in the event of the occurrence (certified by the United States Centers for Disease Control or successor body) of a widespread viral infection transmitted via bites or contact with bodily fluids that causes human corpses to reanimate and seek to consume living human flesh, blood, brain or nerve tissue and is likely to result in the fall of organized civilization. \n\nA special consideration, which may include monetary compensation, will be provided to a limited number of users who read this section of the Terms and Services and contact me at writing-an-email-to-this-address-will-cost-you-10-euro@leonard-lemke.com. This offer may be withdrawn at any time without any notice. \n\nAdditional questions will be answered at this-email-is-way-too-long-and-hopefully-you-cannot-copy-paste@leonard-lemke.com.</string>
-
     <!--Add URL-->
     <string name="add_url">Add url</string>
     <string name="provider">Provider</string>
@@ -67,14 +63,18 @@
     <string name="url">URL</string>
     <string name="description_">"Description: "</string>
     <string name="title_">"Title: "</string>
-    <string name="created">"Created: "</string>
-    <string name="visits">"Visits: "</string>
+    <string name="created_">"Created: "</string>
+    <string name="visits_">"Visits: "</string>
+    <string name="shorten_url">Shorten URL (OneURL)</string>
+    <string name="copy_shortened_url">Copy shortened URL</string>
+    <string name="copy_to_clipboard_hint">Long press URLs or QR codes to copy them to the clipboard.</string>
+    <string name="no_urls">No URLs</string>
+    <string name="no_search_results">No search results</string>
+    <string name="no_favorite_urls">No favorite URLs</string>
 
     <!--Error-->
-    <string name="error">Error</string>
     <string name="no_internet">No internet connection available…</string>
     <string name="no_internet_text">Please check your internet connection and try again.</string>
-    <string name="error_unknown">Unknown error…</string>
     <string name="error_url_not_found">URL not found</string>
     <string name="error_vgd_isgd">It seems that there is a problem with v.gd/is.gd. Please choose another provider.</string>
     <string name="error_empty_url">Empty URL.</string>
@@ -106,28 +106,9 @@
     <string name="error_urlhaus_abused_legit_botnetcc">It is a known compromised website used for botnet C&amp;C hosting.</string>
     <string name="error_urlhaus_abused_redirector">It is a known abused redirector or URL shortener.</string>
 
-    <string name="no_urls">No URLs</string>
-    <string name="no_search_results">No search results</string>
-    <string name="no_favorite_urls">No favorite URLs</string>
-
-    <!--QR Code-->
-    <string name="save_image">Save Image</string>
-    <string name="generate_qr_code">Generate QR-Code</string>
-    <string name="size">Size</string>
-    <string name="background">Background</string>
-    <string name="foreground">Foreground</string>
-    <string name="frame">Frame</string>
-    <string name="icon">Icon</string>
-    <string name="tint_border">Tint border</string>
-    <string name="tint_anchor">Tint anchor</string>
-    <string name="scan_qr">Scan this QR code on another device to view the url.</string>
-
     <!--Others-->
-    <string name="remove_from_fav">Remove from favorites</string>
-    <string name="add_to_fav">Add to favorites</string>
-    <string name="delete">Delete</string>
-    <string name="show_all">Show all</string>
-    <string name="only_show_favorites">Only show favorites</string>
+    <string name="generate_qr_code">Generate QR-Code</string>
+    <string name="scan_qr">Scan this QR code on another device to view the url.</string>
     <string name="delete_url_message">Do you really want to delete this URL?</string>
 
 </resources>

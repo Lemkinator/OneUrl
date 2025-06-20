@@ -54,7 +54,7 @@
                 android:layout_marginVertical="8dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:text="@string/quick_share"
+                android:text="@string/commonutils_quick_share"
                 android:visibility="gone" />
 
             <androidx.appcompat.widget.AppCompatButton
@@ -65,7 +65,7 @@
                 android:layout_marginVertical="8dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:text="@string/share" />
+                android:text="@string/commonutils_share" />
 
 
             <androidx.appcompat.widget.AppCompatButton
@@ -76,7 +76,7 @@
                 android:layout_marginVertical="8dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:text="@string/save_image" />
+                android:text="@string/commonutils_save_as_image" />
 
         </LinearLayout>
 
