@@ -6,6 +6,9 @@
     ":renovatePrefix",
     ":configMigration"
   ],
+  "ignoreDeps": [
+    "io.github.lemkinator:common-utils"
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "digest"],
