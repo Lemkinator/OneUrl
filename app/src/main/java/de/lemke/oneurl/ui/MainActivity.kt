@@ -9,7 +9,6 @@ import android.content.Intent.ACTION_SEARCH
 import android.content.Intent.ACTION_SEND
 import android.content.Intent.EXTRA_PROCESS_TEXT
 import android.content.Intent.EXTRA_TEXT
-import android.graphics.ColorFilter
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
@@ -21,19 +20,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.SwitchPreferenceCompat
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.airbnb.lottie.LottieProperty.COLOR_FILTER
-import com.airbnb.lottie.SimpleColorFilter
-import com.airbnb.lottie.model.KeyPath
-import com.airbnb.lottie.value.LottieValueCallback
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.AppStart
-import de.lemke.commonutils.checkAppStart
+import de.lemke.commonutils.checkAppStartAndHandleOOBE
+import de.lemke.commonutils.configureCommonUtilsSplashScreen
 import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.onNavigationSingleClick
 import de.lemke.commonutils.onPrefChange
@@ -41,6 +37,7 @@ import de.lemke.commonutils.prepareActivityTransformationFrom
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
 import de.lemke.commonutils.setupCommonUtilsAboutActivity
+import de.lemke.commonutils.setupCommonUtilsOOBEActivity
 import de.lemke.commonutils.setupCommonUtilsSettingsActivity
 import de.lemke.commonutils.setupHeaderAndNavRail
 import de.lemke.commonutils.toast
@@ -77,7 +74,6 @@ import dev.oneuiproject.oneui.layout.startActionMode
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -89,14 +85,9 @@ import dev.oneuiproject.oneui.design.R as designR
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
-    companion object {
-        var scrollToTop = false
-    }
-
     private lateinit var binding: ActivityMainBinding
     private lateinit var urlAdapter: URLAdapter
     private var urls: List<URL> = emptyList()
-    private var time: Long = 0
     private var isUIReady = false
     private var filterFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private var search: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -120,47 +111,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         prepareActivityTransformationFrom()
-        time = System.currentTimeMillis()
         super.onCreate(savedInstanceState)
         if (SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        splashScreen.setKeepOnScreenCondition { !isUIReady }
-        /*
-        there is a bug in the new splash screen api, when using the onExitAnimationListener -> splash icon flickers
-        therefore setting a manual delay in openMain()
-        splashScreen.setOnExitAnimationListener { splash ->
-            val splashAnimator: ObjectAnimator = ObjectAnimator.ofPropertyValuesHolder(
-                splash.view,
-                PropertyValuesHolder.ofFloat(View.ALPHA, 0f),
-                PropertyValuesHolder.ofFloat(View.SCALE_X, 1.2f),
-                PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.2f)
-            )
-            splashAnimator.interpolator = AccelerateDecelerateInterpolator()
-            splashAnimator.duration = 400L
-            splashAnimator.doOnEnd { splash.remove() }
-            val contentAnimator: ObjectAnimator = ObjectAnimator.ofPropertyValuesHolder(
-                binding.root,
-                PropertyValuesHolder.ofFloat(View.ALPHA, 0f, 1f),
-                PropertyValuesHolder.ofFloat(View.SCALE_X, 1.2f, 1f),
-                PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.2f, 1f)
-            )
-            contentAnimator.interpolator = AccelerateDecelerateInterpolator()
-            contentAnimator.duration = 400L
-
-            val remainingDuration = splash.iconAnimationDurationMillis - (System.currentTimeMillis() - splash.iconAnimationStartMillis)
-                .coerceAtLeast(0L)
-            lifecycleScope.launch {
-                delay(remainingDuration)
-                splashAnimator.start()
-                contentAnimator.start()
-            }
-        }*/
-
-        when (checkAppStart(BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME)) {
-            AppStart.FIRST_TIME -> openOOBE()
-            else -> checkTOS(savedInstanceState)
-        }
+        configureCommonUtilsSplashScreen(splashScreen, binding.root) { !isUIReady }
+        setupCommonUtilsOOBEActivity(nextActivity = MainActivity::class.java)
+        if (!checkAppStartAndHandleOOBE(BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME)) openMain(savedInstanceState)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -171,21 +128,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             isActionMode = binding.drawerLayout.isActionMode,
             selectedIds = urlAdapter.getSelectedIds()
         )
-    }
-
-    private fun openOOBE() {
-        lifecycleScope.launch {
-            //manually waiting for the animation to finish :/
-            delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
-            startActivity(Intent(applicationContext, OOBEActivity::class.java))
-            @Suppress("DEPRECATION") if (SDK_INT < 34) overridePendingTransition(fade_in, fade_out)
-            finishAfterTransition()
-        }
-    }
-
-    private fun checkTOS(savedInstanceState: Bundle?) {
-        if (!commonUtilsSettings.tosAccepted) openOOBE()
-        else openMain(savedInstanceState)
     }
 
     private fun openMain(savedInstanceState: Bundle?) {
@@ -210,16 +152,11 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         binding.addFab.hideOnScroll(binding.urlList)
         binding.addFab.onSingleClick { binding.addFab.transformToActivity(Intent(this@MainActivity, AddURLActivity::class.java)) }
         lifecycleScope.launch {
-            observeURLs(search, filterFavorite).flowWithLifecycle(lifecycle).collectLatest {
+            observeURLs(search, filterFavorite).flowWithLifecycle(lifecycle, RESUMED).collectLatest {
+                val previousSize = urls.size
                 urls = it
                 updateRecyclerView()
-                if (scrollToTop) {
-                    delay(500)
-                    binding.urlList.smoothScrollToPosition(0)
-                    scrollToTop = false
-                }
-                //manually waiting for the splash animation to finish :/
-                if (!isUIReady) delay(700 - (System.currentTimeMillis() - time).coerceAtLeast(0L))
+                if (it.size > previousSize) binding.urlList.smoothScrollToPosition(0)
                 isUIReady = true
             }
         }
@@ -333,24 +270,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView() {
-        if (urls.isEmpty()) {
-            binding.urlList.isVisible = false
-            binding.noEntryLottie.cancelAnimation()
-            binding.noEntryLottie.progress = 0f
-            binding.noEntryText.text = when {
-                search.value != null -> getString(R.string.no_search_results)
-                filterFavorite.value -> getString(R.string.no_favorite_urls)
-                else -> getString(R.string.no_urls)
-            }
-            binding.noEntryScrollView.isVisible = true
-            val callback = LottieValueCallback<ColorFilter>(SimpleColorFilter(getColor(R.color.primary_color_themed)))
-            binding.noEntryLottie.addValueCallback(KeyPath("**"), COLOR_FILTER, callback)
-            binding.noEntryLottie.postDelayed({ binding.noEntryLottie.playAnimation() }, 400)
-        } else {
-            binding.noEntryScrollView.isVisible = false
-            binding.urlList.isVisible = true
-            urlAdapter.submitList(urls)
+        if (urls.isNotEmpty()) urlAdapter.submitList(urls)
+        else binding.noEntryView.text = when {
+            search.value != null -> getString(commonutilsR.string.commonutils_no_results_found)
+            filterFavorite.value -> getString(R.string.no_favorite_urls)
+            else -> getString(R.string.no_urls)
         }
+        binding.noEntryView.updateVisibilityWith(urls, binding.urlList)
     }
 
     private fun URLAdapter.setupOnClickListeners() {
@@ -409,8 +335,8 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     binding.addFab.show() //sometimes fab does not show after action mode ends
                 }
             },
-            onSelectMenuItem = {
-                when (it.itemId) {
+            onSelectMenuItem = { menuItem ->
+                when (menuItem.itemId) {
                     R.id.menu_item_delete -> lifecycleScope.launch {
                         deleteURL(urls.filter { it.id in urlAdapter.getSelectedIds() })
                         binding.drawerLayout.endActionMode()

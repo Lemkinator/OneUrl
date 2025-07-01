@@ -1,7 +1,6 @@
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color.BLACK
@@ -10,9 +9,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.CompoundButton
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SeslSeekBar
@@ -39,6 +35,7 @@ import dev.oneuiproject.oneui.ktx.hideSoftInput
 import dev.oneuiproject.oneui.qr.QREncoder
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
@@ -54,13 +51,9 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     private var icon = false
     private val minSize = 512
     private val maxSize = 1024
-
-    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
-        StartActivityForResult(),
-        ActivityResultCallback<ActivityResult> { result ->
-            if (result.resultCode == RESULT_OK) saveBitmapToUri(result.data?.data, qrCode)
-        }
-    )
+    private val exportQRCodeResultLauncher = registerForActivityResult(StartActivityForResult()) {
+        if (it.resultCode == RESULT_OK) saveBitmapToUri(it.data?.data, qrCode)
+    }
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -231,7 +224,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     private fun generateQRCode() {
         qrCode = with(QREncoder(this, url)) {
-            if (icon) setIcon(R.drawable.ic_launcher_themed)
+            if (icon) setIcon(commonutilsR.drawable.ic_launcher_themed)
             setBackgroundColor(backgroundColor)
             setForegroundColor(foregroundColor, tintAnchor, tintBorder)
             setSize(size)

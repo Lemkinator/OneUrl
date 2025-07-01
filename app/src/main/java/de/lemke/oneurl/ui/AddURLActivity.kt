@@ -227,7 +227,7 @@ class AddURLActivity : AppCompatActivity() {
         setLoading(null)
     }
 
-    private suspend fun createURL(provider: ShortURLProvider, longURL: String, alias: String) {
+    private fun createURL(provider: ShortURLProvider, longURL: String, alias: String) {
         getURLTitle(longURL) { title ->
             lifecycleScope.launch {
                 generateURL(
@@ -254,7 +254,6 @@ class AddURLActivity : AppCompatActivity() {
                     },
                     successCallback = { shortURL ->
                         lifecycleScope.launch {
-                            MainActivity.scrollToTop = true
                             addURL(
                                 URL(
                                     shortURL = shortURL,

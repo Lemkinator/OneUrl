@@ -8,36 +8,22 @@
     <application
         android:name=".App"
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:dataExtractionRules="@xml/commonutils_data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
-        android:fullBackupContent="@xml/backup_rules"
+        android:fullBackupContent="@xml/commonutils_backup_rules"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:localeConfig="@xml/locale_config"
+        android:localeConfig="@xml/commonutils_locale_config"
         android:resizeableActivity="true"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
+        android:theme="@style/CommonUtils.AppTheme"
         tools:targetApi="34">
-
-        <meta-data
-            android:name="SamsungBasicInteraction"
-            android:value="SEP10" />
-        <meta-data
-            android:name="com.samsung.android.icon_container.has_icon_container"
-            android:value="true" />
-        <meta-data
-            android:name="com.samsung.android.icon_container.feature_appicon"
-            android:value="ADAPTIVEICON_SHADOW" />
-
         <meta-data
             android:name="theming-meta"
             android:value="meta_oneurl" />
-
         <meta-data
             android:name="theming-meta-xml"
             android:value="@xml/meta_oneurl" />
-
-        <activity android:name=".ui.OOBEActivity" />
         <activity android:name=".ui.HelpActivity" />
         <activity
             android:name=".ui.GenerateQRCodeActivity"
@@ -56,33 +42,29 @@
             android:configChanges="orientation|screenLayout|screenSize"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Starting">
+            android:theme="@style/CommonUtils.AppTheme.Starting">
             <meta-data
                 android:name="com.sec.android.app.launcher.icon_theme"
                 android:value="themeColor" />
             <meta-data
                 android:name="android.app.searchable"
-                android:resource="@xml/searchable" />
-
+                android:resource="@xml/commonutils_searchable" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
-
             <intent-filter android:label="@string/shorten_url">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-
             <intent-filter android:label="@string/shorten_url">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

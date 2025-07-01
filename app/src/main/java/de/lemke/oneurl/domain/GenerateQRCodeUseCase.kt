@@ -16,9 +16,9 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toColorInt
 import dagger.hilt.android.qualifiers.ApplicationContext
-import de.lemke.oneurl.R
 import dev.oneuiproject.oneui.qr.QREncoder
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
 
 
 class GenerateQRCodeUseCase @Inject constructor(
@@ -27,7 +27,7 @@ class GenerateQRCodeUseCase @Inject constructor(
     operator fun invoke(url: String): Bitmap {
         return try {
             QREncoder(context, url)
-                .setIcon(R.drawable.ic_launcher_themed)
+                .setIcon(commonutilsR.drawable.ic_launcher_themed)
                 .generate()
                 ?: generateNoSupportBitmap()
         } catch (e: Exception) {
@@ -79,7 +79,7 @@ class GenerateQRCodeUseCase @Inject constructor(
     }
 
     private fun drawIcon(bitmap: Bitmap) {
-        val icon = AppCompatResources.getDrawable(context, R.drawable.ic_launcher_themed) ?: return
+        val icon = AppCompatResources.getDrawable(context, commonutilsR.drawable.ic_launcher_themed) ?: return
         val size = getPixel(40)
         val iconTop = bitmap.height / 2 - size / 2
         val iconLeft = bitmap.width / 2 - size / 2

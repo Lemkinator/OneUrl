@@ -1,0 +1,5 @@
+<resources>
+    <!--Override commonutils-->
+    <integer name="commonutils_tos_version">1</integer>
+
+</resources>

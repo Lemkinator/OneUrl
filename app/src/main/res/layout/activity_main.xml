@@ -9,7 +9,7 @@
     app:title="@string/app_name">
 
     <dev.oneuiproject.oneui.navigation.widget.DrawerNavigationView
-        android:id="@+id/navigation_view"
+        android:id="@+id/navigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_location="drawer_panel"
@@ -30,43 +30,10 @@
             android:paddingHorizontal="10dp"
             android:scrollbarStyle="outsideOverlay" />
 
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/noEntryScrollView"
+        <de.lemke.commonutils.ui.widget.NoEntryView
+            android:id="@+id/noEntryView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-            <LinearLayout
-                android:id="@+id/noEntryView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <com.airbnb.lottie.LottieAnimationView
-                    android:id="@+id/noEntryLottie"
-                    android:layout_width="74dp"
-                    android:layout_height="74dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="10dp"
-                    app:lottie_autoPlay="false"
-                    app:lottie_fileName="sad_face.json"
-                    app:lottie_loop="false" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/noEntryText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:text="@string/commonutils_no_entry"
-                    android:textColor="@color/commonutils_primary_text_icon_color_themed"
-                    android:textSize="17sp" />
-
-            </LinearLayout>
-
-        </androidx.core.widget.NestedScrollView>
+            android:layout_height="match_parent" />
 
         <dev.oneuiproject.oneui.widget.ScrollAwareFloatingActionButton
             android:id="@+id/addFab"
