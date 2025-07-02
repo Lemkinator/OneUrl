@@ -111,7 +111,7 @@ dependencies {
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.github.skydoves:bundler:1.0.4")
 
-    implementation("androidx.core:core-splashscreen:1.2.0-beta02")
+    implementation("androidx.core:core-splashscreen:1.2.0-rc01")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     val roomVersion = "2.7.2"
     implementation("androidx.room:room-runtime:$roomVersion")
