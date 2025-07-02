@@ -20,8 +20,8 @@
       "automerge": true
     },
     {
-      "matchPackagePrefixes": [
-        "sesl.androidx"
+      "matchPackageNames": [
+        "sesl.androidx{/,}**"
       ],
       "automerge": false
     }
