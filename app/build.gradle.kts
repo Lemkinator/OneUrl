@@ -97,7 +97,7 @@ dependencies {
     implementation("sesl.androidx.core:core-ktx:1.16.0+1.0.0-sesl8+rev0")
     implementation("sesl.androidx.appcompat:appcompat:1.7.1+1.0.47000-sesl7+rev0")
     implementation("sesl.androidx.preference:preference:1.2.1+1.0.12-sesl7+rev0")
-    implementation("sesl.androidx.picker:picker-color:1.0.6+1.0.6-sesl7+rev0")
+    implementation("sesl.androidx.picker:picker-color:1.0.19+1.0.19-sesl7+rev0")
     //SESL Material Components + Design Lib + Icons
     implementation("sesl.com.google.android.material:material:1.12.0+1.0.39-sesl7+rev5")
     implementation("io.github.tribalfs:oneui-design:0.6.6+oneui7")
