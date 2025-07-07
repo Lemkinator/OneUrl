@@ -93,7 +93,7 @@ secrets {
 
 dependencies {
     //SESL Android Jetpack
-    implementation("sesl.androidx.core:core:1.16.0+1.0.16-sesl7+rev0")
+    implementation("sesl.androidx.core:core:1.16.0+1.0.16-sesl7+rev1")
     implementation("sesl.androidx.core:core-ktx:1.16.0+1.0.0-sesl7+rev0")
     implementation("sesl.androidx.appcompat:appcompat:1.7.1+1.0.47000-sesl7+rev0")
     implementation("sesl.androidx.preference:preference:1.2.1+1.0.12-sesl7+rev0")
@@ -107,7 +107,6 @@ dependencies {
 
     implementation("com.airbnb.android:lottie:6.6.7")
     implementation("com.google.android.play:review-ktx:2.0.2")
-    implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.github.skydoves:bundler:1.0.4")
 
