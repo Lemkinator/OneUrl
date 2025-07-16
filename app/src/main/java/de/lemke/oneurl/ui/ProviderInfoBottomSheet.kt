@@ -12,15 +12,15 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.openURL
 import de.lemke.oneurl.databinding.ViewProviderInfoBottomsheetBinding
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 
 @AndroidEntryPoint
-class ProviderInfoBottomSheet : BottomSheetDialogFragment() {
+class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewProviderInfoBottomsheetBinding
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
