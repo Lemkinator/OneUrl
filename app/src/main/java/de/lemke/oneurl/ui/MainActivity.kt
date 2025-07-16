@@ -32,7 +32,6 @@ import de.lemke.commonutils.checkAppStartAndHandleOOBE
 import de.lemke.commonutils.configureCommonUtilsSplashScreen
 import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.onNavigationSingleClick
-import de.lemke.commonutils.onPrefChange
 import de.lemke.commonutils.prepareActivityTransformationFrom
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
@@ -66,6 +65,7 @@ import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import dev.oneuiproject.oneui.ktx.hideSoftInputOnScroll
+import dev.oneuiproject.oneui.ktx.onNewValue
 import dev.oneuiproject.oneui.ktx.onSingleClick
 import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         ) {
             findPreference<SwitchPreferenceCompat>("auto_copy_on_create_pref")?.let { autoCopyOnCreatePref ->
                 autoCopyOnCreatePref.isChecked = getUserSettings().autoCopyOnCreate
-                autoCopyOnCreatePref.onPrefChange { newValue: Boolean ->
+                autoCopyOnCreatePref.onNewValue { newValue: Boolean ->
                     lifecycleScope.launch { updateUserSettings { it.copy(autoCopyOnCreate = newValue) } }
                 }
             }
