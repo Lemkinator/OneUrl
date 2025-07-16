@@ -9,14 +9,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.core.view.isVisible
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.skydoves.bundler.bundleValue
 import com.skydoves.bundler.intentOf
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,18 +24,16 @@ import de.lemke.commonutils.quickShareBitmap
 import de.lemke.commonutils.saveBitmapToUri
 import de.lemke.commonutils.shareBitmap
 import de.lemke.oneurl.databinding.ViewQrBottomsheetBinding
+import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 import java.io.ByteArrayOutputStream
 
 @AndroidEntryPoint
-class QRBottomSheet : BottomSheetDialogFragment() {
+class QRBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewQrBottomsheetBinding
     private var qr: Bitmap? = null
-    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
-        StartActivityForResult(),
-        ActivityResultCallback<ActivityResult> { result ->
-            if (result.resultCode == RESULT_OK) requireContext().saveBitmapToUri(result.data?.data, qr)
-        }
-    )
+    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(StartActivityForResult()) {
+        if (it.resultCode == RESULT_OK) requireContext().saveBitmapToUri(it.data?.data, qr)
+    }
 
     companion object {
         const val KEY_TITLE = "key_title"
