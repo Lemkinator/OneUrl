@@ -81,12 +81,11 @@ sealed class GenerateURLError(
     class NoInternet(context: Context) : GenerateURLError(
         context.getString(R.string.no_internet),
         context.getString(R.string.no_internet_text),
-        ErrorAction(
-            context.getString(commonutilsR.string.commonutils_settings)
-        ) {
+        ErrorAction(context.getString(commonutilsR.string.commonutils_settings)) {
             try {
                 context.startActivity(Intent(ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
                 context.toast(commonutilsR.string.commonutils_error)
             }
         }
@@ -96,9 +95,7 @@ sealed class GenerateURLError(
         GenerateURLError(
             context.getString(R.string.error_service_unavailable),
             context.getString(R.string.error_service_unavailable_text),
-            ErrorAction(
-                context.getString(commonutilsR.string.commonutils_website)
-            ) {
+            ErrorAction(context.getString(commonutilsR.string.commonutils_website)) {
                 context.openURL(provider.baseURL)
             }
         )
@@ -164,5 +161,4 @@ sealed class GenerateURLError(
         val title: String,
         val action: () -> Unit,
     )
-
 }
