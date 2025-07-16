@@ -43,7 +43,7 @@ not listed	The queried malware URL is not listed on Spamhaus DBL
  */
 
 class UrlhausCheckUseCase @Inject constructor(
-    @ActivityContext private val context: Context,
+    @param:ActivityContext private val context: Context,
     ) {
     operator fun invoke(
         url: String,

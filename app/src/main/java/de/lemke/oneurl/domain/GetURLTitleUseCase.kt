@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 
 class GetURLTitleUseCase @Inject constructor(
-    @ActivityContext private val context: Context,
+    @param:ActivityContext private val context: Context,
 ) {
     operator fun invoke(url: String, callback: (title: String) -> Unit = { }) {
         RequestQueueSingleton.getInstance(context).addToRequestQueue(

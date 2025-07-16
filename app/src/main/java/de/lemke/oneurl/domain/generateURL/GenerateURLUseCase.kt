@@ -23,7 +23,7 @@ import de.lemke.commonutils.R as commonutilsR
 
 
 class GenerateURLUseCase @Inject constructor(
-    @ActivityContext private val context: Context,
+    @param:ActivityContext private val context: Context,
     private val urlhausCheck: UrlhausCheckUseCase,
 ) {
     suspend operator fun invoke(

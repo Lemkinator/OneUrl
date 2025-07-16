@@ -22,7 +22,7 @@ import de.lemke.commonutils.R as commonutilsR
 
 
 class GenerateQRCodeUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) {
     operator fun invoke(url: String): Bitmap {
         return try {
