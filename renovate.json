@@ -24,6 +24,12 @@
         "sesl.androidx{/,}**"
       ],
       "automerge": false
+    },
+    {
+      "groupName": "hilt",
+      "matchPackageNames": [
+        "com.google.dagger**"
+      ]
     }
   ]
 }
