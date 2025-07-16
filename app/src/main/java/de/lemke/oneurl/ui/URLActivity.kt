@@ -7,8 +7,6 @@ import android.text.style.UnderlineSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.animation.AccelerateDecelerateInterpolator
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AlertDialog
@@ -57,12 +55,9 @@ class URLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUrlBinding
     private lateinit var url: URL
     private lateinit var searchHighlighter: SearchHighlighter
-    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
-        StartActivityForResult(),
-        ActivityResultCallback<ActivityResult> { result ->
-            if (result.resultCode == RESULT_OK && ::url.isInitialized) saveBitmapToUri(result.data?.data, url.qr)
-        }
-    )
+    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(StartActivityForResult()) {
+        if (it.resultCode == RESULT_OK && ::url.isInitialized) saveBitmapToUri(it.data?.data, url.qr)
+    }
 
     @Inject
     lateinit var getURL: GetURLUseCase
