@@ -92,25 +92,9 @@ secrets {
 }
 
 dependencies {
-    //SESL Android Jetpack
-    implementation("sesl.androidx.core:core:1.16.0+1.0.16-sesl7+rev1")
-    implementation("sesl.androidx.core:core-ktx:1.16.0+1.0.0-sesl7+rev0")
-    implementation("sesl.androidx.appcompat:appcompat:1.7.1+1.0.47000-sesl7+rev0")
-    implementation("sesl.androidx.preference:preference:1.2.1+1.0.12-sesl7+rev0")
-    implementation("sesl.androidx.picker:picker-color:1.0.19+1.0.19-sesl7+rev0")
-    //SESL Material Components + Design Lib + Icons
-    implementation("sesl.com.google.android.material:material:1.12.0+1.0.39-sesl7+rev6")
-    implementation("io.github.tribalfs:oneui-design:0.7.6+oneui7")
-    implementation("io.github.oneuiproject:icons:1.1.0")
-
-    implementation("io.github.lemkinator:common-utils:0.8.39")
-
-    implementation("com.airbnb.android:lottie:6.6.7")
-    implementation("com.google.android.play:review-ktx:2.0.2")
+    implementation("io.github.lemkinator:common-utils:0.9.0")
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.github.skydoves:bundler:1.0.4")
-
-    implementation("androidx.core:core-splashscreen:1.2.0-rc01")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     val roomVersion = "2.7.2"
     implementation("androidx.room:room-runtime:$roomVersion")
@@ -135,7 +119,6 @@ configurations.implementation {
     exclude("androidx.recyclerview", "recyclerview")
     exclude("androidx.slidingpanelayout", "slidingpanelayout")
     exclude("androidx.swiperefreshlayout", "swiperefreshlayout")
-
     //Exclude official material components lib
     exclude("com.google.android.material", "material")
 }
