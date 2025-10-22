@@ -96,7 +96,7 @@ dependencies {
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.github.skydoves:bundler:1.0.4")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
-    val roomVersion = "2.8.2"
+    val roomVersion = "2.8.3"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
