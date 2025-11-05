@@ -17,7 +17,7 @@
         android:resizeableActivity="true"
         android:supportsRtl="true"
         android:theme="@style/CommonUtils.AppTheme"
-        tools:targetApi="34">
+        tools:targetApi="36">
         <meta-data
             android:name="theming-meta"
             android:value="meta_oneurl" />
