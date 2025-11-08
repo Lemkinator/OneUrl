@@ -114,9 +114,9 @@ object Tinube : ShortURLProvider {
                     val status = data.split(",")[0].split(":")[1].toInt()
                     val urlCode = if (status == 200) data.split("urlCode\":\"")[1].split("\"")[0] else null
                     Log.d(tag, "status: $status, urlCode: $urlCode")
-                    when {
-                        status == 200 && urlCode != null -> successCallback("$baseURL/$urlCode")
-                        status == 208 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                    when (status) {
+                        200 if urlCode != null -> successCallback("$baseURL/$urlCode")
+                        208 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
                         else -> errorCallback(GenerateURLError.Unknown(context, status))
                     }
                 } catch (e: Exception) {

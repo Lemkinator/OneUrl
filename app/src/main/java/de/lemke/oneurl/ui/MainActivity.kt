@@ -291,7 +291,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 )
             }
         }
-        onClickItemFavorite = { position, url -> lifecycleScope.launch { updateURL(url.copy(favorite = !url.favorite)) } }
+        onClickItemFavorite = { _, url -> lifecycleScope.launch { updateURL(url.copy(favorite = !url.favorite)) } }
         onLongClickItem = {
             if (!isActionMode) launchActionMode()
             binding.urlList.seslStartLongPressMultiSelection()
