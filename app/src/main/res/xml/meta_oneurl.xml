@@ -36,6 +36,14 @@
             ValueType="BgColor" />
 
         <Property
+            Comment="drawer menu category fg color"
+            DefaultValue="#fcfcfc"
+            DestAttribName="oui_des_drawer_menu_category_fg_color"
+            UID="62-20-8"
+            ValueRef="1-18-1"
+            ValueType="BgColor"/>
+
+        <Property
             Comment="drawer selected background color"
             DefaultValue="#0d000000"
             DestAttribName="oui_des_drawer_menu_item_selected_bg_color"
@@ -43,6 +51,44 @@
             UID="62-20-2-2"
             ValueRef="1-3-1"
             ValueType="BgColor" />
+
+        <Property
+            Comment="drawer menu category recoil color"
+            DefaultValue="#19000000"
+            DestAttribName="oui_des_drawer_menu_category_recoil_color"
+            UID="62-11-1"
+            ValueRef="1-52-1"
+            ValueType="Color"/>
+
+        <Property
+            Comment="RoundedTabLayout selected tab text color"
+            DefaultValue="#252525"
+            DestAttribName="oui_des_rounded_tab_selected_text_color"
+            UID="16-61-11"
+            ValueRef="1-E"
+            ValueType="TextColor"/>
+        <Property
+            Comment="RoundedTabLayout unselected tab text color"
+            DefaultValue="#949494"
+            DestAttribName="oui_des_rounded_tab_unselected_text_color"
+            UID="16-61-8"
+            ValueRef="1-1-4"
+            ValueType="TextColor"/>
+        <Property
+            Comment="RoundedTabLayout selected BG color"
+            DefaultValue="#69696c"
+            DestAttribName="oui_des_rounded_tab_selected_background_color"
+            UID="16-61-12"
+            ValueRef="1-A"
+            ValueType="BgColor"/>
+
+        <Property
+            Comment="Background color for RoundedTabLayout"
+            DefaultValue="#e4e4e7"
+            DestAttribName="oui_des_rounded_tab_layout_background_color"
+            UID="16-61-4"
+            ValueRef="1-7-1"
+            ValueType="BgColor"/>
 
     </AppMetaData>
 </ThemeMetaData>
