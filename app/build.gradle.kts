@@ -92,7 +92,7 @@ secrets {
 }
 
 dependencies {
-    implementation("io.github.lemkinator:common-utils:0.9.6")
+    implementation("io.github.lemkinator:common-utils:0.9.8")
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.github.skydoves:bundler:1.0.4")
     implementation("androidx.datastore:datastore-preferences:1.2.0")
