@@ -51,6 +51,7 @@ jobs:
         run: |
           chmod +x ./gradlew
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > keystore.jks
+          echo -e "KURZELINKS_API_KEY=${{ secrets.KURZELINKS_API_KEY }}\nURL_HAUS_AUTH_KEY=${{ secrets.URL_HAUS_AUTH_KEY }}" > secrets.properties
 
       - name: Build APK
         if: steps.version_info.outputs.changed == 'true'
