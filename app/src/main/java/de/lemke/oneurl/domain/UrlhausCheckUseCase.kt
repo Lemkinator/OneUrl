@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.toolbox.StringRequest
 import dagger.hilt.android.qualifiers.ActivityContext
+import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import org.json.JSONObject
 import javax.inject.Inject
@@ -101,6 +102,7 @@ class UrlhausCheckUseCase @Inject constructor(
             }
         ) {
             override fun getParams() = mapOf("url" to url)
+            override fun getHeaders() = mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
         }
     }
 }
