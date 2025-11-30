@@ -116,14 +116,9 @@ object Oneptco : ShortURLProvider {
                         error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
                         statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 500 -> errorCallback(
-                            GenerateURLError.InternalServerError(context)
-                        )
-
-                        statusCode == 503 -> errorCallback(
-                            GenerateURLError.ServiceTemporarilyUnavailable(context, this)
-                        )
-
+                        statusCode == 404 -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        statusCode == 500 -> errorCallback(GenerateURLError.InternalServerError(context))
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
                         else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
                     }
                 } catch (e: Exception) {
