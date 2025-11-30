@@ -44,7 +44,7 @@ https://lstu.fr/stats/test
 }
  */
 object Lstu : ShortURLProvider {
-    override val enabled: Boolean = false // discontinued because of abuse: https://lstu.fr/
+    override val enabled = false // discontinued because of abuse: https://lstu.fr/
     override val name = "lstu.fr"
     override val baseURL = "https://lstu.fr"
     override val apiURL = "$baseURL/a"
