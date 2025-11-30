@@ -31,6 +31,7 @@ fail: {
 2024/10/03: request took 14 seconds :/
 */
 object Oneptco : ShortURLProvider {
+    override val enabled = false // returns 404??
     override val name = "1pt.co"
     override val baseURL = "https://1pt.co"
     override val apiURL = "https://csclub.uwaterloo.ca/~phthakka/1pt-express/addurl"
