@@ -16,7 +16,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toColorInt
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.oneuiproject.oneui.qr.QREncoder
+import dev.oneuiproject.oneui.qr.utils.QrEncoder
 import javax.inject.Inject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -26,7 +26,7 @@ class GenerateQRCodeUseCase @Inject constructor(
 ) {
     operator fun invoke(url: String): Bitmap {
         return try {
-            QREncoder(context, url)
+            QrEncoder(context, url)
                 .setIcon(commonutilsR.drawable.ic_launcher_themed)
                 .generate()
                 ?: generateNoSupportBitmap()

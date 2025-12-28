@@ -32,7 +32,7 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import dev.oneuiproject.oneui.qr.QREncoder
+import dev.oneuiproject.oneui.qr.utils.QrEncoder
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import de.lemke.commonutils.R as commonutilsR
@@ -223,7 +223,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     }
 
     private fun generateQRCode() {
-        qrCode = with(QREncoder(this, url)) {
+        qrCode = with(QrEncoder(this, url)) {
             if (icon) setIcon(commonutilsR.drawable.ic_launcher_themed)
             setBackgroundColor(backgroundColor)
             setForegroundColor(foregroundColor, tintAnchor, tintBorder)
