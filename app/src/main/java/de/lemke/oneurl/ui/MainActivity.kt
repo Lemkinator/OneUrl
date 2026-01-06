@@ -147,7 +147,6 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         }
         initDrawer()
         initRecycler()
-        checkIntent()
         savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
         binding.addFab.hideOnScroll(binding.urlList)
         binding.addFab.onSingleClick { binding.addFab.transformToActivity(Intent(this@MainActivity, AddURLActivity::class.java)) }
@@ -157,7 +156,10 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 urls = it
                 updateRecyclerView()
                 if (it.size > previousSize) binding.urlList.smoothScrollToPosition(0)
-                isUIReady = true
+                if (!isUIReady) {
+                    checkIntent()
+                    isUIReady = true
+                }
             }
         }
     }
