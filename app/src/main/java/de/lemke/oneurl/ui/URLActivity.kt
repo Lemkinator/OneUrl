@@ -146,13 +146,13 @@ class URLActivity : AppCompatActivity() {
             setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
         }
         binding.urlShortButton.setOnClickListener { openURL(url.shortURL.withHttps()) }
-        binding.urlShortButton.setOnLongClickListener { copyToClipboard("Short URL", url.shortURL) }
+        binding.urlShortButton.setOnLongClickListener { copyToClipboard(url.shortURL, "Short URL") }
         binding.urlShortShareButton.setOnClickListener { shareText(url.shortURL) }
         binding.urlLongButton.text = searchHighlighter(url.longURL, highlightText).apply {
             setSpan(UnderlineSpan(), 0, url.longURL.length, 0)
         }
         binding.urlLongButton.setOnClickListener { openURL(url.longURL.withHttps()) }
-        binding.urlLongButton.setOnLongClickListener { copyToClipboard("Long URL", url.longURL) }
+        binding.urlLongButton.setOnLongClickListener { copyToClipboard(url.longURL, "Long URL") }
         binding.urlLongShareButton.setOnClickListener { shareText(url.longURL) }
         if (url.title.isNotBlank()) {
             binding.urlTitleTextview.text = searchHighlighter(url.title, highlightText)
@@ -167,7 +167,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, highlightText)
         binding.urlVisitsRefreshButton.setOnClickListener { refreshVisitCount() }
         refreshVisitCount()
-        binding.bottomTipView.setOnLinkClickListener { copyToClipboard("Short URL", url.shortURL) }
+        binding.bottomTipView.setOnLinkClickListener { copyToClipboard(url.shortURL, "Short URL") }
         setupBottomNav()
     }
 
