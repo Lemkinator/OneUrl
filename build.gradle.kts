@@ -63,5 +63,5 @@ allprojects {
 
 plugins {
     id("org.jetbrains.kotlin.android") version "2.3.0" apply false
-    id("com.google.dagger.hilt.android") version "2.58" apply false
+    id("com.google.dagger.hilt.android") version "2.59" apply false
 }
