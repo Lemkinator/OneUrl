@@ -7,6 +7,7 @@ import de.lemke.commonutils.prepareActivityTransformationBetween
 import de.lemke.commonutils.sendEmailHelp
 import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.commonutils.transformToActivity
+import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityHelpBinding
 import dev.oneuiproject.oneui.ktx.onSingleClick
@@ -22,6 +23,6 @@ class HelpActivity : AppCompatActivity() {
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
         binding.providerInfoButton.apply { onSingleClick { transformToActivity(ProviderActivity::class.java, "ProviderTransformation") } }
-        binding.contactMeButton.setOnClickListener { sendEmailHelp(getString(R.string.commonutils_email), getString(R.string.app_name)) }
+        binding.contactMeButton.setOnClickListener { sendEmailHelp(getString(R.string.commonutils_email), BuildConfig.APP_NAME) }
     }
 }

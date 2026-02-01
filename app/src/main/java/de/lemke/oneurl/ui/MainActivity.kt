@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         initRecycler()
         savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
         binding.addFab.hideOnScroll(binding.urlList)
-        binding.addFab.onSingleClick { binding.addFab.transformToActivity(Intent(this@MainActivity, AddURLActivity::class.java)) }
+        binding.addFab.onSingleClick { binding.addFab.transformToActivity(AddURLActivity::class.java, "AddURLTransition") }
         lifecycleScope.launch {
             observeURLs(search, filterFavorite).flowWithLifecycle(lifecycle, RESUMED).collectLatest {
                 val previousSize = urls.size
@@ -168,12 +168,15 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         val extraText = intent.getStringExtra(EXTRA_TEXT)
         if (intent?.action == ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
             Log.d("MainActivity", "extraText: $extraText")
-            binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", extraText))
+            binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", extraText), "AddURLTransition")
         }
         val textFromSelectMenu = intent.getCharSequenceExtra(EXTRA_PROCESS_TEXT)
         if (intent?.action == ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
             Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
-            binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()))
+            binding.addFab.transformToActivity(
+                Intent(this, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()),
+                "AddURLTransition"
+            )
         }
     }
 
@@ -250,6 +253,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             }
             true
         }
+        binding.drawerLayout.setTitle(BuildConfig.APP_NAME)
         binding.drawerLayout.setupHeaderAndNavRail(getString(R.string.about_app))
         //binding.drawerLayout.isImmersiveScroll = true
         binding.noEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)

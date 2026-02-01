@@ -1,10 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
-    <string name="app_name" translatable="false">OneURL</string>
     <string name="app_description">A URL-Shortener and QR code generator with OneUI-Design.</string>
     <string name="about_app">About OneURL</string>
 
     <!--Override commonutils strings-->
-    <string name="commonutils_app_name" translatable="false">@string/app_name</string>
     <string name="commonutils_app_description" translatable="false">@string/app_description</string>
     <string name="commonutils_email" translatable="false">oneurl@leonard-lemke.com</string>
     <string name="commonutils_privacy_website" translatable="false">https://www.leonard-lemke.com/apps/oneurl/privacy-policy</string>

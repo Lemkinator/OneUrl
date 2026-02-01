@@ -1,19 +1,21 @@
-
 plugins {
-    id("com.android.application")
-    id("com.google.dagger.hilt.android")
-    id("com.google.devtools.ksp")
-    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
-    id("com.google.android.gms.oss-licenses-plugin")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.gradle.secrets)
+    alias(libs.plugins.aboutlibraries)
 }
 
 fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
 fun getProperty(key: String): String? = rootProject.findProperty(key)?.toString() ?: System.getenv(key.toEnvVarStyle())
+fun com.android.build.api.dsl.ApplicationBuildType.addConstant(name: String, value: String) {
+    manifestPlaceholders += mapOf(name to value)
+    buildConfigField("String", name, "\"$value\"")
+}
 
 android {
     namespace = "de.lemke.oneurl"
     compileSdk = 36
-
     defaultConfig {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
@@ -21,10 +23,8 @@ android {
         versionCode = 45
         versionName = "1.7.6"
     }
-
     @Suppress("UnstableApiUsage")
     androidResources.localeFilters += listOf("en", "de")
-
     signingConfigs {
         create("release") {
             getProperty("releaseStoreFile").apply {
@@ -40,16 +40,13 @@ android {
             }
         }
     }
-
     buildTypes {
-        all {
-            signingConfig = signingConfigs.getByName(if (getProperty("releaseStoreFile").isNullOrEmpty()) "debug" else "release")
-        }
-
+        all { signingConfig = signingConfigs.getByName(if (getProperty("releaseStoreFile").isNullOrEmpty()) "debug" else "release") }
         release {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
+            addConstant("APP_NAME", "OneURL")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             ndk { debugSymbolLevel = "FULL" }
         }
@@ -58,63 +55,28 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             applicationIdSuffix = ".debug"
-            resValue("string", "app_name", "OneURL (Debug)")
+            addConstant("APP_NAME", "OneURL (Debug)")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
     buildFeatures {
         viewBinding = true
         buildConfig = true
     }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
-
-ksp { arg("room.schemaLocation", "$projectDir/schemas") }
-
+dependencies {
+    implementation(libs.common.utils)
+    implementation(libs.datastore.preferences)
+    implementation(libs.bundler)
+    implementation(libs.volley)
+    implementation(libs.bundles.room)
+    implementation(libs.hilt.android)
+    ksp(libs.room.compiler)
+    ksp(libs.hilt.compiler)
+}
 secrets {
     propertiesFileName = "secrets.properties"
     defaultPropertiesFileName = "secrets.defaults.properties"
 }
-
-dependencies {
-    implementation("io.github.lemkinator:common-utils:0.9.9")
-    implementation("com.android.volley:volley:1.2.1")
-    implementation("com.github.skydoves:bundler:1.0.4")
-    implementation("androidx.datastore:datastore-preferences:1.2.0")
-    val roomVersion = "2.8.4"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
-    implementation("com.google.dagger:hilt-android:2.59")
-    ksp("com.google.dagger:hilt-compiler:2.59")
-}
-
-configurations.implementation {
-    //Exclude official android jetpack modules
-    exclude("androidx.core", "core")
-    exclude("androidx.core", "core-ktx")
-    exclude("androidx.customview", "customview")
-    exclude("androidx.coordinatorlayout", "coordinatorlayout")
-    exclude("androidx.drawerlayout", "drawerlayout")
-    exclude("androidx.viewpager2", "viewpager2")
-    exclude("androidx.viewpager", "viewpager")
-    exclude("androidx.appcompat", "appcompat")
-    exclude("androidx.fragment", "fragment")
-    exclude("androidx.preference", "preference")
-    exclude("androidx.recyclerview", "recyclerview")
-    exclude("androidx.slidingpanelayout", "slidingpanelayout")
-    exclude("androidx.swiperefreshlayout", "swiperefreshlayout")
-    //Exclude official material components lib
-    exclude("com.google.android.material", "material")
-}
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
