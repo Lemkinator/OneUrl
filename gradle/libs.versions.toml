@@ -7,7 +7,7 @@ gradle = "9.0.1"
 gradke-secrets = "2.0.1"
 hilt = "2.59.1"
 kotlin = "2.3.10"
-ksp = "2.3.5"
+ksp = "2.3.6"
 room = "2.8.4"
 volley = "1.2.1"
 
