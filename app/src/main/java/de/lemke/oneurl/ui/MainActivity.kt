@@ -55,22 +55,21 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
-import de.lemke.oneurl.ui.URLAdapter.Payload.SELECTION_MODE
-import dev.oneuiproject.oneui.delegates.AllSelectorState
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
-import dev.oneuiproject.oneui.ktx.configureImmBottomPadding
-import dev.oneuiproject.oneui.ktx.configureItemSwipeAnimator
 import dev.oneuiproject.oneui.ktx.dpToPx
-import dev.oneuiproject.oneui.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import dev.oneuiproject.oneui.ktx.hideSoftInputOnScroll
 import dev.oneuiproject.oneui.ktx.onNewValue
 import dev.oneuiproject.oneui.ktx.onSingleClick
 import dev.oneuiproject.oneui.layout.ToolbarLayout
+import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchOnActionMode
 import dev.oneuiproject.oneui.layout.startActionMode
+import dev.oneuiproject.oneui.recyclerview.ktx.configureImmBottomPadding
+import dev.oneuiproject.oneui.recyclerview.ktx.configureItemSwipeAnimator
+import dev.oneuiproject.oneui.recyclerview.ktx.enableCoreSeslFeatures
+import dev.oneuiproject.oneui.recyclerview.ktx.hideSoftInputOnScroll
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
@@ -86,12 +85,14 @@ import dev.oneuiproject.oneui.design.R as designR
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var urlAdapter: URLAdapter
     private var urls: List<URL> = emptyList()
     private var isUIReady = false
     private var filterFavorite: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private var search: MutableStateFlow<String?> = MutableStateFlow(null)
     private val allSelectorStateFlow: MutableStateFlow<AllSelectorState> = MutableStateFlow(AllSelectorState())
+    private val urlAdapter: URLAdapter by lazy {
+        URLAdapter(this, onAllSelectorStateChanged = { allSelectorStateFlow.value = it }, onBlockActionMode = ::launchActionMode)
+    }
 
     @Inject
     lateinit var getUserSettings: GetUserSettingsUseCase
@@ -122,7 +123,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        if (!this::binding.isInitialized || !this::urlAdapter.isInitialized) return
+        if (!this::binding.isInitialized) return
         outState.saveSearchAndActionMode(
             isSearchMode = binding.drawerLayout.isSearchMode,
             isActionMode = binding.drawerLayout.isActionMode,
@@ -262,14 +263,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
     private fun initRecycler() {
         binding.urlList.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = URLAdapter(context).also { it.setupOnClickListeners(); urlAdapter = it }
+            adapter = urlAdapter.also { it.setupOnClickListeners() }
             itemAnimator = null
             addItemDecoration(SemItemDecoration(context, ALL, NONE).apply { setDividerInsetStart(92f.dpToPx(resources)) })
             enableCoreSeslFeatures()
             hideSoftInputOnScroll()
             if (SDK_INT >= VERSION_CODES.R) configureImmBottomPadding(binding.drawerLayout)
+            urlAdapter.configureWith(this)
         }
-        urlAdapter.configure(binding.urlList, SELECTION_MODE, onAllSelectorStateChanged = { allSelectorStateFlow.value = it })
         configureItemSwipeAnimator()
         updateRecyclerView()
     }
@@ -287,7 +288,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     private fun URLAdapter.setupOnClickListeners() {
         onClickItem = { position, url, viewHolder ->
-            if (isActionMode) onToggleItem(url.id, position)
+            if (isActionMode) toggleItem(url.id, position)
             else {
                 hideSoftInput()
                 viewHolder.itemView.transformToActivity(
@@ -329,13 +330,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         )
     }
 
-    private fun launchActionMode(initialSelected: Array<Long>? = null) {
+    private fun launchActionMode(initialSelected: Set<Long>? = null) {
         binding.addFab.isVisible = false
-        urlAdapter.onToggleActionMode(true, initialSelected)
+        urlAdapter.toggleActionMode(true, initialSelected)
         binding.drawerLayout.startActionMode(
             onInflateMenu = { menu, menuInflater -> menuInflater.inflate(R.menu.menu_select, menu) },
             onEnd = {
-                urlAdapter.onToggleActionMode(false)
+                urlAdapter.toggleActionMode(false)
                 if (!binding.drawerLayout.isSearchMode) {
                     binding.addFab.isVisible = true
                     binding.addFab.show() //sometimes fab does not show after action mode ends

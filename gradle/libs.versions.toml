@@ -1,7 +1,7 @@
 [versions]
 aboutlibraries = "14.0.0-b02"
 bundler = "1.0.4"
-commonUtils = "0.9.11"
+commonUtils = "0.9.21"
 datastorePreferences = "1.2.0"
 gradle = "9.0.1"
 gradke-secrets = "2.0.1"

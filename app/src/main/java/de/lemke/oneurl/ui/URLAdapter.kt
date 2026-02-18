@@ -11,17 +11,26 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.Adapter
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.URL
-import dev.oneuiproject.oneui.delegates.MultiSelector
-import dev.oneuiproject.oneui.delegates.MultiSelectorDelegate
+import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
+import dev.oneuiproject.oneui.recyclerview.util.MultiSelector
+import dev.oneuiproject.oneui.recyclerview.util.MultiSelectorDelegate
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import dev.oneuiproject.oneui.widget.SelectableLinearLayout
 
 class URLAdapter(
-    private val context: Context
-) : RecyclerView.Adapter<URLAdapter.ViewHolder>(),
-    MultiSelector<Long> by MultiSelectorDelegate(isSelectable = { true }) {
+    private val context: Context,
+    onAllSelectorStateChanged: ((AllSelectorState) -> Unit),
+    onBlockActionMode: (() -> Unit),
+) : Adapter<URLAdapter.ViewHolder>(),
+    MultiSelector<Long> by MultiSelectorDelegate(
+        onAllSelectorStateChanged = onAllSelectorStateChanged,
+        onBlockActionMode = onBlockActionMode,
+        isSelectable = { _, _ -> true },
+        selectionChangePayload = Payload.SELECTION_MODE
+    ) {
 
     private val searchHighlighter = SearchHighlighter(context)
 
@@ -106,7 +115,8 @@ class URLAdapter(
         fun bind(url: URL) {
             listItemTitle.text = searchHighlighter(url.shortURL, highlightWord)
             listItemSubtitle1.text = searchHighlighter(url.longURL, highlightWord)
-            listItemSubtitle2.text = searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
+            listItemSubtitle2.text =
+                searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
             listItemImg.setImageBitmap(url.qr)
             listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
                 null,
@@ -117,14 +127,14 @@ class URLAdapter(
             )
         }
 
-        fun bindActionMode(itemId: Long){
+        fun bindActionMode(itemId: Long) {
             selectableLayout.apply {
                 isSelectionMode = isActionMode
                 setSelected(isSelected(itemId))
             }
         }
 
-        fun bindActionModeAnimate(itemId: Long){
+        fun bindActionModeAnimate(itemId: Long) {
             selectableLayout.apply {
                 isSelectionMode = isActionMode
                 setSelectedAnimate(isSelected(itemId))
@@ -134,7 +144,8 @@ class URLAdapter(
         fun bindHighlight(url: URL) {
             listItemTitle.text = searchHighlighter(url.shortURL, highlightWord)
             listItemSubtitle1.text = searchHighlighter(url.longURL, highlightWord)
-            listItemSubtitle2.text = searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
+            listItemSubtitle2.text =
+                searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
         }
     }
 
