@@ -13,6 +13,7 @@ class DeleteURLUseCase @Inject constructor(
     suspend operator fun invoke(url: URL) = withContext(Dispatchers.Default) {
         urlRepository.deleteURL(url)
     }
+
     suspend operator fun invoke(urls: List<URL>) = withContext(Dispatchers.Default) {
         urlRepository.deleteURLs(urls)
     }

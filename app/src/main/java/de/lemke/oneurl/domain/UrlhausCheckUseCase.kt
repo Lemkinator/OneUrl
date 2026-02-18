@@ -45,7 +45,7 @@ not listed	The queried malware URL is not listed on Spamhaus DBL
 
 class UrlhausCheckUseCase @Inject constructor(
     @param:ActivityContext private val context: Context,
-    ) {
+) {
     operator fun invoke(
         url: String,
         successCallback: () -> Unit,
@@ -82,7 +82,11 @@ class UrlhausCheckUseCase @Inject constructor(
                             val urlhausLink = responseJson.optString("urlhaus_reference").ifBlank { null }
                             val virustotalLink = responseJson.optJSONArray("payloads")?.optJSONObject(0)
                                 ?.optJSONObject("virustotal")?.optString("link")?.ifBlank { null }
-                            blacklistCallback(context.getString(R.string.error_urlhaus_blacklisted, listedOn, reason), urlhausLink, virustotalLink)
+                            blacklistCallback(
+                                context.getString(R.string.error_urlhaus_blacklisted, listedOn, reason),
+                                urlhausLink,
+                                virustotalLink
+                            )
                         } catch (e: Exception) {
                             Log.w(tag, "Failed to get urlhaus_link or virustotal_link for $url: $e")
                             blacklistCallback(context.getString(R.string.error_urlhaus_blacklisted, listedOn, reason), null, null)

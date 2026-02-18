@@ -105,7 +105,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     private fun initViews() {
         generateQRCode()
-        binding.qrCode.setOnClickListener { qrCode?.copyToClipboard(this, "QR Code", "QRCode.png") == true }
+        binding.qrCode.setOnClickListener { qrCode?.copyToClipboard(this, "QR Code", "QRCode.png") }
         binding.editTextURL.setText(url)
         binding.editTextURL.requestFocus()
         binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }

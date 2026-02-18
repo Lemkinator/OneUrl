@@ -12,6 +12,7 @@ class UpdateURLUseCase @Inject constructor(
     suspend operator fun invoke(url: URL) = withContext(Dispatchers.Default) {
         urlRepository.updateURL(url)
     }
+
     suspend operator fun invoke(urls: List<URL>) = withContext(Dispatchers.Default) {
         urlRepository.updateURLs(urls)
     }
