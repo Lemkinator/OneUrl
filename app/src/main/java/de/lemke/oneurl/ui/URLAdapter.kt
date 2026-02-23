@@ -28,7 +28,6 @@ class URLAdapter(
     MultiSelector<Long> by MultiSelectorDelegate(
         onAllSelectorStateChanged = onAllSelectorStateChanged,
         onBlockActionMode = onBlockActionMode,
-        isSelectable = { _, _ -> true },
         selectionChangePayload = Payload.SELECTION_MODE
     ) {
 
