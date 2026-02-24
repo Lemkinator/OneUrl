@@ -20,12 +20,6 @@
       "automerge": true
     },
     {
-      "matchPackageNames": [
-        "sesl.{/,}**"
-      ],
-      "automerge": false
-    },
-    {
       "groupName": "hilt",
       "matchPackageNames": [
         "com.google.dagger**"
