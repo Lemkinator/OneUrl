@@ -1,5 +1,5 @@
 [versions]
-aboutlibraries = "14.0.1"
+aboutlibraries = "14.1.0"
 bundler = "1.0.4"
 commonUtils = "0.9.22"
 datastorePreferences = "1.2.1"
