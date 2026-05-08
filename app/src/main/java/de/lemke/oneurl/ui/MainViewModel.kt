@@ -34,6 +34,7 @@ class MainViewModel @Inject constructor(
 
     val search: MutableStateFlow<String?> get() = _search
     val filterFavorite: MutableStateFlow<Boolean> get() = _filterFavorite
+    val allSelectorState = MutableStateFlow(AllSelectorState())
 
     init {
         viewModelScope.launch {
@@ -61,7 +62,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun setAllSelectorState(state: AllSelectorState) {
-        _state.update { it.copy(allSelectorState = state) }
+        allSelectorState.value = state
     }
 
     fun updateAutoCopy(enabled: Boolean) {
@@ -73,5 +74,4 @@ data class MainUiState(
     val urls: List<URL> = emptyList(),
     val isUIReady: Boolean = false,
     val newItemAdded: Boolean = false,
-    val allSelectorState: AllSelectorState = AllSelectorState(),
 )

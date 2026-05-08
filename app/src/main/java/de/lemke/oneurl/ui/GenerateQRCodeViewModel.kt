@@ -97,7 +97,7 @@ class GenerateQRCodeViewModel @Inject constructor(
 
     fun setForegroundColor(color: Int) {
         viewModelScope.launch {
-            val recentColors = (_state.value.recentForegroundColors.toMutableList().also { it.add(0, color) }).distinct().take(6)
+            val recentColors = _state.value.recentForegroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
             _state.update { it.copy(foregroundColor = color, recentForegroundColors = recentColors) }
             updateUserSettings { it.copy(qrRecentForegroundColors = recentColors) }
             regenerateQR()
@@ -106,7 +106,7 @@ class GenerateQRCodeViewModel @Inject constructor(
 
     fun setBackgroundColor(color: Int) {
         viewModelScope.launch {
-            val recentColors = (_state.value.recentBackgroundColors.toMutableList().also { it.add(0, color) }).distinct().take(6)
+            val recentColors = _state.value.recentBackgroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
             _state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
             updateUserSettings { it.copy(qrRecentBackgroundColors = recentColors) }
             regenerateQR()

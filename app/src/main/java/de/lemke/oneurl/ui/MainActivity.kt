@@ -338,14 +338,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                 }
             },
             onSelectAll = { isChecked: Boolean -> urlAdapter.onToggleSelectAll(isChecked) },
-            allSelectorStateFlow = viewModel.state.value.let {
-                // bridge from state to the required MutableStateFlow for AllSelectorState
-                val flow = kotlinx.coroutines.flow.MutableStateFlow(it.allSelectorState)
-                lifecycleScope.launch {
-                    viewModel.state.collect { s -> flow.value = s.allSelectorState }
-                }
-                flow
-            },
+            allSelectorStateFlow = viewModel.allSelectorState,
             searchOnActionMode = SearchOnActionMode.NoDismiss
         )
     }
