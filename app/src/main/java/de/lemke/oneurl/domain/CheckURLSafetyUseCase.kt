@@ -34,7 +34,7 @@ class CheckURLSafetyUseCase @Inject constructor(
                     val queryStatus = responseJson.optString("query_status")
                     if (queryStatus == "ok") {
                         val blacklists = responseJson.getJSONObject("blacklists")
-                        val surblListed = blacklists.getString("surbl") != "not listed"
+                        val surblListed = blacklists.optString("surbl", "not listed") != "not listed"
                         val spamhausStatus = blacklists.optString("spamhaus_dbl")
                         val spamhausListed = spamhausStatus != "not listed"
                         val listedOn = "URLhaus" +
