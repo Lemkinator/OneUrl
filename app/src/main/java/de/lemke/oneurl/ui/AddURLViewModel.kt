@@ -99,7 +99,7 @@ class AddURLViewModel @Inject constructor(
                     _events.send(AddUrlEvent.AlreadyShortened(existingURLs.first().shortURL))
                     return@launch
                 }
-                val exactMatch = existingURLs.find { it.shortURL == provider.baseURL + alias }
+                val exactMatch = existingURLs.find { it.shortURL == "${provider.baseURL}/$alias" }
                 if (exactMatch != null) {
                     _state.update { it.copy(isLoading = false) }
                     _events.send(AddUrlEvent.AlreadyShortened(exactMatch.shortURL))
