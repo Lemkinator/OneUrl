@@ -63,7 +63,7 @@ object Shareaholic : ShortURLProvider {
                     successCallback(shortURL)
                     return@JsonObjectRequest
                 }
-                errorCallback(GenerateURLError.Unknown(context))
+                errorCallback(GenerateURLError.Unknown())
             },
             { error ->
                 try {
@@ -75,31 +75,31 @@ object Shareaholic : ShortURLProvider {
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     val response = data?.let { JSONObject(it) }
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                         response?.has("errors") == true -> {
                             val firstError = response.optJSONArray("errors")?.optJSONObject(0)
                             Log.e(tag, "first error: $firstError")
                             when (firstError?.optString("code")) {
-                                "100" -> errorCallback(GenerateURLError.Unknown(context, 1100)) //100	apikey not provided
-                                "101" -> errorCallback(GenerateURLError.Unknown(context, 1101)) //101	apikey provided is invalid
-                                "140" -> errorCallback(GenerateURLError.Unknown(context, 1140)) //140	Missing URL
-                                "141" -> errorCallback(GenerateURLError.InvalidURL(context)) //141	Invalid URL
-                                "145" -> errorCallback(GenerateURLError.InvalidURL(context)) //145	URL shortening problem or unsafe URL
-                                "429" -> errorCallback(GenerateURLError.RateLimitExceeded(context)) //429	rate_limit_exceeded
+                                "100" -> errorCallback(GenerateURLError.Unknown(1100)) //100	apikey not provided
+                                "101" -> errorCallback(GenerateURLError.Unknown(1101)) //101	apikey provided is invalid
+                                "140" -> errorCallback(GenerateURLError.Unknown(1140)) //140	Missing URL
+                                "141" -> errorCallback(GenerateURLError.InvalidURL) //141	Invalid URL
+                                "145" -> errorCallback(GenerateURLError.InvalidURL) //145	URL shortening problem or unsafe URL
+                                "429" -> errorCallback(GenerateURLError.RateLimitExceeded) //429	rate_limit_exceeded
                                 else -> if (firstError?.has("detail") == true)
-                                    errorCallback(GenerateURLError.Custom(context, statusCode, firstError.getString("detail")))
+                                    errorCallback(GenerateURLError.Custom(statusCode, firstError.getString("detail")))
                                 else
-                                    errorCallback(GenerateURLError.Unknown(context, statusCode))
+                                    errorCallback(GenerateURLError.Unknown(statusCode))
                             }
                         }
 
-                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         )

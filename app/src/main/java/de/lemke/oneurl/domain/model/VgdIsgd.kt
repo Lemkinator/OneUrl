@@ -64,17 +64,16 @@ sealed class VgdIsgd : ShortURLProvider {
                      */
                     when (response.getString("errorcode")) {
                         "1" -> if (response.optString("errormessage").contains("blacklist", ignoreCase = true)) {
-                            errorCallback(GenerateURLError.BlacklistedURL(context))
+                            errorCallback(GenerateURLError.BlacklistedURL())
                         } else {
-                            errorCallback(GenerateURLError.InvalidURL(context))
+                            errorCallback(GenerateURLError.InvalidURL)
                         }
 
-                        "2" -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        "3" -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                        "4" -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
+                        "2" -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                        "3" -> errorCallback(GenerateURLError.RateLimitExceeded)
+                        "4" -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                         else -> errorCallback(
                             GenerateURLError.Custom(
-                                context,
                                 200,
                                 response.optString("errormessage") + " (${response.getString("errorcode")})"
                             )
@@ -84,7 +83,7 @@ sealed class VgdIsgd : ShortURLProvider {
                 }
                 if (!response.has("shorturl")) {
                     Log.e(tag, "error, response does not contain shorturl, response: $response")
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                     return@JsonObjectRequest
                 }
                 val shortURL = response.getString("shorturl").trim()
@@ -99,22 +98,22 @@ sealed class VgdIsgd : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                         error.message?.contains("JSONException", true) == true -> {
                             //https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
                             //Update: Works fine now?
                             Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
-                            errorCallback(GenerateURLError.Custom(context, statusCode, context.getString(R.string.error_vgd_isgd)))
+                            errorCallback(GenerateURLError.Custom(statusCode, context.getString(R.string.error_vgd_isgd)))
                         }
 
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         )

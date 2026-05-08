@@ -123,15 +123,15 @@ object Lstu : ShortURLProvider {
                             val shortURL = json.getString("short")
                             Log.d(tag, "shortURL: $shortURL")
                             if (alias.isEmpty() || shortURL.endsWith("/$alias")) successCallback(shortURL)
-                            else errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                            else errorCallback(GenerateURLError.AliasAlreadyExists)
                         }
 
-                        json.has("msg") -> errorCallback(GenerateURLError.Custom(context, 200, json.getString("msg")))
-                        else -> errorCallback(GenerateURLError.Unknown(context, 200))
+                        json.has("msg") -> errorCallback(GenerateURLError.Custom(200, json.getString("msg")))
+                        else -> errorCallback(GenerateURLError.Unknown(200))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -142,13 +142,13 @@ object Lstu : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {

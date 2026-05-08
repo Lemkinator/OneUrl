@@ -74,21 +74,21 @@ object Shrtlnk : ShortURLProvider {
                         return Response.success(shortURL, null)
                     } else {
                         Log.e(tag, "error: redirect key not found")
-                        errorCallback(GenerateURLError.Unknown(context))
+                        errorCallback(GenerateURLError.Unknown())
                         return Response.error(VolleyError("redirect key not found"))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                     return Response.error(VolleyError(e))
                 }
             }
 
             override fun parseNetworkError(volleyError: VolleyError?): VolleyError {
                 if (volleyError is NoConnectionError) {
-                    errorCallback(GenerateURLError.ServiceOffline(context))
+                    errorCallback(GenerateURLError.ServiceOffline)
                 } else {
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
                 return volleyError ?: VolleyError("unknown error")
             }

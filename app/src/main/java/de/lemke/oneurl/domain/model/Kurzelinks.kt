@@ -76,14 +76,14 @@ sealed class Kurzelinks : ShortURLProvider {
                     val shortURL = JSONObject(response).optJSONObject("shorturl")?.optString("url")
                     if (shortURL == null) {
                         Log.e(tag, "error: shortURL not found")
-                        errorCallback(GenerateURLError.Unknown(context))
+                        errorCallback(GenerateURLError.Unknown())
                     } else {
                         Log.d(tag, "shortURL: $shortURL")
                         successCallback(shortURL)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->
@@ -94,18 +94,18 @@ sealed class Kurzelinks : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 400 || statusCode == 403 -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 423 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                        statusCode == 444 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 400 || statusCode == 403 -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 423 -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded)
+                        statusCode == 444 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {

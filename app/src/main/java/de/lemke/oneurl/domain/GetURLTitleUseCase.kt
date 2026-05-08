@@ -1,37 +1,39 @@
 package de.lemke.oneurl.domain
 
-
 import android.content.Context
 import android.util.Log
 import com.android.volley.toolbox.StringRequest
-import dagger.hilt.android.qualifiers.ActivityContext
+import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
-
+import kotlin.coroutines.resume
 
 class GetURLTitleUseCase @Inject constructor(
-    @param:ActivityContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) {
-    operator fun invoke(url: String, callback: (title: String) -> Unit = { }) {
-        RequestQueueSingleton.getInstance(context).addToRequestQueue(
-            StringRequest(
-                url.withHttps(),
-                { response ->
-                    try {
-                        val title = Regex("<title>(.*?)</title>").find(response)?.groupValues?.get(1)
-                        Log.d("GetURLTitleUseCase", "title: $title")
-                        callback(title ?: "")
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        callback("")
-                    }
-                },
-                { error ->
-                    error.printStackTrace()
-                    callback("")
+    suspend operator fun invoke(url: String): String? = suspendCancellableCoroutine { cont ->
+        val req = StringRequest(
+            url.withHttps(),
+            { response ->
+                if (!cont.isActive) return@StringRequest
+                try {
+                    val title = Regex("<title>(.*?)</title>").find(response)?.groupValues?.get(1)
+                    Log.d("GetURLTitleUseCase", "title: $title")
+                    cont.resume(title)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    cont.resume(null)
                 }
-            )
+            },
+            { error ->
+                if (!cont.isActive) return@StringRequest
+                error.printStackTrace()
+                cont.resume(null)
+            }
         )
+        RequestQueueSingleton.getInstance(context).addToRequestQueue(req)
+        cont.invokeOnCancellation { req.cancel() }
     }
 }

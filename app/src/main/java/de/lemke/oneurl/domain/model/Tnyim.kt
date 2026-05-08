@@ -180,14 +180,14 @@ object Tnyim : ShortURLProvider {
                         val shortURL = json.getString("shorturl").trim()
                         Log.d(tag, "shortURL: $shortURL")
                         if (alias.isBlank() || shortURL == "$baseURL/alias") successCallback(shortURL)
-                        else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
+                        else errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
                     } else {
                         Log.d(tag, "error: response does not contain short url or errors")
-                        errorCallback(GenerateURLError.Unknown(context, 200))
+                        errorCallback(GenerateURLError.Unknown(200))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->
@@ -198,15 +198,15 @@ object Tnyim : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 500 -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 500 -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {
