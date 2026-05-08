@@ -19,10 +19,12 @@ import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,7 +45,8 @@ class AddURLViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(AddUrlUiState())
     val state: StateFlow<AddUrlUiState> = _state.asStateFlow()
-    val events = Channel<AddUrlEvent>(Channel.BUFFERED)
+    private val _events = Channel<AddUrlEvent>(Channel.BUFFERED)
+    val events: Flow<AddUrlEvent> = _events.receiveAsFlow()
 
     private val intentUrl: String? = savedStateHandle.get<String>("url")
 
@@ -93,13 +96,13 @@ class AddURLViewModel @Inject constructor(
             if (existingURLs.isNotEmpty()) {
                 if (alias.isBlank()) {
                     _state.update { it.copy(isLoading = false) }
-                    events.send(AddUrlEvent.AlreadyShortened(existingURLs.first().shortURL))
+                    _events.send(AddUrlEvent.AlreadyShortened(existingURLs.first().shortURL))
                     return@launch
                 }
                 val exactMatch = existingURLs.find { it.shortURL == provider.baseURL + alias }
                 if (exactMatch != null) {
                     _state.update { it.copy(isLoading = false) }
-                    events.send(AddUrlEvent.AlreadyShortened(exactMatch.shortURL))
+                    _events.send(AddUrlEvent.AlreadyShortened(exactMatch.shortURL))
                     return@launch
                 }
             }
@@ -113,7 +116,7 @@ class AddURLViewModel @Inject constructor(
             _state.update { it.copy(isLoading = false) }
 
             when (result) {
-                is GenerateURLResult.Failure -> events.send(AddUrlEvent.Error(result.error))
+                is GenerateURLResult.Failure -> _events.send(AddUrlEvent.Error(result.error))
                 is GenerateURLResult.Success -> {
                     val qr = withContext(Dispatchers.Default) { generateQRCode(result.shortURL) }
                     addURL(
@@ -129,8 +132,8 @@ class AddURLViewModel @Inject constructor(
                         )
                     )
                     val settings = getUserSettings()
-                    if (settings.autoCopyOnCreate) events.send(AddUrlEvent.CopyAndFinish(result.shortURL, title))
-                    else events.send(AddUrlEvent.Saved)
+                    if (settings.autoCopyOnCreate) _events.send(AddUrlEvent.CopyAndFinish(result.shortURL, title))
+                    else _events.send(AddUrlEvent.Saved)
                 }
             }
         }

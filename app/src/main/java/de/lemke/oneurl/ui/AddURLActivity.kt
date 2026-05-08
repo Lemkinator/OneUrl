@@ -29,7 +29,6 @@ import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import de.lemke.commonutils.R as commonutilsR
 
@@ -70,7 +69,7 @@ class AddURLActivity : AppCompatActivity() {
 
     private fun collectEvents() = lifecycleScope.launch {
         repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.receiveAsFlow().collect { event ->
+            viewModel.events.collect { event ->
                 when (event) {
                     is AddUrlEvent.AlreadyShortened -> showAlreadyShortenedDialog(event.shortURL)
                     is AddUrlEvent.Error -> showErrorDialog(event.error)
@@ -196,7 +195,7 @@ class AddURLActivity : AppCompatActivity() {
                     }
                     is GenerateURLError.BlacklistedURL -> {
                         setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(getString(R.string.error_urlhaus_blacklisted, "URLhaus", error.message ?: getString(R.string.error_urlhaus_default)))
+                        setMessage(error.message ?: getString(R.string.error_urlhaus_default))
                         if (error.urlhausLink != null) setPositiveButton("URLhaus") { _, _ -> openURL(error.urlhausLink) }
                         if (error.virustotalLink != null) setNegativeButton("VirusTotal") { _, _ -> openURL(error.virustotalLink) }
                     }

@@ -26,7 +26,6 @@ import dev.oneuiproject.oneui.recyclerview.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -63,7 +62,7 @@ class ProviderActivity : AppCompatActivity() {
 
     private fun collectEvents() = lifecycleScope.launch {
         repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.receiveAsFlow().collect { event ->
+            viewModel.events.collect { event ->
                 when (event) {
                     is ProviderEvent.Finish -> finishAfterTransition()
                     is ProviderEvent.ShowInfo -> showProviderInfoBottomSheet(event.provider)

@@ -37,7 +37,6 @@ import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
@@ -126,7 +125,7 @@ class URLActivity : AppCompatActivity() {
                 if (visitCount != null) binding.urlVisitsTextview.text = visitCount.toString()
                 renderVisitCountRefresh(state.isRefreshingVisits)
 
-                binding.urlBnv.menu.findItem(R.id.url_bnv_analytics)?.isVisible = url.shortURLProvider.getAnalyticsURL(url.shortURL) != null
+                binding.urlBnv.menu.findItem(R.id.url_bnv_analytics)?.isVisible = url.shortURLProvider.getAnalyticsURL(url.alias) != null
                 binding.urlBnv.menu.findItem(R.id.url_bnv_add_to_fav)?.isVisible = !url.favorite
                 binding.urlBnv.menu.findItem(R.id.url_bnv_remove_from_fav)?.isVisible = url.favorite
                 binding.urlBnv.setOnItemSelectedListener { item ->
@@ -168,7 +167,7 @@ class URLActivity : AppCompatActivity() {
 
     private fun collectEvents() = lifecycleScope.launch {
         repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.receiveAsFlow().collect { event ->
+            viewModel.events.collect { event ->
                 when (event) {
                     is UrlDetailEvent.NotFound -> {
                         toast(R.string.error_url_not_found)

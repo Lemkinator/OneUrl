@@ -9,9 +9,7 @@ import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
@@ -24,22 +22,22 @@ class GenerateURLUseCase @Inject constructor(
         longURL: String,
         alias: String,
         onProgress: (Int) -> Unit,
-    ): GenerateURLResult = withContext(Dispatchers.Default) {
+    ): GenerateURLResult {
         onProgress(R.string.checking_internet)
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val caps = cm.getNetworkCapabilities(cm.activeNetwork)
         if (caps == null || !caps.hasCapability(NET_CAPABILITY_INTERNET) || !caps.hasCapability(NET_CAPABILITY_VALIDATED)) {
-            return@withContext GenerateURLResult.Failure(GenerateURLError.NoInternet)
+            return GenerateURLResult.Failure(GenerateURLError.NoInternet)
         }
         onProgress(R.string.checking_url)
         val safetyResult = checkURLSafety(longURL.withHttps())
         if (safetyResult is CheckURLSafetyUseCase.UrlhausResult.Blacklisted) {
-            return@withContext GenerateURLResult.Failure(
+            return GenerateURLResult.Failure(
                 GenerateURLError.BlacklistedURL(safetyResult.message, safetyResult.urlhausLink, safetyResult.virustotalLink)
             )
         }
         onProgress(R.string.generating_url)
-        provider.createShortURL(context, longURL, alias)
+        return provider.createShortURL(context, longURL, alias)
     }
 }
 
