@@ -77,6 +77,7 @@ class AddURLActivity : AppCompatActivity() {
                         copyToClipboard(event.shortURL, event.title)
                         finishAfterTransition()
                     }
+
                     AddUrlEvent.Saved -> {
                         toast(R.string.url_added)
                         finishAfterTransition()
@@ -191,59 +192,72 @@ class AddURLActivity : AppCompatActivity() {
                     GenerateURLError.NoInternet -> {
                         setTitle(R.string.no_internet)
                         setMessage(R.string.no_internet_text)
-                        setPositiveButton(R.string.open_settings) { _, _ -> startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) }
+                        setPositiveButton(commonutilsR.string.commonutils_settings) { _, _ -> startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) }
                     }
+
                     is GenerateURLError.BlacklistedURL -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(error.message ?: getString(R.string.error_urlhaus_default))
                         if (error.urlhausLink != null) setPositiveButton("URLhaus") { _, _ -> openURL(error.urlhausLink) }
                         if (error.virustotalLink != null) setNegativeButton("VirusTotal") { _, _ -> openURL(error.virustotalLink) }
                     }
+
                     is GenerateURLError.ServiceTemporarilyUnavailable -> {
                         setTitle(R.string.error_service_unavailable)
                         setMessage(R.string.error_service_unavailable_text)
                         setPositiveButton(commonutilsR.string.commonutils_more_information) { _, _ -> openURL(error.providerBaseURL) }
                     }
+
                     is GenerateURLError.Custom -> {
                         setTitle(error.customTitle ?: getString(commonutilsR.string.commonutils_error))
                         setMessage(error.customMessage)
                     }
+
                     is GenerateURLError.Unknown -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(if (error.statusCode != null) "Error ${error.statusCode}" else getString(commonutilsR.string.commonutils_error))
                     }
+
                     GenerateURLError.AliasAlreadyExists -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_alias_already_exists)
                     }
+
                     GenerateURLError.URLExistsWithDifferentAlias -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_url_already_exists_with_different_alias)
                     }
+
                     GenerateURLError.InvalidURL -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_invalid_url)
                     }
+
                     GenerateURLError.InvalidAlias -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_invalid_alias)
                     }
+
                     GenerateURLError.InvalidURLOrAlias -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_invalid_url_or_alias)
                     }
+
                     GenerateURLError.InternalServerError -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_internal_server_error)
                     }
+
                     GenerateURLError.ServiceOffline -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_service_offline)
                     }
+
                     GenerateURLError.RateLimitExceeded -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_rate_limit_exceeded)
                     }
+
                     GenerateURLError.DomainNotAllowed -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(R.string.error_domain_not_allowed)

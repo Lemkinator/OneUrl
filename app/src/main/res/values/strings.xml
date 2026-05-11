@@ -64,7 +64,6 @@
     <string name="no_favorite_urls">No favorite URLs</string>
 
     <!--Error-->
-    <string name="open_settings">Open Settings</string>
     <string name="no_internet">No internet connection available…</string>
     <string name="no_internet_text">Please check your internet connection and try again.</string>
     <string name="error_url_not_found">URL not found</string>

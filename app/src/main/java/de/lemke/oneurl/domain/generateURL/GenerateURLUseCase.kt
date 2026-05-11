@@ -1,6 +1,7 @@
 package de.lemke.oneurl.domain.generateURL
 
 import android.content.Context
+import android.content.Context.CONNECTIVITY_SERVICE
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
@@ -24,7 +25,7 @@ class GenerateURLUseCase @Inject constructor(
         onProgress: (Int) -> Unit,
     ): GenerateURLResult {
         onProgress(R.string.checking_internet)
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val caps = cm.getNetworkCapabilities(cm.activeNetwork)
         if (caps == null || !caps.hasCapability(NET_CAPABILITY_INTERNET) || !caps.hasCapability(NET_CAPABILITY_VALIDATED)) {
             return GenerateURLResult.Failure(GenerateURLError.NoInternet)
