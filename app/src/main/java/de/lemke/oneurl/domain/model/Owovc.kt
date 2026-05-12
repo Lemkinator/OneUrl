@@ -132,9 +132,9 @@ sealed class Owovc : ShortURLProvider {
                     when {
                         error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                         statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 400 && data.contains("link must match pattern") -> errorCallback(GenerateURLError.InvalidURL)
                         statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        statusCode == 400 && data.contains("link must match pattern") -> errorCallback(GenerateURLError.InvalidURL)
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                         else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
