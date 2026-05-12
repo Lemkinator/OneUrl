@@ -62,8 +62,15 @@ class URLViewModel @Inject constructor(
         val url = _state.value.url ?: return
         _state.update { it.copy(isRefreshingVisits = true) }
         viewModelScope.launch {
-            val count = getVisitCount(url)
-            _state.update { it.copy(visitCount = count, isRefreshingVisits = false) }
+            try {
+                val count = getVisitCount(url)
+                _state.update { it.copy(visitCount = count, isRefreshingVisits = false) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _state.update { it.copy(isRefreshingVisits = false) }
+            } finally {
+                _state.update { it.copy(isRefreshingVisits = false) }
+            }
         }
     }
 

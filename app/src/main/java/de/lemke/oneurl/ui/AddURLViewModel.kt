@@ -113,10 +113,11 @@ class AddURLViewModel @Inject constructor(
                 _state.update { it.copy(loadingMessageRes = messageRes) }
             }
 
-            _state.update { it.copy(isLoading = false) }
-
             when (result) {
-                is GenerateURLResult.Failure -> _events.send(AddUrlEvent.Error(result.error))
+                is GenerateURLResult.Failure -> {
+                    _state.update { it.copy(isLoading = false) }
+                    _events.send(AddUrlEvent.Error(result.error))
+                }
                 is GenerateURLResult.Success -> {
                     val qr = withContext(Dispatchers.Default) { generateQRCode(result.shortURL) }
                     addURL(
@@ -131,6 +132,7 @@ class AddURLViewModel @Inject constructor(
                             added = ZonedDateTime.now(),
                         )
                     )
+                    _state.update { it.copy(isLoading = false) }
                     val settings = getUserSettings()
                     if (settings.autoCopyOnCreate) _events.send(AddUrlEvent.CopyAndFinish(result.shortURL, title))
                     else _events.send(AddUrlEvent.Saved)

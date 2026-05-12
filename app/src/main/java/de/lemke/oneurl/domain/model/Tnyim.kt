@@ -179,7 +179,7 @@ object Tnyim : ShortURLProvider {
                     if (json.has("shorturl")) {
                         val shortURL = json.getString("shorturl").trim()
                         Log.d(tag, "shortURL: $shortURL")
-                        if (alias.isBlank() || shortURL == "$baseURL/alias") successCallback(shortURL)
+                        if (alias.isBlank() || shortURL == "$baseURL/$alias") successCallback(shortURL)
                         else errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
                     } else {
                         Log.d(tag, "error: response does not contain short url or errors")

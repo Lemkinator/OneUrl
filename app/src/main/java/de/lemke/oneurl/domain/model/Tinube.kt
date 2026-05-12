@@ -121,7 +121,7 @@ object Tinube : ShortURLProvider {
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->

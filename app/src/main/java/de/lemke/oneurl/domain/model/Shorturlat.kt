@@ -159,7 +159,7 @@ object Shorturlat : ShortURLProvider {
                     successCallback(shortURL)
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->

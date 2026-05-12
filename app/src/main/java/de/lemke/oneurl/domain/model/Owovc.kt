@@ -118,8 +118,8 @@ sealed class Owovc : ShortURLProvider {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
                 } else {
-                    Log.e(tag, "error: no shortURL")
-                    errorCallback(GenerateURLError.Unknown(200))
+                    Log.e(tag, "error: no shortURL in response")
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->

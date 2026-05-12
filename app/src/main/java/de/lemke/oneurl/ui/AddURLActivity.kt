@@ -56,7 +56,6 @@ class AddURLActivity : AppCompatActivity() {
     private fun collectState() = lifecycleScope.launch {
         repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.state.collect { state ->
-                if (state.isLoading && !isInitialized) return@collect
                 if (!isInitialized) {
                     isInitialized = true
                     initViews(state)

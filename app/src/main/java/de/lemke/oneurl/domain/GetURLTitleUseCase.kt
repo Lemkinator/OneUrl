@@ -19,7 +19,8 @@ class GetURLTitleUseCase @Inject constructor(
             { response ->
                 if (!cont.isActive) return@StringRequest
                 try {
-                    val title = Regex("<title>(.*?)</title>").find(response)?.groupValues?.get(1)
+                    val title = Regex("<title[^>]*>(.*?)</title>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+                        .find(response)?.groupValues?.get(1)?.trim()
                     Log.d("GetURLTitleUseCase", "title: $title")
                     cont.resume(title)
                 } catch (e: Exception) {

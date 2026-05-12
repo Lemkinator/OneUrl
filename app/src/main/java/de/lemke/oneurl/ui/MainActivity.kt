@@ -133,10 +133,8 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.state.collect { state ->
                 if (!state.isUIReady) return@collect
-                urlAdapter.let { adapter ->
-                    if (state.urls.isNotEmpty()) adapter.submitList(state.urls)
-                    if (state.newItemAdded) binding.urlList.smoothScrollToPosition(0)
-                }
+                urlAdapter.submitList(state.urls)
+                if (state.newItemAdded) binding.urlList.smoothScrollToPosition(0)
                 updateRecyclerView(state.urls)
             }
         }
@@ -250,11 +248,11 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView(urls: List<de.lemke.oneurl.domain.model.URL>) {
-        if (urls.isNotEmpty()) urlAdapter.submitList(urls)
-        else binding.noEntryView.text = when {
-            viewModel.search.value != null -> getString(commonutilsR.string.commonutils_no_results_found)
-            viewModel.filterFavorite.value -> getString(R.string.no_favorite_urls)
-            else -> getString(R.string.no_urls)
+        binding.noEntryView.text = when {
+            urls.isEmpty() && viewModel.search.value != null -> getString(commonutilsR.string.commonutils_no_results_found)
+            urls.isEmpty() && viewModel.filterFavorite.value -> getString(R.string.no_favorite_urls)
+            urls.isEmpty() -> getString(R.string.no_urls)
+            else -> ""
         }
         binding.noEntryView.updateVisibilityWith(urls, binding.urlList)
     }

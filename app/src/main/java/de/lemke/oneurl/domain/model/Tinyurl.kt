@@ -65,7 +65,7 @@ object Tinyurl : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with http(s)://tinyurl.com/, response: $response")
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->
