@@ -176,11 +176,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             invalidateOptionsMenu()
             true
         }
+
         R.id.menu_item_only_show_favorites -> {
             viewModel.setFilterFavorite(true)
             invalidateOptionsMenu()
             true
         }
+
         else -> super.onOptionsItemSelected(item)
     }
 
@@ -322,16 +324,19 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                         binding.drawerLayout.endActionMode()
                         true
                     }
+
                     R.id.menu_item_add_to_favorites -> {
                         urls.filter { it.id in selectedIds }.forEach { viewModel.setFavorite(it, true) }
                         binding.drawerLayout.endActionMode()
                         true
                     }
+
                     R.id.menu_item_remove_from_favorites -> {
                         urls.filter { it.id in selectedIds }.forEach { viewModel.setFavorite(it, false) }
                         binding.drawerLayout.endActionMode()
                         true
                     }
+
                     else -> false
                 }
             },

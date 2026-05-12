@@ -118,6 +118,7 @@ class AddURLViewModel @Inject constructor(
                     _state.update { it.copy(isLoading = false) }
                     _events.send(AddUrlEvent.Error(result.error))
                 }
+
                 is GenerateURLResult.Success -> {
                     val qr = withContext(Dispatchers.Default) { generateQRCode(result.shortURL) }
                     addURL(

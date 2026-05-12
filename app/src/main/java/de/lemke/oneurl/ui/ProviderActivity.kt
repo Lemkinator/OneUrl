@@ -37,7 +37,6 @@ class ProviderActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProviderBinding
     private val viewModel: ProviderViewModel by viewModels()
     private val providerAdapter = ProviderAdapter()
-    private var appliedInitialScroll = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
@@ -53,12 +52,9 @@ class ProviderActivity : AppCompatActivity() {
     private fun collectState() = lifecycleScope.launch {
         repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.state.collect { state ->
-                if (!appliedInitialScroll) {
-                    providerAdapter.updateProviders(state.providers)
-                    if (state.initialScrollPosition >= 0) {
-                        binding.providerList.scrollToPosition(state.initialScrollPosition)
-                    }
-                    appliedInitialScroll = true
+                providerAdapter.updateProviders(state.providers)
+                if (state.initialScrollPosition >= 0) {
+                    binding.providerList.scrollToPosition(state.initialScrollPosition)
                 }
             }
         }

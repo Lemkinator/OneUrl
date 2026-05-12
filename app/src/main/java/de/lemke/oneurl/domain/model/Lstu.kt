@@ -126,12 +126,12 @@ object Lstu : ShortURLProvider {
                             else errorCallback(GenerateURLError.AliasAlreadyExists)
                         }
 
-                        json.has("msg") -> errorCallback(GenerateURLError.Custom(-1, json.getString("msg")))
-                        else -> errorCallback(GenerateURLError.Unknown())
+                        json.has("msg") -> errorCallback(GenerateURLError.Custom(200, json.getString("msg")))
+                        else -> errorCallback(GenerateURLError.Unknown(200))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown())
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->

@@ -119,7 +119,7 @@ sealed class Owovc : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error: no shortURL in response")
-                    errorCallback(GenerateURLError.Unknown())
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -133,8 +133,8 @@ sealed class Owovc : ShortURLProvider {
                         error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                         statusCode == null -> errorCallback(GenerateURLError.Unknown())
                         statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        statusCode == 400 && data.contains("link must match pattern") -> errorCallback(GenerateURLError.InvalidURL)
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 400 && data.contains("link must match pattern") -> errorCallback(GenerateURLError.InvalidURL)
                         else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {

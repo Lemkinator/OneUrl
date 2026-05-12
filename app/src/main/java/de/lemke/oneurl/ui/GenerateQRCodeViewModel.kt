@@ -32,8 +32,8 @@ class GenerateQRCodeViewModel @Inject constructor(
                 it.copy(
                     url = s.qrURL,
                     size = s.qrSize,
-                    foregroundColor = s.qrRecentForegroundColors.firstOrNull() ?: s.qrForegroundColor,
-                    backgroundColor = s.qrRecentBackgroundColors.firstOrNull() ?: s.qrBackgroundColor,
+                    foregroundColor = s.qrRecentForegroundColors.first(),
+                    backgroundColor = s.qrRecentBackgroundColors.first(),
                     tintAnchor = s.qrTintAnchor,
                     tintBorder = s.qrTintBorder,
                     icon = s.qrIcon,

@@ -110,7 +110,7 @@ sealed class Tly : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error: no shortURL in response")
-                    errorCallback(GenerateURLError.Unknown())
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -126,9 +126,9 @@ sealed class Tly : ShortURLProvider {
                         error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                         statusCode == null -> errorCallback(GenerateURLError.Unknown())
                         statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                         message.contains("long url field is required", true) -> errorCallback(GenerateURLError.InvalidURL)
                         message.contains("T.LY account and API key", true) -> errorCallback(GenerateURLError.RateLimitExceeded)
-                        data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                         else -> errorCallback(GenerateURLError.Custom(statusCode, message))
                     }
                 } catch (e: Exception) {
