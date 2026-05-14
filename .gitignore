@@ -8,6 +8,7 @@
 .idea/**/dictionaries
 .idea/**/shelf
 .idea/**/deploymentTargetSelector.xml
+.idea/**/appInsightsSettings.xml
 
 # AWS User-specific
 .idea/**/aws.xml
