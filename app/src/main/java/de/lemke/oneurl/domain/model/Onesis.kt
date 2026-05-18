@@ -69,18 +69,18 @@ object Onesis : ShortURLProvider {
                     val shortURL = "$baseURL/$responseAlias"
                     Log.d(tag, "shortURL: $shortURL")
                     if (alias.isBlank() || responseAlias == alias) successCallback(shortURL)
-                    else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
+                    else errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.w(tag, "could not find short URL in response")
                     when {
                         response.contains("Short URL already exists. Please choose another one.") ->
-                            errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                            errorCallback(GenerateURLError.AliasAlreadyExists)
 
                         response.contains("The custom short URL must follow the correct format") ->
-                            errorCallback(GenerateURLError.InvalidAlias(context))
+                            errorCallback(GenerateURLError.InvalidAlias)
 
-                        else -> errorCallback(GenerateURLError.Unknown(context, 200))
+                        else -> errorCallback(GenerateURLError.Unknown(200))
                     }
                 }
             },
@@ -93,14 +93,14 @@ object Onesis : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {

@@ -64,7 +64,7 @@ object Gg : ShortURLProvider {
                 try {
                     Log.d(tag, "response: $response")
                     if (response.contains("Link with this path already exist", true)) {
-                        errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        errorCallback(GenerateURLError.AliasAlreadyExists)
                     } else {
                         RequestQueueSingleton.getInstance(context).addToRequestQueue(
                             requestCreateGg(context, longURL, alias, successCallback, errorCallback)
@@ -115,13 +115,13 @@ object Gg : ShortURLProvider {
                 try {
                     Log.d(tag, "response: $response")
                     when {
-                        response == "$baseURL/" -> errorCallback(GenerateURLError.Unknown(context, 2001))
-                        alias.isNotBlank() && !response.endsWith("/$alias") -> errorCallback(GenerateURLError.Unknown(context, 2002))
+                        response == "$baseURL/" -> errorCallback(GenerateURLError.Unknown(2001))
+                        alias.isNotBlank() && !response.endsWith("/$alias") -> errorCallback(GenerateURLError.Unknown(2002))
                         else -> successCallback(response)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context, 2009))
+                    errorCallback(GenerateURLError.Unknown(2009))
                 }
             },
             { error ->
@@ -132,13 +132,13 @@ object Gg : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {

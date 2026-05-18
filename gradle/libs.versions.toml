@@ -1,7 +1,10 @@
 [versions]
 aboutlibraries = "14.2.0"
 bundler = "1.0.4"
-commonUtils = "0.9.22"
+commonUtils = "1.0.0"
+leakcanary = "2.14"
+oneui-design = "0.9.11+oneui8"
+oneui-icons = "1.1.0"
 datastorePreferences = "1.2.1"
 gradle = "9.2.1"
 gradke-secrets = "2.0.1"
@@ -13,6 +16,9 @@ volley = "1.2.1"
 
 [libraries]
 bundler = { module = "com.github.skydoves:bundler", version.ref = "bundler" }
+leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
+oneui-design = { module = "io.github.tribalfs:oneui-design", version.ref = "oneui-design" }
+oneui-icons = { module = "io.github.oneuiproject:icons", version.ref = "oneui-icons" }
 common-utils = { module = "io.github.lemkinator:common-utils", version.ref = "commonUtils" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }

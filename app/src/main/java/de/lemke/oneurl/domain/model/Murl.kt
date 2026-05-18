@@ -105,14 +105,14 @@ object Murl : ShortURLProvider {
 
                     response.contains("Invalid URL", true) ||
                             response.contains("URL is too long", true)
-                        -> errorCallback(GenerateURLError.InvalidURL(context))
+                        -> errorCallback(GenerateURLError.InvalidURL)
 
                     response.contains("adding URLs too fast", true) ||
-                            response.contains("please slow down", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
+                            response.contains("please slow down", true) -> errorCallback(GenerateURLError.RateLimitExceeded)
 
                     else -> {
                         Log.e(tag, "error, response does not start with https://murl.com/, response: $response")
-                        errorCallback(GenerateURLError.Unknown(context, 200))
+                        errorCallback(GenerateURLError.Unknown(200))
                     }
                 }
             },
@@ -125,19 +125,19 @@ object Murl : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         )

@@ -109,8 +109,8 @@ sealed class Tly : ShortURLProvider {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
                 } else {
-                    Log.e(tag, "error: no shortURL")
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    Log.e(tag, "error: no shortURL in response")
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -123,17 +123,17 @@ sealed class Tly : ShortURLProvider {
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     Log.e(tag, "response message: $message")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        message.contains("long url field is required", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        message.contains("T.LY account and API key", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, message))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        message.contains("long url field is required", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        message.contains("T.LY account and API key", true) -> errorCallback(GenerateURLError.RateLimitExceeded)
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, message))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {

@@ -77,22 +77,22 @@ object Oneptco : ShortURLProvider {
                     when {
                         !response.has("message") -> {
                             Log.e(tag, "error: no message")
-                            errorCallback(GenerateURLError.Unknown(context, 200))
+                            errorCallback(GenerateURLError.Unknown(200))
                         }
 
                         response.getString("message") != "Added!" -> {
                             Log.e(tag, "error: ${response.getString("message")}")
-                            errorCallback(GenerateURLError.Custom(context, 200, response.getString("message")))
+                            errorCallback(GenerateURLError.Custom(200, response.getString("message")))
                         }
 
                         !response.has("short") -> {
                             Log.e(tag, "error: no short")
-                            errorCallback(GenerateURLError.Unknown(context, 200))
+                            errorCallback(GenerateURLError.Unknown(200))
                         }
 
                         response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort") -> {
                             Log.e(tag, "error: alias already exists")
-                            errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                            errorCallback(GenerateURLError.AliasAlreadyExists)
                         }
 
                         else -> {
@@ -103,7 +103,7 @@ object Oneptco : ShortURLProvider {
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -114,17 +114,17 @@ object Oneptco : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 404 -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 500 -> errorCallback(GenerateURLError.InternalServerError(context))
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 404 -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 500 -> errorCallback(GenerateURLError.InternalServerError)
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {
