@@ -21,15 +21,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.isVisible
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.SwitchPreferenceCompat
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.checkAppStartAndHandleOOBE
+import de.lemke.commonutils.collectState
 import de.lemke.commonutils.configureCommonUtilsSplashScreen
 import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.onNavigationSingleClick
@@ -67,13 +65,14 @@ import dev.oneuiproject.oneui.recyclerview.ktx.hideSoftInputOnScroll
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
-import kotlinx.coroutines.launch
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.R as iconsR
 import dev.oneuiproject.oneui.design.R as designR
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
+class MainActivity :
+    AppCompatActivity(),
+    ViewYTranslator by AppBarAwareYTranslator() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val urlAdapter: URLAdapter by lazy {
@@ -102,7 +101,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         outState.saveSearchAndActionMode(
             isSearchMode = binding.drawerLayout.isSearchMode,
             isActionMode = binding.drawerLayout.isActionMode,
-            selectedIds = urlAdapter.getSelectedIds()
+            selectedIds = urlAdapter.getSelectedIds(),
         )
     }
 
@@ -112,7 +111,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             commonutilsR.xml.preferences_design,
             R.xml.preferences,
             commonutilsR.xml.preferences_dev_options_delete_app_data,
-            commonutilsR.xml.preferences_more_info
+            commonutilsR.xml.preferences_more_info,
         ) {
             findPreference<SwitchPreferenceCompat>("auto_copy_on_create_pref")?.let { autoCopyOnCreatePref ->
                 autoCopyOnCreatePref.onNewValue { newValue: Boolean ->
@@ -129,16 +128,13 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         checkIntent()
     }
 
-    private fun collectState() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.state.collect { state ->
-                if (!state.isUIReady) return@collect
-                urlAdapter.submitList(state.urls)
-                if (state.newItemAdded) binding.urlList.smoothScrollToPosition(0)
-                updateRecyclerView(state.urls)
-            }
+    private fun collectState() =
+        collectState(viewModel.state) { state ->
+            if (!state.isUIReady) return@collectState
+            urlAdapter.submitList(state.urls)
+            if (state.newItemAdded) binding.urlList.smoothScrollToPosition(0)
+            updateRecyclerView(state.urls)
         }
-    }
 
     private fun checkIntent() {
         val extraText = intent.getStringExtra(EXTRA_TEXT)
@@ -151,7 +147,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
             Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
             binding.addFab.transformToActivity(
                 Intent(this, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()),
-                "AddURLTransition"
+                "AddURLTransition",
             )
         }
     }
@@ -169,51 +165,63 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
         return super.onPrepareOptionsMenu(menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.menu_item_search -> startSearch().let { true }
-        R.id.menu_item_show_all -> {
-            viewModel.setFilterFavorite(false)
-            invalidateOptionsMenu()
-            true
-        }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            R.id.menu_item_search -> {
+                startSearch().let { true }
+            }
 
-        R.id.menu_item_only_show_favorites -> {
-            viewModel.setFilterFavorite(true)
-            invalidateOptionsMenu()
-            true
-        }
+            R.id.menu_item_show_all -> {
+                viewModel.setFilterFavorite(false)
+                invalidateOptionsMenu()
+                true
+            }
 
-        else -> super.onOptionsItemSelected(item)
-    }
+            R.id.menu_item_only_show_favorites -> {
+                viewModel.setFilterFavorite(true)
+                invalidateOptionsMenu()
+                true
+            }
+
+            else -> {
+                super.onOptionsItemSelected(item)
+            }
+        }
 
     private fun startSearch() = binding.drawerLayout.startSearchMode(searchModeListener, DISMISS)
 
-    val searchModeListener = object : ToolbarLayout.SearchModeListener {
-        override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query).also { hideSoftInput() }
-        override fun onQueryTextChange(query: String?): Boolean = setSearch(query)
-        private fun setSearch(query: String?): Boolean {
-            if (viewModel.search.value == null) return false
-            viewModel.setSearch(query ?: "")
-            urlAdapter.highlightWord = query ?: ""
-            commonUtilsSettings.search = query ?: ""
-            return true
-        }
+    val searchModeListener =
+        object : ToolbarLayout.SearchModeListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query).also { hideSoftInput() }
 
-        override fun onSearchModeToggle(searchView: SearchView, isActive: Boolean) {
-            if (isActive) {
-                viewModel.setSearch(commonUtilsSettings.search)
-                binding.addFab.isVisible = false
-                searchView.setQuery(viewModel.search.value, false)
-            } else {
-                viewModel.setSearch(null)
-                if (!binding.drawerLayout.isActionMode) {
-                    binding.addFab.isVisible = true
-                    binding.addFab.show()
+            override fun onQueryTextChange(query: String?): Boolean = setSearch(query)
+
+            private fun setSearch(query: String?): Boolean {
+                if (viewModel.search.value == null) return false
+                viewModel.setSearch(query ?: "")
+                urlAdapter.highlightWord = query ?: ""
+                commonUtilsSettings.search = query ?: ""
+                return true
+            }
+
+            override fun onSearchModeToggle(
+                searchView: SearchView,
+                isActive: Boolean,
+            ) {
+                if (isActive) {
+                    viewModel.setSearch(commonUtilsSettings.search)
+                    binding.addFab.isVisible = false
+                    searchView.setQuery(viewModel.search.value, false)
+                } else {
+                    viewModel.setSearch(null)
+                    if (!binding.drawerLayout.isActionMode) {
+                        binding.addFab.isVisible = true
+                        binding.addFab.show()
+                    }
+                    urlAdapter.highlightWord = ""
                 }
-                urlAdapter.highlightWord = ""
             }
         }
-    }
 
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
@@ -250,24 +258,26 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView(urls: List<de.lemke.oneurl.domain.model.URL>) {
-        binding.noEntryView.text = when {
-            urls.isEmpty() && viewModel.search.value != null -> getString(commonutilsR.string.commonutils_no_results_found)
-            urls.isEmpty() && viewModel.filterFavorite.value -> getString(R.string.no_favorite_urls)
-            urls.isEmpty() -> getString(R.string.no_urls)
-            else -> ""
-        }
+        binding.noEntryView.text =
+            when {
+                urls.isEmpty() && viewModel.search.value != null -> getString(commonutilsR.string.commonutils_no_results_found)
+                urls.isEmpty() && viewModel.filterFavorite.value -> getString(R.string.no_favorite_urls)
+                urls.isEmpty() -> getString(R.string.no_urls)
+                else -> ""
+            }
         binding.noEntryView.updateVisibilityWith(urls, binding.urlList)
     }
 
     private fun URLAdapter.setupOnClickListeners() {
         onClickItem = { position, url, viewHolder ->
-            if (isActionMode) toggleItem(url.id, position)
-            else {
+            if (isActionMode) {
+                toggleItem(url.id, position)
+            } else {
                 hideSoftInput()
                 viewHolder.itemView.transformToActivity(
                     Intent(this@MainActivity, URLActivity::class.java)
                         .putExtra(KEY_HIGHLIGHT_TEXT, viewModel.search.value)
-                        .putExtra(KEY_SHORTURL, url.shortURL)
+                        .putExtra(KEY_SHORTURL, url.shortURL),
                 )
             }
         }
@@ -299,7 +309,7 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                     viewModel.setFavorite(url, false)
                 }
                 true
-            }
+            },
         )
     }
 
@@ -337,12 +347,14 @@ class MainActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTransla
                         true
                     }
 
-                    else -> false
+                    else -> {
+                        false
+                    }
                 }
             },
             onSelectAll = { isChecked: Boolean -> urlAdapter.onToggleSelectAll(isChecked) },
             allSelectorStateFlow = viewModel.allSelectorState,
-            searchOnActionMode = SearchOnActionMode.NoDismiss
+            searchOnActionMode = SearchOnActionMode.NoDismiss,
         )
     }
 }

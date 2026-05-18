@@ -10,12 +10,11 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.collectEvents
+import de.lemke.commonutils.collectState
 import de.lemke.commonutils.prepareActivityTransformationTo
 import de.lemke.commonutils.setCustomBackAnimation
 import de.lemke.oneurl.R
@@ -26,8 +25,6 @@ import dev.oneuiproject.oneui.recyclerview.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
-import kotlinx.coroutines.launch
-
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
     companion object {
@@ -49,25 +46,17 @@ class ProviderActivity : AppCompatActivity() {
         collectEvents()
     }
 
-    private fun collectState() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.state.collect { state ->
-                providerAdapter.updateProviders(state.providers)
-                if (state.initialScrollPosition >= 0) {
-                    binding.providerList.scrollToPosition(state.initialScrollPosition)
-                }
-            }
+    private fun collectState() = collectState(viewModel.state) { state ->
+        providerAdapter.updateProviders(state.providers)
+        if (state.initialScrollPosition >= 0) {
+            binding.providerList.scrollToPosition(state.initialScrollPosition)
         }
     }
 
-    private fun collectEvents() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is ProviderEvent.Finish -> finishAfterTransition()
-                    is ProviderEvent.ShowInfo -> showProviderInfoBottomSheet(event.provider)
-                }
-            }
+    private fun collectEvents() = collectEvents(viewModel.events) { event ->
+        when (event) {
+            is ProviderEvent.Finish -> finishAfterTransition()
+            is ProviderEvent.ShowInfo -> showProviderInfoBottomSheet(event.provider)
         }
     }
 

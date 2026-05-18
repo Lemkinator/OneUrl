@@ -14,11 +14,9 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,7 +34,7 @@ class URLViewModel @Inject constructor(
     private val _state = MutableStateFlow(UrlDetailUiState())
     val state: StateFlow<UrlDetailUiState> = _state.asStateFlow()
     private val _events = Channel<UrlDetailEvent>(Channel.BUFFERED)
-    val events: Flow<UrlDetailEvent> = _events.receiveAsFlow()
+    val events = _events
 
     init {
         val shortURL = savedStateHandle.get<String>(KEY_SHORTURL) ?: ""

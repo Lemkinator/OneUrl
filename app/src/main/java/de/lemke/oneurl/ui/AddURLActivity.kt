@@ -11,10 +11,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.collectEvents
+import de.lemke.commonutils.collectState
 import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.openURL
 import de.lemke.commonutils.prepareActivityTransformationBetween
@@ -29,7 +28,6 @@ import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import kotlinx.coroutines.launch
 import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
@@ -53,38 +51,38 @@ class AddURLActivity : AppCompatActivity() {
         collectEvents()
     }
 
-    private fun collectState() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.state.collect { state ->
-                if (!isInitialized && !state.isLoading) {
-                    isInitialized = true
-                    initViews(state)
+    private fun collectState() =
+        collectState(viewModel.state) { state ->
+            if (!isInitialized && !state.isLoading) {
+                isInitialized = true
+                initViews(state)
+            }
+            updateProvider(state.selectedProvider)
+            renderLoadingState(state)
+        }
+
+    private fun collectEvents() =
+        collectEvents(viewModel.events) { event ->
+            when (event) {
+                is AddUrlEvent.AlreadyShortened -> {
+                    showAlreadyShortenedDialog(event.shortURL)
                 }
-                updateProvider(state.selectedProvider)
-                renderLoadingState(state)
+
+                is AddUrlEvent.Error -> {
+                    showErrorDialog(event.error)
+                }
+
+                is AddUrlEvent.CopyAndFinish -> {
+                    copyToClipboard(event.shortURL, event.title)
+                    finishAfterTransition()
+                }
+
+                AddUrlEvent.Saved -> {
+                    toast(R.string.url_added)
+                    finishAfterTransition()
+                }
             }
         }
-    }
-
-    private fun collectEvents() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is AddUrlEvent.AlreadyShortened -> showAlreadyShortenedDialog(event.shortURL)
-                    is AddUrlEvent.Error -> showErrorDialog(event.error)
-                    is AddUrlEvent.CopyAndFinish -> {
-                        copyToClipboard(event.shortURL, event.title)
-                        finishAfterTransition()
-                    }
-
-                    AddUrlEvent.Saved -> {
-                        toast(R.string.url_added)
-                        finishAfterTransition()
-                    }
-                }
-            }
-        }
-    }
 
     private fun initViews(state: AddUrlUiState) {
         binding.editTextURL.setText(state.initialURL)
@@ -98,7 +96,7 @@ class AddURLActivity : AppCompatActivity() {
         binding.providerSelection.setOnClickListener {
             startActivity(
                 Intent(this, ProviderActivity::class.java).putExtra(KEY_SELECT_PROVIDER, true),
-                ActivityOptions.makeSceneTransitionAnimation(this, Pair.create(binding.providerSelection, "provider_selection")).toBundle()
+                ActivityOptions.makeSceneTransitionAnimation(this, Pair.create(binding.providerSelection, "provider_selection")).toBundle(),
             )
         }
     }
@@ -111,7 +109,9 @@ class AddURLActivity : AppCompatActivity() {
                 if (index < infoContents.size) {
                     iconView.setImageResource(infoContents[index].icon)
                     iconView.isVisible = true
-                } else iconView.isVisible = false
+                } else {
+                    iconView.isVisible = false
+                }
             }
         binding.providerIconLayout.setOnClickListener { showProviderInfoBottomSheet(provider) }
         binding.textInputLayoutAlias.isVisible = provider.aliasConfig != null
@@ -121,7 +121,9 @@ class AddURLActivity : AppCompatActivity() {
             binding.addUrlBottomTip.setSummary(tipsCardInfo.second)
             binding.addUrlBottomTip.setLink(commonutilsR.string.commonutils_more_information) { openURL(provider.infoURL) }
             binding.addUrlBottomTip.isVisible = true
-        } else binding.addUrlBottomTip.isVisible = false
+        } else {
+            binding.addUrlBottomTip.isVisible = false
+        }
     }
 
     private fun renderLoadingState(state: AddUrlUiState) {
@@ -148,7 +150,10 @@ class AddURLActivity : AppCompatActivity() {
             binding.editTextURL.error = getString(R.string.error_empty_url)
             return
         }
-        val alias = binding.editTextAlias.text?.toString()?.trim() ?: ""
+        val alias =
+            binding.editTextAlias.text
+                ?.toString()
+                ?.trim() ?: ""
         val provider = viewModel.state.value.selectedProvider
         if (alias.isNotBlank()) {
             provider.aliasConfig?.let {
@@ -170,28 +175,31 @@ class AddURLActivity : AppCompatActivity() {
     }
 
     private fun showAlreadyShortenedDialog(shortURL: String) {
-        AlertDialog.Builder(this)
+        AlertDialog
+            .Builder(this)
             .setTitle(commonutilsR.string.commonutils_error)
             .setMessage(R.string.error_url_already_exists)
             .setNeutralButton(commonutilsR.string.commonutils_ok, null)
             .setPositiveButton(R.string.to_url) { _, _ ->
                 binding.urlInputLayout.transformToActivity(
                     Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL),
-                    transitionName = "alreadyShortenedUrlTransition"
+                    transitionName = "alreadyShortenedUrlTransition",
                 )
-            }
-            .show()
+            }.show()
     }
 
     private fun showErrorDialog(error: GenerateURLError) {
-        AlertDialog.Builder(this)
+        AlertDialog
+            .Builder(this)
             .setNeutralButton(commonutilsR.string.commonutils_ok, null)
             .apply {
                 when (error) {
                     GenerateURLError.NoInternet -> {
                         setTitle(R.string.no_internet)
                         setMessage(R.string.no_internet_text)
-                        setPositiveButton(commonutilsR.string.commonutils_settings) { _, _ -> startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) }
+                        setPositiveButton(
+                            commonutilsR.string.commonutils_settings,
+                        ) { _, _ -> startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) }
                     }
 
                     is GenerateURLError.BlacklistedURL -> {
@@ -214,7 +222,15 @@ class AddURLActivity : AppCompatActivity() {
 
                     is GenerateURLError.Unknown -> {
                         setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(if (error.statusCode != null) "Error ${error.statusCode}" else getString(commonutilsR.string.commonutils_error))
+                        setMessage(
+                            if (error.statusCode !=
+                                null
+                            ) {
+                                "Error ${error.statusCode}"
+                            } else {
+                                getString(commonutilsR.string.commonutils_error)
+                            },
+                        )
                     }
 
                     GenerateURLError.AliasAlreadyExists -> {
@@ -262,7 +278,6 @@ class AddURLActivity : AppCompatActivity() {
                         setMessage(R.string.error_domain_not_allowed)
                     }
                 }
-            }
-            .show()
+            }.show()
     }
 }

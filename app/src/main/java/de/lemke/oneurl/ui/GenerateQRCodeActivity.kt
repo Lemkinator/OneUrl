@@ -13,11 +13,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SeslSeekBar
 import androidx.core.graphics.toColor
 import androidx.core.widget.addTextChangedListener
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.collectState
 import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.exportBitmap
@@ -31,7 +29,6 @@ import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import kotlinx.coroutines.launch
 import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
@@ -77,20 +74,16 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         return super.onOptionsItemSelected(item)
     }
 
-    private fun collectState() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.state.collect { state ->
-                if (state.isLoading) return@collect
-                state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
-                binding.qrCode.setOnClickListener { state.qrCode?.copyToClipboard(this@GenerateQRCodeActivity, "QR Code", "QRCode.png") }
-                updateButtonColors(state.foregroundColor, state.backgroundColor)
-                if (!isInitialized) {
-                    isInitialized = true
-                    initControls(state)
-                    setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
-                    binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
-                }
-            }
+    private fun collectState() = collectState(viewModel.state) { state ->
+        if (state.isLoading) return@collectState
+        state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
+        binding.qrCode.setOnClickListener { state.qrCode?.copyToClipboard(this@GenerateQRCodeActivity, "QR Code", "QRCode.png") }
+        updateButtonColors(state.foregroundColor, state.backgroundColor)
+        if (!isInitialized) {
+            isInitialized = true
+            initControls(state)
+            setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
+            binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
         }
     }
 

@@ -13,11 +13,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.collectEvents
+import de.lemke.commonutils.collectState
 import de.lemke.commonutils.copyToClipboard
 import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.exportBitmap
@@ -37,7 +36,6 @@ import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
-import kotlinx.coroutines.launch
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -83,11 +81,9 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-    private fun collectState() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.state.collect { state ->
-                if (state.isLoading || state.url == null) return@collect
-                val url = state.url
+    private fun collectState() = collectState(viewModel.state) { state ->
+        if (state.isLoading || state.url == null) return@collectState
+        val url = state.url
                 val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
                 binding.root.setTitle(url.shortURL)
                 binding.urlQrImageview.setImageBitmap(url.qr)
@@ -151,8 +147,6 @@ class URLActivity : AppCompatActivity() {
                     }
                 }
                 setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
-            }
-        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -165,17 +159,13 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-    private fun collectEvents() = lifecycleScope.launch {
-        repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is UrlDetailEvent.NotFound -> {
-                        toast(R.string.error_url_not_found)
-                        finishAfterTransition()
-                    }
-                    is UrlDetailEvent.Deleted -> showInAppReviewOrFinish()
-                }
+    private fun collectEvents() = collectEvents(viewModel.events) { event: UrlDetailEvent ->
+        when (event) {
+            is UrlDetailEvent.NotFound -> {
+                toast(R.string.error_url_not_found)
+                finishAfterTransition()
             }
+            is UrlDetailEvent.Deleted -> showInAppReviewOrFinish()
         }
     }
 }
