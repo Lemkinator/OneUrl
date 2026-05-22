@@ -17,8 +17,10 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
-import kotlinx.coroutines.Dispatchers
+import de.lemke.commonutils.di.DefaultDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,11 +44,12 @@ class AddURLViewModel
         private val generateQRCode: GenerateQRCodeUseCase,
         private val addURL: AddURLUseCase,
         private val getURL: GetURLUseCase,
+        @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val _state = MutableStateFlow(AddUrlUiState())
         val state: StateFlow<AddUrlUiState> = _state.asStateFlow()
         private val _events = Channel<AddUrlEvent>(Channel.BUFFERED)
-        val events = _events
+        val events: ReceiveChannel<AddUrlEvent> = _events
 
         private val intentUrl: String? = savedStateHandle.get<String>("url")
 
@@ -125,7 +128,7 @@ class AddURLViewModel
                     }
 
                     is GenerateURLResult.Success -> {
-                        val qr = withContext(Dispatchers.Default) { generateQRCode(result.shortURL) }
+                        val qr = withContext(defaultDispatcher) { generateQRCode(result.shortURL) }
                         addURL(
                             URL(
                                 shortURL = result.shortURL,

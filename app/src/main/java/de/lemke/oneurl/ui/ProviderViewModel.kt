@@ -9,6 +9,7 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +26,7 @@ class ProviderViewModel @Inject constructor(
     private val _state = MutableStateFlow(ProviderUiState())
     val state: StateFlow<ProviderUiState> = _state.asStateFlow()
     private val _events = Channel<ProviderEvent>(Channel.BUFFERED)
-    val events = _events
+    val events: ReceiveChannel<ProviderEvent> = _events
 
     init {
         val selectMode = savedStateHandle.get<Boolean>(ProviderActivity.KEY_SELECT_PROVIDER) == true

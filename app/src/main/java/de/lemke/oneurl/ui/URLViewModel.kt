@@ -11,9 +11,11 @@ import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.GetVisitCountUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import android.util.Log
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +36,11 @@ class URLViewModel @Inject constructor(
     private val _state = MutableStateFlow(UrlDetailUiState())
     val state: StateFlow<UrlDetailUiState> = _state.asStateFlow()
     private val _events = Channel<UrlDetailEvent>(Channel.BUFFERED)
-    val events = _events
+    val events: ReceiveChannel<UrlDetailEvent> = _events
+
+    companion object {
+        private const val TAG = "URLViewModel"
+    }
 
     init {
         val shortURL = savedStateHandle.get<String>(KEY_SHORTURL) ?: ""
@@ -64,9 +70,7 @@ class URLViewModel @Inject constructor(
                 val count = getVisitCount(url)
                 _state.update { it.copy(visitCount = count, isRefreshingVisits = false) }
             } catch (e: Exception) {
-                e.printStackTrace()
-                _state.update { it.copy(isRefreshingVisits = false) }
-            } finally {
+                Log.e(TAG, "Failed to refresh visit count", e)
                 _state.update { it.copy(isRefreshingVisits = false) }
             }
         }
