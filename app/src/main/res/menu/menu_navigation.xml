@@ -39,16 +39,16 @@
     </group>
 
     <item
+        android:id="@+id/settings_dest"
+        android:icon="@drawable/ic_oui_settings_outline"
+        android:title="@string/commonutils_settings"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/leaks_dest"
         android:icon="@drawable/ic_oui_tool_outline"
         android:title="@string/memory_leaks"
         android:visible="false"
-        app:showAsAction="always" />
-
-    <item
-        android:id="@+id/settings_dest"
-        android:icon="@drawable/ic_oui_settings_outline"
-        android:title="@string/commonutils_settings"
         app:showAsAction="always" />
 
 </menu>
