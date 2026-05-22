@@ -45,6 +45,7 @@ import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
+import de.lemke.oneurl.openLeakCanary
 import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -225,6 +226,7 @@ class MainActivity :
 
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
+        binding.navigationView.findMenuItem(R.id.leaks_dest)?.isVisible = BuildConfig.DEBUG
         binding.navigationView.onNavigationSingleClick { item ->
             when (item.itemId) {
                 R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
@@ -232,6 +234,7 @@ class MainActivity :
                 R.id.help_dest -> findViewById<View>(R.id.help_dest).transformToActivity(HelpActivity::class.java)
                 R.id.about_app_dest -> findViewById<View>(R.id.about_app_dest).transformToActivity(CommonUtilsAboutActivity::class.java)
                 R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(CommonUtilsAboutMeActivity::class.java)
+                R.id.leaks_dest -> openLeakCanary(this)
                 R.id.settings_dest -> findViewById<View>(R.id.settings_dest).transformToActivity(CommonUtilsSettingsActivity::class.java)
                 else -> return@onNavigationSingleClick false
             }
