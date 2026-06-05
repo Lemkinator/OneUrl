@@ -223,13 +223,8 @@ class AddURLActivity : AppCompatActivity() {
                     is GenerateURLError.Unknown -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(
-                            if (error.statusCode !=
-                                null
-                            ) {
-                                "Error ${error.statusCode}"
-                            } else {
-                                getString(commonutilsR.string.commonutils_error)
-                            },
+                            if (error.statusCode != null) "Error ${error.statusCode}"
+                            else getString(commonutilsR.string.commonutils_error_unknown)
                         )
                     }
 
