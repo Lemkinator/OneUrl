@@ -66,7 +66,8 @@ object Dagd : ShortURLProvider {
         if (alias.isBlank()) return requestCreateDAGD(context, longURL, "", successCallback, errorCallback)
         val checkUrlApi = "$baseURL/coshorten/$alias"
         Log.d(tag, "start request: $checkUrlApi")
-        return StringRequest(
+        var innerReq: Request<*>? = null
+        return object : StringRequest(
             Request.Method.GET,
             checkUrlApi,
             { response ->
@@ -97,9 +98,8 @@ object Dagd : ShortURLProvider {
                         else -> {
                             if (statusCode == 404) Log.d(tag, "shortURL does not exist yet, creating it")
                             else Log.w(tag, "error, trying to create it anyway")
-                            RequestQueueSingleton.getInstance(context).addToRequestQueue(
-                                requestCreateDAGD(context, longURL, alias, successCallback, errorCallback)
-                            )
+                            innerReq = requestCreateDAGD(context, longURL, alias, successCallback, errorCallback)
+                            RequestQueueSingleton.getInstance(context).addToRequestQueue(innerReq!!)
                         }
                     }
                 } catch (e: Exception) {
@@ -107,7 +107,12 @@ object Dagd : ShortURLProvider {
                     errorCallback(GenerateURLError.Unknown())
                 }
             }
-        )
+        ) {
+            override fun cancel() {
+                super.cancel()
+                innerReq?.cancel()
+            }
+        }
     }
 
     private fun requestCreateDAGD(
