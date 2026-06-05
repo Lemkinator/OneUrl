@@ -31,14 +31,15 @@ class GenerateURLUseCase @Inject constructor(
             return GenerateURLResult.Failure(GenerateURLError.NoInternet)
         }
         onProgress(R.string.checking_url)
-        val safetyResult = checkURLSafety(longURL.withHttps())
+        val normalizedURL = longURL.withHttps()
+        val safetyResult = checkURLSafety(normalizedURL)
         if (safetyResult is CheckURLSafetyUseCase.UrlhausResult.Blacklisted) {
             return GenerateURLResult.Failure(
                 GenerateURLError.BlacklistedURL(safetyResult.message, safetyResult.urlhausLink, safetyResult.virustotalLink)
             )
         }
         onProgress(R.string.generating_url)
-        return provider.createShortURL(context, longURL, alias)
+        return provider.createShortURL(context, normalizedURL, alias)
     }
 }
 
