@@ -9,6 +9,7 @@ import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,8 @@ class GenerateQRCodeViewModel @Inject constructor(
     private val _state = MutableStateFlow(QrUiState())
     val state: StateFlow<QrUiState> = _state.asStateFlow()
     private var regenJob: Job? = null
+    private var urlSaveJob: Job? = null
+    private var sizeSaveJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -36,8 +39,8 @@ class GenerateQRCodeViewModel @Inject constructor(
                 it.copy(
                     url = s.qrURL,
                     size = s.qrSize,
-                    foregroundColor = s.qrRecentForegroundColors.first(),
-                    backgroundColor = s.qrRecentBackgroundColors.first(),
+                    foregroundColor = s.qrRecentForegroundColors.firstOrNull() ?: -16777216,
+                    backgroundColor = s.qrRecentBackgroundColors.firstOrNull() ?: -1,
                     tintAnchor = s.qrTintAnchor,
                     tintBorder = s.qrTintBorder,
                     icon = s.qrIcon,
@@ -53,14 +56,22 @@ class GenerateQRCodeViewModel @Inject constructor(
 
     fun setUrl(url: String) {
         _state.update { it.copy(url = url) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrURL = url) } }
         launchRegenerate()
+        urlSaveJob?.cancel()
+        urlSaveJob = viewModelScope.launch {
+            delay(300)
+            updateUserSettings { it.copy(qrURL = url) }
+        }
     }
 
     fun setSize(size: Int) {
         _state.update { it.copy(size = size) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrSize = size) } }
         launchRegenerate()
+        sizeSaveJob?.cancel()
+        sizeSaveJob = viewModelScope.launch {
+            delay(300)
+            updateUserSettings { it.copy(qrSize = size) }
+        }
     }
 
     fun setRoundedFrame(enabled: Boolean) {
