@@ -82,12 +82,12 @@ object Dagd : ShortURLProvider {
                         } ($response)",
                     )
                     errorCallback(GenerateURLError.AliasAlreadyExists)
-                    return@StringRequest
+                } else {
+                    Log.d(tag, "shortURL already exists (but is not in local db): $response")
+                    val shortURL = "$baseURL/$alias"
+                    Log.d(tag, "shortURL: $shortURL")
+                    successCallback(shortURL)
                 }
-                Log.d(tag, "shortURL already exists (but is not in local db): $response")
-                val shortURL = "$baseURL/$alias"
-                Log.d(tag, "shortURL: $shortURL")
-                successCallback(shortURL)
             },
             { error ->
                 try {
