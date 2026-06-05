@@ -7,10 +7,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
-import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.GetVisitCountUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
-import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import android.util.Log
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -29,8 +27,6 @@ class URLViewModel @Inject constructor(
     private val getURL: GetURLUseCase,
     private val updateURL: UpdateURLUseCase,
     private val deleteURL: DeleteURLUseCase,
-    private val getUserSettings: GetUserSettingsUseCase,
-    private val updateUserSettings: UpdateUserSettingsUseCase,
     private val getVisitCount: GetVisitCountUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(UrlDetailUiState())
