@@ -33,38 +33,39 @@ class CheckURLSafetyUseCase @Inject constructor(
                     val responseJson = JSONObject(response)
                     val queryStatus = responseJson.optString("query_status")
                     if (queryStatus == "ok") {
-                        val blacklists = responseJson.getJSONObject("blacklists")
-                        val surblListed = blacklists.optString("surbl", "not listed") != "not listed"
-                        val spamhausStatus = blacklists.optString("spamhaus_dbl")
-                        val spamhausListed = spamhausStatus != "not listed"
-                        val listedOn = "URLhaus" +
-                                (if (surblListed) ", SURBL" else "") +
-                                if (spamhausListed) ", Spamhaus" else ""
-                        val reason = when (spamhausStatus) {
-                            "spammer_domain" -> context.getString(R.string.error_urlhaus_spammer_domain)
-                            "phishing_domain" -> context.getString(R.string.error_urlhaus_phishing_domain)
-                            "botnet_cc_domain" -> context.getString(R.string.error_urlhaus_botnet_cc_domain)
-                            "abused_legit_spam" -> context.getString(R.string.error_urlhaus_abused_legit_spam)
-                            "abused_legit_malware" -> context.getString(R.string.error_urlhaus_abused_legit_malware)
-                            "abused_legit_phishing" -> context.getString(R.string.error_urlhaus_abused_legit_phishing)
-                            "abused_legit_botnetcc" -> context.getString(R.string.error_urlhaus_abused_legit_botnetcc)
-                            "abused_redirector" -> context.getString(R.string.error_urlhaus_abused_redirector)
-                            else -> context.getString(R.string.error_urlhaus_default)
-                        }
-                        val urlhausLink = try {
-                            responseJson.optString("urlhaus_reference").ifBlank { null }
-                        } catch (e: Exception) { null }
-                        val virustotalLink = try {
-                            responseJson.optJSONArray("payloads")?.optJSONObject(0)
+                        val blacklists = responseJson.optJSONObject("blacklists")
+                        if (blacklists == null) {
+                            Log.d(tag, "Urlhaus Check: no blacklist data for $url")
+                            cont.resume(UrlhausResult.Ok)
+                        } else {
+                            val surblListed = blacklists.optString("surbl", "not listed") != "not listed"
+                            val spamhausStatus = blacklists.optString("spamhaus_dbl", "not listed")
+                            val spamhausListed = spamhausStatus != "not listed"
+                            val listedOn = "URLhaus" +
+                                    (if (surblListed) ", SURBL" else "") +
+                                    if (spamhausListed) ", Spamhaus" else ""
+                            val reason = when (spamhausStatus) {
+                                "spammer_domain" -> context.getString(R.string.error_urlhaus_spammer_domain)
+                                "phishing_domain" -> context.getString(R.string.error_urlhaus_phishing_domain)
+                                "botnet_cc_domain" -> context.getString(R.string.error_urlhaus_botnet_cc_domain)
+                                "abused_legit_spam" -> context.getString(R.string.error_urlhaus_abused_legit_spam)
+                                "abused_legit_malware" -> context.getString(R.string.error_urlhaus_abused_legit_malware)
+                                "abused_legit_phishing" -> context.getString(R.string.error_urlhaus_abused_legit_phishing)
+                                "abused_legit_botnetcc" -> context.getString(R.string.error_urlhaus_abused_legit_botnetcc)
+                                "abused_redirector" -> context.getString(R.string.error_urlhaus_abused_redirector)
+                                else -> context.getString(R.string.error_urlhaus_default)
+                            }
+                            val urlhausLink = responseJson.optString("urlhaus_reference").ifBlank { null }
+                            val virustotalLink = responseJson.optJSONArray("payloads")?.optJSONObject(0)
                                 ?.optJSONObject("virustotal")?.optString("link")?.ifBlank { null }
-                        } catch (e: Exception) { null }
-                        cont.resume(
-                            UrlhausResult.Blacklisted(
-                                context.getString(R.string.error_urlhaus_blacklisted, listedOn, reason),
-                                urlhausLink,
-                                virustotalLink,
+                            cont.resume(
+                                UrlhausResult.Blacklisted(
+                                    context.getString(R.string.error_urlhaus_blacklisted, listedOn, reason),
+                                    urlhausLink,
+                                    virustotalLink,
+                                )
                             )
-                        )
+                        }
                     } else {
                         Log.d(tag, "Urlhaus Check returned no results for $url")
                         cont.resume(UrlhausResult.Ok)
