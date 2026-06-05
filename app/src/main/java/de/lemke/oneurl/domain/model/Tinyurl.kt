@@ -11,7 +11,7 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLError
 
 /*
 https://tinyurl.com/app
-example: https://tinyurl.com/api-create.php?url=https://example.com&alias=example // json body: https://api.tinyurl.com/create
+example: https://tinyurl.com/api-create.php?url=https://example.com&alias=example // JSON body: https://api.tinyurl.com/create
 
 analytics require api token
  */
@@ -22,27 +22,30 @@ object Tinyurl : ShortURLProvider {
     override val apiURL = "$baseURL/api-create.php"
     override val privacyURL = "$baseURL/app/privacy-policy"
     override val termsURL = "$baseURL/app/terms"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 5
-        override val maxAliasLength = 30
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 5
+            override val maxAliasLength = 30
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
+
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+        }
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
         )
-    )
 
     override fun getCreateRequest(
         context: Context,
@@ -76,21 +79,35 @@ object Tinyurl : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 422 || statusCode == 400 -> {
-                            if (alias.isBlank()) errorCallback(GenerateURLError.InvalidURL)
-                            else errorCallback(GenerateURLError.InvalidURLOrAlias)
+                        error is NoConnectionError -> {
+                            errorCallback(GenerateURLError.ServiceOffline)
                         }
 
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
+                        statusCode == null -> {
+                            errorCallback(GenerateURLError.Unknown())
+                        }
+
+                        data.isNullOrBlank() -> {
+                            errorCallback(GenerateURLError.Unknown(statusCode))
+                        }
+
+                        statusCode == 422 || statusCode == 400 -> {
+                            if (alias.isBlank()) {
+                                errorCallback(GenerateURLError.InvalidURL)
+                            } else {
+                                errorCallback(GenerateURLError.InvalidURLOrAlias)
+                            }
+                        }
+
+                        else -> {
+                            errorCallback(GenerateURLError.Custom(statusCode, data))
+                        }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         )
     }
 }

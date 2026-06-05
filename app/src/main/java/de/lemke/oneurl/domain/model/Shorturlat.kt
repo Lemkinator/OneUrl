@@ -17,7 +17,7 @@ from-urlencoded: u=https://example.com
 
 Short URLs that do not have at least one click per month are disabled
 
-response (parse html):
+response (parse HTML):
 ...
 <main>
 <section id="content">
@@ -94,25 +94,31 @@ object Shorturlat : ShortURLProvider {
     override val privacyURL = "$baseURL/privacy-policy.php"
     override val termsURL = "$baseURL/terms-of-service.php"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-            context.getString(commonutilsR.string.commonutils_experimental),
-            context.getString(R.string.shorturlat_info)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_text)
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
+                context.getString(commonutilsR.string.commonutils_experimental),
+                context.getString(R.string.shorturlat_info),
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text),
+            ),
         )
-    )
 
-    override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(commonutilsR.string.commonutils_info),
-        context.getString(R.string.shorturlat_info)
-    )
+    override fun getTipsCardTitleAndInfo(context: Context) =
+        Pair(
+            context.getString(commonutilsR.string.commonutils_info),
+            context.getString(R.string.shorturlat_info),
+        )
 
-    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+    override fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "https://www.shorturl.at/url-total-clicks.php?u=${url.shortURL}"
         Log.d(tag, "start request: $url")
@@ -134,8 +140,8 @@ object Shorturlat : ShortURLProvider {
                 { error ->
                     Log.e(tag, "error: $error")
                     callback(null)
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -178,10 +184,11 @@ object Shorturlat : ShortURLProvider {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown(200))
                 }
-            }
+            },
         ) {
-            //form-urlencoded: u=https://example.com doesnt work
+            // form-urlencoded: u=https://example.com doesnt work
             override fun getBody() = "u=$longURL".toByteArray(Charsets.UTF_8)
+
             override fun getBodyContentType() = "application/x-www-form-urlencoded; charset=UTF-8"
         }
     }

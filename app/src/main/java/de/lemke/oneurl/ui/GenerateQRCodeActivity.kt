@@ -29,7 +29,6 @@ import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
@@ -38,12 +37,13 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     private val minSize = 512
     private val maxSize = 1024
     private var isInitialized = false
-    private val exportQRCodeResultLauncher = registerForActivityResult(StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val state = viewModel.state.value
-            saveBitmapToUri(result.data?.data, state.qrCode)
+    private val exportQRCodeResultLauncher =
+        registerForActivityResult(StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val state = viewModel.state.value
+                saveBitmapToUri(result.data?.data, state.qrCode)
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
@@ -66,6 +66,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 state.qrCode?.let { exportBitmap(commonUtilsSettings.imageSaveLocation, it, state.url, exportQRCodeResultLauncher) }
                 return true
             }
+
             R.id.menu_item_qr_share -> {
                 state.qrCode?.share(this, "QRCode.png")
                 return true
@@ -74,18 +75,19 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         return super.onOptionsItemSelected(item)
     }
 
-    private fun collectState() = collectState(viewModel.state) { state ->
-        if (state.isLoading) return@collectState
-        state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
-        binding.qrCode.setOnClickListener { state.qrCode?.copyToClipboard(this@GenerateQRCodeActivity, "QR Code", "QRCode.png") }
-        updateButtonColors(state.foregroundColor, state.backgroundColor)
-        if (!isInitialized) {
-            isInitialized = true
-            initControls(state)
-            setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
-            binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
+    private fun collectState() =
+        collectState(viewModel.state) { state ->
+            if (state.isLoading) return@collectState
+            state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
+            binding.qrCode.setOnClickListener { state.qrCode?.copyToClipboard(this@GenerateQRCodeActivity, "QR Code", "QRCode.png") }
+            updateButtonColors(state.foregroundColor, state.backgroundColor)
+            if (!isInitialized) {
+                isInitialized = true
+                initControls(state)
+                setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
+                binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
+            }
         }
-    }
 
     private fun initControls(initialState: QrUiState) {
         binding.editTextURL.setText(initialState.url)
@@ -108,14 +110,22 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         binding.sizeSeekbar.max = maxSize
         binding.sizeSeekbar.min = minSize
         binding.sizeSeekbar.progress = initialState.size
-        binding.sizeSeekbar.setOnSeekBarChangeListener(object : SeslSeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeslSeekBar, progress: Int, fromUser: Boolean) {
-                binding.sizeEdittext.setText(progress.toString())
-                viewModel.setSize(progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeslSeekBar) {}
-            override fun onStopTrackingTouch(seekBar: SeslSeekBar) {}
-        })
+        binding.sizeSeekbar.setOnSeekBarChangeListener(
+            object : SeslSeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeslSeekBar,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {
+                    binding.sizeEdittext.setText(progress.toString())
+                    viewModel.setSize(progress)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeslSeekBar) {}
+
+                override fun onStopTrackingTouch(seekBar: SeslSeekBar) {}
+            },
+        )
 
         binding.frameCheckbox.isChecked = initialState.roundedFrame
         binding.frameCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setRoundedFrame(isChecked) }
@@ -124,10 +134,14 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         binding.iconCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setIcon(isChecked) }
 
         binding.tintBorderCheckbox.isChecked = initialState.tintBorder
-        binding.tintBorderCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setTintBorder(isChecked) }
+        binding.tintBorderCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
+            viewModel.setTintBorder(isChecked)
+        }
 
         binding.tintAnchorCheckbox.isChecked = initialState.tintAnchor
-        binding.tintAnchorCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setTintAnchor(isChecked) }
+        binding.tintAnchorCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
+            viewModel.setTintAnchor(isChecked)
+        }
 
         binding.colorButtonBackground.setOnClickListener {
             val state = viewModel.state.value
@@ -136,7 +150,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 { color: Int -> viewModel.setBackgroundColor(color) },
                 state.backgroundColor,
                 state.recentBackgroundColors.toIntArray(),
-                true
+                true,
             ).apply {
                 setTransparencyControlEnabled(true)
                 show()
@@ -149,7 +163,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 { color: Int -> viewModel.setForegroundColor(color) },
                 state.foregroundColor,
                 state.recentForegroundColors.toIntArray(),
-                true
+                true,
             ).apply {
                 setTransparencyControlEnabled(true)
                 show()
@@ -157,7 +171,10 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         }
     }
 
-    private fun updateButtonColors(foregroundColor: Int, backgroundColor: Int) {
+    private fun updateButtonColors(
+        foregroundColor: Int,
+        backgroundColor: Int,
+    ) {
         binding.colorButtonBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)
         binding.colorButtonForeground.backgroundTintList = ColorStateList.valueOf(foregroundColor)
         binding.colorButtonBackground.setTextColor(if (backgroundColor.toColor().luminance() >= 0.5) BLACK else WHITE)

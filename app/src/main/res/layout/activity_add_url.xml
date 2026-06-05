@@ -12,8 +12,8 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingHorizontal="10dp"
         android:fillViewport="true"
+        android:paddingHorizontal="10dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_location="main_content">
 
@@ -24,6 +24,8 @@
 
             <com.google.android.material.textview.MaterialTextView
                 style="?android:listSeparatorTextViewStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="@string/provider" />
 
             <dev.oneuiproject.oneui.widget.RoundedLinearLayout

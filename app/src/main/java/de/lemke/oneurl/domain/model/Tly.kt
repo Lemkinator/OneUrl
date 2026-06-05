@@ -22,7 +22,7 @@ is.gd: responds is.gd for valid links (example.com) and tinyurl.com else (exampl
 rebrand.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example)
 tinyurl: tinyurl.com
 bit.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example), some requests: T.LY account and API key required to create additional short links.
-wtf? :D anyways...
+wtf? :D anyway...
 
 json:
 {
@@ -71,21 +71,22 @@ sealed class Tly : ShortURLProvider {
     final override val privacyURL = "$baseURL/privacy"
     final override val termsURL = "$baseURL/terms"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-            context.getString(commonutilsR.string.commonutils_experimental),
-            context.getString(R.string.tly_info)
-        ),
-    )
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
+                context.getString(commonutilsR.string.commonutils_experimental),
+                context.getString(R.string.tly_info),
+            ),
+        )
 
-    override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = Pair(
-        context.getString(commonutilsR.string.commonutils_info),
-        context.getString(R.string.tly_info)
-    )
+    override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? =
+        Pair(
+            context.getString(commonutilsR.string.commonutils_info),
+            context.getString(R.string.tly_info),
+        )
 
     fun getTlyCreateRequest(
-        context: Context,
         provider: String,
         longURL: String,
         successCallback: (shortURL: String) -> Unit,
@@ -100,7 +101,7 @@ sealed class Tly : ShortURLProvider {
                 mapOf(
                     "long_url" to longURL,
                     "provider" to provider,
-                )
+                ),
             ),
             { response ->
                 Log.d(tag, "response: $response")
@@ -135,13 +136,14 @@ sealed class Tly : ShortURLProvider {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         ) {
-            override fun getHeaders() = mapOf(
-                "accept" to "application/json",
-                "content-type" to "application/json;charset=UTF-8",
-                "origin" to "chrome-extension://oodfdmglhbbkkcngodjjagblikmoegpa"
-            )
+            override fun getHeaders() =
+                mapOf(
+                    "accept" to "application/json",
+                    "content-type" to "application/json;charset=UTF-8",
+                    "origin" to "chrome-extension://oodfdmglhbbkkcngodjjagblikmoegpa",
+                )
         }
     }
 
@@ -154,64 +156,69 @@ sealed class Tly : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest(context, "t.ly", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getTlyCreateRequest("t.ly", longURL, successCallback, errorCallback)
     }
 
     object Ibitly : Tly() {
         override val name = "t.ly (ibit.ly)"
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest(context, "ibit.ly", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getTlyCreateRequest("ibit.ly", longURL, successCallback, errorCallback)
     }
 
     object Twtrto : Tly() {
         override val enabled = false // useless, only responds with t.ly??
         override val name = "t.ly (twtr.to)"
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest(context, "twtr.to", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getTlyCreateRequest("twtr.to", longURL, successCallback, errorCallback)
     }
 
     object Jpegly : Tly() {
         override val name = "t.ly (jpeg.ly)"
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest(context, "jpeg.ly", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getTlyCreateRequest("jpeg.ly", longURL, successCallback, errorCallback)
     }
 
     object Rebrandly : Tly() {
         override val enabled = false // useless, only responds with t.ly??
         override val name = "t.ly (rebrand.ly)"
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest(context, "rebrand.ly", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getTlyCreateRequest("rebrand.ly", longURL, successCallback, errorCallback)
     }
 
     object Bitly : Tly() {
         override val enabled = false // requires api key after some requests?
         override val name = "t.ly (bit.ly)"
+
         override fun getCreateRequest(
             context: Context,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest(context, "bit.ly", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getTlyCreateRequest("bit.ly", longURL, successCallback, errorCallback)
     }
 }

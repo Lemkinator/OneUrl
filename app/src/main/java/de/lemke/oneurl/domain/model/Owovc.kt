@@ -57,14 +57,18 @@ fail:
 }
  */
 sealed class Owovc : ShortURLProvider {
-    final override val enabled = false //disabled due to abuse :/
+    final override val enabled = false // disabled due to abuse :/
     final override val group = "owo.vc (zws, sketchy, gay)"
     final override val baseURL = "https://owo.vc"
     final override val apiURL = "$baseURL/api/v2/link"
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
-    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+    override fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$apiURL/${Uri.encode(url.shortURL)}"
         Log.d(tag, "start request: $url")
@@ -87,13 +91,12 @@ sealed class Owovc : ShortURLProvider {
                 { error ->
                     Log.e(tag, "error: $error")
                     callback(null)
-                }
-            )
+                },
+            ),
         )
     }
 
     fun getOwovcCreateRequest(
-        context: Context,
         generator: String,
         longURL: String,
         successCallback: (shortURL: String) -> Unit,
@@ -108,8 +111,8 @@ sealed class Owovc : ShortURLProvider {
                 mapOf(
                     "link" to longURL,
                     "generator" to generator,
-                    "metadata" to "IGNORE" //IGNORE, OWOIFY, PROXY
-                )
+                    "metadata" to "IGNORE", // IGNORE, OWOIFY, PROXY
+                ),
             ),
             { response ->
                 Log.d(tag, "response: $response")
@@ -141,24 +144,27 @@ sealed class Owovc : ShortURLProvider {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         )
     }
 
     object Owo : Owovc() {
         override val name = "owo.vc"
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.owovc_fun_text)
-        )
 
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
+        override fun getTipsCardTitleAndInfo(context: Context) =
+            Pair(
+                context.getString(commonutilsR.string.commonutils_info),
+                context.getString(R.string.owovc_fun_text),
             )
-        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
+            )
 
         override fun getCreateRequest(
             context: Context,
@@ -166,30 +172,31 @@ sealed class Owovc : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest =
-            getOwovcCreateRequest(context, "owo", longURL, successCallback, errorCallback)
-
+        ): JsonObjectRequest = getOwovcCreateRequest("owo", longURL, successCallback, errorCallback)
     }
 
     object Zws : Owovc() {
         override val name = "owo.vc (zws)"
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.owovc_zws)
-        )
 
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,
-                "zws",
-                context.getString(R.string.owovc_zws)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
-            ),
-        )
+        override fun getTipsCardTitleAndInfo(context: Context) =
+            Pair(
+                context.getString(commonutilsR.string.commonutils_info),
+                context.getString(R.string.owovc_zws),
+            )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_keyboard_btn_space,
+                    "zws",
+                    context.getString(R.string.owovc_zws),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
+            )
 
         override fun getCreateRequest(
             context: Context,
@@ -197,29 +204,31 @@ sealed class Owovc : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest =
-            getOwovcCreateRequest(context, "zws", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getOwovcCreateRequest("zws", longURL, successCallback, errorCallback)
     }
 
     object Sketchy : Owovc() {
         override val name = "owo.vc (sketchy)"
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.owovc_sketchy)
-        )
 
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_basic,
-                "sketchy",
-                context.getString(R.string.owovc_sketchy)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
+        override fun getTipsCardTitleAndInfo(context: Context) =
+            Pair(
+                context.getString(commonutilsR.string.commonutils_info),
+                context.getString(R.string.owovc_sketchy),
             )
-        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_basic,
+                    "sketchy",
+                    context.getString(R.string.owovc_sketchy),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
+            )
 
         override fun getCreateRequest(
             context: Context,
@@ -227,29 +236,31 @@ sealed class Owovc : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest =
-            getOwovcCreateRequest(context, "sketchy", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getOwovcCreateRequest("sketchy", longURL, successCallback, errorCallback)
     }
 
     object Gay : Owovc() {
         override val name = "owo.vc (gay)"
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(commonutilsR.string.commonutils_warning),
-            context.getString(R.string.owovc_gay)
-        )
 
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_long_legs,
-                "gay",
-                context.getString(R.string.owovc_gay)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
+        override fun getTipsCardTitleAndInfo(context: Context) =
+            Pair(
+                context.getString(commonutilsR.string.commonutils_warning),
+                context.getString(R.string.owovc_gay),
             )
-        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_long_legs,
+                    "gay",
+                    context.getString(R.string.owovc_gay),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
+            )
 
         override fun getCreateRequest(
             context: Context,
@@ -257,7 +268,6 @@ sealed class Owovc : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest =
-            getOwovcCreateRequest(context, "gay", longURL, successCallback, errorCallback)
+        ): JsonObjectRequest = getOwovcCreateRequest("gay", longURL, successCallback, errorCallback)
     }
 }

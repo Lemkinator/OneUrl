@@ -27,7 +27,8 @@ data class URL(
 
     val id get() = hashCode().toLong()
 
-    fun contentEquals(other: URL): Boolean = shortURL == other.shortURL &&
+    fun contentEquals(other: URL): Boolean =
+        shortURL == other.shortURL &&
             longURL == other.longURL &&
             shortURLProvider == other.shortURLProvider &&
             favorite == other.favorite &&
@@ -35,7 +36,8 @@ data class URL(
             description == other.description &&
             added == other.added
 
-    val alias: String get() = shortURL.trimEnd('/').substringAfterLast('/').substringBeforeLast('/') //does not work for Owovc(e.g. sketchy)
+    val alias: String
+        get() = shortURL.trimEnd('/').substringAfterLast('/').substringBeforeLast('/') // does not work for Owovc(e.g. sketchy)
 
     val addedFormatMedium: String get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
 
@@ -50,7 +52,9 @@ data class URL(
                 title.contains(nextToken, ignoreCase = true) ||
                 description.contains(nextToken, ignoreCase = true) ||
                 addedFormatMedium.contains(nextToken, ignoreCase = true)
-            ) return true
+            ) {
+                return true
+            }
         }
         return false
     }

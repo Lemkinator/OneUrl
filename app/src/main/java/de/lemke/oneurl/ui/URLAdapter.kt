@@ -28,19 +28,29 @@ class URLAdapter(
     MultiSelector<Long> by MultiSelectorDelegate(
         onAllSelectorStateChanged = onAllSelectorStateChanged,
         onBlockActionMode = onBlockActionMode,
-        selectionChangePayload = Payload.SELECTION_MODE
+        selectionChangePayload = Payload.SELECTION_MODE,
     ) {
-
     private val searchHighlighter = SearchHighlighter(context)
 
     init {
         setHasStableIds(true)
     }
 
-    private val asyncListDiffer = AsyncListDiffer(this, object : DiffUtil.ItemCallback<URL>() {
-        override fun areItemsTheSame(oldItem: URL, newItem: URL) = oldItem == newItem
-        override fun areContentsTheSame(oldItem: URL, newItem: URL) = oldItem.contentEquals(newItem)
-    })
+    private val asyncListDiffer =
+        AsyncListDiffer(
+            this,
+            object : DiffUtil.ItemCallback<URL>() {
+                override fun areItemsTheSame(
+                    oldItem: URL,
+                    newItem: URL,
+                ) = oldItem == newItem
+
+                override fun areContentsTheSame(
+                    oldItem: URL,
+                    newItem: URL,
+                ) = oldItem.contentEquals(newItem)
+            },
+        )
 
     var onClickItem: ((Int, URL, ViewHolder) -> Unit)? = null
 
@@ -71,24 +81,33 @@ class URLAdapter(
 
     override fun getItemViewType(position: Int): Int = 0
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = ViewHolder(
-        LayoutInflater.from(parent.context).inflate(R.layout.listview_item, parent, false)
-    ).apply {
-        itemView.setOnClickListener {
-            bindingAdapterPosition.let { onClickItem?.invoke(it, currentList[it], this@apply) }
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int,
+    ): ViewHolder =
+        ViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.listview_item, parent, false),
+        ).apply {
+            itemView.setOnClickListener {
+                bindingAdapterPosition.let { onClickItem?.invoke(it, currentList[it], this@apply) }
+            }
+            itemView.setOnLongClickListener {
+                onLongClickItem?.invoke()
+                true
+            }
+            listItemFav.setOnClickListener {
+                bindingAdapterPosition.let { onClickItemFavorite?.invoke(it, currentList[it]) }
+            }
         }
-        itemView.setOnLongClickListener {
-            onLongClickItem?.invoke()
-            true
-        }
-        listItemFav.setOnClickListener {
-            bindingAdapterPosition.let { onClickItemFavorite?.invoke(it, currentList[it]) }
-        }
-    }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
-        if (payloads.isEmpty()) onBindViewHolder(holder, position)
-        else {
+    override fun onBindViewHolder(
+        holder: ViewHolder,
+        position: Int,
+        payloads: MutableList<Any>,
+    ) {
+        if (payloads.isEmpty()) {
+            onBindViewHolder(holder, position)
+        } else {
             for (payload in payloads.toSet()) {
                 when (payload) {
                     Payload.SELECTION_MODE -> holder.bindActionModeAnimate(getItemId(position))
@@ -98,7 +117,10 @@ class URLAdapter(
         }
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: ViewHolder,
+        position: Int,
+    ) {
         holder.bind(currentList[position])
         holder.bindActionMode(getItemId(position))
     }
@@ -120,9 +142,12 @@ class URLAdapter(
             listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
                 null,
                 null,
-                if (url.favorite) AppCompatResources.getDrawable(context, dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
-                else AppCompatResources.getDrawable(context, dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off),
-                null
+                if (url.favorite) {
+                    AppCompatResources.getDrawable(context, dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_on)
+                } else {
+                    AppCompatResources.getDrawable(context, dev.oneuiproject.oneui.R.drawable.ic_oui_favorite_off)
+                },
+                null,
             )
         }
 
@@ -150,6 +175,6 @@ class URLAdapter(
 
     enum class Payload {
         SELECTION_MODE,
-        HIGHLIGHT
+        HIGHLIGHT,
     }
 }

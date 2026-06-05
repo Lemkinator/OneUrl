@@ -13,7 +13,7 @@
         <SwitchPreferenceCompat
             android:key="auto_copy_on_create_pref"
             android:title="@string/auto_copy_on_create"
-            android:summary="@string/auto_copy_on_create_summary"/>
+            android:summary="@string/auto_copy_on_create_summary" />
 
         <DropDownPreference
             android:key="@string/commonutils_preference_key_image_save_location"

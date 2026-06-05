@@ -14,11 +14,11 @@ example: https://1s.is/?original_url=https://example.com&custom_short_url=
 
 <span id="shortlink-url" style="color: #007bff; font-weight: bold;">https://1s.is/K5F8WO</span>
 
-supports alias (1- tested up to 100 chars, on its website its limited to 30)
+supports alias (1- tested up to 100 chars, on its website it's limited to 30)
 no spaces, no accents, only (lowercase???) letters and numbers, use "-", not at the beginning or end, and no consecutive hyphens.
 
 if alias is taken -> <div class="shortlink-message">Short URL already exists. Please choose another one.</div>
-if url already shortened -> return existing short url regardless of alias... thats bad
+if url already shortened -> return existing short url regardless of alias... that's bad
 
 errors:
 The custom short URL must follow the correct format: no spaces, no accents, only letters and numbers, use "-", not at the beginning or end, and no consecutive hyphens.
@@ -28,25 +28,28 @@ object Onesis : ShortURLProvider {
     override val enabled = false // security check failed
     override val name = "1s.is"
     override val baseURL = "https://1s.is"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 1
-        override val maxAliasLength = 100
-        override val allowedAliasCharacters = "a-z, 0-9"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-z0-9]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 1
+            override val maxAliasLength = 100
+            override val allowedAliasCharacters = "a-z, 0-9"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-z0-9]+"))
+        }
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
         )
-    )
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
@@ -64,23 +67,30 @@ object Onesis : ShortURLProvider {
             apiURL,
             { response ->
                 try {
-                    //Log.d(tag, "response: $response")
+                    // Log.d(tag, "response: $response")
                     val responseAlias = response.split("<span id=\"shortlink-url\"")[1].split("</span>")[0].split("https://1s.is/")[1]
                     val shortURL = "$baseURL/$responseAlias"
                     Log.d(tag, "shortURL: $shortURL")
-                    if (alias.isBlank() || responseAlias == alias) successCallback(shortURL)
-                    else errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
+                    if (alias.isBlank() || responseAlias == alias) {
+                        successCallback(shortURL)
+                    } else {
+                        errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     Log.w(tag, "could not find short URL in response")
                     when {
-                        response.contains("Short URL already exists. Please choose another one.") ->
+                        response.contains("Short URL already exists. Please choose another one.") -> {
                             errorCallback(GenerateURLError.AliasAlreadyExists)
+                        }
 
-                        response.contains("The custom short URL must follow the correct format") ->
+                        response.contains("The custom short URL must follow the correct format") -> {
                             errorCallback(GenerateURLError.InvalidAlias)
+                        }
 
-                        else -> errorCallback(GenerateURLError.Unknown(200))
+                        else -> {
+                            errorCallback(GenerateURLError.Unknown(200))
+                        }
                     }
                 }
             },
@@ -102,7 +112,7 @@ object Onesis : ShortURLProvider {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         ) {
             override fun getParams() = mapOf("original_url" to longURL, "custom_short_url" to alias)
         }

@@ -17,10 +17,10 @@ https://murl.com
 example: https://murl.com/api/?url=https://example.com
 
 errors:
-Invalid URL
-URL is too long
-You are adding URLs too fast, please slow down
-Enter your URL
+Invalid URL.
+URL is too long.
+You are adding URLs too fast, please slow down.
+Enter your URL.
 
  */
 object Murl : ShortURLProvider {
@@ -30,25 +30,31 @@ object Murl : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(commonutilsR.string.commonutils_info),
-        context.getString(R.string.redirect_hint_text)
-    )
-
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
-            context.getString(R.string.redirect_hint),
-            context.getString(R.string.redirect_hint_text)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_text)
+    override fun getTipsCardTitleAndInfo(context: Context) =
+        Pair(
+            context.getString(commonutilsR.string.commonutils_info),
+            context.getString(R.string.redirect_hint_text),
         )
-    )
 
-    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
+                context.getString(R.string.redirect_hint),
+                context.getString(R.string.redirect_hint_text),
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text),
+            ),
+        )
+
+    override fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$baseURL/${url.alias}"
         Log.d(tag, "start request: $requestURL")
@@ -60,8 +66,8 @@ object Murl : ShortURLProvider {
                     requestURL,
                     { response ->
                         try {
-                            //Log.d(tag, "response: $response")
-                            //<span class="mu-mc count-480357" title="Views">1</span>
+                            // Log.d(tag, "response: $response")
+                            // <span class="mu-mc count-480357" title="Views">1</span>
                             val clicks = response.substringAfter("\" title=\"Views\">").substringBefore("</span>").toIntOrNull()
                             Log.d(tag, response.substringAfter("entry-date").substringBefore("entry-links"))
                             Log.d(tag, "clicks: $clicks")
@@ -75,8 +81,8 @@ object Murl : ShortURLProvider {
                     { error ->
                         Log.e(tag, "error: $error")
                         callback(null)
-                    }
-                )
+                    },
+                ),
             )
         }
     }
@@ -103,12 +109,13 @@ object Murl : ShortURLProvider {
                         successCallback(shortURL)
                     }
 
-                    response.contains("Invalid URL", true) ||
-                            response.contains("URL is too long", true)
-                        -> errorCallback(GenerateURLError.InvalidURL)
+                    response.contains("Invalid URL", true) || response.contains("URL is too long", true) -> {
+                        errorCallback(GenerateURLError.InvalidURL)
+                    }
 
-                    response.contains("adding URLs too fast", true) ||
-                            response.contains("please slow down", true) -> errorCallback(GenerateURLError.RateLimitExceeded)
+                    response.contains("adding URLs too fast", true) || response.contains("please slow down", true) -> {
+                        errorCallback(GenerateURLError.RateLimitExceeded)
+                    }
 
                     else -> {
                         Log.e(tag, "error, response does not start with https://murl.com/, response: $response")
@@ -139,7 +146,7 @@ object Murl : ShortURLProvider {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         )
     }
 }

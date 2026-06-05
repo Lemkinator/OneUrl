@@ -25,6 +25,7 @@ import dev.oneuiproject.oneui.recyclerview.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
+
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
     companion object {
@@ -46,19 +47,21 @@ class ProviderActivity : AppCompatActivity() {
         collectEvents()
     }
 
-    private fun collectState() = collectState(viewModel.state) { state ->
-        providerAdapter.updateProviders(state.providers)
-        if (state.initialScrollPosition >= 0) {
-            binding.providerList.scrollToPosition(state.initialScrollPosition)
+    private fun collectState() =
+        collectState(viewModel.state) { state ->
+            providerAdapter.updateProviders(state.providers)
+            if (state.initialScrollPosition >= 0) {
+                binding.providerList.scrollToPosition(state.initialScrollPosition)
+            }
         }
-    }
 
-    private fun collectEvents() = collectEvents(viewModel.events) { event ->
-        when (event) {
-            is ProviderEvent.Finish -> finishAfterTransition()
-            is ProviderEvent.ShowInfo -> showProviderInfoBottomSheet(event.provider)
+    private fun collectEvents() =
+        collectEvents(viewModel.events) { event ->
+            when (event) {
+                is ProviderEvent.Finish -> finishAfterTransition()
+                is ProviderEvent.ShowInfo -> showProviderInfoBottomSheet(event.provider)
+            }
         }
-    }
 
     private fun initRecycler() {
         binding.providerList.apply {
@@ -79,11 +82,18 @@ class ProviderActivity : AppCompatActivity() {
         }
 
         override fun getItemCount(): Int = providers.size
-        override fun getItemViewType(position: Int): Int = 0
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
-            ViewHolder(LayoutInflater.from(this@ProviderActivity).inflate(R.layout.listview_item_provider, parent, false))
 
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        override fun getItemViewType(position: Int): Int = 0
+
+        override fun onCreateViewHolder(
+            parent: ViewGroup,
+            viewType: Int,
+        ): ViewHolder = ViewHolder(LayoutInflater.from(this@ProviderActivity).inflate(R.layout.listview_item_provider, parent, false))
+
+        override fun onBindViewHolder(
+            holder: ViewHolder,
+            position: Int,
+        ) {
             val provider = providers[position]
             holder.title.text = provider.name
             val infoContents = provider.getInfoContents(this@ProviderActivity)
@@ -91,7 +101,9 @@ class ProviderActivity : AppCompatActivity() {
                 if (index < infoContents.size) {
                     iconView.setImageResource(infoContents[index].icon)
                     iconView.isVisible = true
-                } else iconView.isVisible = false
+                } else {
+                    iconView.isVisible = false
+                }
             }
             holder.parentView.setOnClickListener { viewModel.onProviderClick(provider) }
             holder.iconLayout.setOnClickListener { viewModel.onProviderInfoClick(provider) }

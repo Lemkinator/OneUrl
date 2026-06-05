@@ -27,7 +27,7 @@ X-Vercel-Cache: MISS
 X-Vercel-Id: iad1::iad1::dx52r-1727007634821-62b637657b9e
 
 so short link is: https://shrtlnk.dev/h1aja4
-but has 10 seconds countdown before redirecting (can be skipped)
+but has 10-second countdown before redirecting (can be skipped)
 and sometimes shows ads?
 
  */
@@ -37,20 +37,21 @@ object Shrtlnk : ShortURLProvider {
     override val baseURL = "https://www.shrtlnk.dev"
     override val apiURL = "$baseURL?index=&_data=routes%2F_index"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
-            context.getString(R.string.redirect_hint),
-            context.getString(R.string.redirect_hint_text)
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
+                context.getString(R.string.redirect_hint),
+                context.getString(R.string.redirect_hint_text),
+            ),
         )
-    )
 
     override fun getCreateRequest(
         context: Context,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit
+        errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_$name"
         Log.d(tag, "start request: $apiURL {url=$longURL}")
@@ -61,6 +62,7 @@ object Shrtlnk : ShortURLProvider {
             null,
         ) {
             override fun getParams() = mutableMapOf("url" to longURL)
+
             override fun parseNetworkResponse(response: NetworkResponse?): Response<String> {
                 try {
                     val headers = response?.headers

@@ -14,7 +14,7 @@ https://gg.gg/
 https://gg.gg/check {long_url=https://example.com custom_path=test}
 
 response: 200: ok
-fail: 200: Link with this path already exist. Choose another path.
+fail: 200: Link with this path already exists. Choose another path.
 
 https://gg.gg/create {long_url=https://example.com custom_path=1cbz0v}
 response: 200: http://gg.gg/1cbz0v
@@ -26,25 +26,28 @@ object Gg : ShortURLProvider {
     override val baseURL = "https://gg.gg"
     val apiURLCheck = "$baseURL/check"
     override val apiURL = "$baseURL/create"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 0
-        override val maxAliasLength = 200 //no info, tested up to 500
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 0
+            override val maxAliasLength = 200 // no info, tested up to 500
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
+        }
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
         )
-    )
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
@@ -67,13 +70,13 @@ object Gg : ShortURLProvider {
                         errorCallback(GenerateURLError.AliasAlreadyExists)
                     } else {
                         RequestQueueSingleton.getInstance(context).addToRequestQueue(
-                            requestCreateGg(context, longURL, alias, successCallback, errorCallback)
+                            requestCreateGg(longURL, alias, successCallback, errorCallback),
                         )
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     RequestQueueSingleton.getInstance(context).addToRequestQueue(
-                        requestCreateGg(context, longURL, alias, successCallback, errorCallback)
+                        requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 }
             },
@@ -85,22 +88,21 @@ object Gg : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     RequestQueueSingleton.getInstance(context).addToRequestQueue(
-                        requestCreateGg(context, longURL, alias, successCallback, errorCallback)
+                        requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 } catch (e: Exception) {
                     e.printStackTrace()
                     RequestQueueSingleton.getInstance(context).addToRequestQueue(
-                        requestCreateGg(context, longURL, alias, successCallback, errorCallback)
+                        requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 }
-            }
+            },
         ) {
             override fun getParams() = mapOf("long_url" to longURL, "custom_path" to alias)
         }
     }
 
     private fun requestCreateGg(
-        context: Context,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -140,7 +142,7 @@ object Gg : ShortURLProvider {
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         ) {
             override fun getParams() = mapOf("long_url" to longURL, "custom_path" to alias)
         }

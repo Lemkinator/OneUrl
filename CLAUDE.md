@@ -47,7 +47,9 @@ Clean Architecture with three layers:
 checks URL against URLhaus → delegates to the selected provider's `getCreateRequest()`. URL generation uses Volley (`RequestQueueSingleton`)
 for all HTTP calls.
 
-**`ui/`** — Activities, adapters, and ViewModels. Activities interact with use cases through ViewModels (MainViewModel, AddURLViewModel, URLViewModel, GenerateQRCodeViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather than calling use cases directly.
+**`ui/`** — Activities, adapters, and ViewModels. Activities interact with use cases through ViewModels (MainViewModel, AddURLViewModel,
+URLViewModel, GenerateQRCodeViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather than calling use cases
+directly.
 
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
 `ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers marked `//disabled` are instantiated but filtered out of

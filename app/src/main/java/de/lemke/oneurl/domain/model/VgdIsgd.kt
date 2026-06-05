@@ -20,12 +20,14 @@ https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
  */
 sealed class VgdIsgd : ShortURLProvider {
     final override val group = "v.gd, is.gd"
-    final override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 5
-        override val maxAliasLength = 30
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
-    }
+    final override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 5
+            override val maxAliasLength = 30
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
+
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+        }
 
     override fun getAnalyticsURL(alias: String) = "$baseURL/stats.php?url=$alias"
 
@@ -51,33 +53,46 @@ sealed class VgdIsgd : ShortURLProvider {
                     Log.e(tag, "errorcode: ${response.getString("errorcode")}")
                     Log.e(tag, "errormessage: ${response.optString("errormessage")}")
                     /*
-                    Error code 1 - there was a problem with the original long URL provided
+                    Error code 1 - there was a problem with the original long URL provided.
                     Please specify a URL to shorten.                                            //should not happen, checked before
-                    Please enter a valid URL to shorten
+                    Please enter a valid URL to shorten.
                     Sorry, the URL you entered is on our internal blacklist. It may have been used abusively in the past, or it may link to another URL redirection service.
-                    Error code 2 - there was a problem with the short URL provided (for custom short URLs)
-                    Short URLs must be at least 5 characters long                               //should not happen, checked before
-                    Short URLs may only contain the characters a-z, 0-9 and underscore          //should not happen, checked before
+                    Error code 2 - there was a problem with the short URL provided (for custom short URLs).
+                    Short URLs must be at least 5 characters long.                               //should not happen, checked before
+                    Short URLs may only contain the characters a-z, 0-9 and underscore.          //should not happen, checked before
                     The shortened URL you picked already exists, please choose another.
-                    Error code 3 - our rate limit was exceeded (your app should wait before trying again)
-                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period)
+                    Error code 3 - our rate limit was exceeded (your app should wait before trying again).
+                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period).
                      */
                     when (response.getString("errorcode")) {
-                        "1" -> if (response.optString("errormessage").contains("blacklist", ignoreCase = true)) {
-                            errorCallback(GenerateURLError.BlacklistedURL())
-                        } else {
-                            errorCallback(GenerateURLError.InvalidURL)
+                        "1" -> {
+                            if (response.optString("errormessage").contains("blacklist", ignoreCase = true)) {
+                                errorCallback(GenerateURLError.BlacklistedURL())
+                            } else {
+                                errorCallback(GenerateURLError.InvalidURL)
+                            }
                         }
 
-                        "2" -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                        "3" -> errorCallback(GenerateURLError.RateLimitExceeded)
-                        "4" -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        else -> errorCallback(
-                            GenerateURLError.Custom(
-                                200,
-                                response.optString("errormessage") + " (${response.getString("errorcode")})"
+                        "2" -> {
+                            errorCallback(GenerateURLError.AliasAlreadyExists)
+                        }
+
+                        "3" -> {
+                            errorCallback(GenerateURLError.RateLimitExceeded)
+                        }
+
+                        "4" -> {
+                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        }
+
+                        else -> {
+                            errorCallback(
+                                GenerateURLError.Custom(
+                                    200,
+                                    response.optString("errormessage") + " (${response.getString("errorcode")})",
+                                ),
                             )
-                        )
+                        }
                     }
                     return@JsonObjectRequest
                 }
@@ -98,24 +113,35 @@ sealed class VgdIsgd : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        error is NoConnectionError -> {
+                            errorCallback(GenerateURLError.ServiceOffline)
+                        }
+
+                        statusCode == null -> {
+                            errorCallback(GenerateURLError.Unknown())
+                        }
+
+                        data.isNullOrBlank() -> {
+                            errorCallback(GenerateURLError.Unknown(statusCode))
+                        }
+
                         error.message?.contains("JSONException", true) == true -> {
-                            //https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
-                            //Update: Works fine now?
+                            // https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
+                            // Update: Works fine now?
                             Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
                             errorCallback(GenerateURLError.Custom(statusCode, context.getString(R.string.error_vgd_isgd)))
                         }
 
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
+                        else -> {
+                            errorCallback(GenerateURLError.Custom(statusCode, data))
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error: $e")
                     e.printStackTrace()
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         )
     }
 
@@ -126,33 +152,35 @@ sealed class VgdIsgd : ShortURLProvider {
         override val privacyURL = "$baseURL/privacy.php"
         override val termsURL = "$baseURL/terms.php"
 
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.redirect_hint_text)
-        )
-
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
-                context.getString(R.string.redirect_hint),
-                context.getString(R.string.redirect_hint_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(
-                    R.string.alias_text,
-                    aliasConfig.minAliasLength,
-                    aliasConfig.maxAliasLength,
-                    aliasConfig.allowedAliasCharacters
-                )
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
+        override fun getTipsCardTitleAndInfo(context: Context) =
+            Pair(
+                context.getString(commonutilsR.string.commonutils_info),
+                context.getString(R.string.redirect_hint_text),
             )
-        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
+                    context.getString(R.string.redirect_hint),
+                    context.getString(R.string.redirect_hint_text),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                    context.getString(R.string.alias),
+                    context.getString(
+                        R.string.alias_text,
+                        aliasConfig.minAliasLength,
+                        aliasConfig.maxAliasLength,
+                        aliasConfig.allowedAliasCharacters,
+                    ),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
+            )
 
         override fun getCreateRequest(
             context: Context,
@@ -170,23 +198,24 @@ sealed class VgdIsgd : ShortURLProvider {
         override val privacyURL = "$baseURL/privacy.php"
         override val termsURL = "$baseURL/terms.php"
 
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(
-                    R.string.alias_text,
-                    aliasConfig.minAliasLength,
-                    aliasConfig.maxAliasLength,
-                    aliasConfig.allowedAliasCharacters
-                )
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                    context.getString(R.string.alias),
+                    context.getString(
+                        R.string.alias_text,
+                        aliasConfig.minAliasLength,
+                        aliasConfig.maxAliasLength,
+                        aliasConfig.allowedAliasCharacters,
+                    ),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
             )
-        )
 
         override fun getCreateRequest(
             context: Context,

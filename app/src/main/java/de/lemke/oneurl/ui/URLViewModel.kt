@@ -1,17 +1,17 @@
 package de.lemke.oneurl.ui
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetVisitCountUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
-import android.util.Log
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class URLViewModel @Inject constructor(
@@ -90,5 +89,6 @@ data class UrlDetailUiState(
 
 sealed class UrlDetailEvent {
     data object NotFound : UrlDetailEvent()
+
     data object Deleted : UrlDetailEvent()
 }

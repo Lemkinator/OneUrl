@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.oneurl.domain.DeleteURLUseCase
-import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.ObserveURLsUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
+import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,11 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val getUserSettings: GetUserSettingsUseCase,
     private val updateUserSettings: UpdateUserSettingsUseCase,
     private val observeURLs: ObserveURLsUseCase,
     private val deleteURL: DeleteURLUseCase,
@@ -59,7 +57,10 @@ class MainViewModel @Inject constructor(
         _filterFavorite.value = enabled
     }
 
-    fun setFavorite(url: URL, favorite: Boolean) {
+    fun setFavorite(
+        url: URL,
+        favorite: Boolean,
+    ) {
         viewModelScope.launch { updateURL(url.copy(favorite = favorite)) }
     }
 
