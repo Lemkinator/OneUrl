@@ -10,6 +10,8 @@ import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +34,8 @@ class MainViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(MainUiState())
     val state: StateFlow<MainUiState> = _state.asStateFlow()
+    private val _events = Channel<MainEvent>(Channel.BUFFERED)
+    val events: ReceiveChannel<MainEvent> = _events
 
     val search: StateFlow<String?> = _search.asStateFlow()
     val filterFavorite: StateFlow<Boolean> = _filterFavorite.asStateFlow()
@@ -41,7 +45,8 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             observeURLs(_search, _filterFavorite).collectLatest { urls ->
                 val previousSize = _state.value.urls.size
-                _state.update { it.copy(urls = urls, isUIReady = true, newItemAdded = urls.size > previousSize) }
+                _state.update { it.copy(urls = urls, isUIReady = true) }
+                if (urls.size > previousSize) _events.send(MainEvent.NewItemAdded)
             }
         }
     }
@@ -74,5 +79,8 @@ class MainViewModel @Inject constructor(
 data class MainUiState(
     val urls: List<URL> = emptyList(),
     val isUIReady: Boolean = false,
-    val newItemAdded: Boolean = false,
 )
+
+sealed class MainEvent {
+    data object NewItemAdded : MainEvent()
+}

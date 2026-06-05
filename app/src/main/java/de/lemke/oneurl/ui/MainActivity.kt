@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.checkAppStartAndHandleOOBE
+import de.lemke.commonutils.collectEvents
 import de.lemke.commonutils.collectState
 import de.lemke.commonutils.configureCommonUtilsSplashScreen
 import de.lemke.commonutils.data.commonUtilsSettings
@@ -126,6 +127,7 @@ class MainActivity :
         binding.addFab.hideOnScroll(binding.urlList)
         binding.addFab.onSingleClick { binding.addFab.transformToActivity(AddURLActivity::class.java, "AddURLTransition") }
         collectState()
+        collectEvents()
         checkIntent()
     }
 
@@ -133,8 +135,14 @@ class MainActivity :
         collectState(viewModel.state) { state ->
             if (!state.isUIReady) return@collectState
             urlAdapter.submitList(state.urls)
-            if (state.newItemAdded) binding.urlList.smoothScrollToPosition(0)
             updateRecyclerView(state.urls)
+        }
+
+    private fun collectEvents() =
+        collectEvents(viewModel.events) { event ->
+            when (event) {
+                is MainEvent.NewItemAdded -> binding.urlList.smoothScrollToPosition(0)
+            }
         }
 
     private fun checkIntent() {
