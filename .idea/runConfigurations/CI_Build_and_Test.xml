@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="ProjectRunConfigurationManager">
+    <configuration name="CI: Build &amp; Test" factoryName="Gradle" type="GradleRunConfiguration">
+        <ExternalSystemSettings>
+            <option name="executionName" />
+            <option name="externalProjectPath" value="$PROJECT_DIR$" />
+            <option name="externalSystemIdString" value="GRADLE" />
+            <option name="scriptParameters" value="" />
+            <option name="taskDescriptions">
+                <list />
+            </option>
+            <option name="taskNames">
+                <list>
+                    <option value="lintDebug" />
+                    <option value="testDebugUnitTest" />
+                    <option value="koverXmlReportDebug" />
+                    <option value="koverHtmlReportDebug" />
+                    <option value="koverVerifyDebug" />
+                    <option value="verifyRoborazziDebug" />
+                    <option value="pixel9Api35DebugAndroidTest" />
+                    <option value="assembleRelease" />
+                </list>
+            </option>
+            <option name="vmOptions" />
+        </ExternalSystemSettings>
+        <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+        <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+        <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+        <DebugAllEnabled>false</DebugAllEnabled>
+        <RunAsTest>false</RunAsTest>
+        <GradleProfilingDisabled>false</GradleProfilingDisabled>
+        <GradleCoverageDisabled>false</GradleCoverageDisabled>
+        <method v="2" />
+    </configuration>
+</component>
