@@ -9,6 +9,7 @@
   "ignoreDeps": [
     "io.github.lemkinator:common-utils"
   ],
+  "platformAutomerge": true,
   "packageRules": [
     {
       "matchUpdateTypes": [
@@ -20,9 +21,23 @@
       "automerge": true
     },
     {
+      "groupName": "kotlin",
+      "matchPackageNames": [
+        "org.jetbrains.kotlin:**",
+        "org.jetbrains.kotlin.*:**",
+        "com.google.devtools.ksp**"
+      ]
+    },
+    {
       "groupName": "hilt",
       "matchPackageNames": [
         "com.google.dagger**"
+      ]
+    },
+    {
+      "groupName": "github-actions",
+      "matchManagers": [
+        "github-actions"
       ]
     }
   ]
