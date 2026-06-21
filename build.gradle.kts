@@ -59,6 +59,14 @@ allprojects {
 }
 
 subprojects {
+    configurations.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlin" && requested.name == "kotlin-metadata-jvm") {
+                useVersion("2.4.0")
+                because("Hilt 2.59.x does not support Kotlin 2.4 — its bundled kotlin-metadata-jvm only reads metadata format ≤ 2.3.0. Remove once Hilt ships native Kotlin 2.4 support (track: github.com/google/dagger/issues/5001)")
+            }
+        }
+    }
     plugins.withId("com.android.base") {
         project.extensions.findByType(CommonExtension::class.java)?.apply {
             compileOptions.apply {

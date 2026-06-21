@@ -1,5 +1,5 @@
 [versions]
-aboutlibraries = "14.2.0"
+aboutlibraries = "15.0.0"
 bundler = "1.0.4"
 commonUtils = "1.0.0"
 leakcanary = "2.14"
@@ -9,8 +9,8 @@ datastorePreferences = "1.2.1"
 gradle = "9.2.1"
 gradke-secrets = "2.0.1"
 hilt = "2.59.2"
-kotlin = "2.3.21"
-ksp = "2.3.8"
+kotlin = "2.4.0"
+ksp = "2.3.9"
 room = "2.8.4"
 volley = "1.2.1"
 
