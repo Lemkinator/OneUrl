@@ -44,6 +44,7 @@
     <string name="to_url">Zur URL</string>
     <string name="url_added">URL hinzugefügt</string>
     <string name="checking_duplicates">Überprüfe auf Duplikate…</string>
+    <string name="fetching_title">Rufe Seitentitel ab…</string>
     <string name="checking_internet">Überprüfe Internetverbindung…</string>
     <string name="checking_url">Überprüfung der URL auf Blacklisting, Malware, Phishing, Spam oder Missbrauch…</string>
     <string name="generating_url">Generiere URL…</string>

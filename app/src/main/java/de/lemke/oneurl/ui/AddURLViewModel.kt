@@ -113,6 +113,7 @@ class AddURLViewModel @Inject constructor(
                 }
             }
 
+            state.update { it.copy(loadingMessageRes = de.lemke.oneurl.R.string.fetching_title) }
             val title = getURLTitle(longURL) ?: ""
 
             val result =
