@@ -76,6 +76,13 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { updateURL(url.copy(favorite = favorite)) }
     }
 
+    fun setFavorites(
+        urls: List<URL>,
+        favorite: Boolean,
+    ) {
+        viewModelScope.launch { updateURL(urls.map { it.copy(favorite = favorite) }) }
+    }
+
     fun delete(urls: List<URL>) {
         viewModelScope.launch { deleteURL(urls) }
     }

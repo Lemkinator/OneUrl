@@ -346,13 +346,13 @@ class MainActivity :
                     }
 
                     R.id.menu_item_add_to_favorites -> {
-                        urls.filter { it.id in selectedIds }.forEach { viewModel.setFavorite(it, true) }
+                        viewModel.setFavorites(urls.filter { it.id in selectedIds }, true)
                         binding.drawerLayout.endActionMode()
                         true
                     }
 
                     R.id.menu_item_remove_from_favorites -> {
-                        urls.filter { it.id in selectedIds }.forEach { viewModel.setFavorite(it, false) }
+                        viewModel.setFavorites(urls.filter { it.id in selectedIds }, false)
                         binding.drawerLayout.endActionMode()
                         true
                     }
