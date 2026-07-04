@@ -165,7 +165,7 @@ object Shorturlat : ShortURLProvider {
                     successCallback(shortURL)
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown())
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -182,7 +182,7 @@ object Shorturlat : ShortURLProvider {
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
         ) {
