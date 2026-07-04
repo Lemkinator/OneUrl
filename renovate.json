@@ -6,9 +6,6 @@
     ":renovatePrefix",
     ":configMigration"
   ],
-  "ignoreDeps": [
-    "io.github.lemkinator:common-utils"
-  ],
   "platformAutomerge": true,
   "packageRules": [
     {
@@ -35,9 +32,37 @@
       ]
     },
     {
+      "groupName": "androidx-test",
+      "matchPackageNames": [
+        "androidx.test**"
+      ]
+    },
+    {
+      "groupName": "kotest",
+      "matchPackageNames": [
+        "io.kotest**",
+        "de.mannodermaus.android-junit**"
+      ]
+    },
+    {
+      "groupName": "screenshot-testing",
+      "matchPackageNames": [
+        "io.github.takahirom.roborazzi**",
+        "org.robolectric:**"
+      ]
+    },
+    {
       "groupName": "github-actions",
       "matchManagers": [
         "github-actions"
+      ]
+    },
+    {
+      "groupName": "static-analysis",
+      "matchPackageNames": [
+        "dev.detekt**",
+        "io.gitlab.arturbosch.detekt**",
+        "com.diffplug.spotless**"
       ]
     }
   ]
