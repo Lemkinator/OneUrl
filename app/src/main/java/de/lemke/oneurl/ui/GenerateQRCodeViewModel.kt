@@ -12,7 +12,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -26,8 +25,8 @@ class GenerateQRCodeViewModel @Inject constructor(
     private val generateQRCode: GenerateQRCodeUseCase,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(QrUiState())
-    val state: StateFlow<QrUiState> = _state.asStateFlow()
+    val state: StateFlow<QrUiState>
+        field = MutableStateFlow(QrUiState())
     private var regenJob: Job? = null
     private var urlSaveJob: Job? = null
     private var sizeSaveJob: Job? = null
@@ -35,7 +34,7 @@ class GenerateQRCodeViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val s = getUserSettings()
-            _state.update {
+            state.update {
                 it.copy(
                     url = s.qrURL,
                     size = s.qrSize,
@@ -55,7 +54,7 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun setUrl(url: String) {
-        _state.update { it.copy(url = url) }
+        state.update { it.copy(url = url) }
         launchRegenerate()
         urlSaveJob?.cancel()
         urlSaveJob = viewModelScope.launch {
@@ -65,7 +64,7 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun setSize(size: Int) {
-        _state.update { it.copy(size = size) }
+        state.update { it.copy(size = size) }
         launchRegenerate()
         sizeSaveJob?.cancel()
         sizeSaveJob = viewModelScope.launch {
@@ -75,39 +74,39 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun setRoundedFrame(enabled: Boolean) {
-        _state.update { it.copy(roundedFrame = enabled) }
+        state.update { it.copy(roundedFrame = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrFrame = enabled) } }
         launchRegenerate()
     }
 
     fun setIcon(enabled: Boolean) {
-        _state.update { it.copy(icon = enabled) }
+        state.update { it.copy(icon = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrIcon = enabled) } }
         launchRegenerate()
     }
 
     fun setTintBorder(enabled: Boolean) {
-        _state.update { it.copy(tintBorder = enabled) }
+        state.update { it.copy(tintBorder = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrTintBorder = enabled) } }
         launchRegenerate()
     }
 
     fun setTintAnchor(enabled: Boolean) {
-        _state.update { it.copy(tintAnchor = enabled) }
+        state.update { it.copy(tintAnchor = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrTintAnchor = enabled) } }
         launchRegenerate()
     }
 
     fun setForegroundColor(color: Int) {
-        val recentColors = _state.value.recentForegroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
-        _state.update { it.copy(foregroundColor = color, recentForegroundColors = recentColors) }
+        val recentColors = state.value.recentForegroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
+        state.update { it.copy(foregroundColor = color, recentForegroundColors = recentColors) }
         viewModelScope.launch { updateUserSettings { it.copy(qrRecentForegroundColors = recentColors) } }
         launchRegenerate()
     }
 
     fun setBackgroundColor(color: Int) {
-        val recentColors = _state.value.recentBackgroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
-        _state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
+        val recentColors = state.value.recentBackgroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
+        state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
         viewModelScope.launch { updateUserSettings { it.copy(qrRecentBackgroundColors = recentColors) } }
         launchRegenerate()
     }
@@ -115,11 +114,11 @@ class GenerateQRCodeViewModel @Inject constructor(
     private fun launchRegenerate() {
         regenJob?.cancel()
         regenJob = viewModelScope.launch {
-            val s = _state.value
+            val s = state.value
             val qr = withContext(defaultDispatcher) {
                 generateQRCode(s.url, s.size, s.foregroundColor, s.backgroundColor, s.tintAnchor, s.tintBorder, s.icon, s.roundedFrame)
             }
-            _state.update { it.copy(qrCode = qr) }
+            state.update { it.copy(qrCode = qr) }
         }
     }
 }
