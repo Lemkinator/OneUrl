@@ -224,7 +224,7 @@ class AddURLActivity : AppCompatActivity() {
                     }
 
                     is GenerateURLError.Custom -> {
-                        setTitle(error.customTitle ?: getString(commonutilsR.string.commonutils_error))
+                        setTitle(error.customTitle ?: "${getString(commonutilsR.string.commonutils_error)} (${error.statusCode})")
                         setMessage(error.customMessage)
                     }
 
