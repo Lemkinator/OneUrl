@@ -37,7 +37,6 @@ import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBott
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import de.lemke.commonutils.R as commonutilsR
-import de.lemke.oneurl.domain.model.URL as DomainURL
 import dev.oneuiproject.oneui.design.R as designR
 
 @AndroidEntryPoint
@@ -50,7 +49,7 @@ class URLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
     private lateinit var searchHighlighter: SearchHighlighter
-    private var lastBoundUrl: DomainURL? = null
+    private var lastBoundShortURL: String? = null
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
@@ -116,8 +115,8 @@ class URLActivity : AppCompatActivity() {
         collectState(viewModel.state) { state ->
             if (state.isLoading || state.url == null) return@collectState
             val url = state.url
-            if (url != lastBoundUrl) {
-                lastBoundUrl = url
+            if (url.shortURL != lastBoundShortURL) {
+                lastBoundShortURL = url.shortURL
                 val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
                 binding.root.setTitle(url.shortURL)
                 binding.urlQrImageview.setImageBitmap(url.qr)
@@ -167,12 +166,6 @@ class URLActivity : AppCompatActivity() {
                 binding.urlBnv.menu
                     .findItem(R.id.url_bnv_analytics)
                     ?.isVisible = url.shortURLProvider.getAnalyticsURL(url.alias) != null
-                binding.urlBnv.menu
-                    .findItem(R.id.url_bnv_add_to_fav)
-                    ?.isVisible = !url.favorite
-                binding.urlBnv.menu
-                    .findItem(R.id.url_bnv_remove_from_fav)
-                    ?.isVisible = url.favorite
                 binding.urlBnv.setOnItemSelectedListener { item ->
                     when (item.itemId) {
                         R.id.url_bnv_analytics -> {
@@ -212,6 +205,12 @@ class URLActivity : AppCompatActivity() {
                 setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
             }
 
+            binding.urlBnv.menu
+                .findItem(R.id.url_bnv_add_to_fav)
+                ?.isVisible = !url.favorite
+            binding.urlBnv.menu
+                .findItem(R.id.url_bnv_remove_from_fav)
+                ?.isVisible = url.favorite
             val visitCount = state.visitCount
             binding.urlVisitsDivider.isVisible = visitCount != null
             binding.urlVisitsLayout.isVisible = visitCount != null
