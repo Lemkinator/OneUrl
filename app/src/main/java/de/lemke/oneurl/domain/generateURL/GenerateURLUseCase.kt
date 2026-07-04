@@ -6,17 +6,21 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import dagger.hilt.android.qualifiers.ApplicationContext
+import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
 class GenerateURLUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val checkURLSafety: CheckURLSafetyUseCase,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
     suspend operator fun invoke(
         provider: ShortURLProvider,
@@ -25,8 +29,10 @@ class GenerateURLUseCase @Inject constructor(
         onProgress: (Int) -> Unit,
     ): GenerateURLResult {
         onProgress(R.string.checking_internet)
-        val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+        val caps = withContext(defaultDispatcher) {
+            val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+            cm.getNetworkCapabilities(cm.activeNetwork)
+        }
         if (caps == null || !caps.hasCapability(NET_CAPABILITY_INTERNET) || !caps.hasCapability(NET_CAPABILITY_VALIDATED)) {
             return GenerateURLResult.Failure(GenerateURLError.NoInternet)
         }
