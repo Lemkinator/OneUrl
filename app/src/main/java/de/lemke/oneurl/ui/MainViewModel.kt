@@ -41,12 +41,22 @@ class MainViewModel @Inject constructor(
     val allSelectorState: StateFlow<AllSelectorState>
         field = MutableStateFlow(AllSelectorState())
 
+    private var previousSnapshot: ScrollSnapshot? = null
+
     init {
         viewModelScope.launch {
             observeURLs(search, filterFavorite).collectLatest { urls ->
-                val previousSize = state.value.urls.size
                 state.update { it.copy(urls = urls, isUIReady = true) }
-                if (urls.size > previousSize) _events.send(MainEvent.NewItemAdded)
+                val snapshot = ScrollSnapshot(urls.mapTo(mutableSetOf()) { it.shortURL }, search.value, filterFavorite.value)
+                val previous = previousSnapshot
+                if (previous != null &&
+                    previous.search == snapshot.search &&
+                    previous.filterFavorite == snapshot.filterFavorite &&
+                    (snapshot.ids - previous.ids).isNotEmpty()
+                ) {
+                    _events.send(MainEvent.NewItemAdded)
+                }
+                previousSnapshot = snapshot
             }
         }
     }
@@ -82,6 +92,12 @@ class MainViewModel @Inject constructor(
 data class MainUiState(
     val urls: List<URL> = emptyList(),
     val isUIReady: Boolean = false,
+)
+
+private data class ScrollSnapshot(
+    val ids: Set<String>,
+    val search: String?,
+    val filterFavorite: Boolean,
 )
 
 sealed class MainEvent {
