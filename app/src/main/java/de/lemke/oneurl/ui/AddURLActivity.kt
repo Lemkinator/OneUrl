@@ -1,6 +1,7 @@
 package de.lemke.oneurl.ui
 
 import android.app.ActivityOptions
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -199,7 +200,14 @@ class AddURLActivity : AppCompatActivity() {
                         setMessage(R.string.no_internet_text)
                         setPositiveButton(
                             commonutilsR.string.commonutils_settings,
-                        ) { _, _ -> startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) }
+                        ) { _, _ ->
+                            try {
+                                startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+                            } catch (e: ActivityNotFoundException) {
+                                e.printStackTrace()
+                                toast(commonutilsR.string.commonutils_error)
+                            }
+                        }
                     }
 
                     is GenerateURLError.BlacklistedURL -> {
