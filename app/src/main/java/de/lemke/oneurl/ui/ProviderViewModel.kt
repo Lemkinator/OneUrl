@@ -33,13 +33,9 @@ class ProviderViewModel @Inject constructor(
         val selectMode = savedStateHandle.get<Boolean>(ProviderActivity.KEY_SELECT_PROVIDER) == true
         viewModelScope.launch {
             val settings = getUserSettings()
-            state.update {
-                it.copy(
-                    selectMode = selectMode,
-                    currentSelected = settings.selectedShortURLProvider,
-                    initialScrollPosition = ShortURLProviderCompanion.enabled.indexOf(settings.selectedShortURLProvider),
-                )
-            }
+            state.update { it.copy(selectMode = selectMode, currentSelected = settings.selectedShortURLProvider) }
+            val position = ShortURLProviderCompanion.enabled.indexOf(settings.selectedShortURLProvider)
+            if (position >= 0) _events.send(ProviderEvent.ScrollToSelected(position))
         }
     }
 
@@ -63,10 +59,10 @@ data class ProviderUiState(
     val providers: List<ShortURLProvider> = ShortURLProviderCompanion.enabled,
     val selectMode: Boolean = false,
     val currentSelected: ShortURLProvider? = null,
-    val initialScrollPosition: Int = 0,
 )
 
 sealed class ProviderEvent {
     data object Finish : ProviderEvent()
     data class ShowInfo(val provider: ShortURLProvider) : ProviderEvent()
+    data class ScrollToSelected(val position: Int) : ProviderEvent()
 }

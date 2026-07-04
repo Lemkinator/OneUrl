@@ -35,7 +35,6 @@ class ProviderActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProviderBinding
     private val viewModel: ProviderViewModel by viewModels()
     private val providerAdapter = ProviderAdapter()
-    private var scrolledToInitialPosition = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
@@ -51,10 +50,6 @@ class ProviderActivity : AppCompatActivity() {
     private fun collectState() =
         collectState(viewModel.state) { state ->
             providerAdapter.updateProviders(state.providers)
-            if (!scrolledToInitialPosition && state.initialScrollPosition >= 0) {
-                scrolledToInitialPosition = true
-                binding.providerList.scrollToPosition(state.initialScrollPosition)
-            }
         }
 
     private fun collectEvents() =
@@ -62,6 +57,7 @@ class ProviderActivity : AppCompatActivity() {
             when (event) {
                 is ProviderEvent.Finish -> finishAfterTransition()
                 is ProviderEvent.ShowInfo -> showProviderInfoBottomSheet(event.provider)
+                is ProviderEvent.ScrollToSelected -> binding.providerList.scrollToPosition(event.position)
             }
         }
 
