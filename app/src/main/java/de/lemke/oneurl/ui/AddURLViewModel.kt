@@ -22,11 +22,11 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,17 +44,18 @@ class AddURLViewModel @Inject constructor(
     private val getURL: GetURLUseCase,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(AddUrlUiState())
-    val state: StateFlow<AddUrlUiState> = _state.asStateFlow()
+    val state: StateFlow<AddUrlUiState>
+        field = MutableStateFlow(AddUrlUiState())
+
     private val _events = Channel<AddUrlEvent>(Channel.BUFFERED)
-    val events: ReceiveChannel<AddUrlEvent> = _events
+    val events: Flow<AddUrlEvent> = _events.receiveAsFlow()
 
     private val intentUrl: String? = savedStateHandle.get<String>("url")
 
     init {
         viewModelScope.launch {
             val settings = getUserSettings()
-            _state.update {
+            state.update {
                 it.copy(
                     selectedProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(settings.selectedShortURLProvider),
                     initialURL = intentUrl ?: settings.lastURL,
@@ -68,8 +69,8 @@ class AddURLViewModel @Inject constructor(
         viewModelScope.launch {
             observeUserSettings().collectLatest { settings ->
                 val newProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(settings.selectedShortURLProvider)
-                if (newProvider != _state.value.selectedProvider) {
-                    _state.update { it.copy(selectedProvider = newProvider) }
+                if (newProvider != state.value.selectedProvider) {
+                    state.update { it.copy(selectedProvider = newProvider) }
                 }
             }
         }
@@ -93,20 +94,20 @@ class AddURLViewModel @Inject constructor(
         description: String,
     ) {
         viewModelScope.launch {
-            val provider = _state.value.selectedProvider
+            val provider = state.value.selectedProvider
             val longURL = provider.sanitizeLongURL(longURLRaw)
-            _state.update { it.copy(isLoading = true, loadingMessageRes = de.lemke.oneurl.R.string.checking_duplicates) }
+            state.update { it.copy(isLoading = true, loadingMessageRes = de.lemke.oneurl.R.string.checking_duplicates) }
 
             val existingURLs = getURL(provider, longURL)
             if (existingURLs.isNotEmpty()) {
                 if (alias.isBlank()) {
-                    _state.update { it.copy(isLoading = false) }
+                    state.update { it.copy(isLoading = false) }
                     _events.send(AddUrlEvent.AlreadyShortened(existingURLs.first().shortURL))
                     return@launch
                 }
                 val exactMatch = existingURLs.find { it.shortURL == "${provider.baseURL}/$alias" }
                 if (exactMatch != null) {
-                    _state.update { it.copy(isLoading = false) }
+                    state.update { it.copy(isLoading = false) }
                     _events.send(AddUrlEvent.AlreadyShortened(exactMatch.shortURL))
                     return@launch
                 }
@@ -116,12 +117,12 @@ class AddURLViewModel @Inject constructor(
 
             val result =
                 generateURL(provider, longURL, alias) { messageRes ->
-                    _state.update { it.copy(loadingMessageRes = messageRes) }
+                    state.update { it.copy(loadingMessageRes = messageRes) }
                 }
 
             when (result) {
                 is GenerateURLResult.Failure -> {
-                    _state.update { it.copy(isLoading = false) }
+                    state.update { it.copy(isLoading = false) }
                     _events.send(AddUrlEvent.Error(result.error))
                 }
 
@@ -139,7 +140,7 @@ class AddURLViewModel @Inject constructor(
                             added = ZonedDateTime.now(),
                         ),
                     )
-                    _state.update { it.copy(isLoading = false) }
+                    state.update { it.copy(isLoading = false) }
                     val settings = getUserSettings()
                     if (settings.autoCopyOnCreate) {
                         _events.send(AddUrlEvent.CopyAndFinish(result.shortURL, title))

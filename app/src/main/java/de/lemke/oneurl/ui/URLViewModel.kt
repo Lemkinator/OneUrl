@@ -13,10 +13,10 @@ import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,10 +28,11 @@ class URLViewModel @Inject constructor(
     private val deleteURL: DeleteURLUseCase,
     private val getVisitCount: GetVisitCountUseCase,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(UrlDetailUiState())
-    val state: StateFlow<UrlDetailUiState> = _state.asStateFlow()
+    val state: StateFlow<UrlDetailUiState>
+        field = MutableStateFlow(UrlDetailUiState())
+
     private val _events = Channel<UrlDetailEvent>(Channel.BUFFERED)
-    val events: ReceiveChannel<UrlDetailEvent> = _events
+    val events: Flow<UrlDetailEvent> = _events.receiveAsFlow()
 
     companion object {
         private const val TAG = "URLViewModel"
@@ -45,34 +46,34 @@ class URLViewModel @Inject constructor(
                 _events.send(UrlDetailEvent.NotFound)
                 return@launch
             }
-            _state.update { it.copy(url = url, isLoading = false) }
+            state.update { it.copy(url = url, isLoading = false) }
             refreshVisitCount()
         }
     }
 
     fun toggleFavorite() {
-        val url = _state.value.url ?: return
+        val url = state.value.url ?: return
         val updated = url.copy(favorite = !url.favorite)
-        _state.update { it.copy(url = updated) }
+        state.update { it.copy(url = updated) }
         viewModelScope.launch { updateURL(updated) }
     }
 
     fun refreshVisitCount() {
-        val url = _state.value.url ?: return
-        _state.update { it.copy(isRefreshingVisits = true) }
+        val url = state.value.url ?: return
+        state.update { it.copy(isRefreshingVisits = true) }
         viewModelScope.launch {
             try {
                 val count = getVisitCount(url)
-                _state.update { it.copy(visitCount = count, isRefreshingVisits = false) }
+                state.update { it.copy(visitCount = count, isRefreshingVisits = false) }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to refresh visit count", e)
-                _state.update { it.copy(isRefreshingVisits = false) }
+                state.update { it.copy(isRefreshingVisits = false) }
             }
         }
     }
 
     fun delete() {
-        val url = _state.value.url ?: return
+        val url = state.value.url ?: return
         viewModelScope.launch {
             deleteURL(url)
             _events.send(UrlDetailEvent.Deleted)

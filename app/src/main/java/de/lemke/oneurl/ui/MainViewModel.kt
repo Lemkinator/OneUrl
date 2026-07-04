@@ -11,11 +11,11 @@ import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -26,35 +26,37 @@ class MainViewModel @Inject constructor(
     private val deleteURL: DeleteURLUseCase,
     private val updateURL: UpdateURLUseCase,
 ) : ViewModel() {
-    private val _search = MutableStateFlow<String?>(null)
-    private val _filterFavorite = MutableStateFlow(false)
-    private val _allSelectorState = MutableStateFlow(AllSelectorState())
+    val state: StateFlow<MainUiState>
+        field = MutableStateFlow(MainUiState())
 
-    private val _state = MutableStateFlow(MainUiState())
-    val state: StateFlow<MainUiState> = _state.asStateFlow()
     private val _events = Channel<MainEvent>(Channel.BUFFERED)
-    val events: ReceiveChannel<MainEvent> = _events
+    val events: Flow<MainEvent> = _events.receiveAsFlow()
 
-    val search: StateFlow<String?> = _search.asStateFlow()
-    val filterFavorite: StateFlow<Boolean> = _filterFavorite.asStateFlow()
-    val allSelectorState: StateFlow<AllSelectorState> = _allSelectorState.asStateFlow()
+    val search: StateFlow<String?>
+        field = MutableStateFlow<String?>(null)
+
+    val filterFavorite: StateFlow<Boolean>
+        field = MutableStateFlow(false)
+
+    val allSelectorState: StateFlow<AllSelectorState>
+        field = MutableStateFlow(AllSelectorState())
 
     init {
         viewModelScope.launch {
-            observeURLs(_search, _filterFavorite).collectLatest { urls ->
-                val previousSize = _state.value.urls.size
-                _state.update { it.copy(urls = urls, isUIReady = true) }
+            observeURLs(search, filterFavorite).collectLatest { urls ->
+                val previousSize = state.value.urls.size
+                state.update { it.copy(urls = urls, isUIReady = true) }
                 if (urls.size > previousSize) _events.send(MainEvent.NewItemAdded)
             }
         }
     }
 
     fun setSearch(query: String?) {
-        _search.value = query
+        search.value = query
     }
 
     fun setFilterFavorite(enabled: Boolean) {
-        _filterFavorite.value = enabled
+        filterFavorite.value = enabled
     }
 
     fun setFavorite(
@@ -69,7 +71,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun setAllSelectorState(state: AllSelectorState) {
-        _allSelectorState.value = state
+        allSelectorState.value = state
     }
 
     fun updateAutoCopy(enabled: Boolean) {

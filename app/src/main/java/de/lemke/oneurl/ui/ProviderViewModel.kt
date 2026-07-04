@@ -9,10 +9,10 @@ import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,16 +23,17 @@ class ProviderViewModel @Inject constructor(
     private val getUserSettings: GetUserSettingsUseCase,
     private val updateUserSettings: UpdateUserSettingsUseCase,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(ProviderUiState())
-    val state: StateFlow<ProviderUiState> = _state.asStateFlow()
+    val state: StateFlow<ProviderUiState>
+        field = MutableStateFlow(ProviderUiState())
+
     private val _events = Channel<ProviderEvent>(Channel.BUFFERED)
-    val events: ReceiveChannel<ProviderEvent> = _events
+    val events: Flow<ProviderEvent> = _events.receiveAsFlow()
 
     init {
         val selectMode = savedStateHandle.get<Boolean>(ProviderActivity.KEY_SELECT_PROVIDER) == true
         viewModelScope.launch {
             val settings = getUserSettings()
-            _state.update {
+            state.update {
                 it.copy(
                     selectMode = selectMode,
                     currentSelected = settings.selectedShortURLProvider,
@@ -44,7 +45,7 @@ class ProviderViewModel @Inject constructor(
 
     fun onProviderClick(provider: ShortURLProvider) {
         viewModelScope.launch {
-            if (_state.value.selectMode) {
+            if (state.value.selectMode) {
                 updateUserSettings { it.copy(selectedShortURLProvider = provider) }
                 _events.send(ProviderEvent.Finish)
             } else {

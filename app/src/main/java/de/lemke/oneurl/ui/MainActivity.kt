@@ -26,17 +26,16 @@ import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.checkAppStartAndHandleOOBE
 import de.lemke.commonutils.collectEvents
 import de.lemke.commonutils.collectState
 import de.lemke.commonutils.configureCommonUtilsSplashScreen
 import de.lemke.commonutils.data.commonUtilsSettings
 import de.lemke.commonutils.onNavigationSingleClick
+import de.lemke.commonutils.onboardIfNeeded
 import de.lemke.commonutils.prepareActivityTransformationFrom
 import de.lemke.commonutils.restoreSearchAndActionMode
 import de.lemke.commonutils.saveSearchAndActionMode
 import de.lemke.commonutils.setupCommonUtilsAboutActivity
-import de.lemke.commonutils.setupCommonUtilsOOBEActivity
 import de.lemke.commonutils.setupCommonUtilsSettingsActivity
 import de.lemke.commonutils.setupHeaderAndNavRail
 import de.lemke.commonutils.toast
@@ -87,14 +86,14 @@ class MainActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
-        prepareActivityTransformationFrom()
         super.onCreate(savedInstanceState)
+        onboardIfNeeded(BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME, allowSkip = BuildConfig.FIRST_RUN_SKIPPABLE) ?: return
+        prepareActivityTransformationFrom()
         if (SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         configureCommonUtilsSplashScreen(splashScreen, binding.root) { !viewModel.state.value.isUIReady }
-        setupCommonUtilsOOBEActivity(nextActivity = MainActivity::class.java)
-        if (!checkAppStartAndHandleOOBE(BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME)) openMain(savedInstanceState)
+        openMain(savedInstanceState)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
