@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
@@ -14,20 +13,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineDispatcher
 
 @HiltViewModel
 class GenerateQRCodeViewModel @Inject constructor(
     private val getUserSettings: GetUserSettingsUseCase,
     private val updateUserSettings: UpdateUserSettingsUseCase,
     private val generateQRCode: GenerateQRCodeUseCase,
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     val state: StateFlow<QrUiState>
         field = MutableStateFlow(QrUiState())
-    private var regenJob: Job? = null
     private var urlSaveJob: Job? = null
     private var sizeSaveJob: Job? = null
 
@@ -49,13 +44,13 @@ class GenerateQRCodeViewModel @Inject constructor(
                     isLoading = false,
                 )
             }
-            launchRegenerate()
+            regenerate()
         }
     }
 
     fun setUrl(url: String) {
         state.update { it.copy(url = url) }
-        launchRegenerate()
+        regenerate()
         urlSaveJob?.cancel()
         urlSaveJob = viewModelScope.launch {
             delay(300)
@@ -65,7 +60,7 @@ class GenerateQRCodeViewModel @Inject constructor(
 
     fun setSize(size: Int) {
         state.update { it.copy(size = size) }
-        launchRegenerate()
+        regenerate()
         sizeSaveJob?.cancel()
         sizeSaveJob = viewModelScope.launch {
             delay(300)
@@ -76,50 +71,48 @@ class GenerateQRCodeViewModel @Inject constructor(
     fun setRoundedFrame(enabled: Boolean) {
         state.update { it.copy(roundedFrame = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrFrame = enabled) } }
-        launchRegenerate()
+        regenerate()
     }
 
     fun setIcon(enabled: Boolean) {
         state.update { it.copy(icon = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrIcon = enabled) } }
-        launchRegenerate()
+        regenerate()
     }
 
     fun setTintBorder(enabled: Boolean) {
         state.update { it.copy(tintBorder = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrTintBorder = enabled) } }
-        launchRegenerate()
+        regenerate()
     }
 
     fun setTintAnchor(enabled: Boolean) {
         state.update { it.copy(tintAnchor = enabled) }
         viewModelScope.launch { updateUserSettings { it.copy(qrTintAnchor = enabled) } }
-        launchRegenerate()
+        regenerate()
     }
 
     fun setForegroundColor(color: Int) {
         val recentColors = state.value.recentForegroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
         state.update { it.copy(foregroundColor = color, recentForegroundColors = recentColors) }
         viewModelScope.launch { updateUserSettings { it.copy(qrRecentForegroundColors = recentColors) } }
-        launchRegenerate()
+        regenerate()
     }
 
     fun setBackgroundColor(color: Int) {
         val recentColors = state.value.recentBackgroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
         state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
         viewModelScope.launch { updateUserSettings { it.copy(qrRecentBackgroundColors = recentColors) } }
-        launchRegenerate()
+        regenerate()
     }
 
-    private fun launchRegenerate() {
-        regenJob?.cancel()
-        regenJob = viewModelScope.launch {
-            val s = state.value
-            val qr = withContext(defaultDispatcher) {
-                generateQRCode(s.url, s.size, s.foregroundColor, s.backgroundColor, s.tintAnchor, s.tintBorder, s.icon, s.roundedFrame)
-            }
-            state.update { it.copy(qrCode = qr) }
-        }
+    // Runs synchronously on the calling (Main) dispatcher. QR encoding + canvas drawing is only a
+    // few ms, and dispatching it to a background dispatcher makes cancellation ineffective mid-job
+    // on rapid slider/text changes, producing concurrent bitmap allocations instead of preventing them.
+    private fun regenerate() {
+        val s = state.value
+        val qr = generateQRCode(s.url, s.size, s.foregroundColor, s.backgroundColor, s.tintAnchor, s.tintBorder, s.icon, s.roundedFrame)
+        state.update { it.copy(qrCode = qr) }
     }
 }
 
