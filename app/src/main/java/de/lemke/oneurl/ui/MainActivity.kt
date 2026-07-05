@@ -115,6 +115,7 @@ class MainActivity :
             commonutilsR.xml.preferences_more_info,
         ) {
             findPreference<SwitchPreferenceCompat>("auto_copy_on_create_pref")?.let { autoCopyOnCreatePref ->
+                autoCopyOnCreatePref.isChecked = viewModel.getAutoCopyOnCreate()
                 autoCopyOnCreatePref.onNewValue { newValue: Boolean ->
                     viewModel.updateAutoCopy(newValue)
                 }
