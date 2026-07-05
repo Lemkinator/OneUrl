@@ -64,11 +64,3 @@ directly.
    subtypes).
 3. Add to the `provider` list in `ShortURLProviderCompanion` in `ShortURLProvider.kt`.
 4. If the provider supports aliases, implement `AliasConfig`.
-
-## Key Constraints
-
-- All standard AndroidX UI components (`appcompat`, `recyclerview`, `fragment`, etc.) are globally excluded — replaced by `oneui-design`
-  equivalents. Don't add them back.
-- `Locale.getDefault()` is cached at class-load time for the provider list (intentional — see comment in `ShortURLProviderCompanion`).
-- `URL.equals()` / `hashCode()` are based solely on `shortURL`. Use `contentEquals()` for full field comparison.
-- Supported locales are restricted to `en` and `de` (`androidResources.localeFilters`).
