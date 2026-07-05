@@ -43,12 +43,12 @@ class URLAdapter(
                 override fun areItemsTheSame(
                     oldItem: URL,
                     newItem: URL,
-                ) = oldItem == newItem
+                ) = oldItem.shortURL == newItem.shortURL
 
                 override fun areContentsTheSame(
                     oldItem: URL,
                     newItem: URL,
-                ) = oldItem.contentEquals(newItem)
+                ) = oldItem == newItem
             },
         )
 

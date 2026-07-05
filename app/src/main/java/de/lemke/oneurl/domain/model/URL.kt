@@ -20,21 +20,27 @@ data class URL(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as URL
-        return shortURL == other.shortURL
-    }
-
-    override fun hashCode(): Int = shortURL.hashCode()
-
-    val id get() = hashCode().toLong()
-
-    fun contentEquals(other: URL): Boolean =
-        shortURL == other.shortURL &&
+        return shortURL == other.shortURL &&
             longURL == other.longURL &&
             shortURLProvider == other.shortURLProvider &&
             favorite == other.favorite &&
             title == other.title &&
             description == other.description &&
             added == other.added
+    }
+
+    override fun hashCode(): Int {
+        var result = shortURL.hashCode()
+        result = 31 * result + longURL.hashCode()
+        result = 31 * result + shortURLProvider.hashCode()
+        result = 31 * result + favorite.hashCode()
+        result = 31 * result + title.hashCode()
+        result = 31 * result + description.hashCode()
+        result = 31 * result + added.hashCode()
+        return result
+    }
+
+    val id: Long get() = shortURL.hashCode().toLong()
 
     val alias: String
         get() = shortURL.trimEnd('/').substringAfterLast('/').substringBeforeLast('/') // does not work for Owovc(e.g. sketchy)
