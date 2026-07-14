@@ -3,6 +3,7 @@ package de.lemke.oneurl.ui
 import android.R.anim.fade_in
 import android.R.anim.fade_out
 import android.annotation.SuppressLint
+import android.content.Context.INPUT_METHOD_SERVICE
 import android.content.Intent
 import android.content.Intent.ACTION_PROCESS_TEXT
 import android.content.Intent.ACTION_SEARCH
@@ -16,9 +17,9 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.isVisible
 import androidx.preference.SwitchPreferenceCompat
@@ -55,10 +56,10 @@ import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import dev.oneuiproject.oneui.ktx.onNewValue
 import dev.oneuiproject.oneui.ktx.onSingleClick
-import dev.oneuiproject.oneui.layout.ToolbarLayout
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchOnActionMode
 import dev.oneuiproject.oneui.layout.startActionMode
+import dev.oneuiproject.oneui.layout.startSearchMode
 import dev.oneuiproject.oneui.recyclerview.ktx.configureImmBottomPadding
 import dev.oneuiproject.oneui.recyclerview.ktx.configureItemSwipeAnimator
 import dev.oneuiproject.oneui.recyclerview.ktx.enableCoreSeslFeatures
@@ -197,40 +198,31 @@ class MainActivity :
             }
         }
 
-    private fun startSearch() = binding.drawerLayout.startSearchMode(searchModeListener, DISMISS)
-
-    val searchModeListener =
-        object : ToolbarLayout.SearchModeListener {
-            override fun onQueryTextSubmit(query: String?): Boolean = setSearch(query).also { hideSoftInput() }
-
-            override fun onQueryTextChange(query: String?): Boolean = setSearch(query)
-
-            private fun setSearch(query: String?): Boolean {
-                if (viewModel.search.value == null) return false
-                viewModel.setSearch(query ?: "")
-                urlAdapter.highlightWord = query ?: ""
-                commonUtilsSettings.search = query ?: ""
-                return true
-            }
-
-            override fun onSearchModeToggle(
-                searchView: SearchView,
-                isActive: Boolean,
-            ) {
-                if (isActive) {
-                    viewModel.setSearch(commonUtilsSettings.search)
-                    binding.addFab.isVisible = false
-                    searchView.setQuery(viewModel.search.value, false)
-                } else {
-                    viewModel.setSearch(null)
-                    if (!binding.drawerLayout.isActionMode) {
-                        binding.addFab.isVisible = true
-                        binding.addFab.show()
-                    }
-                    urlAdapter.highlightWord = ""
+    private fun startSearch() =
+        binding.drawerLayout.startSearchMode(
+            onStart = {
+                viewModel.setSearch(commonUtilsSettings.search)
+                binding.addFab.isVisible = false
+                it.setQuery(viewModel.search.value, false)
+                (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(it, 0)
+            },
+            onQuery = { query, isSubmit ->
+                viewModel.setSearch(query)
+                urlAdapter.highlightWord = query
+                commonUtilsSettings.search = query
+                if (isSubmit) hideSoftInput()
+                true
+            },
+            onEnd = {
+                viewModel.setSearch(null)
+                if (!binding.drawerLayout.isActionMode) {
+                    binding.addFab.isVisible = true
+                    binding.addFab.show()
                 }
-            }
-        }
+                urlAdapter.highlightWord = ""
+            },
+            onBackBehavior = DISMISS,
+        )
 
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
