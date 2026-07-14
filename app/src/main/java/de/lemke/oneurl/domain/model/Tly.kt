@@ -172,7 +172,6 @@ sealed class Tly : ShortURLProvider {
     }
 
     object Twtrto : Tly() {
-        override val enabled = false // useless, only responds with t.ly??
         override val name = "t.ly (twtr.to)"
 
         override fun getCreateRequest(

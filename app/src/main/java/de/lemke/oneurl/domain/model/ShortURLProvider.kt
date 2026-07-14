@@ -66,7 +66,7 @@ class ShortURLProviderCompanion {
             Murl,
             Tly.Default,
             Tly.Ibitly,
-            Tly.Twtrto, //disabled
+            Tly.Twtrto,
             Tly.Jpegly,
             Tly.Rebrandly, //disabled
             Tly.Bitly, //disabled
