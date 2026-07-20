@@ -1,5 +1,5 @@
 [versions]
-aboutlibraries = "15.0.3"
+aboutlibraries = "15.0.4"
 bundler = "1.0.4"
 commonUtils = "1.1.4"
 leakcanary = "2.14"
