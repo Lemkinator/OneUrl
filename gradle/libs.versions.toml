@@ -1,13 +1,15 @@
 [versions]
 aboutlibraries = "15.0.4"
 bundler = "1.0.4"
-commonUtils = "1.2.2"
+# pinned below 1.2.0 until Plan 3's SettingsRepository migration lands
+#noinspection GradleDependency
+commonUtils = "1.1.4"
 leakcanary = "2.14"
 oneui-design = "0.9.14+oneui8"
 oneui-icons = "1.1.0"
 datastorePreferences = "1.2.1"
 gradle = "9.3.0"
-gradke-secrets = "2.0.1"
+gradle-secrets = "2.0.1"
 hilt = "2.60.1"
 kotlin = "2.4.10"
 ksp = "2.3.10"
@@ -31,7 +33,7 @@ volley = { module = "com.android.volley:volley", version.ref = "volley" }
 [plugins]
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "gradle" }
-gradle-secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "gradke-secrets" }
+gradle-secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "gradle-secrets" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
