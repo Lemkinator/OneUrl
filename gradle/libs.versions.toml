@@ -1,7 +1,7 @@
 [versions]
 aboutlibraries = "15.0.4"
 bundler = "1.0.4"
-commonUtils = "1.2.1"
+commonUtils = "1.2.2"
 leakcanary = "2.14"
 oneui-design = "0.9.11+oneui8"
 oneui-icons = "1.1.0"
