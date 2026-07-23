@@ -212,7 +212,7 @@ class AddURLActivity : AppCompatActivity() {
 
                     is GenerateURLError.BlacklistedURL -> {
                         setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(error.message ?: getString(R.string.error_urlhaus_default))
+                        setMessage(error.message ?: getString(R.string.error_blacklisted_url))
                         if (error.urlhausLink != null) setPositiveButton("URLhaus") { _, _ -> openURL(error.urlhausLink) }
                         if (error.virustotalLink != null) setNegativeButton("VirusTotal") { _, _ -> openURL(error.virustotalLink) }
                     }
@@ -231,8 +231,11 @@ class AddURLActivity : AppCompatActivity() {
                     is GenerateURLError.Unknown -> {
                         setTitle(commonutilsR.string.commonutils_error)
                         setMessage(
-                            if (error.statusCode != null) "Error ${error.statusCode}"
-                            else getString(commonutilsR.string.commonutils_error_unknown)
+                            if (error.statusCode != null) {
+                                "Error ${error.statusCode}"
+                            } else {
+                                getString(commonutilsR.string.commonutils_error_unknown)
+                            },
                         )
                     }
 

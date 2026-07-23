@@ -93,6 +93,7 @@ class AddURLViewModel @Inject constructor(
         alias: String,
         description: String,
     ) {
+        if (state.value.isLoading) return
         viewModelScope.launch {
             val provider = state.value.selectedProvider
             val longURL = provider.sanitizeLongURL(longURLRaw)

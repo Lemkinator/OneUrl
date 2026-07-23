@@ -45,10 +45,11 @@ class CheckURLSafetyUseCase @Inject constructor(
                                         val surblListed = blacklists.optString("surbl", "not listed") != "not listed"
                                         val spamhausStatus = blacklists.optString("spamhaus_dbl", "not listed")
                                         val spamhausListed = spamhausStatus != "not listed"
-                                        val listedOn =
-                                            "URLhaus" +
-                                                (if (surblListed) ", SURBL" else "") +
-                                                if (spamhausListed) ", Spamhaus" else ""
+                                        val listedOn = buildString {
+                                            append("URLhaus")
+                                            if (surblListed) append(", SURBL")
+                                            if (spamhausListed) append(", Spamhaus")
+                                        }
                                         val reason =
                                             when (spamhausStatus) {
                                                 "spammer_domain" -> context.getString(R.string.error_urlhaus_spammer_domain)

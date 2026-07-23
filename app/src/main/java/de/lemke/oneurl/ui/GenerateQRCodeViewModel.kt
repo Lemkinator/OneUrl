@@ -1,6 +1,7 @@
 package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,8 +34,8 @@ class GenerateQRCodeViewModel @Inject constructor(
                 it.copy(
                     url = s.qrURL,
                     size = s.qrSize,
-                    foregroundColor = s.qrRecentForegroundColors.firstOrNull() ?: -16777216,
-                    backgroundColor = s.qrRecentBackgroundColors.firstOrNull() ?: -1,
+                    foregroundColor = s.qrRecentForegroundColors.firstOrNull() ?: Color.BLACK,
+                    backgroundColor = s.qrRecentBackgroundColors.firstOrNull() ?: Color.WHITE,
                     tintAnchor = s.qrTintAnchor,
                     tintBorder = s.qrTintBorder,
                     icon = s.qrIcon,
@@ -120,13 +121,13 @@ data class QrUiState(
     val url: String = "",
     val qrCode: Bitmap? = null,
     val size: Int = 512,
-    val foregroundColor: Int = -16777216,
-    val backgroundColor: Int = -1,
+    val foregroundColor: Int = Color.BLACK,
+    val backgroundColor: Int = Color.WHITE,
     val tintAnchor: Boolean = false,
     val tintBorder: Boolean = false,
     val icon: Boolean = true,
     val roundedFrame: Boolean = true,
-    val recentForegroundColors: List<Int> = listOf(-16777216),
-    val recentBackgroundColors: List<Int> = listOf(-1),
+    val recentForegroundColors: List<Int> = listOf(Color.BLACK),
+    val recentBackgroundColors: List<Int> = listOf(Color.WHITE),
     val isLoading: Boolean = true,
 )
