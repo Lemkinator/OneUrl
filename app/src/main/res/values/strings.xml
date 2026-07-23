@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="app_description">A URL-Shortener and QR code generator with OneUI-Design.</string>
     <string name="about_app">About OneURL</string>
+    <string name="memory_leaks" translatable="false">Memory leaks</string>
 
     <!--Override commonutils strings-->
     <string name="commonutils_app_description" translatable="false">@string/app_description</string>
@@ -47,6 +48,7 @@
     <string name="to_url">To URL</string>
     <string name="url_added">URL added</string>
     <string name="checking_duplicates">Checking for duplicates…</string>
+    <string name="fetching_title">Fetching page title…</string>
     <string name="checking_internet">Checking internet connection…</string>
     <string name="checking_url">Checking the URL for blacklisting, malware, phishing, spam or abuse…</string>
     <string name="generating_url">Generating URL…</string>

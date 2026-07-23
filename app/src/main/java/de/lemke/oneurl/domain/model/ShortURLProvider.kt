@@ -66,7 +66,7 @@ class ShortURLProviderCompanion {
             Murl,
             Tly.Default,
             Tly.Ibitly,
-            Tly.Twtrto, //disabled
+            Tly.Twtrto,
             Tly.Jpegly,
             Tly.Rebrandly, //disabled
             Tly.Bitly, //disabled
@@ -118,7 +118,7 @@ class Unknown : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit,
     ): Request<*> {
         Log.e("UnknownProvider", "Tried to generate short URL with unknown provider")
-        errorCallback(GenerateURLError.Unknown(context))
+        errorCallback(GenerateURLError.Unknown())
         return object : Request<Any>(Method.GET, "", Response.ErrorListener { }) {
             override fun deliverResponse(response: Any?) {}
             override fun parseNetworkResponse(response: NetworkResponse?) = null

@@ -41,7 +41,7 @@
             DestAttribName="oui_des_drawer_menu_category_fg_color"
             UID="62-20-8"
             ValueRef="1-18-1"
-            ValueType="BgColor"/>
+            ValueType="BgColor" />
 
         <Property
             Comment="drawer selected background color"
@@ -58,7 +58,7 @@
             DestAttribName="oui_des_drawer_menu_category_recoil_color"
             UID="62-11-1"
             ValueRef="1-52-1"
-            ValueType="Color"/>
+            ValueType="Color" />
 
         <Property
             Comment="RoundedTabLayout selected tab text color"
@@ -66,21 +66,21 @@
             DestAttribName="oui_des_rounded_tab_selected_text_color"
             UID="16-61-11"
             ValueRef="1-E"
-            ValueType="TextColor"/>
+            ValueType="TextColor" />
         <Property
             Comment="RoundedTabLayout unselected tab text color"
             DefaultValue="#949494"
             DestAttribName="oui_des_rounded_tab_unselected_text_color"
             UID="16-61-8"
             ValueRef="1-1-4"
-            ValueType="TextColor"/>
+            ValueType="TextColor" />
         <Property
             Comment="RoundedTabLayout selected BG color"
             DefaultValue="#69696c"
             DestAttribName="oui_des_rounded_tab_selected_background_color"
             UID="16-61-12"
             ValueRef="1-A"
-            ValueType="BgColor"/>
+            ValueType="BgColor" />
 
         <Property
             Comment="Background color for RoundedTabLayout"
@@ -88,7 +88,7 @@
             DestAttribName="oui_des_rounded_tab_layout_background_color"
             UID="16-61-4"
             ValueRef="1-7-1"
-            ValueType="BgColor"/>
+            ValueType="BgColor" />
 
     </AppMetaData>
 </ThemeMetaData>

@@ -114,7 +114,7 @@ sealed class Spoome : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error: response does not contain short_url")
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -126,34 +126,34 @@ sealed class Spoome : ShortURLProvider {
                     val response = data?.let { JSONObject(it) }
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        response?.has("UrlError") == true -> errorCallback(GenerateURLError.InvalidURL(context))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        response?.has("UrlError") == true -> errorCallback(GenerateURLError.InvalidURL)
                         response?.has("AliasError") == true -> {
                             val aliasError = response.getString("AliasError")
                             when {
-                                aliasError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                                aliasError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
-                                else -> errorCallback(GenerateURLError.Custom(context, statusCode, aliasError))
+                                aliasError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                                aliasError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
+                                else -> errorCallback(GenerateURLError.Custom(statusCode, aliasError))
                             }
                         }
 
                         response?.has("EmojiError") == true -> {
                             val emojiError = response.getString("EmojiError")
                             when {
-                                emojiError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                                emojiError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
-                                else -> errorCallback(GenerateURLError.Custom(context, statusCode, emojiError))
+                                emojiError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                                emojiError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
+                                else -> errorCallback(GenerateURLError.Custom(statusCode, emojiError))
                             }
                         }
 
-                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded)
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {

@@ -1,0 +1,26 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+ij_kotlin_imports_layout = *, ^
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+# ktlint 1.7+ moves `@Inject` before `constructor` onto its own continuation line, causing
+# the class body to be doubly-indented (8 sp). All major Android reference projects
+# use the inline form. Disable to match community practice.
+ktlint_standard_annotation = disabled
+ktlint_standard_class-signature = disabled
+max_line_length = 140
+
+[*.xml]
+ij_xml_keep_line_breaks = true
+
+[*.{json,toml,yml,yaml}]
+indent_size = 2

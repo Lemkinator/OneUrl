@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-empty-file")
+
 package de.lemke.oneurl.domain.model
 
 /*

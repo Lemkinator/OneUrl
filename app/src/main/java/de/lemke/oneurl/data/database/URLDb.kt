@@ -23,10 +23,23 @@ data class URLDb(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as URLDb
-        return shortURL == other.shortURL
+        return shortURL == other.shortURL &&
+            longURL == other.longURL &&
+            shortURLProvider == other.shortURLProvider &&
+            favorite == other.favorite &&
+            title == other.title &&
+            description == other.description &&
+            added == other.added
     }
 
     override fun hashCode(): Int {
-        return shortURL.hashCode()
+        var result = shortURL.hashCode()
+        result = 31 * result + longURL.hashCode()
+        result = 31 * result + shortURLProvider.hashCode()
+        result = 31 * result + favorite.hashCode()
+        result = 31 * result + title.hashCode()
+        result = 31 * result + description.hashCode()
+        result = 31 * result + added.hashCode()
+        return result
     }
 }

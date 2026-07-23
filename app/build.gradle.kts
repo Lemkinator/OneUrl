@@ -7,21 +7,27 @@ plugins {
 }
 
 fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
+
 fun getProperty(key: String): String? = rootProject.findProperty(key)?.toString() ?: System.getenv(key.toEnvVarStyle())
-fun com.android.build.api.dsl.ApplicationBuildType.addConstant(name: String, value: String) {
+
+fun com.android.build.api.dsl.ApplicationBuildType.addConstant(
+    name: String,
+    value: String,
+) {
     manifestPlaceholders += mapOf(name to value)
     buildConfigField("String", name, "\"$value\"")
 }
 
 android {
     namespace = "de.lemke.oneurl"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 45
         versionName = "1.7.6"
+        buildConfigField("boolean", "FIRST_RUN_SKIPPABLE", "false")
     }
     @Suppress("UnstableApiUsage")
     androidResources.localeFilters += listOf("en", "de")
@@ -53,6 +59,7 @@ android {
         debug {
             isDebuggable = true
             isMinifyEnabled = false
+            //noinspection NotShrinkingResources
             isShrinkResources = false
             applicationIdSuffix = ".debug"
             addConstant("APP_NAME", "OneURL (Debug)")
@@ -63,9 +70,19 @@ android {
         viewBinding = true
         buildConfig = true
     }
-    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+    packaging {
+        resources {
+            excludes += "META-INF/AL2.0"
+            excludes += "META-INF/LGPL2.1"
+            excludes += "META-INF/LICENSE*"
+            excludes += "META-INF/licenses/**"
+        }
+    }
 }
 dependencies {
+    debugImplementation(libs.leakcanary)
+    implementation(libs.oneui.design)
+    implementation(libs.oneui.icons)
     implementation(libs.common.utils)
     implementation(libs.datastore.preferences)
     implementation(libs.bundler)
