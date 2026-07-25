@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.ui
 
 import android.app.Activity.RESULT_OK
@@ -31,31 +47,36 @@ import java.io.ByteArrayOutputStream
 class QRBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewQrBottomsheetBinding
     private var qr: Bitmap? = null
-    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(StartActivityForResult()) {
-        if (it.resultCode == RESULT_OK) requireContext().saveBitmapToUri(it.data?.data, qr)
-    }
+    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(StartActivityForResult()) {
+            if (it.resultCode == RESULT_OK) requireContext().saveBitmapToUri(it.data?.data, qr)
+        }
 
     companion object {
         const val KEY_TITLE = "key_title"
         const val KEY_QR = "key_qr"
         const val KEY_SAVE_LOCATION = "key_save_location"
 
-        fun createQRBottomSheet(title: String, qrCode: Bitmap, saveLocation: SaveLocation): QRBottomSheet =
+        fun createQRBottomSheet(
+            title: String,
+            qrCode: Bitmap,
+            saveLocation: SaveLocation,
+        ): QRBottomSheet =
             QRBottomSheet().apply {
-                arguments = intentOf {
-                    +(KEY_TITLE to title)
-                    +(KEY_QR to qrCode.toByteArray())
-                    +(KEY_SAVE_LOCATION to saveLocation.toString())
-                }.extras
+                arguments =
+                    intentOf {
+                        +(KEY_TITLE to title)
+                        +(KEY_QR to qrCode.toByteArray())
+                        +(KEY_SAVE_LOCATION to saveLocation.toString())
+                    }.extras
             }
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
+        (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
             behavior.skipCollapsed = true
             setOnShowListener { behavior.state = STATE_EXPANDED }
         }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,7 +84,10 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
         savedInstanceState: Bundle?,
     ): View = ViewQrBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         if (requireContext().isSamsungQuickShareAvailable()) {
             binding.quickShareButton.isVisible = true
@@ -81,10 +105,11 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
     }
 }
 
-//java.lang.RuntimeException: Could not copy bitmap to parcel blob. ???????
-private fun Bitmap.toByteArray(): ByteArray = ByteArrayOutputStream().use { stream ->
-    compress(Bitmap.CompressFormat.PNG, 100, stream)
-    stream.toByteArray()
-}
+// java.lang.RuntimeException: Could not copy bitmap to parcel blob. ???????
+private fun Bitmap.toByteArray(): ByteArray =
+    ByteArrayOutputStream().use { stream ->
+        compress(Bitmap.CompressFormat.PNG, 100, stream)
+        stream.toByteArray()
+    }
 
 private fun ByteArray.toBitmap(): Bitmap = decodeByteArray(this, 0, size)

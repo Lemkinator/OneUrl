@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.data
 
 import androidx.datastore.core.DataStore
@@ -8,16 +24,15 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 /** Provides CRUD operations for user settings. */
 class UserSettingsRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>,
 ) {
-
     /** Returns the current user settings. */
     suspend fun getSettings(): UserSettings = dataStore.data.map(::settingsFromPreferences).first()
 
@@ -29,43 +44,44 @@ class UserSettingsRepository @Inject constructor(
      * @param f Invoked with the current settings; The settings returned from this function will replace the current ones.
      */
     suspend fun updateSettings(f: (UserSettings) -> UserSettings): UserSettings {
-        val prefs = dataStore.edit {
-            val newSettings = f(settingsFromPreferences(it))
-            it[KEY_SELECTED_SHORT_URL_PROVIDER] = newSettings.selectedShortURLProvider.name
-            it[KEY_LAST_ALIAS] = newSettings.lastAlias
-            it[KEY_LAST_URL] = newSettings.lastURL
-            it[KEY_LAST_DESCRIPTION] = newSettings.lastDescription
-            it[KEY_QR_URL] = newSettings.qrURL
-            it[KEY_QR_RECENT_BACKGROUND_COLORS] = newSettings.qrRecentBackgroundColors.joinToString(",")
-            it[KEY_QR_RECENT_FOREGROUND_COLORS] = newSettings.qrRecentForegroundColors.joinToString(",")
-            it[KEY_QR_SIZE] = newSettings.qrSize
-            it[KEY_QR_FRAME] = newSettings.qrFrame
-            it[KEY_QR_ICON] = newSettings.qrIcon
-            it[KEY_QR_TINT_ANCHOR] = newSettings.qrTintAnchor
-            it[KEY_QR_TINT_BORDER] = newSettings.qrTintBorder
-            it[KEY_CURRENT_CATEGORY] = newSettings.currentCategory
-            it[KEY_AUTO_COPY_ON_CREATE] = newSettings.autoCopyOnCreate
-        }
+        val prefs =
+            dataStore.edit {
+                val newSettings = f(settingsFromPreferences(it))
+                it[KEY_SELECTED_SHORT_URL_PROVIDER] = newSettings.selectedShortURLProvider.name
+                it[KEY_LAST_ALIAS] = newSettings.lastAlias
+                it[KEY_LAST_URL] = newSettings.lastURL
+                it[KEY_LAST_DESCRIPTION] = newSettings.lastDescription
+                it[KEY_QR_URL] = newSettings.qrURL
+                it[KEY_QR_RECENT_BACKGROUND_COLORS] = newSettings.qrRecentBackgroundColors.joinToString(",")
+                it[KEY_QR_RECENT_FOREGROUND_COLORS] = newSettings.qrRecentForegroundColors.joinToString(",")
+                it[KEY_QR_SIZE] = newSettings.qrSize
+                it[KEY_QR_FRAME] = newSettings.qrFrame
+                it[KEY_QR_ICON] = newSettings.qrIcon
+                it[KEY_QR_TINT_ANCHOR] = newSettings.qrTintAnchor
+                it[KEY_QR_TINT_BORDER] = newSettings.qrTintBorder
+                it[KEY_CURRENT_CATEGORY] = newSettings.currentCategory
+                it[KEY_AUTO_COPY_ON_CREATE] = newSettings.autoCopyOnCreate
+            }
         return settingsFromPreferences(prefs)
     }
 
-
-    private fun settingsFromPreferences(prefs: Preferences) = UserSettings(
-        selectedShortURLProvider = ShortURLProviderCompanion.fromStringOrDefault(prefs[KEY_SELECTED_SHORT_URL_PROVIDER]),
-        lastAlias = prefs[KEY_LAST_ALIAS] ?: "",
-        lastURL = prefs[KEY_LAST_URL] ?: "",
-        lastDescription = prefs[KEY_LAST_DESCRIPTION] ?: "",
-        qrURL = prefs[KEY_QR_URL] ?: "",
-        qrRecentBackgroundColors = prefs[KEY_QR_RECENT_BACKGROUND_COLORS]?.split(",")?.map { it.toInt() } ?: listOf(-1),
-        qrRecentForegroundColors = prefs[KEY_QR_RECENT_FOREGROUND_COLORS]?.split(",")?.map { it.toInt() } ?: listOf(-16777216),
-        qrSize = prefs[KEY_QR_SIZE] ?: 512,
-        qrFrame = prefs[KEY_QR_FRAME] != false,
-        qrIcon = prefs[KEY_QR_ICON] != false,
-        qrTintAnchor = prefs[KEY_QR_TINT_ANCHOR] == true,
-        qrTintBorder = prefs[KEY_QR_TINT_BORDER] == true,
-        currentCategory = prefs[KEY_CURRENT_CATEGORY] ?: "",
-        autoCopyOnCreate = prefs[KEY_AUTO_COPY_ON_CREATE] == true,
-    )
+    private fun settingsFromPreferences(prefs: Preferences) =
+        UserSettings(
+            selectedShortURLProvider = ShortURLProviderCompanion.fromStringOrDefault(prefs[KEY_SELECTED_SHORT_URL_PROVIDER]),
+            lastAlias = prefs[KEY_LAST_ALIAS] ?: "",
+            lastURL = prefs[KEY_LAST_URL] ?: "",
+            lastDescription = prefs[KEY_LAST_DESCRIPTION] ?: "",
+            qrURL = prefs[KEY_QR_URL] ?: "",
+            qrRecentBackgroundColors = prefs[KEY_QR_RECENT_BACKGROUND_COLORS]?.split(",")?.map { it.toInt() } ?: listOf(-1),
+            qrRecentForegroundColors = prefs[KEY_QR_RECENT_FOREGROUND_COLORS]?.split(",")?.map { it.toInt() } ?: listOf(-16777216),
+            qrSize = prefs[KEY_QR_SIZE] ?: 512,
+            qrFrame = prefs[KEY_QR_FRAME] != false,
+            qrIcon = prefs[KEY_QR_ICON] != false,
+            qrTintAnchor = prefs[KEY_QR_TINT_ANCHOR] == true,
+            qrTintBorder = prefs[KEY_QR_TINT_BORDER] == true,
+            currentCategory = prefs[KEY_CURRENT_CATEGORY] ?: "",
+            autoCopyOnCreate = prefs[KEY_AUTO_COPY_ON_CREATE] == true,
+        )
 
     private companion object {
         private val KEY_SELECTED_SHORT_URL_PROVIDER = stringPreferencesKey("selectedShortURLProvider")

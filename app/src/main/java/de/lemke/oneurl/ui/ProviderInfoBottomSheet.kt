@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.ui
 
 import android.app.Dialog
@@ -23,21 +39,26 @@ import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewProviderInfoBottomsheetBinding
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
+        (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
             behavior.skipCollapsed = true
             setOnShowListener { behavior.state = STATE_EXPANDED }
         }
-    }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        ViewProviderInfoBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View = ViewProviderInfoBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
 
     private fun AppCompatButton.setIcon(icon: Int) {
         setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(requireContext(), icon), null, null, null)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         val provider = ShortURLProviderCompanion.fromString(requireArguments().getString(KEY_PROVIDER)!!)
         binding.providerBottomSheetTitle.text = provider.name
@@ -84,12 +105,15 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
         fun FragmentActivity.showProviderInfoBottomSheet(provider: ShortURLProvider) =
             showProviderInfoBottomSheet(supportFragmentManager, provider)
 
-        fun showProviderInfoBottomSheet(fragmentManager: FragmentManager, provider: ShortURLProvider) =
-            newInstance(provider).show(fragmentManager, ProviderInfoBottomSheet::class.java.simpleName)
+        fun showProviderInfoBottomSheet(
+            fragmentManager: FragmentManager,
+            provider: ShortURLProvider,
+        ) = newInstance(provider).show(fragmentManager, ProviderInfoBottomSheet::class.java.simpleName)
 
-        private fun newInstance(provider: ShortURLProvider): ProviderInfoBottomSheet = ProviderInfoBottomSheet().apply {
-            arguments = Bundle().apply { putString(KEY_PROVIDER, provider.name) }
-        }
+        private fun newInstance(provider: ShortURLProvider): ProviderInfoBottomSheet =
+            ProviderInfoBottomSheet().apply {
+                arguments = Bundle().apply { putString(KEY_PROVIDER, provider.name) }
+            }
 
         const val KEY_PROVIDER = "key_provider"
     }
