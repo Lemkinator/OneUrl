@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+# Binaries — never normalize
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.keystore binary
+*.jks binary

@@ -33,6 +33,19 @@ A URL-Shortener with OneUI-Design.
 
 <br>
 
+## Contributing
+
+One-time per clone:
+
+```bash
+git config core.autocrlf input    # Windows only — prevents CRLF line-ending violations
+git config core.hooksPath .githooks
+```
+
+This enables a pre-commit hook that runs Spotless + Detekt before allowing a commit.
+
+<br>
+
 ![Alt](https://repobeats.axiom.co/api/embed/e036d9142181fc91f90663653abc32c087e7aef6.svg "Repobeats analytics image")
 
 <br>
