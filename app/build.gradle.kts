@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt.android)
@@ -134,11 +133,6 @@ spotless {
         licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.kt"))
         trimTrailingWhitespace()
         endWithNewline()
-    }
-    kotlinGradle {
-        target("*.gradle.kts")
-        ktlint(libs.versions.ktlint.get())
-        licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.kt"), "(^(?![\\/ ]\\*).*$)")
     }
     format("xml") {
         target("src/**/*.xml")

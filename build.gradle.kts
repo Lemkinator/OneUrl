@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import com.android.build.api.dsl.CommonExtension
 import java.util.Properties
 
@@ -5,8 +21,21 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.detekt) apply false
-    alias(libs.plugins.spotless) apply false
+    alias(libs.plugins.spotless)
     alias(libs.plugins.dependency.analysis)
+}
+
+spotless {
+    kotlinGradle {
+        target(
+            fileTree(rootDir) {
+                include("**/*.gradle.kts")
+                exclude("**/build/**", "**/.gradle/**")
+            },
+        )
+        licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.kt"), "(^(?![\\/ ]\\*).*$)")
+        ktlint(libs.versions.ktlint.get())
+    }
 }
 
 /**
@@ -66,7 +95,9 @@ subprojects {
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlin" && requested.name == "kotlin-metadata-jvm") {
                 useVersion("2.4.0")
-                because("Hilt 2.59.x does not support Kotlin 2.4 — its bundled kotlin-metadata-jvm only reads metadata format ≤ 2.3.0. Remove once Hilt ships native Kotlin 2.4 support (track: github.com/google/dagger/issues/5001)")
+                because(
+                    "Hilt 2.59.x does not support Kotlin 2.4 — its bundled kotlin-metadata-jvm only reads metadata format ≤ 2.3.0. Remove once Hilt ships native Kotlin 2.4 support (track: github.com/google/dagger/issues/5001)",
+                )
             }
         }
     }
