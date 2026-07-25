@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
@@ -74,34 +90,42 @@ object Ulvis : ShortURLProvider {
 
     override val privacyURL = "$baseURL/privacy.html"
     override val termsURL = "$baseURL/disclaimer.html"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 0
-        override val maxAliasLength = 60
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 0
+            override val maxAliasLength = 60
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9"
+
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
+        }
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_text)
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text),
+            ),
         )
-    )
 
-    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+    @Suppress("TooGenericExceptionCaught")
+    override fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$baseURL/API/read/get?id=${url.alias}"
         Log.d(tag, "start request: $requestURL")
@@ -117,18 +141,19 @@ object Ulvis : ShortURLProvider {
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
                 },
                 { error ->
                     Log.e(tag, "error: $error")
                     callback(null)
-                }
-            )
+                },
+            ),
         )
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -152,8 +177,14 @@ object Ulvis : ShortURLProvider {
                     Log.d(tag, "shortURL: $shortURL")
                     val status = data?.optString("status")
                     when {
-                        status == "custom-taken" -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                        !shortURL.isNullOrBlank() -> successCallback(shortURL)
+                        status == "custom-taken" -> {
+                            errorCallback(GenerateURLError.AliasAlreadyExists)
+                        }
+
+                        !shortURL.isNullOrBlank() -> {
+                            successCallback(shortURL)
+                        }
+
                         error != null && error.has("code") -> {
                             val code = error.getInt("code")
                             when {
@@ -165,10 +196,12 @@ object Ulvis : ShortURLProvider {
                             }
                         }
 
-                        else -> errorCallback(GenerateURLError.Unknown(200))
+                        else -> {
+                            errorCallback(GenerateURLError.Unknown(200))
+                        }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing create response", e)
                     errorCallback(GenerateURLError.Unknown(200))
                 }
             },
@@ -187,10 +220,10 @@ object Ulvis : ShortURLProvider {
                         else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing error response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         )
     }
 }

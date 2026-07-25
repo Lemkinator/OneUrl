@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
@@ -104,34 +120,42 @@ object Tnyim : ShortURLProvider {
     override val baseURL = "https://tny.im"
     override val apiURL = "$baseURL/yourls-api.php"
     override val termsURL = "$baseURL/rules.php"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 5
-        override val maxAliasLength = 100 // no info, tested up to 100
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, -"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9-]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 5
+            override val maxAliasLength = 100 // no info, tested up to 100
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9, -"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_text)
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9-]+"))
+        }
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text),
+            ),
         )
-    )
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
-    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+    @Suppress("TooGenericExceptionCaught")
+    override fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$apiURL?action=url-stats&format=json&shorturl=${url.alias}"
         Log.d(tag, "start request: $url")
@@ -147,18 +171,19 @@ object Tnyim : ShortURLProvider {
                         Log.d(tag, "visitCount: $visitCount")
                         callback(visitCount)
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
                 },
                 { error ->
                     Log.e(tag, "error: $error")
                     callback(null)
-                }
-            )
+                },
+            ),
         )
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -179,14 +204,17 @@ object Tnyim : ShortURLProvider {
                     if (json.has("shorturl")) {
                         val shortURL = json.getString("shorturl").trim()
                         Log.d(tag, "shortURL: $shortURL")
-                        if (alias.isBlank() || shortURL == "$baseURL/$alias") successCallback(shortURL)
-                        else errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
+                        if (alias.isBlank() || shortURL == "$baseURL/$alias") {
+                            successCallback(shortURL)
+                        } else {
+                            errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
+                        }
                     } else {
                         Log.d(tag, "error: response does not contain short url or errors")
                         errorCallback(GenerateURLError.Unknown(200))
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing create response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
             },
@@ -205,16 +233,17 @@ object Tnyim : ShortURLProvider {
                         else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing error response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         ) {
-            override fun getRetryPolicy() = DefaultRetryPolicy(
-                10000, // set timeout to 10 seconds
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            )
+            override fun getRetryPolicy() =
+                DefaultRetryPolicy(
+                    10000, // set timeout to 10 seconds
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
+                )
         }
     }
 }

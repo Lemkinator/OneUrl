@@ -1,5 +1,20 @@
-package de.lemke.oneurl.domain
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package de.lemke.oneurl.domain
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -20,23 +35,22 @@ import dev.oneuiproject.oneui.qr.utils.QrEncoder
 import javax.inject.Inject
 import de.lemke.commonutils.R as commonutilsR
 
-
 class GenerateQRCodeUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
-    operator fun invoke(url: String): Bitmap {
-        return try {
+    @Suppress("TooGenericExceptionCaught")
+    operator fun invoke(url: String): Bitmap =
+        try {
             QrEncoder(context, url)
                 .setIcon(commonutilsR.drawable.ic_launcher_themed)
                 .generate()
                 ?: generateNoSupportBitmap()
         } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GenerateQRCodeUseCase", "error: ${e.message}")
+            Log.e("GenerateQRCodeUseCase", "error: ${e.message}", e)
             generateNoSupportBitmap()
         }
-    }
 
+    @Suppress("TooGenericExceptionCaught")
     operator fun invoke(
         url: String,
         size: Int,
@@ -46,8 +60,8 @@ class GenerateQRCodeUseCase @Inject constructor(
         tintBorder: Boolean,
         icon: Boolean,
         roundedFrame: Boolean,
-    ): Bitmap {
-        return try {
+    ): Bitmap =
+        try {
             with(QrEncoder(context, url)) {
                 if (icon) setIcon(commonutilsR.drawable.ic_launcher_themed)
                 setBackgroundColor(backgroundColor)
@@ -57,11 +71,9 @@ class GenerateQRCodeUseCase @Inject constructor(
                 generate()
             } ?: generateNoSupportBitmap()
         } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GenerateQRCodeUseCase", "error: ${e.message}")
+            Log.e("GenerateQRCodeUseCase", "error: ${e.message}", e)
             generateNoSupportBitmap()
         }
-    }
 
     private fun generateNoSupportBitmap(): Bitmap {
         val size = getPixel(200)
@@ -112,12 +124,13 @@ class GenerateQRCodeUseCase @Inject constructor(
         val iconRadius = getPixel(20)
         val iconPadding = getPixel(5)
         val canvas = Canvas(bitmap)
-        val rectF = RectF(
-            (iconLeft - iconPadding).toFloat(),
-            (iconTop - iconPadding).toFloat(),
-            (size + iconLeft + iconPadding).toFloat(),
-            (size + iconTop + iconPadding).toFloat()
-        )
+        val rectF =
+            RectF(
+                (iconLeft - iconPadding).toFloat(),
+                (iconTop - iconPadding).toFloat(),
+                (size + iconLeft + iconPadding).toFloat(),
+                (size + iconTop + iconPadding).toFloat(),
+            )
         canvas.drawRoundRect(rectF, iconRadius.toFloat(), iconRadius.toFloat(), getPaint())
         icon.setBounds(iconLeft, iconTop, iconLeft + size, iconTop + size)
         icon.draw(canvas)
@@ -131,6 +144,10 @@ class GenerateQRCodeUseCase @Inject constructor(
         return paint
     }
 
-    private fun getPixel(dp: Int): Int = if (context.resources == null) 0
-    else applyDimension(COMPLEX_UNIT_DIP, dp.toFloat(), context.resources.displayMetrics).toInt()
+    private fun getPixel(dp: Int): Int =
+        if (context.resources == null) {
+            0
+        } else {
+            applyDimension(COMPLEX_UNIT_DIP, dp.toFloat(), context.resources.displayMetrics).toInt()
+        }
 }

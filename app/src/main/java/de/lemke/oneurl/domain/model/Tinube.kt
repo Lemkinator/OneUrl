@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
@@ -41,34 +57,42 @@ object Tinube : ShortURLProvider {
     override val apiURL = "$baseURL/en"
     override val privacyURL = "$baseURL/terms"
     override val termsURL = "$baseURL/terms"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 0
-        override val maxAliasLength = 100 //no info, tested up to 100
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 0
+            override val maxAliasLength = 100 // no info, tested up to 100
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_text)
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
+        }
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_text),
+            ),
         )
-    )
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+    @Suppress("TooGenericExceptionCaught")
+    override fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "https://api.tinu.be/${url.alias}/stats"
         Log.d(tag, "start request: $url")
@@ -83,18 +107,19 @@ object Tinube : ShortURLProvider {
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
                 },
                 { error ->
                     Log.e(tag, "error: $error")
                     callback(null)
-                }
-            )
+                },
+            ),
         )
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -120,7 +145,7 @@ object Tinube : ShortURLProvider {
                         else -> errorCallback(GenerateURLError.Unknown(status))
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing create response", e)
                     errorCallback(GenerateURLError.Unknown(200))
                 }
             },
@@ -137,12 +162,13 @@ object Tinube : ShortURLProvider {
                         else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing error response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         ) {
             override fun getHeaders() = mapOf("next-action" to "74b2f223fe2b6e65737e07eeabae72c67abf76b2")
+
             override fun getBody() = "[{\"longUrl\":\"$longURL\",\"urlCode\":\"$alias\"}]".toByteArray(Charsets.UTF_8)
         }
     }

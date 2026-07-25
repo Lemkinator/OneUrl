@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
@@ -27,9 +43,12 @@ response:
 }
 
 Errors:
-UrlError	    400	The request does not contain the long URL or contains an invalid url. The url must contain a valid protocol like https, http and must follow rfc-1034 & rfc-2727
-AliasError	    400	The User requested Alias is invalid or already taken. The alias must be alphanumeric & must be under 15 chars, anything beyond 15 chars would be stripped by the API
-PasswordError	400	The user entered password must be atleast 8 characters long, must contain atleast a letter and a number and a special character either '@' or '.' and cannot be consecutive.
+UrlError	    400	The request does not contain the long URL or contains an invalid url.
+            The url must contain a valid protocol like https, http and must follow rfc-1034 & rfc-2727
+AliasError	    400	The User requested Alias is invalid or already taken.
+            The alias must be alphanumeric & must be under 15 chars, anything beyond 15 chars would be stripped by the API
+PasswordError	400	The user entered password must be atleast 8 characters long, must contain atleast a letter and a number
+            and a special character either '@' or '.' and cannot be consecutive.
 MaxClicksError	400	The user entered max-clicks is not a positive integer.
 
 {
@@ -42,9 +61,12 @@ MaxClicksError	400	The user entered max-clicks is not a positive integer.
 
 emoji:
 Errors:
-UrlError	    400	The request does not contain the long URL or contains an invalid url. The url must contain a valid protocol like https, http and must follow rfc-1034 & rfc-2727
-EmojiError	    400	The User requested Emoji sequence is invalid or already taken. The emoji sequence must contain only emojies, no other character is allowed.
-PasswordError	400	The user entered password must be atleast 8 characters long, must contain atleast a letter and a number and a special character either '@' or '.' and cannot be consecutive.
+UrlError	    400	The request does not contain the long URL or contains an invalid url.
+            The url must contain a valid protocol like https, http and must follow rfc-1034 & rfc-2727
+EmojiError	    400	The User requested Emoji sequence is invalid or already taken.
+            The emoji sequence must contain only emojies, no other character is allowed.
+PasswordError	400	The user entered password must be atleast 8 characters long, must contain atleast a letter and a number
+            and a special character either '@' or '.' and cannot be consecutive.
 MaxClicksError	400	The user entered max-clicks is not a positive integer.
 {
   "EmojiError": "Invalid emoji"
@@ -63,7 +85,12 @@ sealed class Spoome : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    override fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) {
+    @Suppress("TooGenericExceptionCaught")
+    override fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = getAnalyticsURL(url.alias)
         Log.d(tag, "start request: $url")
@@ -79,18 +106,19 @@ sealed class Spoome : ShortURLProvider {
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
                 },
                 { error ->
                     Log.e(tag, "error: $error")
                     callback(null)
-                }
-            )
+                },
+            ),
         )
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -99,8 +127,12 @@ sealed class Spoome : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "SpoomeCreateRequest_$name"
-        val url = if (this is Default) "$apiURL?alias=$alias&url=$longURL"
-        else "$apiURL?emojies=$alias&url=$longURL"
+        val url =
+            if (this is Default) {
+                "$apiURL?alias=$alias&url=$longURL"
+            } else {
+                "$apiURL?emojies=$alias&url=$longURL"
+            }
         Log.d(tag, "start request: $url")
         return object : JsonObjectRequest(
             Method.POST,
@@ -126,10 +158,22 @@ sealed class Spoome : ShortURLProvider {
                     val response = data?.let { JSONObject(it) }
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        response?.has("UrlError") == true -> errorCallback(GenerateURLError.InvalidURL)
+                        error is NoConnectionError -> {
+                            errorCallback(GenerateURLError.ServiceOffline)
+                        }
+
+                        statusCode == null -> {
+                            errorCallback(GenerateURLError.Unknown())
+                        }
+
+                        data.isNullOrBlank() -> {
+                            errorCallback(GenerateURLError.Unknown(statusCode))
+                        }
+
+                        response?.has("UrlError") == true -> {
+                            errorCallback(GenerateURLError.InvalidURL)
+                        }
+
                         response?.has("AliasError") == true -> {
                             val aliasError = response.getString("AliasError")
                             when {
@@ -148,14 +192,19 @@ sealed class Spoome : ShortURLProvider {
                             }
                         }
 
-                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded)
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
+                        statusCode == 429 -> {
+                            errorCallback(GenerateURLError.RateLimitExceeded)
+                        }
+
+                        else -> {
+                            errorCallback(GenerateURLError.Custom(statusCode, data))
+                        }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing error response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         ) {
             override fun getHeaders() = mapOf("Accept" to "application/json")
         }
@@ -164,70 +213,76 @@ sealed class Spoome : ShortURLProvider {
     object Default : Spoome() {
         override val name = "spoo.me"
         override val apiURL = "https://spoo.me/"
-        override val aliasConfig = object : AliasConfig {
-            override val minAliasLength = 0
-            override val maxAliasLength = 15
-            override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
-            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
-        }
+        override val aliasConfig =
+            object : AliasConfig {
+                override val minAliasLength = 0
+                override val maxAliasLength = 15
+                override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
 
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(
-                    R.string.alias_text,
-                    aliasConfig.minAliasLength,
-                    aliasConfig.maxAliasLength,
-                    aliasConfig.allowedAliasCharacters
-                )
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
+                override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+            }
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                    context.getString(R.string.alias),
+                    context.getString(
+                        R.string.alias_text,
+                        aliasConfig.minAliasLength,
+                        aliasConfig.maxAliasLength,
+                        aliasConfig.allowedAliasCharacters,
+                    ),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
             )
-        )
     }
 
     object Emoji : Spoome() {
         override val name = "spoo.me (emoji)"
         override val apiURL = "https://spoo.me/emoji"
-        override val aliasConfig = object : AliasConfig {
-            override val minAliasLength = 0
-            override val maxAliasLength = 30 //returns invalid alias if more than 30
-            override val allowedAliasCharacters = "Emojis"
+        override val aliasConfig =
+            object : AliasConfig {
+                override val minAliasLength = 0
+                override val maxAliasLength = 30 // returns invalid alias if more than 30
+                override val allowedAliasCharacters = "Emojis"
 
-            //one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
-            override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+"))
-        }
+                // one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
+                override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+"))
+            }
 
-        override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.emoji_text)
-        )
-
-        override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
-                context.getString(R.string.emoji),
-                context.getString(R.string.emoji_text)
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-                context.getString(R.string.alias),
-                context.getString(
-                    R.string.alias_text,
-                    aliasConfig.minAliasLength,
-                    aliasConfig.maxAliasLength,
-                    aliasConfig.allowedAliasCharacters
-                )
-            ),
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-                context.getString(R.string.analytics),
-                context.getString(R.string.analytics_text)
+        override fun getTipsCardTitleAndInfo(context: Context) =
+            Pair(
+                context.getString(commonutilsR.string.commonutils_info),
+                context.getString(R.string.emoji_text),
             )
-        )
+
+        override fun getInfoContents(context: Context): List<ProviderInfo> =
+            listOf(
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_emoji,
+                    context.getString(R.string.emoji),
+                    context.getString(R.string.emoji_text),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                    context.getString(R.string.alias),
+                    context.getString(
+                        R.string.alias_text,
+                        aliasConfig.minAliasLength,
+                        aliasConfig.maxAliasLength,
+                        aliasConfig.allowedAliasCharacters,
+                    ),
+                ),
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                    context.getString(R.string.analytics),
+                    context.getString(R.string.analytics_text),
+                ),
+            )
     }
 }

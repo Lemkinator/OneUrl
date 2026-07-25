@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
@@ -21,7 +37,8 @@ if alias is taken -> <div class="shortlink-message">Short URL already exists. Pl
 if url already shortened -> return existing short url regardless of alias... that's bad
 
 errors:
-The custom short URL must follow the correct format: no spaces, no accents, only letters and numbers, use "-", not at the beginning or end, and no consecutive hyphens.
+The custom short URL must follow the correct format: no spaces, no accents, only letters and numbers,
+use "-", not at the beginning or end, and no consecutive hyphens.
 Short URL already exists. Please choose another one.
  */
 object Onesis : ShortURLProvider {
@@ -53,6 +70,7 @@ object Onesis : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
+    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -77,8 +95,7 @@ object Onesis : ShortURLProvider {
                         errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    Log.w(tag, "could not find short URL in response")
+                    Log.e(tag, "could not find short URL in response", e)
                     when {
                         response.contains("Short URL already exists. Please choose another one.") -> {
                             errorCallback(GenerateURLError.AliasAlreadyExists)
@@ -109,7 +126,7 @@ object Onesis : ShortURLProvider {
                         else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing error response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
             },

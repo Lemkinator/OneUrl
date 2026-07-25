@@ -41,7 +41,7 @@ Debug APK has `applicationId = "de.lemke.oneurl.debug"` so it can coexist with r
 Clean Architecture with three layers:
 
 **`data/`** — Repositories wrapping Room (`URLRepository`) and DataStore (`UserSettingsRepository`). All DB entities live in
-`data/database/`; `domainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
+`data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
 
 **`domain/`** — Use cases (`*UseCase.kt`), each doing one thing, injected by Hilt. `GenerateURLUseCase` is the core flow: checks internet →
 checks URL against URLhaus → delegates to the selected provider's `getCreateRequest()`. URL generation uses Volley (`RequestQueueSingleton`)
