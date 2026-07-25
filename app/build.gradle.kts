@@ -105,6 +105,11 @@ android {
         abortOnError = true
         baseline = file("lint-baseline.xml")
     }
+    testOptions {
+        unitTests {
+            all { test -> test.useJUnitPlatform() }
+        }
+    }
 }
 dependencies {
     debugImplementation(libs.leakcanary)
@@ -118,6 +123,11 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
+
+    testImplementation(libs.konsist)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 secrets {
     propertiesFileName = "secrets.properties"
