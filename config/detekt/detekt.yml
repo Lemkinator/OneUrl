@@ -40,6 +40,9 @@ style:
   ForbiddenComment:
     active: true
     comments: [ 'TODO:', 'FIXME:' ]
+  ReturnCount:
+    max: 4
+    excludeGuardClauses: true
   UnusedPrivateFunction:
     active: true
   UnusedPrivateProperty:

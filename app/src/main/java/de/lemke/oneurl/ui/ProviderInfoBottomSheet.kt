@@ -21,6 +21,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
@@ -67,14 +68,22 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
             binding.providerBottomSheetInfoGroupText.isVisible = true
             binding.providerBottomSheetInfoGroupText.text = provider.group
         }
+        bindInfoContents(provider)
+        bindInfoButtons(provider)
+    }
+
+    private fun infoContentViewsAt(index: Int): Pair<AppCompatButton, TextView>? =
+        when (index) {
+            0 -> binding.providerBottomSheetInfo1 to binding.providerBottomSheetInfoText1
+            1 -> binding.providerBottomSheetInfo2 to binding.providerBottomSheetInfoText2
+            2 -> binding.providerBottomSheetInfo3 to binding.providerBottomSheetInfoText3
+            3 -> binding.providerBottomSheetInfo4 to binding.providerBottomSheetInfoText4
+            else -> null
+        }
+
+    private fun bindInfoContents(provider: ShortURLProvider) {
         provider.getInfoContents(requireContext()).forEachIndexed { index, info ->
-            when (index) {
-                0 -> binding.providerBottomSheetInfo1 to binding.providerBottomSheetInfoText1
-                1 -> binding.providerBottomSheetInfo2 to binding.providerBottomSheetInfoText2
-                2 -> binding.providerBottomSheetInfo3 to binding.providerBottomSheetInfoText3
-                3 -> binding.providerBottomSheetInfo4 to binding.providerBottomSheetInfoText4
-                else -> null
-            }?.let { (button, textView) ->
+            infoContentViewsAt(index)?.let { (button, textView) ->
                 button.apply {
                     text = info.title
                     setIcon(info.icon)
@@ -86,13 +95,19 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    private fun infoButtonAt(index: Int): AppCompatButton? =
+        when (index) {
+            0 -> binding.providerBottomSheetInfoButton1
+            1 -> binding.providerBottomSheetInfoButton2
+            2 -> binding.providerBottomSheetInfoButton3
+            else -> null
+        }
+
+    private fun bindInfoButtons(provider: ShortURLProvider) {
         provider.getInfoButtons(requireContext()).forEachIndexed { index, info ->
-            when (index) {
-                0 -> binding.providerBottomSheetInfoButton1
-                1 -> binding.providerBottomSheetInfoButton2
-                2 -> binding.providerBottomSheetInfoButton3
-                else -> null
-            }?.apply {
+            infoButtonAt(index)?.apply {
                 text = info.title
                 setIcon(info.icon)
                 setOnClickListener { openURL(info.linkOrDescription) }

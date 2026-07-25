@@ -106,11 +106,20 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         }
 
     private fun initControls(initialState: QrUiState) {
+        initUrlField(initialState)
+        initSizeControls(initialState)
+        initToggles(initialState)
+        initColorButtons()
+    }
+
+    private fun initUrlField(initialState: QrUiState) {
         binding.editTextURL.setText(initialState.url)
         binding.editTextURL.requestFocus()
         binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
         binding.editTextURL.addTextChangedListener { text -> viewModel.setUrl(text.toString()) }
+    }
 
+    private fun initSizeControls(initialState: QrUiState) {
         binding.sizeEdittext.setText(initialState.size.toString())
         binding.sizeEdittext.setOnEditorActionListener { textView, _, _ ->
             val newSize = textView.text.toString().toIntOrNull()
@@ -142,7 +151,9 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 override fun onStopTrackingTouch(seekBar: SeslSeekBar) {}
             },
         )
+    }
 
+    private fun initToggles(initialState: QrUiState) {
         binding.frameCheckbox.isChecked = initialState.roundedFrame
         binding.frameCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setRoundedFrame(isChecked) }
 
@@ -158,7 +169,9 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         binding.tintAnchorCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
             viewModel.setTintAnchor(isChecked)
         }
+    }
 
+    private fun initColorButtons() {
         binding.colorButtonBackground.setOnClickListener {
             val state = viewModel.state.value
             SeslColorPickerDialog(

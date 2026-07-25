@@ -20,10 +20,12 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import org.json.JSONObject
 
 /*
 https://github.com/1pt-co/api
@@ -76,7 +78,6 @@ object Oneptco : ShortURLProvider {
             ),
         )
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -91,62 +92,8 @@ object Oneptco : ShortURLProvider {
             Method.POST,
             url,
             null,
-            { response ->
-                try {
-                    Log.d(tag, "response: $response")
-                    when {
-                        !response.has("message") -> {
-                            Log.e(tag, "error: no message")
-                            errorCallback(GenerateURLError.Unknown(200))
-                        }
-
-                        response.getString("message") != "Added!" -> {
-                            Log.e(tag, "error: ${response.getString("message")}")
-                            errorCallback(GenerateURLError.Custom(200, response.getString("message")))
-                        }
-
-                        !response.has("short") -> {
-                            Log.e(tag, "error: no short")
-                            errorCallback(GenerateURLError.Unknown(200))
-                        }
-
-                        response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort") -> {
-                            Log.e(tag, "error: alias already exists")
-                            errorCallback(GenerateURLError.AliasAlreadyExists)
-                        }
-
-                        else -> {
-                            val shortURL = "$baseURL/${response.getString("short").trim()}"
-                            Log.d(tag, "shortURL: $shortURL")
-                            successCallback(shortURL)
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing create response", e)
-                    errorCallback(GenerateURLError.Unknown(200))
-                }
-            },
-            { error ->
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 404 -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 500 -> errorCallback(GenerateURLError.InternalServerError)
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
-                }
-            },
+            { response -> handleResponse(tag, response, successCallback, errorCallback) },
+            { error -> handleError(tag, error, errorCallback) },
         ) {
             override fun getRetryPolicy() =
                 DefaultRetryPolicy(
@@ -154,6 +101,75 @@ object Oneptco : ShortURLProvider {
                     DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
                 )
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleResponse(
+        tag: String,
+        response: JSONObject,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.d(tag, "response: $response")
+            when {
+                !response.has("message") -> {
+                    Log.e(tag, "error: no message")
+                    errorCallback(GenerateURLError.Unknown(200))
+                }
+
+                response.getString("message") != "Added!" -> {
+                    Log.e(tag, "error: ${response.getString("message")}")
+                    errorCallback(GenerateURLError.Custom(200, response.getString("message")))
+                }
+
+                !response.has("short") -> {
+                    Log.e(tag, "error: no short")
+                    errorCallback(GenerateURLError.Unknown(200))
+                }
+
+                response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort") -> {
+                    Log.e(tag, "error: alias already exists")
+                    errorCallback(GenerateURLError.AliasAlreadyExists)
+                }
+
+                else -> {
+                    val shortURL = "$baseURL/${response.getString("short").trim()}"
+                    Log.d(tag, "shortURL: $shortURL")
+                    successCallback(shortURL)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing create response", e)
+            errorCallback(GenerateURLError.Unknown(200))
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleError(
+        tag: String,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.e(tag, "error: $error")
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+            when {
+                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                statusCode == 404 -> errorCallback(GenerateURLError.Unknown(statusCode))
+                statusCode == 500 -> errorCallback(GenerateURLError.InternalServerError)
+                statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                else -> errorCallback(GenerateURLError.Custom(statusCode, data))
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing error response", e)
+            errorCallback(GenerateURLError.Unknown())
         }
     }
 }

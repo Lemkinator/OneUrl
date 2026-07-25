@@ -20,6 +20,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.commonutils.withHttps
@@ -118,7 +119,6 @@ sealed class Spoome : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -138,75 +138,103 @@ sealed class Spoome : ShortURLProvider {
             Method.POST,
             url,
             null,
-            { response ->
-                Log.d(tag, "response: $response")
-                if (response.has("short_url")) {
-                    val shortURL = response.getString("short_url").trim()
-                    Log.d(tag, "shortURL: $shortURL")
-                    successCallback(shortURL)
-                } else {
-                    Log.e(tag, "error: response does not contain short_url")
-                    errorCallback(GenerateURLError.Unknown(200))
-                }
-            },
-            { error ->
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    val response = data?.let { JSONObject(it) }
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> {
-                            errorCallback(GenerateURLError.ServiceOffline)
-                        }
-
-                        statusCode == null -> {
-                            errorCallback(GenerateURLError.Unknown())
-                        }
-
-                        data.isNullOrBlank() -> {
-                            errorCallback(GenerateURLError.Unknown(statusCode))
-                        }
-
-                        response?.has("UrlError") == true -> {
-                            errorCallback(GenerateURLError.InvalidURL)
-                        }
-
-                        response?.has("AliasError") == true -> {
-                            val aliasError = response.getString("AliasError")
-                            when {
-                                aliasError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                                aliasError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
-                                else -> errorCallback(GenerateURLError.Custom(statusCode, aliasError))
-                            }
-                        }
-
-                        response?.has("EmojiError") == true -> {
-                            val emojiError = response.getString("EmojiError")
-                            when {
-                                emojiError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                                emojiError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
-                                else -> errorCallback(GenerateURLError.Custom(statusCode, emojiError))
-                            }
-                        }
-
-                        statusCode == 429 -> {
-                            errorCallback(GenerateURLError.RateLimitExceeded)
-                        }
-
-                        else -> {
-                            errorCallback(GenerateURLError.Custom(statusCode, data))
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
-                }
-            },
+            { response -> handleResponse(tag, response, successCallback, errorCallback) },
+            { error -> handleError(tag, error, errorCallback) },
         ) {
             override fun getHeaders() = mapOf("Accept" to "application/json")
+        }
+    }
+
+    private fun handleResponse(
+        tag: String,
+        response: JSONObject,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        Log.d(tag, "response: $response")
+        if (response.has("short_url")) {
+            val shortURL = response.getString("short_url").trim()
+            Log.d(tag, "shortURL: $shortURL")
+            successCallback(shortURL)
+        } else {
+            Log.e(tag, "error: response does not contain short_url")
+            errorCallback(GenerateURLError.Unknown(200))
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleError(
+        tag: String,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.e(tag, "error: $error")
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            val response = data?.let { JSONObject(it) }
+            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+            when {
+                error is NoConnectionError -> {
+                    errorCallback(GenerateURLError.ServiceOffline)
+                }
+
+                statusCode == null -> {
+                    errorCallback(GenerateURLError.Unknown())
+                }
+
+                data.isNullOrBlank() -> {
+                    errorCallback(GenerateURLError.Unknown(statusCode))
+                }
+
+                response?.has("UrlError") == true -> {
+                    errorCallback(GenerateURLError.InvalidURL)
+                }
+
+                response?.has("AliasError") == true -> {
+                    handleAliasError(response.getString("AliasError"), statusCode, errorCallback)
+                }
+
+                response?.has("EmojiError") == true -> {
+                    handleEmojiError(response.getString("EmojiError"), statusCode, errorCallback)
+                }
+
+                statusCode == 429 -> {
+                    errorCallback(GenerateURLError.RateLimitExceeded)
+                }
+
+                else -> {
+                    errorCallback(GenerateURLError.Custom(statusCode, data))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing error response", e)
+            errorCallback(GenerateURLError.Unknown())
+        }
+    }
+
+    private fun handleAliasError(
+        aliasError: String,
+        statusCode: Int,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        when {
+            aliasError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+            aliasError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
+            else -> errorCallback(GenerateURLError.Custom(statusCode, aliasError))
+        }
+    }
+
+    private fun handleEmojiError(
+        emojiError: String,
+        statusCode: Int,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        when {
+            emojiError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+            emojiError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
+            else -> errorCallback(GenerateURLError.Custom(statusCode, emojiError))
         }
     }
 

@@ -66,15 +66,10 @@ data class URL(
     fun contains(query: String): Boolean = contains(StringTokenizer(query))
 
     fun contains(stringTokenizer: StringTokenizer): Boolean {
+        val searchableFields = listOf(shortURL, longURL, shortURLProvider.name, title, description, addedFormatMedium)
         while (stringTokenizer.hasMoreTokens()) {
             val nextToken = stringTokenizer.nextToken()
-            if (shortURL.contains(nextToken, ignoreCase = true) ||
-                longURL.contains(nextToken, ignoreCase = true) ||
-                shortURLProvider.name.contains(nextToken, ignoreCase = true) ||
-                title.contains(nextToken, ignoreCase = true) ||
-                description.contains(nextToken, ignoreCase = true) ||
-                addedFormatMedium.contains(nextToken, ignoreCase = true)
-            ) {
+            if (searchableFields.any { it.contains(nextToken, ignoreCase = true) }) {
                 return true
             }
         }

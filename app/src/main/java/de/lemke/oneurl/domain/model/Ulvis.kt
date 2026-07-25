@@ -20,12 +20,14 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import org.json.JSONObject
 
 /*
 https://ulvis.net/developer.html
@@ -153,7 +155,6 @@ object Ulvis : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -168,62 +169,77 @@ object Ulvis : ShortURLProvider {
             Request.Method.POST,
             url,
             null,
-            { response ->
-                try {
-                    Log.d(tag, "response: $response")
-                    val error = response.optJSONObject("error")
-                    val data = response.optJSONObject("data")
-                    val shortURL = data?.optString("url")?.trim()
-                    Log.d(tag, "shortURL: $shortURL")
-                    val status = data?.optString("status")
+            { response -> handleResponse(tag, response, successCallback, errorCallback) },
+            { error -> handleError(tag, error, errorCallback) },
+        )
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleResponse(
+        tag: String,
+        response: JSONObject,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.d(tag, "response: $response")
+            val error = response.optJSONObject("error")
+            val data = response.optJSONObject("data")
+            val shortURL = data?.optString("url")?.trim()
+            Log.d(tag, "shortURL: $shortURL")
+            val status = data?.optString("status")
+            when {
+                status == "custom-taken" -> {
+                    errorCallback(GenerateURLError.AliasAlreadyExists)
+                }
+
+                !shortURL.isNullOrBlank() -> {
+                    successCallback(shortURL)
+                }
+
+                error != null && error.has("code") -> {
+                    val code = error.getInt("code")
                     when {
-                        status == "custom-taken" -> {
-                            errorCallback(GenerateURLError.AliasAlreadyExists)
-                        }
-
-                        !shortURL.isNullOrBlank() -> {
-                            successCallback(shortURL)
-                        }
-
-                        error != null && error.has("code") -> {
-                            val code = error.getInt("code")
-                            when {
-                                code == 0 -> errorCallback(GenerateURLError.DomainNotAllowed)
-                                code == 1 -> errorCallback(GenerateURLError.InvalidURL)
-                                code == 2 -> errorCallback(GenerateURLError.InvalidAlias)
-                                error.has("msg") -> errorCallback(GenerateURLError.Custom(code, error.optString("msg")))
-                                else -> errorCallback(GenerateURLError.Unknown(200))
-                            }
-                        }
-
-                        else -> {
-                            errorCallback(GenerateURLError.Unknown(200))
-                        }
+                        code == 0 -> errorCallback(GenerateURLError.DomainNotAllowed)
+                        code == 1 -> errorCallback(GenerateURLError.InvalidURL)
+                        code == 2 -> errorCallback(GenerateURLError.InvalidAlias)
+                        error.has("msg") -> errorCallback(GenerateURLError.Custom(code, error.optString("msg")))
+                        else -> errorCallback(GenerateURLError.Unknown(200))
                     }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing create response", e)
+                }
+
+                else -> {
                     errorCallback(GenerateURLError.Unknown(200))
                 }
-            },
-            { error ->
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        statusCode == 403 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
-                }
-            },
-        )
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing create response", e)
+            errorCallback(GenerateURLError.Unknown(200))
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleError(
+        tag: String,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.e(tag, "error: $error")
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+            when {
+                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                statusCode == 403 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                else -> errorCallback(GenerateURLError.Custom(statusCode, data))
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing error response", e)
+            errorCallback(GenerateURLError.Unknown())
+        }
     }
 }

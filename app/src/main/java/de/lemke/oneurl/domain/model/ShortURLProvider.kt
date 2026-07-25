@@ -59,67 +59,65 @@ https://shorturl.73.nu/
 https://sor.bz/
  */
 
-class ShortURLProviderCompanion {
-    companion object {
-        private val provider: List<ShortURLProvider> =
-            listOf(
-                Dagd,
-                VgdIsgd.Isgd,
-                VgdIsgd.Vgd,
-                Kurzelinks.Kurzelinksde,
-                Kurzelinks.Ocn,
-                Kurzelinks.T1p,
-                Kurzelinks.Ogy,
-                Lstu,
-                Tinube,
-                Ulvis, // disabled
-                Tinyurl,
-                Onesis, // disabled
-                Gg,
-                L4f, // disabled
-                Oneptco,
-                Tnyim,
-                Shareaholic,
-                Murl,
-                Tly.Default,
-                Tly.Ibitly,
-                Tly.Twtrto,
-                Tly.Jpegly,
-                Tly.Rebrandly, // disabled
-                Tly.Bitly, // disabled
-                Shrtlnk, // disabled
-                Shorturlat, // disabled
-                Zwsim,
-                Spoome.Default,
-                Spoome.Emoji,
-                Owovc.Owo, // disabled
-                Owovc.Zws, // disabled
-                Owovc.Sketchy, // disabled
-                Owovc.Gay, // disabled
-            )
+object ShortURLProviderCompanion {
+    private val provider: List<ShortURLProvider> =
+        listOf(
+            Dagd,
+            VgdIsgd.Isgd,
+            VgdIsgd.Vgd,
+            Kurzelinks.Kurzelinksde,
+            Kurzelinks.Ocn,
+            Kurzelinks.T1p,
+            Kurzelinks.Ogy,
+            Lstu,
+            Tinube,
+            Ulvis, // disabled
+            Tinyurl,
+            Onesis, // disabled
+            Gg,
+            L4f, // disabled
+            Oneptco,
+            Tnyim,
+            Shareaholic,
+            Murl,
+            Tly.Default,
+            Tly.Ibitly,
+            Tly.Twtrto,
+            Tly.Jpegly,
+            Tly.Rebrandly, // disabled
+            Tly.Bitly, // disabled
+            Shrtlnk, // disabled
+            Shorturlat, // disabled
+            Zwsim,
+            Spoome.Default,
+            Spoome.Emoji,
+            Owovc.Owo, // disabled
+            Owovc.Zws, // disabled
+            Owovc.Sketchy, // disabled
+            Owovc.Gay, // disabled
+        )
 
-        /*
-        provide kurzelinks.de for German users only
-        Assigning Locale.getDefault() to a final static field (suspicious)
-        intended behavior: if the user changes locale while the app is running,
-        the app will not update the list of available providers until restart
-         */
-        @SuppressLint("ConstantLocale")
-        val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
+    /*
+    provide kurzelinks.de for German users only
+    Assigning Locale.getDefault() to a final static field (suspicious)
+    intended behavior: if the user changes locale while the app is running,
+    the app will not update the list of available providers until restart
+     */
+    @SuppressLint("ConstantLocale")
+    val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
 
-        val enabled = all.filter { it.enabled }
+    val enabled = all.filter { it.enabled }
 
-        val default: ShortURLProvider = enabled.first()
+    val default: ShortURLProvider = enabled.first()
 
-        fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
-            if (shortURLProvider in enabled) shortURLProvider ?: default else default
+    fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
+        if (shortURLProvider in enabled) shortURLProvider ?: default else default
 
-        private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
+    private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
 
-        fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
+    fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
 
-        fun fromStringOrDefault(name: String?): ShortURLProvider = fromStringOrNull(name) ?: default
-    }
+    fun fromStringOrDefault(name: String?): ShortURLProvider = fromStringOrNull(name) ?: default
 }
 
 class Unknown : ShortURLProvider {

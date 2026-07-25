@@ -20,6 +20,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -58,7 +59,6 @@ object Shareaholic : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -73,91 +73,114 @@ object Shareaholic : ShortURLProvider {
             Request.Method.GET,
             url,
             null,
-            { response ->
-                Log.d(tag, "response: $response")
-                if (response.has("data")) {
-                    val shortURL = response.getString("data").trim()
-                    Log.d(tag, "shortURL: $shortURL")
-                    successCallback(shortURL)
-                    return@JsonObjectRequest
+            { response -> handleResponse(tag, response, successCallback, errorCallback) },
+            { error -> handleError(tag, error, errorCallback) },
+        )
+    }
+
+    private fun handleResponse(
+        tag: String,
+        response: JSONObject,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        Log.d(tag, "response: $response")
+        if (response.has("data")) {
+            val shortURL = response.getString("data").trim()
+            Log.d(tag, "shortURL: $shortURL")
+            successCallback(shortURL)
+            return
+        }
+        errorCallback(GenerateURLError.Unknown())
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleError(
+        tag: String,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.e(tag, "error: $error")
+            val message = error.message
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            Log.e(tag, "$statusCode: message: $message data: $data")
+            val response = data?.let { JSONObject(it) }
+            when {
+                error is NoConnectionError -> {
+                    errorCallback(GenerateURLError.ServiceOffline)
                 }
-                errorCallback(GenerateURLError.Unknown())
-            },
-            { error ->
-                try {
-                    Log.e(tag, "error: $error")
-                    val message = error.message
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: $message data: $data")
-                    val response = data?.let { JSONObject(it) }
-                    when {
-                        error is NoConnectionError -> {
-                            errorCallback(GenerateURLError.ServiceOffline)
-                        }
 
-                        statusCode == null -> {
-                            errorCallback(GenerateURLError.Unknown())
-                        }
-
-                        data.isNullOrBlank() -> {
-                            errorCallback(GenerateURLError.Unknown(statusCode))
-                        }
-
-                        response?.has("errors") == true -> {
-                            val firstError = response.optJSONArray("errors")?.optJSONObject(0)
-                            Log.e(tag, "first error: $firstError")
-                            when (firstError?.optString("code")) {
-                                "100" -> {
-                                    errorCallback(GenerateURLError.Unknown(1100))
-                                }
-
-                                // 100	apikey not provided
-                                "101" -> {
-                                    errorCallback(GenerateURLError.Unknown(1101))
-                                }
-
-                                // 101	apikey provided is invalid
-                                "140" -> {
-                                    errorCallback(GenerateURLError.Unknown(1140))
-                                }
-
-                                // 140	Missing URL
-                                "141" -> {
-                                    errorCallback(GenerateURLError.InvalidURL)
-                                }
-
-                                // 141	Invalid URL
-                                "145" -> {
-                                    errorCallback(GenerateURLError.InvalidURL)
-                                }
-
-                                // 145	URL shortening problem or unsafe URL
-                                "429" -> {
-                                    errorCallback(GenerateURLError.RateLimitExceeded)
-                                }
-
-                                // 429	rate_limit_exceeded
-                                else -> {
-                                    if (firstError?.has("detail") == true) {
-                                        errorCallback(GenerateURLError.Custom(statusCode, firstError.getString("detail")))
-                                    } else {
-                                        errorCallback(GenerateURLError.Unknown(statusCode))
-                                    }
-                                }
-                            }
-                        }
-
-                        else -> {
-                            errorCallback(GenerateURLError.Unknown(statusCode))
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
+                statusCode == null -> {
                     errorCallback(GenerateURLError.Unknown())
                 }
-            },
-        )
+
+                data.isNullOrBlank() -> {
+                    errorCallback(GenerateURLError.Unknown(statusCode))
+                }
+
+                response?.has("errors") == true -> {
+                    handleApiErrors(tag, response, statusCode, errorCallback)
+                }
+
+                else -> {
+                    errorCallback(GenerateURLError.Unknown(statusCode))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing error response", e)
+            errorCallback(GenerateURLError.Unknown())
+        }
+    }
+
+    private fun handleApiErrors(
+        tag: String,
+        response: JSONObject,
+        statusCode: Int,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        val firstError = response.optJSONArray("errors")?.optJSONObject(0)
+        Log.e(tag, "first error: $firstError")
+        when (firstError?.optString("code")) {
+            "100" -> {
+                errorCallback(GenerateURLError.Unknown(1100))
+            }
+
+            // 100	apikey not provided
+            "101" -> {
+                errorCallback(GenerateURLError.Unknown(1101))
+            }
+
+            // 101	apikey provided is invalid
+            "140" -> {
+                errorCallback(GenerateURLError.Unknown(1140))
+            }
+
+            // 140	Missing URL
+            "141" -> {
+                errorCallback(GenerateURLError.InvalidURL)
+            }
+
+            // 141	Invalid URL
+            "145" -> {
+                errorCallback(GenerateURLError.InvalidURL)
+            }
+
+            // 145	URL shortening problem or unsafe URL
+            "429" -> {
+                errorCallback(GenerateURLError.RateLimitExceeded)
+            }
+
+            // 429	rate_limit_exceeded
+            else -> {
+                if (firstError?.has("detail") == true) {
+                    errorCallback(GenerateURLError.Custom(statusCode, firstError.getString("detail")))
+                } else {
+                    errorCallback(GenerateURLError.Unknown(statusCode))
+                }
+            }
+        }
     }
 }

@@ -210,97 +210,92 @@ class AddURLActivity : AppCompatActivity() {
         AlertDialog
             .Builder(this)
             .setNeutralButton(commonutilsR.string.commonutils_ok, null)
-            .apply {
-                when (error) {
-                    GenerateURLError.NoInternet -> {
-                        setTitle(R.string.no_internet)
-                        setMessage(R.string.no_internet_text)
-                        setPositiveButton(
-                            commonutilsR.string.commonutils_settings,
-                        ) { _, _ ->
-                            try {
-                                startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
-                            } catch (e: ActivityNotFoundException) {
-                                Log.e("AddURLActivity", "could not open wireless settings", e)
-                                toast(commonutilsR.string.commonutils_error)
-                            }
-                        }
-                    }
+            .apply { configureFor(error) }
+            .show()
+    }
 
-                    is GenerateURLError.BlacklistedURL -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(error.message ?: getString(R.string.error_blacklisted_url))
-                        if (error.urlhausLink != null) setPositiveButton("URLhaus") { _, _ -> openURL(error.urlhausLink) }
-                        if (error.virustotalLink != null) setNegativeButton("VirusTotal") { _, _ -> openURL(error.virustotalLink) }
-                    }
+    private fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
+        when (error) {
+            GenerateURLError.NoInternet -> {
+                configureNoInternet()
+            }
 
-                    is GenerateURLError.ServiceTemporarilyUnavailable -> {
-                        setTitle(R.string.error_service_unavailable)
-                        setMessage(R.string.error_service_unavailable_text)
-                        setPositiveButton(commonutilsR.string.commonutils_more_information) { _, _ -> openURL(error.providerBaseURL) }
-                    }
+            is GenerateURLError.BlacklistedURL -> {
+                configureBlacklisted(error)
+            }
 
-                    is GenerateURLError.Custom -> {
-                        setTitle(error.customTitle ?: "${getString(commonutilsR.string.commonutils_error)} (${error.statusCode})")
-                        setMessage(error.customMessage)
-                    }
+            is GenerateURLError.ServiceTemporarilyUnavailable -> {
+                configureServiceUnavailable(error)
+            }
 
-                    is GenerateURLError.Unknown -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(
-                            if (error.statusCode != null) {
-                                "Error ${error.statusCode}"
-                            } else {
-                                getString(commonutilsR.string.commonutils_error_unknown)
-                            },
-                        )
-                    }
+            is GenerateURLError.Custom -> {
+                configureCustom(error)
+            }
 
-                    GenerateURLError.AliasAlreadyExists -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_alias_already_exists)
-                    }
+            is GenerateURLError.Unknown -> {
+                configureUnknown(error)
+            }
 
-                    GenerateURLError.URLExistsWithDifferentAlias -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_url_already_exists_with_different_alias)
-                    }
+            else -> {
+                setTitle(commonutilsR.string.commonutils_error)
+                setMessage(simpleErrorMessageRes(error))
+            }
+        }
+    }
 
-                    GenerateURLError.InvalidURL -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_invalid_url)
-                    }
+    private fun simpleErrorMessageRes(error: GenerateURLError): Int =
+        when (error) {
+            GenerateURLError.AliasAlreadyExists -> R.string.error_alias_already_exists
+            GenerateURLError.URLExistsWithDifferentAlias -> R.string.error_url_already_exists_with_different_alias
+            GenerateURLError.InvalidURL -> R.string.error_invalid_url
+            GenerateURLError.InvalidAlias -> R.string.error_invalid_alias
+            GenerateURLError.InvalidURLOrAlias -> R.string.error_invalid_url_or_alias
+            GenerateURLError.InternalServerError -> R.string.error_internal_server_error
+            GenerateURLError.ServiceOffline -> R.string.error_service_offline
+            GenerateURLError.RateLimitExceeded -> R.string.error_rate_limit_exceeded
+            GenerateURLError.DomainNotAllowed -> R.string.error_domain_not_allowed
+            else -> commonutilsR.string.commonutils_error_unknown
+        }
 
-                    GenerateURLError.InvalidAlias -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_invalid_alias)
-                    }
+    private fun AlertDialog.Builder.configureNoInternet() {
+        setTitle(R.string.no_internet)
+        setMessage(R.string.no_internet_text)
+        setPositiveButton(commonutilsR.string.commonutils_settings) { _, _ ->
+            try {
+                startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+            } catch (e: ActivityNotFoundException) {
+                Log.e("AddURLActivity", "could not open wireless settings", e)
+                toast(commonutilsR.string.commonutils_error)
+            }
+        }
+    }
 
-                    GenerateURLError.InvalidURLOrAlias -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_invalid_url_or_alias)
-                    }
+    private fun AlertDialog.Builder.configureBlacklisted(error: GenerateURLError.BlacklistedURL) {
+        setTitle(commonutilsR.string.commonutils_error)
+        setMessage(error.message ?: getString(R.string.error_blacklisted_url))
+        if (error.urlhausLink != null) setPositiveButton("URLhaus") { _, _ -> openURL(error.urlhausLink) }
+        if (error.virustotalLink != null) setNegativeButton("VirusTotal") { _, _ -> openURL(error.virustotalLink) }
+    }
 
-                    GenerateURLError.InternalServerError -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_internal_server_error)
-                    }
+    private fun AlertDialog.Builder.configureServiceUnavailable(error: GenerateURLError.ServiceTemporarilyUnavailable) {
+        setTitle(R.string.error_service_unavailable)
+        setMessage(R.string.error_service_unavailable_text)
+        setPositiveButton(commonutilsR.string.commonutils_more_information) { _, _ -> openURL(error.providerBaseURL) }
+    }
 
-                    GenerateURLError.ServiceOffline -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_service_offline)
-                    }
+    private fun AlertDialog.Builder.configureCustom(error: GenerateURLError.Custom) {
+        setTitle(error.customTitle ?: "${getString(commonutilsR.string.commonutils_error)} (${error.statusCode})")
+        setMessage(error.customMessage)
+    }
 
-                    GenerateURLError.RateLimitExceeded -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_rate_limit_exceeded)
-                    }
-
-                    GenerateURLError.DomainNotAllowed -> {
-                        setTitle(commonutilsR.string.commonutils_error)
-                        setMessage(R.string.error_domain_not_allowed)
-                    }
-                }
-            }.show()
+    private fun AlertDialog.Builder.configureUnknown(error: GenerateURLError.Unknown) {
+        setTitle(commonutilsR.string.commonutils_error)
+        setMessage(
+            if (error.statusCode != null) {
+                "Error ${error.statusCode}"
+            } else {
+                getString(commonutilsR.string.commonutils_error_unknown)
+            },
+        )
     }
 }
