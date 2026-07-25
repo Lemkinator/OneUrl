@@ -68,7 +68,7 @@ object Zwsim : ShortURLProvider {
                     response.has("url") -> successCallback(response.getString("url"))
                     else -> {
                         Log.e(tag, "error, response does not contain short url")
-                        errorCallback(GenerateURLError.Unknown(context, 200))
+                        errorCallback(GenerateURLError.Unknown(200))
                     }
                 }
             },
@@ -81,16 +81,16 @@ object Zwsim : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 422 && data.contains("Invalid url") -> errorCallback(GenerateURLError.InvalidURL(context))
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 422 && data.contains("Invalid url") -> errorCallback(GenerateURLError.InvalidURL)
+                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         )

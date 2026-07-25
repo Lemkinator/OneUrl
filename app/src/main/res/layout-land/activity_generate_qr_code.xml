@@ -16,162 +16,162 @@
         android:layout_height="match_parent"
         android:orientation="horizontal">
 
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:fillViewport="true"
-        android:paddingHorizontal="10dp"
-        android:paddingBottom="10dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:paddingHorizontal="10dp"
+            android:paddingBottom="10dp"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center">
-
-            <ImageView
-                android:id="@+id/qr_code"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="QR Code"
-                tools:ignore="HardcodedText" />
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
-
-    <dev.oneuiproject.oneui.widget.RoundedLinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginHorizontal="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_weight="1"
-        android:background="?android:colorBackground"
-        android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/url"
-                app:endIconMode="clear_text"
-                app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
+                android:gravity="center">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextURL"
+                <ImageView
+                    android:id="@+id/qr_code"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="QR Code"
+                    tools:ignore="HardcodedText" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <dev.oneuiproject.oneui.widget.RoundedLinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_weight="1"
+            android:background="?android:colorBackground"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:hint="@string/url"
+                    app:endIconMode="clear_text"
+                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editTextURL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-        </LinearLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            </LinearLayout>
 
-            <androidx.appcompat.widget.SeslSeekBar
-                android:id="@+id/size_seekbar"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                app:seslSeekBarMode="expand" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-            <EditText
-                android:id="@+id/size_edittext"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:hint="@string/commonutils_size"
-                android:importantForAutofill="no"
-                android:inputType="number"
-                android:maxLength="4"
-                android:maxLines="1" />
+                <androidx.appcompat.widget.SeslSeekBar
+                    android:id="@+id/size_seekbar"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    app:seslSeekBarMode="expand" />
 
-        </LinearLayout>
+                <EditText
+                    android:id="@+id/size_edittext"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:hint="@string/commonutils_size"
+                    android:importantForAutofill="no"
+                    android:inputType="number"
+                    android:maxLength="4"
+                    android:maxLines="1" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:orientation="horizontal">
+            </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatCheckBox
-                android:id="@+id/frame_checkbox"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:text="@string/commonutils_frame" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatCheckBox
-                android:id="@+id/icon_checkbox"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="@string/commonutils_icon" />
+                <androidx.appcompat.widget.AppCompatCheckBox
+                    android:id="@+id/frame_checkbox"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/commonutils_frame" />
 
-        </LinearLayout>
+                <androidx.appcompat.widget.AppCompatCheckBox
+                    android:id="@+id/icon_checkbox"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="@string/commonutils_icon" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:orientation="horizontal">
+            </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatCheckBox
-                android:id="@+id/tint_border_checkbox"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:text="@string/commonutils_tint_border" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatCheckBox
-                android:id="@+id/tint_anchor_checkbox"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="@string/commonutils_tint_anchor" />
+                <androidx.appcompat.widget.AppCompatCheckBox
+                    android:id="@+id/tint_border_checkbox"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/commonutils_tint_border" />
 
-        </LinearLayout>
+                <androidx.appcompat.widget.AppCompatCheckBox
+                    android:id="@+id/tint_anchor_checkbox"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="@string/commonutils_tint_anchor" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/color_button_background"
-                style="@style/ButtonStyle.Colored"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginVertical="6dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:text="@string/commonutils_background" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/color_button_foreground"
-                style="@style/ButtonStyle.Colored"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginVertical="6dp"
-                android:layout_weight="1"
-                android:text="@string/commonutils_foreground" />
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/color_button_background"
+                    style="@style/ButtonStyle.Colored"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginVertical="6dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/commonutils_background" />
 
-        </LinearLayout>
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/color_button_foreground"
+                    style="@style/ButtonStyle.Colored"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginVertical="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/commonutils_foreground" />
 
-    </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
+            </LinearLayout>
+
+        </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
     </LinearLayout>
 

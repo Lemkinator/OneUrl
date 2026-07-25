@@ -92,17 +92,17 @@ object L4f : ShortURLProvider {
                     Log.d(tag, "error: $error message: $message shortURL: $shortURL")
                     if (!error && shortURL != null) {
                         if (alias.isBlank() || shortURL == "$baseURL/$alias") successCallback(shortURL)
-                        else errorCallback(GenerateURLError.URLExistsWithDifferentAlias(context))
+                        else errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
                     } else when {
-                        message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
-                        message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                        else -> errorCallback(GenerateURLError.Custom(context, 200, message))
+                        message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                        message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias)
+                        message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded)
+                        else -> errorCallback(GenerateURLError.Custom(200, message))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -113,13 +113,13 @@ object L4f : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         )

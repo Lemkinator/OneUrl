@@ -1,7 +1,5 @@
 import com.android.build.api.dsl.CommonExtension
 import java.util.Properties
-import kotlin.apply
-import kotlin.jvm.java
 
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -25,7 +23,14 @@ fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").u
  *      ghAccessToken=&lt;YOUR_GITHUB_ACCESS_TOKEN&gt;
  */
 fun getProperty(key: String): String =
-    Properties().apply { rootProject.file("github.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) } }.getProperty(key)
+    Properties()
+        .apply {
+            rootProject
+                .file("github.properties")
+                .takeIf { it.exists() }
+                ?.inputStream()
+                ?.use { load(it) }
+        }.getProperty(key)
         ?: rootProject.findProperty(key)?.toString()
         ?: System.getenv(key.toEnvVarStyle())
         ?: throw GradleException("Property $key not found")
@@ -68,7 +73,7 @@ subprojects {
                 sourceCompatibility = JavaVersion.VERSION_21
                 targetCompatibility = JavaVersion.VERSION_21
             }
-            configurations.all {
+            configurations.matching { !it.name.contains("test", ignoreCase = true) }.configureEach {
                 exclude(group = "androidx.core", module = "core")
                 exclude(group = "androidx.core", module = "core-ktx")
                 exclude(group = "androidx.customview", module = "customview")

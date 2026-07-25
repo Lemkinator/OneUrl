@@ -2,8 +2,8 @@ name: Build and publish release
 
 on:
   push:
-    branches: [main]
-    paths: ['app/build.gradle.kts']
+    branches: [ main ]
+    paths: [ 'app/build.gradle.kts' ]
 
 jobs:
   build-and-publish-release:
@@ -36,12 +36,12 @@ jobs:
           OLD_VERSION_CODE=$(git show $PREV:app/build.gradle.kts | grep 'versionCode' | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
           VERSION_CODE=$(grep 'versionCode' app/build.gradle.kts | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
           VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | sed -E 's/.*versionName\s*=\s*"([^"]+)".*/\1/')
-          
+
           # Set outputs
           echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "changed=$([ "$OLD_VERSION_CODE" != "$VERSION_CODE" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
-          
+
           # Display info
           echo "Version: $VERSION_NAME (code: $VERSION_CODE, changed: $([ "$OLD_VERSION_CODE" != "$VERSION_CODE" ] && echo "true" || echo "false"))"
 

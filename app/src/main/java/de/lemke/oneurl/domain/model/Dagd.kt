@@ -26,30 +26,33 @@ object Dagd : ShortURLProvider {
     override val name = "da.gd"
     override val baseURL = "https://da.gd"
     override val apiURL = "$baseURL/shorten"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 0
-        override val maxAliasLength = 10
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 0
+            override val maxAliasLength = 10
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_report,
-            context.getString(R.string.analytics),
-            context.getString(R.string.analytics_dagd)
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+        }
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_report,
+                context.getString(R.string.analytics),
+                context.getString(R.string.analytics_dagd),
+            ),
         )
-    )
 
     override fun getAnalyticsURL(alias: String) = "$baseURL/stats/$alias"
 
@@ -63,25 +66,28 @@ object Dagd : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit,
     ): StringRequest {
         val tag = "CreateRequest_check_$name"
-        if (alias.isBlank()) return requestCreateDAGD(context, longURL, "", successCallback, errorCallback)
+        if (alias.isBlank()) return requestCreateDAGD(longURL, "", successCallback, errorCallback)
         val checkUrlApi = "$baseURL/coshorten/$alias"
         Log.d(tag, "start request: $checkUrlApi")
-        return StringRequest(
-            Request.Method.GET,
+        var innerReq: Request<*>? = null
+        return object : StringRequest(
+            Method.GET,
             checkUrlApi,
             { response ->
                 if (sanitizeLongURL(response) != longURL) {
                     Log.e(
                         tag,
-                        "error, shortURL already exists, but has different longURL, longURL: $longURL, response: ${sanitizeLongURL(response)} ($response)"
+                        "error, shortURL already exists, but has different longURL, longURL: $longURL, response: ${
+                            sanitizeLongURL(response)
+                        } ($response)",
                     )
-                    errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                    return@StringRequest
+                    errorCallback(GenerateURLError.AliasAlreadyExists)
+                } else {
+                    Log.d(tag, "shortURL already exists (but is not in local db): $response")
+                    val shortURL = "$baseURL/$alias"
+                    Log.d(tag, "shortURL: $shortURL")
+                    successCallback(shortURL)
                 }
-                Log.d(tag, "shortURL already exists (but is not in local db): $response")
-                val shortURL = "$baseURL/$alias"
-                Log.d(tag, "shortURL: $shortURL")
-                successCallback(shortURL)
             },
             { error ->
                 try {
@@ -92,26 +98,38 @@ object Dagd : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
+                        error is NoConnectionError -> {
+                            errorCallback(GenerateURLError.ServiceOffline)
+                        }
+
+                        statusCode == null -> {
+                            errorCallback(GenerateURLError.Unknown())
+                        }
+
                         else -> {
-                            if (statusCode == 404) Log.d(tag, "shortURL does not exist yet, creating it")
-                            else Log.w(tag, "error, trying to create it anyway")
-                            RequestQueueSingleton.getInstance(context).addToRequestQueue(
-                                requestCreateDAGD(context, longURL, alias, successCallback, errorCallback)
-                            )
+                            if (statusCode == 404) {
+                                Log.d(tag, "shortURL does not exist yet, creating it")
+                            } else {
+                                Log.w(tag, "error, trying to create it anyway")
+                            }
+                            innerReq = requestCreateDAGD(longURL, alias, successCallback, errorCallback)
+                            RequestQueueSingleton.getInstance(context).addToRequestQueue(innerReq)
                         }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
+            },
+        ) {
+            override fun cancel() {
+                super.cancel()
+                innerReq?.cancel()
             }
-        )
+        }
     }
 
     private fun requestCreateDAGD(
-        context: Context,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -131,7 +149,7 @@ object Dagd : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with https://da.gd, response: $response")
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -142,21 +160,21 @@ object Dagd : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL(context))
-                        data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        data.contains("Custom short URL contained invalid", true) -> errorCallback(GenerateURLError.InvalidAlias(context))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
+                        data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                        data.contains("Custom short URL contained invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         )
     }
 }

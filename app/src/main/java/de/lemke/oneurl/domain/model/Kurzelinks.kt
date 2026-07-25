@@ -12,7 +12,7 @@ import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
 /*
-docs: https://kurzelinks.de/ https://ogy.de/ https://t1p.de/ https://0cn.de/ -> pdf
+docs: https://kurzelinks.de/ https://ogy.de/ https://t1p.de/ https://0cn.de/ -> PDF
 example: https://kurzelinks.de/api?key=API_KEY&json=1&apiversion=22&url=example.com&servicedomain=kurzelinks.de&requesturl=example
 
 response:
@@ -28,38 +28,41 @@ error:
 */
 sealed class Kurzelinks : ShortURLProvider {
     final override val group = "kurzelinks.de, 0cn.de, t1p.de, ogy.de"
-    final override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 5
-        override val maxAliasLength = 100 //tested up to 250
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
-    }
+    final override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 5
+            override val maxAliasLength = 100 // tested up to 250
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-            context.getString(commonutilsR.string.commonutils_privacy_policy),
-            context.getString(R.string.privacy_text)
-        ),
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
+        }
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
+                context.getString(commonutilsR.string.commonutils_privacy_policy),
+                context.getString(R.string.privacy_text),
+            ),
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
         )
-    )
 
-    override fun getTipsCardTitleAndInfo(context: Context) = Pair(
-        context.getString(commonutilsR.string.commonutils_info),
-        context.getString(R.string.privacy_text)
-    )
+    override fun getTipsCardTitleAndInfo(context: Context) =
+        Pair(
+            context.getString(commonutilsR.string.commonutils_info),
+            context.getString(R.string.privacy_text),
+        )
 
     fun getKurzelinksCreateRequest(
-        context: Context,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -76,14 +79,14 @@ sealed class Kurzelinks : ShortURLProvider {
                     val shortURL = JSONObject(response).optJSONObject("shorturl")?.optString("url")
                     if (shortURL == null) {
                         Log.e(tag, "error: shortURL not found")
-                        errorCallback(GenerateURLError.Unknown(context))
+                        errorCallback(GenerateURLError.Unknown())
                     } else {
                         Log.d(tag, "shortURL: $shortURL")
                         successCallback(shortURL)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->
@@ -94,29 +97,30 @@ sealed class Kurzelinks : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 400 || statusCode == 403 -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        statusCode == 423 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded(context))
-                        statusCode == 444 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 400 || statusCode == 403 -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == 423 -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded)
+                        statusCode == 444 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
-            }
+            },
         ) {
-            override fun getParams() = mapOf(
-                "key" to BuildConfig.KURZELINKS_API_KEY,
-                "json" to "1",
-                "apiversion" to "22",
-                "url" to longURL,
-                "servicedomain" to baseURL.withoutHttps(),
-                "requesturl" to alias
-            )
+            override fun getParams() =
+                mapOf(
+                    "key" to BuildConfig.KURZELINKS_API_KEY,
+                    "json" to "1",
+                    "apiversion" to "22",
+                    "url" to longURL,
+                    "servicedomain" to baseURL.withoutHttps(),
+                    "requesturl" to alias,
+                )
         }
     }
 
@@ -133,10 +137,10 @@ sealed class Kurzelinks : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
+        ): StringRequest = getKurzelinksCreateRequest(longURL, alias, successCallback, errorCallback)
     }
 
-    object Ocn : Kurzelinks() { //o -> 0
+    object Ocn : Kurzelinks() { // o -> 0
         override val name = "0cn.de"
         override val baseURL = "https://0cn.de"
         override val apiURL = "$baseURL/api"
@@ -149,7 +153,7 @@ sealed class Kurzelinks : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
+        ): StringRequest = getKurzelinksCreateRequest(longURL, alias, successCallback, errorCallback)
     }
 
     object T1p : Kurzelinks() {
@@ -165,7 +169,7 @@ sealed class Kurzelinks : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
+        ): StringRequest = getKurzelinksCreateRequest(longURL, alias, successCallback, errorCallback)
     }
 
     object Ogy : Kurzelinks() {
@@ -181,6 +185,6 @@ sealed class Kurzelinks : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): StringRequest = getKurzelinksCreateRequest(context, longURL, alias, successCallback, errorCallback)
+        ): StringRequest = getKurzelinksCreateRequest(longURL, alias, successCallback, errorCallback)
     }
 }

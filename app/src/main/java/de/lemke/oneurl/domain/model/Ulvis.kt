@@ -152,24 +152,24 @@ object Ulvis : ShortURLProvider {
                     Log.d(tag, "shortURL: $shortURL")
                     val status = data?.optString("status")
                     when {
-                        status == "custom-taken" -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
+                        status == "custom-taken" -> errorCallback(GenerateURLError.AliasAlreadyExists)
                         !shortURL.isNullOrBlank() -> successCallback(shortURL)
                         error != null && error.has("code") -> {
                             val code = error.getInt("code")
                             when {
-                                code == 0 -> errorCallback(GenerateURLError.DomainNotAllowed(context))
-                                code == 1 -> errorCallback(GenerateURLError.InvalidURL(context))
-                                code == 2 -> errorCallback(GenerateURLError.InvalidAlias(context))
-                                error.has("msg") -> errorCallback(GenerateURLError.Custom(context, code, error.optString("msg")))
-                                else -> errorCallback(GenerateURLError.Unknown(context, 200))
+                                code == 0 -> errorCallback(GenerateURLError.DomainNotAllowed)
+                                code == 1 -> errorCallback(GenerateURLError.InvalidURL)
+                                code == 2 -> errorCallback(GenerateURLError.InvalidAlias)
+                                error.has("msg") -> errorCallback(GenerateURLError.Custom(code, error.optString("msg")))
+                                else -> errorCallback(GenerateURLError.Unknown(200))
                             }
                         }
 
-                        else -> errorCallback(GenerateURLError.Unknown(context, 200))
+                        else -> errorCallback(GenerateURLError.Unknown(200))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -180,15 +180,15 @@ object Ulvis : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        statusCode == 403 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(context, this))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(context, statusCode))
-                        else -> errorCallback(GenerateURLError.Custom(context, statusCode, data))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        statusCode == 403 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         )

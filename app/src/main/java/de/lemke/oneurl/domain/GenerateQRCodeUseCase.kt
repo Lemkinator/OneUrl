@@ -37,6 +37,32 @@ class GenerateQRCodeUseCase @Inject constructor(
         }
     }
 
+    operator fun invoke(
+        url: String,
+        size: Int,
+        foregroundColor: Int,
+        backgroundColor: Int,
+        tintAnchor: Boolean,
+        tintBorder: Boolean,
+        icon: Boolean,
+        roundedFrame: Boolean,
+    ): Bitmap {
+        return try {
+            with(QrEncoder(context, url)) {
+                if (icon) setIcon(commonutilsR.drawable.ic_launcher_themed)
+                setBackgroundColor(backgroundColor)
+                setForegroundColor(foregroundColor, tintAnchor, tintBorder)
+                setSize(size)
+                roundedFrame(roundedFrame)
+                generate()
+            } ?: generateNoSupportBitmap()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GenerateQRCodeUseCase", "error: ${e.message}")
+            generateNoSupportBitmap()
+        }
+    }
+
     private fun generateNoSupportBitmap(): Bitmap {
         val size = getPixel(200)
         val result = createBitmap(size, size)

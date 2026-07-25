@@ -116,12 +116,12 @@ object Tinube : ShortURLProvider {
                     Log.d(tag, "status: $status, urlCode: $urlCode")
                     when (status) {
                         200 if urlCode != null -> successCallback("$baseURL/$urlCode")
-                        208 -> errorCallback(GenerateURLError.AliasAlreadyExists(context))
-                        else -> errorCallback(GenerateURLError.Unknown(context, status))
+                        208 -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                        else -> errorCallback(GenerateURLError.Unknown(status))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context, 200))
+                    errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
@@ -132,13 +132,13 @@ object Tinube : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline(context))
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown(context))
-                        else -> errorCallback(GenerateURLError.Unknown(context, statusCode))
+                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(context))
+                    errorCallback(GenerateURLError.Unknown())
                 }
             }
         ) {
