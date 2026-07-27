@@ -23,10 +23,11 @@ import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
-import de.lemke.commonutils.urlEncodeAmpersand
+import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import org.json.JSONException
 import org.json.JSONObject
 
 /*
@@ -165,6 +166,8 @@ object Tnyim : ShortURLProvider {
                 requestURL,
                 null,
                 { response ->
+                    // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                    // escaping exception here would crash the whole app.
                     try {
                         Log.d(tag, "response: $response")
                         val visitCount = response.optJSONObject("link")?.optString("clicks")?.toIntOrNull()
@@ -213,12 +216,14 @@ object Tnyim : ShortURLProvider {
                         Log.d(tag, "error: response does not contain short url or errors")
                         errorCallback(GenerateURLError.Unknown(200))
                     }
-                } catch (e: Exception) {
+                } catch (e: JSONException) {
                     Log.e(tag, "error parsing create response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

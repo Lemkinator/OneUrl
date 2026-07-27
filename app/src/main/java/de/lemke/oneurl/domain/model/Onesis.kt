@@ -20,7 +20,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
-import de.lemke.commonutils.withHttps
+import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 
@@ -84,9 +84,16 @@ object Onesis : ShortURLProvider {
             Method.POST,
             apiURL,
             { response ->
-                try {
-                    // Log.d(tag, "response: $response")
-                    val responseAlias = response.split("<span id=\"shortlink-url\"")[1].split("</span>")[0].split("https://1s.is/")[1]
+                // Log.d(tag, "response: $response")
+                val responseAlias =
+                    response
+                        .split("<span id=\"shortlink-url\"")
+                        .getOrNull(1)
+                        ?.split("</span>")
+                        ?.getOrNull(0)
+                        ?.split("https://1s.is/")
+                        ?.getOrNull(1)
+                if (responseAlias != null) {
                     val shortURL = "$baseURL/$responseAlias"
                     Log.d(tag, "shortURL: $shortURL")
                     if (alias.isBlank() || responseAlias == alias) {
@@ -94,8 +101,8 @@ object Onesis : ShortURLProvider {
                     } else {
                         errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
                     }
-                } catch (e: Exception) {
-                    Log.e(tag, "could not find short URL in response", e)
+                } else {
+                    Log.e(tag, "could not find short URL in response")
                     when {
                         response.contains("Short URL already exists. Please choose another one.") -> {
                             errorCallback(GenerateURLError.AliasAlreadyExists)
@@ -112,6 +119,8 @@ object Onesis : ShortURLProvider {
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val message = error.message

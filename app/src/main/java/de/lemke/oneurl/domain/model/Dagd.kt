@@ -21,8 +21,8 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
-import de.lemke.commonutils.urlEncodeAmpersand
-import de.lemke.commonutils.withHttps
+import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
+import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
@@ -107,6 +107,8 @@ object Dagd : ShortURLProvider {
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.w(tag, "error: $error")
                     val message = error.message
@@ -171,6 +173,8 @@ object Dagd : ShortURLProvider {
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

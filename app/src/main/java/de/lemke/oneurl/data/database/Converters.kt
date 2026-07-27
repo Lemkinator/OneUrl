@@ -22,6 +22,7 @@ import android.util.Log
 import androidx.room.TypeConverter
 import java.io.ByteArrayOutputStream
 import java.time.ZonedDateTime
+import java.time.format.DateTimeParseException
 
 /** Type converters to map between SQLite types and entity types. */
 object Converters {
@@ -31,14 +32,15 @@ object Converters {
 
     /** Returns the [ZonedDateTime] represented by the [zonedDateTimeString]. */
     @TypeConverter
-    @Suppress("TooGenericExceptionCaught")
-    fun zonedDateTimeFromDb(zonedDateTimeString: String?): ZonedDateTime? =
-        try {
+    fun zonedDateTimeFromDb(zonedDateTimeString: String?): ZonedDateTime? {
+        if (zonedDateTimeString == null) return null
+        return try {
             ZonedDateTime.parse(zonedDateTimeString)
-        } catch (e: Exception) {
+        } catch (e: DateTimeParseException) {
             Log.e("Converters", "Failed to parse ZonedDateTime from db value: $zonedDateTimeString", e)
             null
         }
+    }
 
     /** Returns the string representation of the [bitmap]. */
     @TypeConverter

@@ -31,22 +31,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.collectEvents
-import de.lemke.commonutils.collectState
-import de.lemke.commonutils.copyToClipboard
-import de.lemke.commonutils.data.commonUtilsSettings
-import de.lemke.commonutils.exportBitmap
-import de.lemke.commonutils.openURL
-import de.lemke.commonutils.prepareActivityTransformationTo
-import de.lemke.commonutils.saveBitmapToUri
-import de.lemke.commonutils.setCustomBackAnimation
-import de.lemke.commonutils.setWindowTransparent
-import de.lemke.commonutils.shareBitmap
-import de.lemke.commonutils.shareText
-import de.lemke.commonutils.showInAppReviewOrFinish
-import de.lemke.commonutils.toast
-import de.lemke.commonutils.urlEncode
-import de.lemke.commonutils.withHttps
+import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.collectEvents
+import de.lemke.commonutils.ui.utils.collectState
+import de.lemke.commonutils.ui.utils.copyToClipboard
+import de.lemke.commonutils.ui.utils.exportBitmap
+import de.lemke.commonutils.ui.utils.openURL
+import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
+import de.lemke.commonutils.ui.utils.saveBitmapToUri
+import de.lemke.commonutils.ui.utils.setCustomBackAnimation
+import de.lemke.commonutils.ui.utils.setWindowTransparent
+import de.lemke.commonutils.ui.utils.shareBitmap
+import de.lemke.commonutils.ui.utils.shareText
+import de.lemke.commonutils.ui.utils.showInAppReviewOrFinish
+import de.lemke.commonutils.ui.utils.toast
+import de.lemke.commonutils.ui.utils.urlEncode
+import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityUrlBinding
 import de.lemke.oneurl.domain.model.URL
@@ -54,6 +54,7 @@ import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBott
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import java.text.NumberFormat
+import javax.inject.Inject
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -63,6 +64,9 @@ class URLActivity : AppCompatActivity() {
         const val KEY_SHORTURL = "key_shorturl"
         const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
     }
+
+    @Inject
+    lateinit var settings: SettingsRepository
 
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
@@ -134,7 +138,7 @@ class URLActivity : AppCompatActivity() {
         binding.root.setTitle(url.shortURL)
         binding.urlQrImageview.setImageBitmap(url.qr)
         binding.urlQrImageview.setOnClickListener {
-            createQRBottomSheet(url.shortURL, url.qr, commonUtilsSettings.imageSaveLocation).show(supportFragmentManager, null)
+            createQRBottomSheet(url.shortURL, url.qr, settings.imageSaveLocation).show(supportFragmentManager, null)
         }
         binding.urlQrImageview.setOnLongClickListener {
             url.qr
@@ -146,7 +150,7 @@ class URLActivity : AppCompatActivity() {
         }
         binding.urlQrSaveButton.setOnClickListener {
             exportBitmap(
-                commonUtilsSettings.imageSaveLocation,
+                settings.imageSaveLocation,
                 url.qr,
                 url.shortURL,
                 exportQRCodeResultLauncher,
@@ -241,7 +245,6 @@ class URLActivity : AppCompatActivity() {
         renderVisitCountRefresh(state.isRefreshingVisits)
     }
 
-    @SuppressLint("SetTextI18n")
     private fun renderVisitCountRefresh(isRefreshing: Boolean) {
         binding.urlVisitsRefreshButton.isEnabled = !isRefreshing
         binding.urlVisitsRefreshButton.alpha = if (isRefreshing) 0.5f else 1f

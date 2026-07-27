@@ -22,10 +22,11 @@ import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
-import de.lemke.commonutils.withHttps
+import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import org.json.JSONException
 import org.json.JSONObject
 
 /*
@@ -99,7 +100,6 @@ object Lstu : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         context: Context,
         url: URL,
@@ -118,7 +118,7 @@ object Lstu : ShortURLProvider {
                         val clicks = JSONObject(response).getInt("counter")
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
-                    } catch (e: Exception) {
+                    } catch (e: JSONException) {
                         Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
@@ -167,12 +167,14 @@ object Lstu : ShortURLProvider {
                             errorCallback(GenerateURLError.Unknown(200))
                         }
                     }
-                } catch (e: Exception) {
+                } catch (e: JSONException) {
                     Log.e(tag, "error parsing create response", e)
                     errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

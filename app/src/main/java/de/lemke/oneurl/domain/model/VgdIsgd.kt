@@ -22,7 +22,7 @@ import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
-import de.lemke.commonutils.urlEncodeAmpersand
+import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import org.json.JSONObject
@@ -142,6 +142,8 @@ sealed class VgdIsgd : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
+        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+        // escaping exception here would crash the whole app.
         try {
             Log.e(tag, "error: $error")
             val networkResponse = error.networkResponse

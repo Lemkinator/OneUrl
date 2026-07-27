@@ -18,7 +18,9 @@ package de.lemke.oneurl
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
-import de.lemke.commonutils.data.initCommonUtilsSettingsAndSetDarkMode
+import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.data.applyDarkMode
+import javax.inject.Inject
 
 /**
  * Main entry point into the application process.
@@ -26,8 +28,11 @@ import de.lemke.commonutils.data.initCommonUtilsSettingsAndSetDarkMode
  */
 @HiltAndroidApp
 class App : Application() {
+    @Inject
+    lateinit var settings: SettingsRepository
+
     override fun onCreate() {
         super.onCreate()
-        initCommonUtilsSettingsAndSetDarkMode()
+        settings.applyDarkMode()
     }
 }

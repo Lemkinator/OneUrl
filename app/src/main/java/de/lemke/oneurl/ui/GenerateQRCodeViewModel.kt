@@ -21,10 +21,10 @@ import android.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
-import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,8 +34,7 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class GenerateQRCodeViewModel @Inject constructor(
-    private val getUserSettings: GetUserSettingsUseCase,
-    private val updateUserSettings: UpdateUserSettingsUseCase,
+    private val userSettings: UserSettings,
     private val generateQRCode: GenerateQRCodeUseCase,
 ) : ViewModel() {
     val state: StateFlow<QrUiState>
@@ -44,25 +43,22 @@ class GenerateQRCodeViewModel @Inject constructor(
     private var sizeSaveJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            val s = getUserSettings()
-            state.update {
-                it.copy(
-                    url = s.qrURL,
-                    size = s.qrSize,
-                    foregroundColor = s.qrRecentForegroundColors.firstOrNull() ?: Color.BLACK,
-                    backgroundColor = s.qrRecentBackgroundColors.firstOrNull() ?: Color.WHITE,
-                    tintAnchor = s.qrTintAnchor,
-                    tintBorder = s.qrTintBorder,
-                    icon = s.qrIcon,
-                    roundedFrame = s.qrFrame,
-                    recentForegroundColors = s.qrRecentForegroundColors,
-                    recentBackgroundColors = s.qrRecentBackgroundColors,
-                    isLoading = false,
-                )
-            }
-            regenerate()
+        state.update {
+            it.copy(
+                url = userSettings.qrURL,
+                size = userSettings.qrSize,
+                foregroundColor = userSettings.qrRecentForegroundColors.firstOrNull() ?: Color.BLACK,
+                backgroundColor = userSettings.qrRecentBackgroundColors.firstOrNull() ?: Color.WHITE,
+                tintAnchor = userSettings.qrTintAnchor,
+                tintBorder = userSettings.qrTintBorder,
+                icon = userSettings.qrIcon,
+                roundedFrame = userSettings.qrFrame,
+                recentForegroundColors = userSettings.qrRecentForegroundColors,
+                recentBackgroundColors = userSettings.qrRecentBackgroundColors,
+                isLoading = false,
+            )
         }
+        regenerate()
     }
 
     fun setUrl(url: String) {
@@ -71,8 +67,8 @@ class GenerateQRCodeViewModel @Inject constructor(
         urlSaveJob?.cancel()
         urlSaveJob =
             viewModelScope.launch {
-                delay(300)
-                updateUserSettings { it.copy(qrURL = url) }
+                delay(300.milliseconds)
+                userSettings.qrURL = url
             }
     }
 
@@ -82,32 +78,32 @@ class GenerateQRCodeViewModel @Inject constructor(
         sizeSaveJob?.cancel()
         sizeSaveJob =
             viewModelScope.launch {
-                delay(300)
-                updateUserSettings { it.copy(qrSize = size) }
+                delay(300.milliseconds)
+                userSettings.qrSize = size
             }
     }
 
     fun setRoundedFrame(enabled: Boolean) {
         state.update { it.copy(roundedFrame = enabled) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrFrame = enabled) } }
+        userSettings.qrFrame = enabled
         regenerate()
     }
 
     fun setIcon(enabled: Boolean) {
         state.update { it.copy(icon = enabled) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrIcon = enabled) } }
+        userSettings.qrIcon = enabled
         regenerate()
     }
 
     fun setTintBorder(enabled: Boolean) {
         state.update { it.copy(tintBorder = enabled) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrTintBorder = enabled) } }
+        userSettings.qrTintBorder = enabled
         regenerate()
     }
 
     fun setTintAnchor(enabled: Boolean) {
         state.update { it.copy(tintAnchor = enabled) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrTintAnchor = enabled) } }
+        userSettings.qrTintAnchor = enabled
         regenerate()
     }
 
@@ -119,7 +115,7 @@ class GenerateQRCodeViewModel @Inject constructor(
                 .distinct()
                 .take(6)
         state.update { it.copy(foregroundColor = color, recentForegroundColors = recentColors) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrRecentForegroundColors = recentColors) } }
+        userSettings.qrRecentForegroundColors = recentColors
         regenerate()
     }
 
@@ -131,7 +127,7 @@ class GenerateQRCodeViewModel @Inject constructor(
                 .distinct()
                 .take(6)
         state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
-        viewModelScope.launch { updateUserSettings { it.copy(qrRecentBackgroundColors = recentColors) } }
+        userSettings.qrRecentBackgroundColors = recentColors
         regenerate()
     }
 

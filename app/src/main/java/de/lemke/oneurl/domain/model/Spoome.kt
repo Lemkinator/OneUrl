@@ -22,11 +22,12 @@ import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
-import de.lemke.commonutils.urlEncodeAmpersand
-import de.lemke.commonutils.withHttps
+import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
+import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import org.json.JSONException
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -86,7 +87,6 @@ sealed class Spoome : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         context: Context,
         url: URL,
@@ -106,7 +106,7 @@ sealed class Spoome : ShortURLProvider {
                         val clicks = response.getInt("total-clicks")
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
-                    } catch (e: Exception) {
+                    } catch (e: JSONException) {
                         Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
@@ -162,7 +162,6 @@ sealed class Spoome : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleError(
         tag: String,
         error: VolleyError,
@@ -208,7 +207,7 @@ sealed class Spoome : ShortURLProvider {
                     errorCallback(GenerateURLError.Custom(statusCode, data))
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: JSONException) {
             Log.e(tag, "error parsing error response", e)
             errorCallback(GenerateURLError.Unknown())
         }

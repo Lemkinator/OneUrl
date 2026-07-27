@@ -81,6 +81,8 @@ object Shrtlnk : ShortURLProvider {
 
             @Suppress("TooGenericExceptionCaught")
             override fun parseNetworkResponse(response: NetworkResponse?): Response<String> {
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     val headers = response?.headers
                     Log.d(tag, "response headers: $headers")

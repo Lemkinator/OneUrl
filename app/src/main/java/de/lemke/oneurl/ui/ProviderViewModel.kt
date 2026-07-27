@@ -20,8 +20,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import javax.inject.Inject
@@ -36,8 +35,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ProviderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val getUserSettings: GetUserSettingsUseCase,
-    private val updateUserSettings: UpdateUserSettingsUseCase,
+    private val userSettings: UserSettings,
 ) : ViewModel() {
     val state: StateFlow<ProviderUiState>
         field = MutableStateFlow(ProviderUiState())
@@ -47,22 +45,20 @@ class ProviderViewModel @Inject constructor(
 
     init {
         val selectMode = savedStateHandle.get<Boolean>(ProviderActivity.KEY_SELECT_PROVIDER) == true
-        viewModelScope.launch {
-            val settings = getUserSettings()
-            state.update { it.copy(selectMode = selectMode, currentSelected = settings.selectedShortURLProvider) }
-            val position = ShortURLProviderCompanion.enabled.indexOf(settings.selectedShortURLProvider)
-            if (position >= 0) _events.send(ProviderEvent.ScrollToSelected(position))
+        val currentSelected = userSettings.selectedShortURLProvider
+        state.update { it.copy(selectMode = selectMode, currentSelected = currentSelected) }
+        val position = ShortURLProviderCompanion.enabled.indexOf(currentSelected)
+        if (position >= 0) {
+            viewModelScope.launch { _events.send(ProviderEvent.ScrollToSelected(position)) }
         }
     }
 
     fun onProviderClick(provider: ShortURLProvider) {
-        viewModelScope.launch {
-            if (state.value.selectMode) {
-                updateUserSettings { it.copy(selectedShortURLProvider = provider) }
-                _events.send(ProviderEvent.Finish)
-            } else {
-                _events.send(ProviderEvent.ShowInfo(provider))
-            }
+        if (state.value.selectMode) {
+            userSettings.selectedShortURLProvider = provider
+            viewModelScope.launch { _events.send(ProviderEvent.Finish) }
+        } else {
+            viewModelScope.launch { _events.send(ProviderEvent.ShowInfo(provider)) }
         }
     }
 
