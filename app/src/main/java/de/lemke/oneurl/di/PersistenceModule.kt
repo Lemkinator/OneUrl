@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl
+package de.lemke.oneurl.di
 
 import android.content.Context
 import androidx.room.Room
