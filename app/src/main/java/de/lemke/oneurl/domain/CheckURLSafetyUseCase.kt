@@ -31,6 +31,8 @@ import org.json.JSONObject
 class CheckURLSafetyUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
+    val tag = "CheckURLSafetyUseCase"
+
     sealed class UrlhausResult {
         data object Ok : UrlhausResult()
 
@@ -39,7 +41,6 @@ class CheckURLSafetyUseCase @Inject constructor(
 
     suspend operator fun invoke(url: String): UrlhausResult =
         suspendCancellableCoroutine { cont ->
-            val tag = "UrlhausCheckRequest"
             val checkUrlApi = "https://urlhaus-api.abuse.ch/v1/url"
             Log.d(tag, "start request: $checkUrlApi")
             val req =
@@ -48,7 +49,7 @@ class CheckURLSafetyUseCase @Inject constructor(
                     checkUrlApi,
                     { response ->
                         if (cont.isActive) {
-                            cont.resume(parseUrlhausResponse(tag, url, response))
+                            cont.resume(parseUrlhausResponse(url, response))
                         }
                     },
                     { error ->
@@ -68,7 +69,6 @@ class CheckURLSafetyUseCase @Inject constructor(
 
     @Suppress("TooGenericExceptionCaught")
     private fun parseUrlhausResponse(
-        tag: String,
         url: String,
         response: String,
     ): UrlhausResult =
