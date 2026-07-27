@@ -241,7 +241,6 @@ class URLActivity : AppCompatActivity() {
         renderVisitCountRefresh(state.isRefreshingVisits)
     }
 
-    @SuppressLint("SetTextI18n")
     private fun renderVisitCountRefresh(isRefreshing: Boolean) {
         binding.urlVisitsRefreshButton.isEnabled = !isRefreshing
         binding.urlVisitsRefreshButton.alpha = if (isRefreshing) 0.5f else 1f
