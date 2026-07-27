@@ -70,7 +70,7 @@ class ArchitectureTest {
         scope
             .classes()
             .filter { it.name.endsWith("ViewModel") }
-            .assertTrue { it.hasParent { parent -> parent.name == "ViewModel" } }
+            .assertTrue { it.hasParentWithName("ViewModel", "AndroidViewModel", indirectParents = true) }
     }
 
     @Test
