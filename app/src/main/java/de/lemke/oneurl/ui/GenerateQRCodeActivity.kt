@@ -45,6 +45,7 @@ import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
+import java.util.Locale
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
@@ -120,7 +121,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     }
 
     private fun initSizeControls(initialState: QrUiState) {
-        binding.sizeEdittext.setText(initialState.size.toString())
+        binding.sizeEdittext.setText(String.format(Locale.ROOT, "%d", initialState.size))
         binding.sizeEdittext.setOnEditorActionListener { textView, _, _ ->
             val newSize = textView.text.toString().toIntOrNull()
             if (newSize != null) {
@@ -142,7 +143,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                     progress: Int,
                     fromUser: Boolean,
                 ) {
-                    binding.sizeEdittext.setText(progress.toString())
+                    binding.sizeEdittext.setText(String.format(Locale.ROOT, "%d", progress))
                     viewModel.setSize(progress)
                 }
 

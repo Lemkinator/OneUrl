@@ -53,6 +53,7 @@ import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
+import java.text.NumberFormat
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -234,7 +235,9 @@ class URLActivity : AppCompatActivity() {
         val visitCount = state.visitCount
         binding.urlVisitsDivider.isVisible = visitCount != null
         binding.urlVisitsLayout.isVisible = visitCount != null
-        if (visitCount != null) binding.urlVisitsTextview.text = visitCount.toString()
+        if (visitCount != null) {
+            binding.urlVisitsTextview.text = NumberFormat.getIntegerInstance(resources.configuration.locales[0]).format(visitCount)
+        }
         renderVisitCountRefresh(state.isRefreshingVisits)
     }
 

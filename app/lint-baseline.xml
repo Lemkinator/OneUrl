@@ -166,37 +166,4 @@
             column="14"/>
     </issue>
 
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="        binding.sizeEdittext.setText(initialState.size.toString())"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/lemke/oneurl/ui/GenerateQRCodeActivity.kt"
-            line="123"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="                    binding.sizeEdittext.setText(progress.toString())"
-        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/lemke/oneurl/ui/GenerateQRCodeActivity.kt"
-            line="145"
-            column="50"/>
-    </issue>
-
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="        if (visitCount != null) binding.urlVisitsTextview.text = visitCount.toString()"
-        errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/de/lemke/oneurl/ui/URLActivity.kt"
-            line="237"
-            column="66"/>
-    </issue>
-
 </issues>
