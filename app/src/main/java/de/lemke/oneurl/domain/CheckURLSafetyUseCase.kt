@@ -32,7 +32,7 @@ import org.json.JSONObject
 class CheckURLSafetyUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
-    val tag = "CheckURLSafetyUseCase"
+    private val tag = "CheckURLSafetyUseCase"
 
     sealed class UrlhausResult {
         data object Ok : UrlhausResult()

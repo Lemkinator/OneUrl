@@ -32,13 +32,15 @@ object Converters {
 
     /** Returns the [ZonedDateTime] represented by the [zonedDateTimeString]. */
     @TypeConverter
-    fun zonedDateTimeFromDb(zonedDateTimeString: String?): ZonedDateTime? =
-        try {
+    fun zonedDateTimeFromDb(zonedDateTimeString: String?): ZonedDateTime? {
+        if (zonedDateTimeString == null) return null
+        return try {
             ZonedDateTime.parse(zonedDateTimeString)
         } catch (e: DateTimeParseException) {
             Log.e("Converters", "Failed to parse ZonedDateTime from db value: $zonedDateTimeString", e)
             null
         }
+    }
 
     /** Returns the string representation of the [bitmap]. */
     @TypeConverter
