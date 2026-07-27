@@ -142,6 +142,7 @@ class Unknown : ShortURLProvider {
     }
 }
 
+@Suppress("SameReturnValue")
 interface ShortURLProvider {
     val enabled: Boolean
         get() = true
