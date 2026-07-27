@@ -28,19 +28,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-/**
- * Reactive snapshot of the settings other screens need to observe live.
- *
- * Deliberately narrow: every other [UserSettings] field is only ever read synchronously (at
- * ViewModel init or on submit) by the single screen that owns it. [selectedShortURLProvider] is the
- * one exception — [de.lemke.oneurl.ui.AddURLViewModel] must react to it changing while the Add-URL
- * screen is alive, because the user can change it from [de.lemke.oneurl.ui.ProviderActivity] in the
- * background.
- */
-data class UserSettingsSnapshot(
-    val selectedShortURLProvider: ShortURLProvider = ShortURLProviderCompanion.default,
-)
-
 /** OneUrl-specific settings, layered on top of common-utils [SettingsRepository]. */
 class UserSettings(
     preferences: SharedPreferences,
@@ -101,6 +88,19 @@ class UserSettings(
         const val DEFAULT_QR_SIZE = 512
     }
 }
+
+/**
+ * Reactive snapshot of the settings other screens need to observe live.
+ *
+ * Deliberately narrow: every other [UserSettings] field is only ever read synchronously (at
+ * ViewModel init or on submit) by the single screen that owns it. [selectedShortURLProvider] is the
+ * one exception — [de.lemke.oneurl.ui.AddURLViewModel] must react to it changing while the Add-URL
+ * screen is alive, because the user can change it from [de.lemke.oneurl.ui.ProviderActivity] in the
+ * background.
+ */
+data class UserSettingsSnapshot(
+    val selectedShortURLProvider: ShortURLProvider = ShortURLProviderCompanion.default,
+)
 
 /** Emits only when [UserSettingsSnapshot.selectedShortURLProvider] changes. */
 val StateFlow<UserSettingsSnapshot>.selectedShortURLProvider: Flow<ShortURLProvider>
