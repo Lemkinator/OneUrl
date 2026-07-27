@@ -37,6 +37,8 @@ class GetURLTitleUseCase @Inject constructor(
                     url.withHttps(),
                     { response ->
                         if (!cont.isActive) return@StringRequest
+                        // Broad catch is intentional: Volley delivers this callback on the main thread, so an
+                        // unexpected exception here must not escape and crash the whole app.
                         try {
                             val title =
                                 Regex("<title[^>]*>(.*?)</title>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))

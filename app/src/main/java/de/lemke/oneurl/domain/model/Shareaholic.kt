@@ -24,6 +24,7 @@ import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import org.json.JSONException
 import org.json.JSONObject
 
 /*
@@ -94,7 +95,6 @@ object Shareaholic : ShortURLProvider {
         errorCallback(GenerateURLError.Unknown())
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleError(
         tag: String,
         error: VolleyError,
@@ -129,7 +129,7 @@ object Shareaholic : ShortURLProvider {
                     errorCallback(GenerateURLError.Unknown(statusCode))
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: JSONException) {
             Log.e(tag, "error parsing error response", e)
             errorCallback(GenerateURLError.Unknown())
         }

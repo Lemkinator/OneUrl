@@ -28,6 +28,7 @@ import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,6 +84,8 @@ class URLViewModel @Inject constructor(
             try {
                 val count = getVisitCount(url)
                 state.update { it.copy(visitCount = count, isRefreshingVisits = false) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to refresh visit count", e)
                 state.update { it.copy(isRefreshingVisits = false) }

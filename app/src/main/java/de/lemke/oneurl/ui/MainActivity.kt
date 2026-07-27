@@ -19,7 +19,6 @@ package de.lemke.oneurl.ui
 import android.R.anim.fade_in
 import android.R.anim.fade_out
 import android.annotation.SuppressLint
-import android.content.Context.INPUT_METHOD_SERVICE
 import android.content.Intent
 import android.content.Intent.ACTION_PROCESS_TEXT
 import android.content.Intent.ACTION_SEARCH
@@ -275,7 +274,6 @@ class MainActivity :
         configureItemSwipeAnimator()
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private fun updateRecyclerView(urls: List<de.lemke.oneurl.domain.model.URL>) {
         binding.noEntryView.text =
             when {

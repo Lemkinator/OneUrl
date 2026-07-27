@@ -24,6 +24,7 @@ import de.lemke.commonutils.ui.utils.withoutHttps
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import org.json.JSONException
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -101,12 +102,14 @@ sealed class Kurzelinks : ShortURLProvider {
                         Log.d(tag, "shortURL: $shortURL")
                         successCallback(shortURL)
                     }
-                } catch (e: Exception) {
+                } catch (e: JSONException) {
                     Log.e(tag, "error parsing create response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

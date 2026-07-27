@@ -26,6 +26,7 @@ import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import org.json.JSONException
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -80,7 +81,6 @@ sealed class Owovc : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         context: Context,
         url: URL,
@@ -100,7 +100,7 @@ sealed class Owovc : ShortURLProvider {
                         val clicks = response.getInt("visits")
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
-                    } catch (e: Exception) {
+                    } catch (e: JSONException) {
                         Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
@@ -144,6 +144,8 @@ sealed class Owovc : ShortURLProvider {
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

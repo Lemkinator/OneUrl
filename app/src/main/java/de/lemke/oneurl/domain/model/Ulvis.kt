@@ -27,6 +27,7 @@ import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import org.json.JSONException
 import org.json.JSONObject
 
 /*
@@ -122,7 +123,6 @@ object Ulvis : ShortURLProvider {
             ),
         )
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         context: Context,
         url: URL,
@@ -142,7 +142,7 @@ object Ulvis : ShortURLProvider {
                         val clicks = response.getJSONObject("data").getInt("hits")
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
-                    } catch (e: Exception) {
+                    } catch (e: JSONException) {
                         Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
@@ -174,7 +174,6 @@ object Ulvis : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleResponse(
         tag: String,
         response: JSONObject,
@@ -212,7 +211,7 @@ object Ulvis : ShortURLProvider {
                     errorCallback(GenerateURLError.Unknown(200))
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: JSONException) {
             Log.e(tag, "error parsing create response", e)
             errorCallback(GenerateURLError.Unknown(200))
         }
@@ -224,6 +223,8 @@ object Ulvis : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
+        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+        // escaping exception here would crash the whole app.
         try {
             Log.e(tag, "error: $error")
             val networkResponse = error.networkResponse

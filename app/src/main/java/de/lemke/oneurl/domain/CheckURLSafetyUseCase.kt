@@ -26,6 +26,7 @@ import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.json.JSONException
 import org.json.JSONObject
 
 class CheckURLSafetyUseCase @Inject constructor(
@@ -67,7 +68,6 @@ class CheckURLSafetyUseCase @Inject constructor(
             cont.invokeOnCancellation { req.cancel() }
         }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun parseUrlhausResponse(
         url: String,
         response: String,
@@ -91,7 +91,7 @@ class CheckURLSafetyUseCase @Inject constructor(
                     buildBlacklistedResult(responseJson, blacklists)
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: JSONException) {
             Log.e(tag, "Skipped Urlhaus Check for $url because of Exception: $e")
             UrlhausResult.Ok
         }
