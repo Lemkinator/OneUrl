@@ -26,7 +26,7 @@
             app:isPreferenceVisible="false" />
 
         <SwitchPreferenceCompat
-            android:key="auto_copy_on_create_pref"
+            android:key="autoCopyOnCreate"
             android:title="@string/auto_copy_on_create"
             android:summary="@string/auto_copy_on_create_summary" />
 

@@ -19,7 +19,7 @@ package de.lemke.oneurl.data
 import android.content.SharedPreferences
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.data.delegates
-import de.lemke.oneurl.di.ApplicationScope
+import de.lemke.commonutils.data.mapped
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import kotlinx.coroutines.CoroutineScope
@@ -46,15 +46,10 @@ class UserSettings(
     preferences: SharedPreferences,
     scope: CoroutineScope,
 ) : SettingsRepository(preferences) {
-    private var selectedShortURLProviderName: String by preferences.delegates
-        .string(ShortURLProviderCompanion.default.name, key = "selectedShortURLProvider")
-
     /** The URL-shortening service currently selected for new URLs. */
-    var selectedShortURLProvider: ShortURLProvider
-        get() = ShortURLProviderCompanion.fromStringOrDefault(selectedShortURLProviderName)
-        set(value) {
-            selectedShortURLProviderName = value.name
-        }
+    var selectedShortURLProvider: ShortURLProvider by preferences.delegates
+        .string(ShortURLProviderCompanion.default.name)
+        .mapped(ShortURLProviderCompanion::fromStringOrDefault) { it.name }
 
     /** The most recently entered alias in the Add-URL screen. */
     var lastAlias: String by preferences.delegates.string("")
@@ -89,13 +84,8 @@ class UserSettings(
     /** Whether the QR code's border is tinted with the foreground color. */
     var qrTintBorder: Boolean by preferences.delegates.boolean(false)
 
-    /**
-     * Whether the shortened URL is copied to the clipboard automatically after creation.
-     *
-     * Keyed to match `auto_copy_on_create_pref` in `res/xml/preferences.xml` — the SwitchPreferenceCompat
-     * there self-persists to this exact SharedPreferences key, so no manual wiring is needed.
-     */
-    var autoCopyOnCreate: Boolean by preferences.delegates.boolean(false, key = "auto_copy_on_create_pref")
+    /** Whether the shortened URL is copied to the clipboard automatically after creation. */
+    var autoCopyOnCreate: Boolean by preferences.delegates.boolean(false)
 
     /**
      * A [StateFlow] of the current [UserSettingsSnapshot]. See [settingsFlow] for the backing
