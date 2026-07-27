@@ -29,10 +29,10 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.collectEvents
-import de.lemke.commonutils.collectState
-import de.lemke.commonutils.prepareActivityTransformationTo
-import de.lemke.commonutils.setCustomBackAnimation
+import de.lemke.commonutils.ui.utils.collectEvents
+import de.lemke.commonutils.ui.utils.collectState
+import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
+import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
 import de.lemke.oneurl.domain.model.ShortURLProvider

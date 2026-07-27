@@ -116,7 +116,6 @@ dependencies {
     implementation(libs.oneui.design)
     implementation(libs.oneui.icons)
     implementation(libs.common.utils)
-    implementation(libs.datastore.preferences)
     implementation(libs.bundler)
     implementation(libs.volley)
     implementation(libs.bundles.room)

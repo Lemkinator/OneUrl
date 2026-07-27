@@ -20,10 +20,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.oneurl.domain.DeleteURLUseCase
-import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.ObserveURLsUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
-import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import javax.inject.Inject
@@ -38,8 +36,6 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val getUserSettings: GetUserSettingsUseCase,
-    private val updateUserSettings: UpdateUserSettingsUseCase,
     private val observeURLs: ObserveURLsUseCase,
     private val deleteURL: DeleteURLUseCase,
     private val updateURL: UpdateURLUseCase,
@@ -108,12 +104,6 @@ class MainViewModel @Inject constructor(
     fun setAllSelectorState(state: AllSelectorState) {
         allSelectorState.value = state
     }
-
-    fun updateAutoCopy(enabled: Boolean) {
-        viewModelScope.launch { updateUserSettings { it.copy(autoCopyOnCreate = enabled) } }
-    }
-
-    suspend fun getAutoCopyOnCreate(): Boolean = getUserSettings().autoCopyOnCreate
 }
 
 data class MainUiState(

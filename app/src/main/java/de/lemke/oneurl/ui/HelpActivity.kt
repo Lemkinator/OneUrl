@@ -19,10 +19,10 @@ package de.lemke.oneurl.ui
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.prepareActivityTransformationBetween
-import de.lemke.commonutils.sendEmailHelp
-import de.lemke.commonutils.setCustomBackAnimation
-import de.lemke.commonutils.transformToActivity
+import de.lemke.commonutils.ui.utils.prepareActivityTransformationBetween
+import de.lemke.commonutils.ui.utils.sendEmailHelp
+import de.lemke.commonutils.ui.utils.setCustomBackAnimation
+import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityHelpBinding

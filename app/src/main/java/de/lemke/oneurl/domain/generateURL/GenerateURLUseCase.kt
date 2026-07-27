@@ -23,7 +23,7 @@ import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.commonutils.di.DefaultDispatcher
-import de.lemke.commonutils.withHttps
+import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider

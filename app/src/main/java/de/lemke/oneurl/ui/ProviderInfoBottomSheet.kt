@@ -30,7 +30,7 @@ import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.openURL
+import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.oneurl.databinding.ViewProviderInfoBottomsheetBinding
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion

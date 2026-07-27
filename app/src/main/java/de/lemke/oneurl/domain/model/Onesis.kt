@@ -20,7 +20,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
-import de.lemke.commonutils.withHttps
+import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 

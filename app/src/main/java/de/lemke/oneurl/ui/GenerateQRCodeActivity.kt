@@ -31,24 +31,28 @@ import androidx.core.graphics.toColor
 import androidx.core.widget.addTextChangedListener
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.collectState
-import de.lemke.commonutils.copyToClipboard
-import de.lemke.commonutils.data.commonUtilsSettings
-import de.lemke.commonutils.exportBitmap
-import de.lemke.commonutils.prepareActivityTransformationTo
-import de.lemke.commonutils.saveBitmapToUri
-import de.lemke.commonutils.setCustomBackAnimation
-import de.lemke.commonutils.setWindowTransparent
-import de.lemke.commonutils.share
+import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.collectState
+import de.lemke.commonutils.ui.utils.copyToClipboard
+import de.lemke.commonutils.ui.utils.exportBitmap
+import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
+import de.lemke.commonutils.ui.utils.saveBitmapToUri
+import de.lemke.commonutils.ui.utils.setCustomBackAnimation
+import de.lemke.commonutils.ui.utils.setWindowTransparent
+import de.lemke.commonutils.ui.utils.share
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import java.util.Locale
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
+    @Inject
+    lateinit var settings: SettingsRepository
+
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private val viewModel: GenerateQRCodeViewModel by viewModels()
     private val minSize = 512
@@ -80,7 +84,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         val state = viewModel.state.value
         when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                state.qrCode?.let { exportBitmap(commonUtilsSettings.imageSaveLocation, it, state.url, exportQRCodeResultLauncher) }
+                state.qrCode?.let { exportBitmap(settings.imageSaveLocation, it, state.url, exportQRCodeResultLauncher) }
                 return true
             }
 

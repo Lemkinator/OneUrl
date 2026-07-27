@@ -21,7 +21,7 @@ import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
-import de.lemke.commonutils.urlEncodeAmpersand
+import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 

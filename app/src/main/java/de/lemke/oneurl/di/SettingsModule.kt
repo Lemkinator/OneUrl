@@ -16,33 +16,33 @@
 
 package de.lemke.oneurl.di
 
+import android.content.Context
+import androidx.preference.PreferenceManager
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import de.lemke.commonutils.di.DefaultDispatcher
-import javax.inject.Qualifier
+import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.oneurl.data.UserSettings
 import javax.inject.Singleton
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-
-@Retention(AnnotationRetention.RUNTIME)
-@Qualifier
-annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)
-object DispatchersModule {
-    @Provides
-    @DefaultDispatcher
-    fun provideDefault(): CoroutineDispatcher = Dispatchers.Default
-
+object SettingsProvideModule {
     @Provides
     @Singleton
-    @ApplicationScope
-    fun provideApplicationScope(
-        @DefaultDispatcher dispatcher: CoroutineDispatcher,
-    ): CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher)
+    fun provideUserSettings(
+        @ApplicationContext c: Context,
+        @ApplicationScope scope: CoroutineScope,
+    ): UserSettings = UserSettings(PreferenceManager.getDefaultSharedPreferences(c), scope)
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class SettingsBindModule {
+    @Binds
+    abstract fun bindSettingsRepository(u: UserSettings): SettingsRepository
 }

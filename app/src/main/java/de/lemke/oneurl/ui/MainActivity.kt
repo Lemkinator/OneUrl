@@ -38,28 +38,27 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.isVisible
-import androidx.preference.SwitchPreferenceCompat
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.collectEvents
-import de.lemke.commonutils.collectState
-import de.lemke.commonutils.configureCommonUtilsSplashScreen
-import de.lemke.commonutils.data.commonUtilsSettings
-import de.lemke.commonutils.onNavigationSingleClick
-import de.lemke.commonutils.onboardIfNeeded
-import de.lemke.commonutils.prepareActivityTransformationFrom
-import de.lemke.commonutils.restoreSearchAndActionMode
-import de.lemke.commonutils.saveSearchAndActionMode
-import de.lemke.commonutils.setupCommonUtilsAboutActivity
-import de.lemke.commonutils.setupCommonUtilsSettingsActivity
-import de.lemke.commonutils.setupHeaderAndNavRail
-import de.lemke.commonutils.toast
-import de.lemke.commonutils.transformToActivity
+import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
+import de.lemke.commonutils.ui.utils.collectEvents
+import de.lemke.commonutils.ui.utils.collectState
+import de.lemke.commonutils.ui.utils.configureCommonUtilsSplashScreen
+import de.lemke.commonutils.ui.utils.onNavigationSingleClick
+import de.lemke.commonutils.ui.utils.onboardIfNeeded
+import de.lemke.commonutils.ui.utils.prepareActivityTransformationFrom
+import de.lemke.commonutils.ui.utils.restoreSearchAndActionMode
+import de.lemke.commonutils.ui.utils.saveSearchAndActionMode
+import de.lemke.commonutils.ui.utils.setupCommonUtilsAboutActivity
+import de.lemke.commonutils.ui.utils.setupCommonUtilsSettingsActivity
+import de.lemke.commonutils.ui.utils.setupHeaderAndNavRail
+import de.lemke.commonutils.ui.utils.toast
+import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityMainBinding
@@ -70,7 +69,6 @@ import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import dev.oneuiproject.oneui.ktx.onNewValue
 import dev.oneuiproject.oneui.ktx.onSingleClick
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchOnActionMode
@@ -83,6 +81,7 @@ import dev.oneuiproject.oneui.recyclerview.ktx.hideSoftInputOnScroll
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
+import javax.inject.Inject
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.R as iconsR
 import dev.oneuiproject.oneui.design.R as designR
@@ -91,6 +90,9 @@ import dev.oneuiproject.oneui.design.R as designR
 class MainActivity :
     AppCompatActivity(),
     ViewYTranslator by AppBarAwareYTranslator() {
+    @Inject
+    lateinit var settings: SettingsRepository
+
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val urlAdapter: URLAdapter by lazy {
@@ -104,7 +106,12 @@ class MainActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-        onboardIfNeeded(BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME, allowSkip = BuildConfig.FIRST_RUN_SKIPPABLE) ?: return
+        onboardIfNeeded(
+            BuildConfig.VERSION_CODE,
+            BuildConfig.VERSION_NAME,
+            settings,
+            allowSkip = BuildConfig.FIRST_RUN_SKIPPABLE,
+        ) ?: return
         prepareActivityTransformationFrom()
         if (SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -130,14 +137,7 @@ class MainActivity :
             R.xml.preferences,
             commonutilsR.xml.preferences_dev_options_delete_app_data,
             commonutilsR.xml.preferences_more_info,
-        ) {
-            findPreference<SwitchPreferenceCompat>("auto_copy_on_create_pref")?.let { autoCopyOnCreatePref ->
-                autoCopyOnCreatePref.isChecked = viewModel.getAutoCopyOnCreate()
-                autoCopyOnCreatePref.onNewValue { newValue: Boolean ->
-                    viewModel.updateAutoCopy(newValue)
-                }
-            }
-        }
+        )
         initDrawer()
         initRecycler()
         savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
@@ -217,7 +217,7 @@ class MainActivity :
     private fun startSearch() =
         binding.drawerLayout.startSearchMode(
             onStart = {
-                viewModel.setSearch(commonUtilsSettings.search)
+                viewModel.setSearch(settings.search)
                 binding.addFab.isVisible = false
                 it.setQuery(viewModel.search.value, false)
                 (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(it, 0)
@@ -225,7 +225,7 @@ class MainActivity :
             onQuery = { query, isSubmit ->
                 viewModel.setSearch(query)
                 urlAdapter.highlightWord = query
-                commonUtilsSettings.search = query
+                settings.search = query
                 if (isSubmit) hideSoftInput()
                 true
             },

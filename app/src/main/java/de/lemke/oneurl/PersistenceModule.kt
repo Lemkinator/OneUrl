@@ -17,9 +17,6 @@
 package de.lemke.oneurl
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import dagger.Module
 import dagger.Provides
@@ -33,14 +30,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object PersistenceModule {
-    private val Context.userSettingsStore: DataStore<Preferences> by preferencesDataStore(name = "userSettings")
-
-    @Provides
-    @Singleton
-    fun provideUserSettingsDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> = context.userSettingsStore
-
     @Provides
     @Singleton
     fun provideAppDatabase(

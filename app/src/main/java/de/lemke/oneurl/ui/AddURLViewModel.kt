@@ -21,13 +21,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.commonutils.di.DefaultDispatcher
+import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.data.selectedShortURLProvider
 import de.lemke.oneurl.domain.AddURLUseCase
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLTitleUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
-import de.lemke.oneurl.domain.GetUserSettingsUseCase
-import de.lemke.oneurl.domain.ObserveUserSettingsUseCase
-import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.GenerateURLResult
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
@@ -50,9 +49,7 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class AddURLViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val getUserSettings: GetUserSettingsUseCase,
-    private val observeUserSettings: ObserveUserSettingsUseCase,
-    private val updateUserSettings: UpdateUserSettingsUseCase,
+    private val userSettings: UserSettings,
     private val generateURL: GenerateURLUseCase,
     private val getURLTitle: GetURLTitleUseCase,
     private val generateQRCode: GenerateQRCodeUseCase,
@@ -69,22 +66,19 @@ class AddURLViewModel @Inject constructor(
     private val intentUrl: String? = savedStateHandle.get<String>("url")
 
     init {
-        viewModelScope.launch {
-            val settings = getUserSettings()
-            state.update {
-                it.copy(
-                    selectedProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(settings.selectedShortURLProvider),
-                    initialURL = intentUrl ?: settings.lastURL,
-                    initialAlias = settings.lastAlias,
-                    initialDescription = settings.lastDescription,
-                    isLoading = false,
-                )
-            }
-            if (intentUrl != null) updateUserSettings { it.copy(lastURL = intentUrl) }
+        state.update {
+            it.copy(
+                selectedProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(userSettings.selectedShortURLProvider),
+                initialURL = intentUrl ?: userSettings.lastURL,
+                initialAlias = userSettings.lastAlias,
+                initialDescription = userSettings.lastDescription,
+                isLoading = false,
+            )
         }
+        if (intentUrl != null) userSettings.lastURL = intentUrl
         viewModelScope.launch {
-            observeUserSettings().collectLatest { settings ->
-                val newProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(settings.selectedShortURLProvider)
+            userSettings.flow.selectedShortURLProvider.collectLatest { provider ->
+                val newProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(provider)
                 if (newProvider != state.value.selectedProvider) {
                     state.update { it.copy(selectedProvider = newProvider) }
                 }
@@ -93,15 +87,15 @@ class AddURLViewModel @Inject constructor(
     }
 
     fun onLongURLChanged(text: String) {
-        viewModelScope.launch { updateUserSettings { it.copy(lastURL = text) } }
+        userSettings.lastURL = text
     }
 
     fun onAliasChanged(text: String) {
-        viewModelScope.launch { updateUserSettings { it.copy(lastAlias = text) } }
+        userSettings.lastAlias = text
     }
 
     fun onDescriptionChanged(text: String) {
-        viewModelScope.launch { updateUserSettings { it.copy(lastDescription = text) } }
+        userSettings.lastDescription = text
     }
 
     fun submit(
@@ -159,8 +153,7 @@ class AddURLViewModel @Inject constructor(
                         ),
                     )
                     state.update { it.copy(isLoading = false) }
-                    val settings = getUserSettings()
-                    if (settings.autoCopyOnCreate) {
+                    if (userSettings.autoCopyOnCreate) {
                         _events.send(AddUrlEvent.CopyAndFinish(result.shortURL, title))
                     } else {
                         _events.send(AddUrlEvent.Saved)
