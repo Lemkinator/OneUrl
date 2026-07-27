@@ -1,23 +1,39 @@
 [versions]
+#noinspection UnusedVersionCatalogEntry
+jvmTarget = "21"
+
 aboutlibraries = "15.0.4"
 bundler = "1.0.4"
 # pinned below 1.2.0 until Plan 3's SettingsRepository migration lands
 #noinspection GradleDependency
 commonUtils = "1.1.4"
-leakcanary = "2.14"
-oneui-design = "0.9.14+oneui8"
-oneui-icons = "1.1.0"
+dependency-analysis = "3.17.0"
+detekt = "2.0.0-alpha.5"
 datastorePreferences = "1.2.1"
 gradle = "9.3.1"
 gradle-secrets = "2.0.1"
 hilt = "2.60.1"
+junit-jupiter = "6.1.2"
+junit-platform = "6.1.2"
+konsist = "0.17.3"
 kotlin = "2.4.10"
 ksp = "2.3.10"
+# Used via spotless { kotlin { ktlint(libs.versions.ktlint.get()) } } — version-only ref, no library/plugin alias
+#noinspection UnusedVersionCatalogEntry
+ktlint = "1.8.0"
+leakcanary = "2.14"
+oneui-design = "0.9.14+oneui8"
+oneui-icons = "1.1.0"
 room = "2.8.4"
+spotless = "8.8.0"
 volley = "1.2.1"
 
 [libraries]
 bundler = { module = "com.github.skydoves:bundler", version.ref = "bundler" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
+konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 oneui-design = { module = "io.github.tribalfs:oneui-design", version.ref = "oneui-design" }
 oneui-icons = { module = "io.github.oneuiproject:icons", version.ref = "oneui-icons" }
@@ -33,10 +49,13 @@ volley = { module = "com.android.volley:volley", version.ref = "volley" }
 [plugins]
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "gradle" }
+dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependency-analysis" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 gradle-secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "gradle-secrets" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 
 [bundles]
 room = ["room-ktx", "room-runtime"]

@@ -1,13 +1,31 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
 /*
@@ -47,102 +65,117 @@ sealed class VgdIsgd : ShortURLProvider {
             Request.Method.GET,
             url,
             null,
-            { response ->
-                Log.d(tag, "response: $response")
-                if (response.has("errorcode")) {
-                    Log.e(tag, "errorcode: ${response.getString("errorcode")}")
-                    Log.e(tag, "errormessage: ${response.optString("errormessage")}")
-                    /*
-                    Error code 1 - there was a problem with the original long URL provided.
-                    Please specify a URL to shorten.                                            //should not happen, checked before
-                    Please enter a valid URL to shorten.
-                    Sorry, the URL you entered is on our internal blacklist. It may have been used abusively in the past, or it may link to another URL redirection service.
-                    Error code 2 - there was a problem with the short URL provided (for custom short URLs).
-                    Short URLs must be at least 5 characters long.                               //should not happen, checked before
-                    Short URLs may only contain the characters a-z, 0-9 and underscore.          //should not happen, checked before
-                    The shortened URL you picked already exists, please choose another.
-                    Error code 3 - our rate limit was exceeded (your app should wait before trying again).
-                    Error code 4 - any other error (includes potential problems with our service such as a maintenance period).
-                     */
-                    when (response.getString("errorcode")) {
-                        "1" -> {
-                            if (response.optString("errormessage").contains("blacklist", ignoreCase = true)) {
-                                errorCallback(GenerateURLError.BlacklistedURL())
-                            } else {
-                                errorCallback(GenerateURLError.InvalidURL)
-                            }
-                        }
+            { response -> handleResponse(tag, response, successCallback, errorCallback) },
+            { error -> handleError(tag, context, error, errorCallback) },
+        )
+    }
 
-                        "2" -> {
-                            errorCallback(GenerateURLError.AliasAlreadyExists)
-                        }
-
-                        "3" -> {
-                            errorCallback(GenerateURLError.RateLimitExceeded)
-                        }
-
-                        "4" -> {
-                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        }
-
-                        else -> {
-                            errorCallback(
-                                GenerateURLError.Custom(
-                                    200,
-                                    response.optString("errormessage") + " (${response.getString("errorcode")})",
-                                ),
-                            )
-                        }
+    private fun handleResponse(
+        tag: String,
+        response: JSONObject,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        Log.d(tag, "response: $response")
+        if (response.has("errorcode")) {
+            Log.e(tag, "errorcode: ${response.getString("errorcode")}")
+            Log.e(tag, "errormessage: ${response.optString("errormessage")}")
+            /*
+            Error code 1 - there was a problem with the original long URL provided.
+            Please specify a URL to shorten.                                            //should not happen, checked before
+            Please enter a valid URL to shorten.
+            Sorry, the URL you entered is on our internal blacklist. It may have been used abusively in the past,
+            or it may link to another URL redirection service.
+            Error code 2 - there was a problem with the short URL provided (for custom short URLs).
+            Short URLs must be at least 5 characters long.                               //should not happen, checked before
+            Short URLs may only contain the characters a-z, 0-9 and underscore.          //should not happen, checked before
+            The shortened URL you picked already exists, please choose another.
+            Error code 3 - our rate limit was exceeded (your app should wait before trying again).
+            Error code 4 - any other error (includes potential problems with our service such as a maintenance period).
+             */
+            when (response.getString("errorcode")) {
+                "1" -> {
+                    if (response.optString("errormessage").contains("blacklist", ignoreCase = true)) {
+                        errorCallback(GenerateURLError.BlacklistedURL())
+                    } else {
+                        errorCallback(GenerateURLError.InvalidURL)
                     }
-                    return@JsonObjectRequest
                 }
-                if (!response.has("shorturl")) {
-                    Log.e(tag, "error, response does not contain shorturl, response: $response")
-                    errorCallback(GenerateURLError.Unknown(200))
-                    return@JsonObjectRequest
+
+                "2" -> {
+                    errorCallback(GenerateURLError.AliasAlreadyExists)
                 }
-                val shortURL = response.getString("shorturl").trim()
-                Log.d(tag, "shortURL: $shortURL")
-                successCallback(shortURL)
-            },
-            { error ->
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> {
-                            errorCallback(GenerateURLError.ServiceOffline)
-                        }
 
-                        statusCode == null -> {
-                            errorCallback(GenerateURLError.Unknown())
-                        }
+                "3" -> {
+                    errorCallback(GenerateURLError.RateLimitExceeded)
+                }
 
-                        data.isNullOrBlank() -> {
-                            errorCallback(GenerateURLError.Unknown(statusCode))
-                        }
+                "4" -> {
+                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                }
 
-                        error.message?.contains("JSONException", true) == true -> {
-                            // https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
-                            // Update: Works fine now?
-                            Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
-                            errorCallback(GenerateURLError.Custom(statusCode, context.getString(R.string.error_vgd_isgd)))
-                        }
+                else -> {
+                    errorCallback(
+                        GenerateURLError.Custom(
+                            200,
+                            response.optString("errormessage") + " (${response.getString("errorcode")})",
+                        ),
+                    )
+                }
+            }
+            return
+        }
+        if (!response.has("shorturl")) {
+            Log.e(tag, "error, response does not contain shorturl, response: $response")
+            errorCallback(GenerateURLError.Unknown(200))
+            return
+        }
+        val shortURL = response.getString("shorturl").trim()
+        Log.d(tag, "shortURL: $shortURL")
+        successCallback(shortURL)
+    }
 
-                        else -> {
-                            errorCallback(GenerateURLError.Custom(statusCode, data))
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error: $e")
-                    e.printStackTrace()
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleError(
+        tag: String,
+        context: Context,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.e(tag, "error: $error")
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+            when {
+                error is NoConnectionError -> {
+                    errorCallback(GenerateURLError.ServiceOffline)
+                }
+
+                statusCode == null -> {
                     errorCallback(GenerateURLError.Unknown())
                 }
-            },
-        )
+
+                data.isNullOrBlank() -> {
+                    errorCallback(GenerateURLError.Unknown(statusCode))
+                }
+
+                error.message?.contains("JSONException", true) == true -> {
+                    // https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
+                    // Update: Works fine now?
+                    Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
+                    errorCallback(GenerateURLError.Custom(statusCode, context.getString(R.string.error_vgd_isgd)))
+                }
+
+                else -> {
+                    errorCallback(GenerateURLError.Custom(statusCode, data))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error: $e", e)
+            errorCallback(GenerateURLError.Unknown())
+        }
     }
 
     object Vgd : VgdIsgd() {

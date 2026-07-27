@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
@@ -33,9 +49,11 @@ import de.lemke.commonutils.urlEncode
 import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityUrlBinding
+import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
+import java.text.NumberFormat
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -76,40 +94,29 @@ class URLActivity : AppCompatActivity() {
         val longURL =
             viewModel.state.value.url
                 ?.longURL ?: return false
-        return when (item.itemId) {
-            R.id.url_toolbar_norton_safe_web -> {
-                openURL("https://safeweb.norton.com/report/show?url=${longURL.urlEncode()}").let { true }
-            }
-
-            R.id.url_toolbar_google_safe_browsing -> {
-                openURL(
-                    "https://transparencyreport.google.com/safe-browsing/search?url=${longURL.urlEncode()}",
-                ).let {
-                    true
-                }
-            }
-
-            R.id.url_toolbar_link_shield -> {
-                openURL("https://linkshieldapi.com/?url=${longURL.urlEncode()}").let { true }
-            }
-
-            R.id.url_toolbar_malshare -> {
-                openURL("https://malshare.com/search.php?query=${longURL.urlEncode()}").let { true }
-            }
-
-            R.id.url_toolbar_urlhaus -> {
-                openURL("https://urlhaus.abuse.ch/browse.php?search=${longURL.urlEncode()}").let { true }
-            }
-
-            R.id.url_toolbar_kaspersky -> {
-                openURL("https://opentip.kaspersky.com/${longURL.urlEncode()}/?tab=lookup").let { true }
-            }
-
-            else -> {
-                super.onOptionsItemSelected(item)
-            }
-        }
+        val urlScanTemplate = urlScanTemplateFor(item.itemId) ?: return super.onOptionsItemSelected(item)
+        openURL(urlScanTemplate(longURL.urlEncode()))
+        return true
     }
+
+    private fun urlScanTemplateFor(itemId: Int): ((encodedURL: String) -> String)? =
+        when (itemId) {
+            R.id.url_toolbar_norton_safe_web -> { encoded -> "https://safeweb.norton.com/report/show?url=$encoded" }
+
+            R.id.url_toolbar_google_safe_browsing -> { encoded ->
+                "https://transparencyreport.google.com/safe-browsing/search?url=$encoded"
+            }
+
+            R.id.url_toolbar_link_shield -> { encoded -> "https://linkshieldapi.com/?url=$encoded" }
+
+            R.id.url_toolbar_malshare -> { encoded -> "https://malshare.com/search.php?query=$encoded" }
+
+            R.id.url_toolbar_urlhaus -> { encoded -> "https://urlhaus.abuse.ch/browse.php?search=$encoded" }
+
+            R.id.url_toolbar_kaspersky -> { encoded -> "https://opentip.kaspersky.com/$encoded/?tab=lookup" }
+
+            else -> null
+        }
 
     private fun collectState() =
         collectState(viewModel.state) { state ->
@@ -117,106 +124,122 @@ class URLActivity : AppCompatActivity() {
             val url = state.url
             if (url.shortURL != lastBoundShortURL) {
                 lastBoundShortURL = url.shortURL
-                val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
-                binding.root.setTitle(url.shortURL)
-                binding.urlQrImageview.setImageBitmap(url.qr)
-                binding.urlQrImageview.setOnClickListener {
-                    createQRBottomSheet(url.shortURL, url.qr, commonUtilsSettings.imageSaveLocation).show(supportFragmentManager, null)
-                }
-                binding.urlQrImageview.setOnLongClickListener {
-                    url.qr
-                        .copyToClipboard(
-                            this@URLActivity,
-                            "QR Code",
-                            "QRCode.png",
-                        ).let { true }
-                }
-                binding.urlQrSaveButton.setOnClickListener {
-                    exportBitmap(
-                        commonUtilsSettings.imageSaveLocation,
-                        url.qr,
-                        url.shortURL,
-                        exportQRCodeResultLauncher,
-                    )
-                }
-                binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
-                binding.urlShortButton.text =
-                    searchHighlighter(url.shortURL, highlightText).apply {
-                        setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
-                    }
-                binding.urlShortButton.setOnClickListener { openURL(url.shortURL.withHttps()) }
-                binding.urlShortButton.setOnLongClickListener { copyToClipboard(url.shortURL, "Short URL") }
-                binding.urlShortShareButton.setOnClickListener { shareText(url.shortURL) }
-                binding.urlLongButton.text =
-                    searchHighlighter(url.longURL, highlightText).apply {
-                        setSpan(UnderlineSpan(), 0, url.longURL.length, 0)
-                    }
-                binding.urlLongButton.setOnClickListener { openURL(url.longURL.withHttps()) }
-                binding.urlLongButton.setOnLongClickListener { copyToClipboard(url.longURL, "Long URL") }
-                binding.urlLongShareButton.setOnClickListener { shareText(url.longURL) }
-                binding.urlTitleLayout.isVisible = url.title.isNotBlank()
-                binding.urlTitleDivider.isVisible = url.title.isNotBlank()
-                if (url.title.isNotBlank()) binding.urlTitleTextview.text = searchHighlighter(url.title, highlightText)
-                binding.urlDescriptionLayout.isVisible = url.description.isNotBlank()
-                binding.urlDescriptionDivider.isVisible = url.description.isNotBlank()
-                if (url.description.isNotBlank()) binding.urlDescriptionTextview.text = searchHighlighter(url.description, highlightText)
-                binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, highlightText)
-                binding.urlVisitsRefreshButton.setOnClickListener { viewModel.refreshVisitCount() }
-                binding.bottomTipView.setOnLinkClickListener { copyToClipboard(url.shortURL, "Short URL") }
-                binding.urlBnv.menu
-                    .findItem(R.id.url_bnv_analytics)
-                    ?.isVisible = url.shortURLProvider.getAnalyticsURL(url.alias) != null
-                binding.urlBnv.setOnItemSelectedListener { item ->
-                    when (item.itemId) {
-                        R.id.url_bnv_analytics -> {
-                            val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return@setOnItemSelectedListener false
-                            openURL(analyticsURL)
-                            true
-                        }
+                bindURL(url)
+            }
+            updateFavoriteAndVisitViews(state, url)
+        }
 
-                        R.id.url_bnv_provider_info -> {
-                            showProviderInfoBottomSheet(url.shortURLProvider).let { true }
-                        }
+    private fun bindURL(url: URL) {
+        val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
+        binding.root.setTitle(url.shortURL)
+        binding.urlQrImageview.setImageBitmap(url.qr)
+        binding.urlQrImageview.setOnClickListener {
+            createQRBottomSheet(url.shortURL, url.qr, commonUtilsSettings.imageSaveLocation).show(supportFragmentManager, null)
+        }
+        binding.urlQrImageview.setOnLongClickListener {
+            url.qr
+                .copyToClipboard(
+                    this@URLActivity,
+                    "QR Code",
+                    "QRCode.png",
+                ).let { true }
+        }
+        binding.urlQrSaveButton.setOnClickListener {
+            exportBitmap(
+                commonUtilsSettings.imageSaveLocation,
+                url.qr,
+                url.shortURL,
+                exportQRCodeResultLauncher,
+            )
+        }
+        binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
+        binding.urlShortButton.text =
+            searchHighlighter(url.shortURL, highlightText).apply {
+                setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
+            }
+        binding.urlShortButton.setOnClickListener { openURL(url.shortURL.withHttps()) }
+        binding.urlShortButton.setOnLongClickListener { copyToClipboard(url.shortURL, "Short URL") }
+        binding.urlShortShareButton.setOnClickListener { shareText(url.shortURL) }
+        binding.urlLongButton.text =
+            searchHighlighter(url.longURL, highlightText).apply {
+                setSpan(UnderlineSpan(), 0, url.longURL.length, 0)
+            }
+        binding.urlLongButton.setOnClickListener { openURL(url.longURL.withHttps()) }
+        binding.urlLongButton.setOnLongClickListener { copyToClipboard(url.longURL, "Long URL") }
+        binding.urlLongShareButton.setOnClickListener { shareText(url.longURL) }
+        binding.urlTitleLayout.isVisible = url.title.isNotBlank()
+        binding.urlTitleDivider.isVisible = url.title.isNotBlank()
+        if (url.title.isNotBlank()) binding.urlTitleTextview.text = searchHighlighter(url.title, highlightText)
+        binding.urlDescriptionLayout.isVisible = url.description.isNotBlank()
+        binding.urlDescriptionDivider.isVisible = url.description.isNotBlank()
+        if (url.description.isNotBlank()) binding.urlDescriptionTextview.text = searchHighlighter(url.description, highlightText)
+        binding.urlAddedTextview.text = searchHighlighter(url.addedFormatMedium, highlightText)
+        binding.urlVisitsRefreshButton.setOnClickListener { viewModel.refreshVisitCount() }
+        binding.bottomTipView.setOnLinkClickListener { copyToClipboard(url.shortURL, "Short URL") }
+        binding.urlBnv.menu
+            .findItem(R.id.url_bnv_analytics)
+            ?.isVisible = url.shortURLProvider.getAnalyticsURL(url.alias) != null
+        binding.urlBnv.setOnItemSelectedListener { item -> handleBnvItemSelected(item, url) }
+        setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
+    }
 
-                        R.id.url_bnv_add_to_fav -> {
-                            viewModel.toggleFavorite().let { true }
-                        }
-
-                        R.id.url_bnv_remove_from_fav -> {
-                            viewModel.toggleFavorite().let { true }
-                        }
-
-                        R.id.url_bnv_delete -> {
-                            AlertDialog
-                                .Builder(this@URLActivity)
-                                .setTitle(commonutilsR.string.commonutils_delete)
-                                .setMessage(R.string.delete_url_message)
-                                .setPositiveButton(commonutilsR.string.commonutils_delete) { _, _ -> viewModel.delete() }
-                                .setNegativeButton(designR.string.oui_des_common_cancel, null)
-                                .show()
-                            true
-                        }
-
-                        else -> {
-                            false
-                        }
-                    }
-                }
-                setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
+    private fun handleBnvItemSelected(
+        item: MenuItem,
+        url: URL,
+    ): Boolean =
+        when (item.itemId) {
+            R.id.url_bnv_analytics -> {
+                val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return false
+                openURL(analyticsURL)
+                true
             }
 
-            binding.urlBnv.menu
-                .findItem(R.id.url_bnv_add_to_fav)
-                ?.isVisible = !url.favorite
-            binding.urlBnv.menu
-                .findItem(R.id.url_bnv_remove_from_fav)
-                ?.isVisible = url.favorite
-            val visitCount = state.visitCount
-            binding.urlVisitsDivider.isVisible = visitCount != null
-            binding.urlVisitsLayout.isVisible = visitCount != null
-            if (visitCount != null) binding.urlVisitsTextview.text = visitCount.toString()
-            renderVisitCountRefresh(state.isRefreshingVisits)
+            R.id.url_bnv_provider_info -> {
+                showProviderInfoBottomSheet(url.shortURLProvider).let { true }
+            }
+
+            R.id.url_bnv_add_to_fav -> {
+                viewModel.toggleFavorite().let { true }
+            }
+
+            R.id.url_bnv_remove_from_fav -> {
+                viewModel.toggleFavorite().let { true }
+            }
+
+            R.id.url_bnv_delete -> {
+                AlertDialog
+                    .Builder(this@URLActivity)
+                    .setTitle(commonutilsR.string.commonutils_delete)
+                    .setMessage(R.string.delete_url_message)
+                    .setPositiveButton(commonutilsR.string.commonutils_delete) { _, _ -> viewModel.delete() }
+                    .setNegativeButton(designR.string.oui_des_common_cancel, null)
+                    .show()
+                true
+            }
+
+            else -> {
+                false
+            }
         }
+
+    private fun updateFavoriteAndVisitViews(
+        state: UrlDetailUiState,
+        url: URL,
+    ) {
+        binding.urlBnv.menu
+            .findItem(R.id.url_bnv_add_to_fav)
+            ?.isVisible = !url.favorite
+        binding.urlBnv.menu
+            .findItem(R.id.url_bnv_remove_from_fav)
+            ?.isVisible = url.favorite
+        val visitCount = state.visitCount
+        binding.urlVisitsDivider.isVisible = visitCount != null
+        binding.urlVisitsLayout.isVisible = visitCount != null
+        if (visitCount != null) {
+            binding.urlVisitsTextview.text = NumberFormat.getIntegerInstance(resources.configuration.locales[0]).format(visitCount)
+        }
+        renderVisitCountRefresh(state.isRefreshingVisits)
+    }
 
     @SuppressLint("SetTextI18n")
     private fun renderVisitCountRefresh(isRefreshing: Boolean) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.ui
 
 import android.content.res.ColorStateList
@@ -29,6 +45,7 @@ import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
+import java.util.Locale
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
@@ -90,12 +107,21 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         }
 
     private fun initControls(initialState: QrUiState) {
+        initUrlField(initialState)
+        initSizeControls(initialState)
+        initToggles(initialState)
+        initColorButtons()
+    }
+
+    private fun initUrlField(initialState: QrUiState) {
         binding.editTextURL.setText(initialState.url)
         binding.editTextURL.requestFocus()
         binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
         binding.editTextURL.addTextChangedListener { text -> viewModel.setUrl(text.toString()) }
+    }
 
-        binding.sizeEdittext.setText(initialState.size.toString())
+    private fun initSizeControls(initialState: QrUiState) {
+        binding.sizeEdittext.setText(String.format(Locale.ROOT, "%d", initialState.size))
         binding.sizeEdittext.setOnEditorActionListener { textView, _, _ ->
             val newSize = textView.text.toString().toIntOrNull()
             if (newSize != null) {
@@ -117,7 +143,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                     progress: Int,
                     fromUser: Boolean,
                 ) {
-                    binding.sizeEdittext.setText(progress.toString())
+                    binding.sizeEdittext.setText(String.format(Locale.ROOT, "%d", progress))
                     viewModel.setSize(progress)
                 }
 
@@ -126,7 +152,9 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 override fun onStopTrackingTouch(seekBar: SeslSeekBar) {}
             },
         )
+    }
 
+    private fun initToggles(initialState: QrUiState) {
         binding.frameCheckbox.isChecked = initialState.roundedFrame
         binding.frameCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setRoundedFrame(isChecked) }
 
@@ -142,7 +170,9 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         binding.tintAnchorCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
             viewModel.setTintAnchor(isChecked)
         }
+    }
 
+    private fun initColorButtons() {
         binding.colorButtonBackground.setOnClickListener {
             val state = viewModel.state.value
             SeslColorPickerDialog(

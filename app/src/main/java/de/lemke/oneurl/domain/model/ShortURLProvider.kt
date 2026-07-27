@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.annotation.SuppressLint
@@ -43,9 +59,9 @@ https://shorturl.73.nu/
 https://sor.bz/
  */
 
-class ShortURLProviderCompanion {
-    companion object {
-        private val provider: List<ShortURLProvider> = listOf(
+object ShortURLProviderCompanion {
+    private val provider: List<ShortURLProvider> =
+        listOf(
             Dagd,
             VgdIsgd.Isgd,
             VgdIsgd.Vgd,
@@ -55,11 +71,11 @@ class ShortURLProviderCompanion {
             Kurzelinks.Ogy,
             Lstu,
             Tinube,
-            Ulvis, //disabled
+            Ulvis, // disabled
             Tinyurl,
-            Onesis, //disabled
+            Onesis, // disabled
             Gg,
-            L4f, //disabled
+            L4f, // disabled
             Oneptco,
             Tnyim,
             Shareaholic,
@@ -68,41 +84,40 @@ class ShortURLProviderCompanion {
             Tly.Ibitly,
             Tly.Twtrto,
             Tly.Jpegly,
-            Tly.Rebrandly, //disabled
-            Tly.Bitly, //disabled
-            Shrtlnk, //disabled
-            Shorturlat, //disabled
+            Tly.Rebrandly, // disabled
+            Tly.Bitly, // disabled
+            Shrtlnk, // disabled
+            Shorturlat, // disabled
             Zwsim,
             Spoome.Default,
             Spoome.Emoji,
-            Owovc.Owo, //disabled
-            Owovc.Zws, //disabled
-            Owovc.Sketchy, //disabled
-            Owovc.Gay, //disabled
+            Owovc.Owo, // disabled
+            Owovc.Zws, // disabled
+            Owovc.Sketchy, // disabled
+            Owovc.Gay, // disabled
         )
 
-        /*
-        provide kurzelinks.de for German users only
-        Assigning Locale.getDefault() to a final static field (suspicious)
-        intended behavior: if the user changes locale while the app is running,
-        the app will not update the list of available providers until restart
-         */
-        @SuppressLint("ConstantLocale")
-        val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
+    /*
+    provide kurzelinks.de for German users only
+    Assigning Locale.getDefault() to a final static field (suspicious)
+    intended behavior: if the user changes locale while the app is running,
+    the app will not update the list of available providers until restart
+     */
+    @SuppressLint("ConstantLocale")
+    val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
 
-        val enabled = all.filter { it.enabled }
+    val enabled = all.filter { it.enabled }
 
-        val default: ShortURLProvider = enabled.first()
+    val default: ShortURLProvider = enabled.first()
 
-        fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
-            if (shortURLProvider in enabled) shortURLProvider ?: default else default
+    fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
+        if (shortURLProvider in enabled) shortURLProvider ?: default else default
 
-        private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
+    private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
 
-        fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
+    fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
 
-        fun fromStringOrDefault(name: String?): ShortURLProvider = fromStringOrNull(name) ?: default
-    }
+    fun fromStringOrDefault(name: String?): ShortURLProvider = fromStringOrNull(name) ?: default
 }
 
 class Unknown : ShortURLProvider {
@@ -121,6 +136,7 @@ class Unknown : ShortURLProvider {
         errorCallback(GenerateURLError.Unknown())
         return object : Request<Any>(Method.GET, "", Response.ErrorListener { }) {
             override fun deliverResponse(response: Any?) {}
+
             override fun parseNetworkResponse(response: NetworkResponse?) = null
         }
     }
@@ -146,7 +162,11 @@ interface ShortURLProvider {
 
     fun getAnalyticsURL(alias: String): String? = null
 
-    fun getURLClickCount(context: Context, url: URL, callback: (clicks: Int?) -> Unit) = callback(null)
+    fun getURLClickCount(
+        context: Context,
+        url: URL,
+        callback: (clicks: Int?) -> Unit,
+    ) = callback(null)
 
     fun sanitizeLongURL(url: String): String = url.trim()
 
@@ -159,27 +179,29 @@ interface ShortURLProvider {
     ): Request<*>
 
     fun getInfoContents(context: Context): List<ProviderInfo> = emptyList()
-    fun getInfoButtons(context: Context): List<ProviderInfo> = listOfNotNull(
-        privacyURL?.let {
+
+    fun getInfoButtons(context: Context): List<ProviderInfo> =
+        listOfNotNull(
+            privacyURL?.let {
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
+                    context.getString(commonutilsR.string.commonutils_privacy_policy),
+                    it,
+                )
+            },
+            termsURL?.let {
+                ProviderInfo(
+                    dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
+                    context.getString(commonutilsR.string.commonutils_tos),
+                    it,
+                )
+            },
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_privacy,
-                context.getString(commonutilsR.string.commonutils_privacy_policy),
-                it
-            )
-        },
-        termsURL?.let {
-            ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_memo_outline,
-                context.getString(commonutilsR.string.commonutils_tos),
-                it
-            )
-        },
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
-            context.getString(commonutilsR.string.commonutils_more_information),
-            infoURL
+                dev.oneuiproject.oneui.R.drawable.ic_oui_info_outline,
+                context.getString(commonutilsR.string.commonutils_more_information),
+                infoURL,
+            ),
         )
-    )
 
     fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? = null
 }
@@ -198,5 +220,6 @@ interface AliasConfig {
     val minAliasLength: Int
     val maxAliasLength: Int
     val allowedAliasCharacters: String
+
     fun isAliasValid(alias: String): Boolean
 }

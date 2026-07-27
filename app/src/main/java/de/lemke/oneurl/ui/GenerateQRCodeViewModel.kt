@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
@@ -8,13 +24,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetUserSettingsUseCase
 import de.lemke.oneurl.domain.UpdateUserSettingsUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class GenerateQRCodeViewModel @Inject constructor(
@@ -53,20 +69,22 @@ class GenerateQRCodeViewModel @Inject constructor(
         state.update { it.copy(url = url) }
         regenerate()
         urlSaveJob?.cancel()
-        urlSaveJob = viewModelScope.launch {
-            delay(300)
-            updateUserSettings { it.copy(qrURL = url) }
-        }
+        urlSaveJob =
+            viewModelScope.launch {
+                delay(300)
+                updateUserSettings { it.copy(qrURL = url) }
+            }
     }
 
     fun setSize(size: Int) {
         state.update { it.copy(size = size) }
         regenerate()
         sizeSaveJob?.cancel()
-        sizeSaveJob = viewModelScope.launch {
-            delay(300)
-            updateUserSettings { it.copy(qrSize = size) }
-        }
+        sizeSaveJob =
+            viewModelScope.launch {
+                delay(300)
+                updateUserSettings { it.copy(qrSize = size) }
+            }
     }
 
     fun setRoundedFrame(enabled: Boolean) {
@@ -94,14 +112,24 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun setForegroundColor(color: Int) {
-        val recentColors = state.value.recentForegroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
+        val recentColors =
+            state.value.recentForegroundColors
+                .toMutableList()
+                .also { it.add(0, color) }
+                .distinct()
+                .take(6)
         state.update { it.copy(foregroundColor = color, recentForegroundColors = recentColors) }
         viewModelScope.launch { updateUserSettings { it.copy(qrRecentForegroundColors = recentColors) } }
         regenerate()
     }
 
     fun setBackgroundColor(color: Int) {
-        val recentColors = state.value.recentBackgroundColors.toMutableList().also { it.add(0, color) }.distinct().take(6)
+        val recentColors =
+            state.value.recentBackgroundColors
+                .toMutableList()
+                .also { it.add(0, color) }
+                .distinct()
+                .take(6)
         state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
         viewModelScope.launch { updateUserSettings { it.copy(qrRecentBackgroundColors = recentColors) } }
         regenerate()

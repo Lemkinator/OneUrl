@@ -1,0 +1,84 @@
+config:
+  validation: true
+  warningsAsErrors: false
+
+processors:
+  active: true
+  exclude: [ ]
+
+console-reports:
+  active: true
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    active: true
+  RedundantSuspendModifier:
+    active: true
+  SleepInsteadOfDelay:
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
+
+complexity:
+  active: true
+  LongParameterList:
+    active: true
+    allowedFunctionParameters: 8
+    allowedConstructorParameters: 8
+  TooManyFunctions:
+    active: false
+  ComplexCondition:
+    allowedConditions: 4
+
+style:
+  active: true
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    maxLineLength: 140
+  ForbiddenComment:
+    active: true
+    comments: [ 'TODO:', 'FIXME:' ]
+  ReturnCount:
+    max: 4
+    excludeGuardClauses: true
+  UnusedPrivateFunction:
+    active: true
+  UnusedPrivateProperty:
+    active: true
+
+naming:
+  FunctionNaming:
+    functionPattern: '[a-z][A-Za-z0-9]*'
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Z0-9]*'
+
+empty-blocks:
+  EmptyFunctionBlock:
+    active: true
+    ignoreOverridden: true
+
+exceptions:
+  active: true
+  TooGenericExceptionThrown:
+    active: true
+    exceptionNames:
+      - Error
+      - Exception
+      - RuntimeException
+      - Throwable
+  SwallowedException:
+    active: true
+    ignoredExceptionTypes:
+      - InterruptedException
+      - MalformedURLException
+      - NumberFormatException
+      - ParseException
+
+potential-bugs:
+  active: true
+  ImplicitDefaultLocale:
+    active: true
+  UnsafeCallOnNullableType:
+    active: true

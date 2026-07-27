@@ -1,13 +1,31 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import org.json.JSONObject
 
 /*
 https://l4f.com
@@ -47,25 +65,28 @@ object L4f : ShortURLProvider {
     override val name = "l4f.com"
     override val baseURL = "https://l4f.com"
     override val apiURL = "$baseURL/shorten"
-    override val aliasConfig = object : AliasConfig {
-        override val minAliasLength = 3
-        override val maxAliasLength = 100
-        override val allowedAliasCharacters = "a-z, A-Z, 0-9"
-        override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
-    }
+    override val aliasConfig =
+        object : AliasConfig {
+            override val minAliasLength = 3
+            override val maxAliasLength = 100
+            override val allowedAliasCharacters = "a-z, A-Z, 0-9"
 
-    override fun getInfoContents(context: Context): List<ProviderInfo> = listOf(
-        ProviderInfo(
-            dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
-            context.getString(R.string.alias),
-            context.getString(
-                R.string.alias_text,
-                aliasConfig.minAliasLength,
-                aliasConfig.maxAliasLength,
-                aliasConfig.allowedAliasCharacters
-            )
+            override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
+        }
+
+    override fun getInfoContents(context: Context): List<ProviderInfo> =
+        listOf(
+            ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
+                context.getString(R.string.alias),
+                context.getString(
+                    R.string.alias_text,
+                    aliasConfig.minAliasLength,
+                    aliasConfig.maxAliasLength,
+                    aliasConfig.allowedAliasCharacters,
+                ),
+            ),
         )
-    )
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
@@ -83,45 +104,80 @@ object L4f : ShortURLProvider {
             Request.Method.POST,
             url,
             null,
-            { response ->
-                try {
-                    Log.d(tag, "response: $response")
-                    val error = response.optBoolean("error")
-                    val message = response.optString("message")
-                    val shortURL = response.optJSONObject("data")?.optString("shorturl")
-                    Log.d(tag, "error: $error message: $message shortURL: $shortURL")
-                    if (!error && shortURL != null) {
-                        if (alias.isBlank() || shortURL == "$baseURL/$alias") successCallback(shortURL)
-                        else errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
-                    } else when {
-                        message.contains("alias is taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                        message.contains("Inappropriate alias", true) -> errorCallback(GenerateURLError.InvalidAlias)
-                        message.contains("Please enter a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
-                        message.contains("Too Many Requests", true) -> errorCallback(GenerateURLError.RateLimitExceeded)
-                        else -> errorCallback(GenerateURLError.Custom(200, message))
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown(200))
+            { response -> handleResponse(tag, alias, response, successCallback, errorCallback) },
+            { error -> handleError(tag, error, errorCallback) },
+        )
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleResponse(
+        tag: String,
+        alias: String,
+        response: JSONObject,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.d(tag, "response: $response")
+            val error = response.optBoolean("error")
+            val message = response.optString("message")
+            val shortURL = response.optJSONObject("data")?.optString("shorturl")
+            Log.d(tag, "error: $error message: $message shortURL: $shortURL")
+            when {
+                !error && shortURL != null && (alias.isBlank() || shortURL == "$baseURL/$alias") -> {
+                    successCallback(shortURL)
                 }
-            },
-            { error ->
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    errorCallback(GenerateURLError.Unknown())
+
+                !error && shortURL != null -> {
+                    errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
+                }
+
+                message.contains("alias is taken", true) -> {
+                    errorCallback(GenerateURLError.AliasAlreadyExists)
+                }
+
+                message.contains("Inappropriate alias", true) -> {
+                    errorCallback(GenerateURLError.InvalidAlias)
+                }
+
+                message.contains("Please enter a valid URL", true) -> {
+                    errorCallback(GenerateURLError.InvalidURL)
+                }
+
+                message.contains("Too Many Requests", true) -> {
+                    errorCallback(GenerateURLError.RateLimitExceeded)
+                }
+
+                else -> {
+                    errorCallback(GenerateURLError.Custom(200, message))
                 }
             }
-        )
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing response", e)
+            errorCallback(GenerateURLError.Unknown(200))
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleError(
+        tag: String,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        try {
+            Log.e(tag, "error: $error")
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+            when {
+                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                else -> errorCallback(GenerateURLError.Unknown(statusCode))
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing error response", e)
+            errorCallback(GenerateURLError.Unknown())
+        }
     }
 }

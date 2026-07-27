@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023-2026 Leonard Lemke
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
@@ -51,6 +67,7 @@ object Gg : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
+    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         context: Context,
         longURL: String,
@@ -74,7 +91,7 @@ object Gg : ShortURLProvider {
                         )
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error handling check response, creating anyway", e)
                     RequestQueueSingleton.getInstance(context).addToRequestQueue(
                         requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
@@ -91,7 +108,7 @@ object Gg : ShortURLProvider {
                         requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error handling check error response, creating anyway", e)
                     RequestQueueSingleton.getInstance(context).addToRequestQueue(
                         requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
@@ -102,6 +119,7 @@ object Gg : ShortURLProvider {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun requestCreateGg(
         longURL: String,
         alias: String,
@@ -122,7 +140,7 @@ object Gg : ShortURLProvider {
                         else -> successCallback(response)
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing create response", e)
                     errorCallback(GenerateURLError.Unknown(2009))
                 }
             },
@@ -139,7 +157,7 @@ object Gg : ShortURLProvider {
                         else -> errorCallback(GenerateURLError.Unknown(statusCode))
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(tag, "error parsing create error response", e)
                     errorCallback(GenerateURLError.Unknown())
                 }
             },
