@@ -98,6 +98,8 @@ object Zwsim : ShortURLProvider {
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val message = error.message

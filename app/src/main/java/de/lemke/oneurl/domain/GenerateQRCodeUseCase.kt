@@ -38,6 +38,8 @@ import de.lemke.commonutils.R as commonutilsR
 class GenerateQRCodeUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
+    // Broad catch is intentional: QrEncoder is a third-party OneUI call with no documented exception
+    // contract, so this falls back to generateNoSupportBitmap() rather than crashing.
     @Suppress("TooGenericExceptionCaught")
     operator fun invoke(url: String): Bitmap =
         try {
@@ -50,6 +52,8 @@ class GenerateQRCodeUseCase @Inject constructor(
             generateNoSupportBitmap()
         }
 
+    // Broad catch is intentional: QrEncoder is a third-party OneUI call with no documented exception
+    // contract, so this falls back to generateNoSupportBitmap() rather than crashing.
     @Suppress("TooGenericExceptionCaught")
     operator fun invoke(
         url: String,

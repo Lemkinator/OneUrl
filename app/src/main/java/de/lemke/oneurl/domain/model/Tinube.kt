@@ -26,6 +26,7 @@ import de.lemke.commonutils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import org.json.JSONException
 import org.json.JSONObject
 
 /*
@@ -87,7 +88,6 @@ object Tinube : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         context: Context,
         url: URL,
@@ -106,7 +106,7 @@ object Tinube : ShortURLProvider {
                         val clicks = JSONObject(response).getInt("clicks")
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
-                    } catch (e: Exception) {
+                    } catch (e: JSONException) {
                         Log.e(tag, "error parsing click count response", e)
                         callback(null)
                     }
@@ -133,23 +133,36 @@ object Tinube : ShortURLProvider {
             Method.POST,
             apiURL,
             { response ->
-                try {
-                    Log.d(tag, "response: $response")
-                    val data = response.split("1:")[1]
-                    val status = data.split(",")[0].split(":")[1].toInt()
-                    val urlCode = if (status == 200) data.split("urlCode\":\"")[1].split("\"")[0] else null
-                    Log.d(tag, "status: $status, urlCode: $urlCode")
-                    when (status) {
-                        200 if urlCode != null -> successCallback("$baseURL/$urlCode")
-                        208 -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                        else -> errorCallback(GenerateURLError.Unknown(status))
+                Log.d(tag, "response: $response")
+                val data = response.split("1:").getOrNull(1)
+                val status =
+                    data
+                        ?.split(",")
+                        ?.getOrNull(0)
+                        ?.split(":")
+                        ?.getOrNull(1)
+                        ?.toIntOrNull()
+                val urlCode =
+                    if (status == 200) {
+                        data
+                            .split("urlCode\":\"")
+                            .getOrNull(1)
+                            ?.split("\"")
+                            ?.getOrNull(0)
+                    } else {
+                        null
                     }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing create response", e)
-                    errorCallback(GenerateURLError.Unknown(200))
+                Log.d(tag, "status: $status, urlCode: $urlCode")
+                when {
+                    status == 200 && urlCode != null -> successCallback("$baseURL/$urlCode")
+                    status == 208 -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                    status != null -> errorCallback(GenerateURLError.Unknown(status))
+                    else -> errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

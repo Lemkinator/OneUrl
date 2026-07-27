@@ -132,7 +132,6 @@ object Shorturlat : ShortURLProvider {
             context.getString(R.string.shorturlat_info),
         )
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         context: Context,
         url: URL,
@@ -146,15 +145,16 @@ object Shorturlat : ShortURLProvider {
                 Request.Method.GET,
                 requestURL,
                 { response ->
-                    try {
-                        Log.d(tag, "response: $response")
-                        val visitCount = response.split("<div class=\"squareboxtext\">")[1].split("</div>")[0].toIntOrNull()
-                        Log.d(tag, "visitCount: $visitCount")
-                        callback(visitCount)
-                    } catch (e: Exception) {
-                        Log.e(tag, "error parsing click count response", e)
-                        callback(null)
-                    }
+                    Log.d(tag, "response: $response")
+                    val visitCount =
+                        response
+                            .split("<div class=\"squareboxtext\">")
+                            .getOrNull(1)
+                            ?.split("</div>")
+                            ?.getOrNull(0)
+                            ?.toIntOrNull()
+                    Log.d(tag, "visitCount: $visitCount")
+                    callback(visitCount)
                 },
                 { error ->
                     Log.e(tag, "error: $error")
@@ -178,17 +178,24 @@ object Shorturlat : ShortURLProvider {
             Method.POST,
             apiURL,
             { response ->
-                try {
-                    Log.d(tag, "response: $response")
-                    val shortURL = response.split("shortenurl\" type=\"text\" value=\"")[1].split("\" onClick")[0]
+                Log.d(tag, "response: $response")
+                val shortURL =
+                    response
+                        .split("shortenurl\" type=\"text\" value=\"")
+                        .getOrNull(1)
+                        ?.split("\" onClick")
+                        ?.getOrNull(0)
+                if (shortURL != null) {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing create response", e)
+                } else {
+                    Log.e(tag, "error parsing create response")
                     errorCallback(GenerateURLError.Unknown(200))
                 }
             },
             { error ->
+                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                // escaping exception here would crash the whole app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

@@ -83,6 +83,8 @@ object Murl : ShortURLProvider {
                     Request.Method.GET,
                     requestURL,
                     { response ->
+                        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                        // escaping exception here would crash the whole app.
                         try {
                             // Log.d(tag, "response: $response")
                             // <span class="mu-mc count-480357" title="Views">1</span>
@@ -157,6 +159,8 @@ object Murl : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
+        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+        // escaping exception here would crash the whole app.
         try {
             Log.e(tag, "error: $error")
             val message = error.message
