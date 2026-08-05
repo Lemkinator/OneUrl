@@ -14,7 +14,7 @@ junit-jupiter = "6.1.2"
 junit-platform = "6.1.2"
 konsist = "0.17.3"
 kotlin = "2.4.10"
-ksp = "2.3.10"
+ksp = "2.3.11"
 # Used via spotless { kotlin { ktlint(libs.versions.ktlint.get()) } } — version-only ref, no library/plugin alias
 #noinspection UnusedVersionCatalogEntry
 ktlint = "1.8.0"
