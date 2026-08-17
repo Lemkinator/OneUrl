@@ -22,7 +22,7 @@ leakcanary = "2.14"
 oneui-design = "0.9.15+oneui8"
 oneui-icons = "1.1.0"
 room = "2.8.4"
-spotless = "8.9.0"
+spotless = "8.10.0"
 volley = "1.2.1"
 
 [libraries]
