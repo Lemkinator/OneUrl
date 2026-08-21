@@ -2,7 +2,7 @@
 #noinspection UnusedVersionCatalogEntry
 jvmTarget = "21"
 
-aboutlibraries = "15.1.0"
+aboutlibraries = "15.1.1"
 bundler = "1.0.4"
 commonUtils = "1.2.3"
 dependency-analysis = "3.18.0"
