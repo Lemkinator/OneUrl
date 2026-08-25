@@ -37,10 +37,12 @@ A URL-Shortener with OneUI-Design.
 
 <br>
 
-<picture>
-    <!--suppress HtmlUnknownTarget -->
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Lemkinator/OneURL&type=Date&theme=dark" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Lemkinator/OneURL&type=Date" />
-</picture>
+<a href="https://www.star-history.com/?repos=Lemkinator%2FOneURL&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Lemkinator/OneURL&type=date&theme=dark&legend=top-left&sealed_token=nBkBfBu_piMXDyVNSa7M2TG1eISlU5t4_rYYiipXLQRS1JzHN1U8VP-GRVkFQ64cv5sKUEejH9q-JkB64RPHNiVjd7riosqwmyA2GiyKwO2TqBpPpyUjLLvRrPFAc7-btap8mJ9t27h_XxGzLeZpVU8iZjUwNANqzsAQMLp683KwIUe8OYaxloGo9gq9" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Lemkinator/OneURL&type=date&legend=top-left&sealed_token=nBkBfBu_piMXDyVNSa7M2TG1eISlU5t4_rYYiipXLQRS1JzHN1U8VP-GRVkFQ64cv5sKUEejH9q-JkB64RPHNiVjd7riosqwmyA2GiyKwO2TqBpPpyUjLLvRrPFAc7-btap8mJ9t27h_XxGzLeZpVU8iZjUwNANqzsAQMLp683KwIUe8OYaxloGo9gq9" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Lemkinator/OneURL&type=date&legend=top-left&sealed_token=nBkBfBu_piMXDyVNSa7M2TG1eISlU5t4_rYYiipXLQRS1JzHN1U8VP-GRVkFQ64cv5sKUEejH9q-JkB64RPHNiVjd7riosqwmyA2GiyKwO2TqBpPpyUjLLvRrPFAc7-btap8mJ9t27h_XxGzLeZpVU8iZjUwNANqzsAQMLp683KwIUe8OYaxloGo9gq9" />
+ </picture>
+</a>
 
 </div>
