@@ -19,7 +19,7 @@ ksp = "2.3.11"
 #noinspection UnusedVersionCatalogEntry
 ktlint = "1.8.0"
 leakcanary = "2.14"
-oneui-design = "0.9.17+oneui8"
+oneui-design = "0.9.19+oneui8"
 oneui-icons = "1.1.0"
 room = "2.8.4"
 spotless = "8.10.1"
