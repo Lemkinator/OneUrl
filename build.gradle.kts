@@ -117,6 +117,7 @@ subprojects {
                 exclude(group = "androidx.viewpager", module = "viewpager")
                 exclude(group = "androidx.appcompat", module = "appcompat")
                 exclude(group = "androidx.fragment", module = "fragment")
+                exclude(group = "androidx.fragment", module = "fragment-ktx")
                 exclude(group = "androidx.preference", module = "preference")
                 exclude(group = "androidx.recyclerview", module = "recyclerview")
                 exclude(group = "androidx.slidingpanelayout", module = "slidingpanelayout")
