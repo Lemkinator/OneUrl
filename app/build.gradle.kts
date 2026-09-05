@@ -38,7 +38,9 @@ fun com.android.build.api.dsl.ApplicationBuildType.addConstant(
 
 android {
     namespace = "de.lemke.oneurl"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) { minorApiLevel = 1 }
+    }
     defaultConfig {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
