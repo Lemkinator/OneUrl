@@ -2,27 +2,27 @@
 #noinspection UnusedVersionCatalogEntry
 jvmTarget = "21"
 
-aboutlibraries = "15.0.4"
+aboutlibraries = "15.2.0"
 bundler = "1.0.4"
 commonUtils = "1.2.3"
-dependency-analysis = "3.18.0"
-detekt = "2.0.0-alpha.5"
-gradle = "9.3.1"
+dependency-analysis = "3.19.1"
+detekt = "2.0.0-alpha.6"
+gradle = "9.4.0"
 gradle-secrets = "2.0.1"
 hilt = "2.60.1"
-junit-jupiter = "6.1.2"
-junit-platform = "6.1.2"
+junit-jupiter = "6.1.3"
+junit-platform = "6.1.3"
 konsist = "0.17.3"
 kotlin = "2.4.10"
-ksp = "2.3.10"
+ksp = "2.3.11"
 # Used via spotless { kotlin { ktlint(libs.versions.ktlint.get()) } } — version-only ref, no library/plugin alias
 #noinspection UnusedVersionCatalogEntry
 ktlint = "1.8.0"
 leakcanary = "2.14"
-oneui-design = "0.9.15+oneui8"
+oneui-design = "0.9.17+oneui8"
 oneui-icons = "1.1.0"
 room = "2.8.4"
-spotless = "8.9.0"
+spotless = "8.10.2"
 volley = "1.2.1"
 
 [libraries]
