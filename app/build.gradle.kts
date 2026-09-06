@@ -100,7 +100,7 @@ android {
     }
     lint {
         warningsAsErrors = true
-        // checkDependencies = false: private AAR deps (oneui-design, common-utils) surface
+        // checkDependencies = false: private AAR deps surface
         // hundreds of unactionable warnings; flip to true once in-project surface is clean
         checkDependencies = false
         checkReleaseBuilds = true
