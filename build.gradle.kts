@@ -107,22 +107,51 @@ subprojects {
                 sourceCompatibility = JavaVersion.VERSION_21
                 targetCompatibility = JavaVersion.VERSION_21
             }
-            configurations.matching { !it.name.contains("test", ignoreCase = true) }.configureEach {
-                exclude(group = "androidx.core", module = "core")
-                exclude(group = "androidx.core", module = "core-ktx")
-                exclude(group = "androidx.customview", module = "customview")
-                exclude(group = "androidx.coordinatorlayout", module = "coordinatorlayout")
-                exclude(group = "androidx.drawerlayout", module = "drawerlayout")
-                exclude(group = "androidx.viewpager2", module = "viewpager2")
-                exclude(group = "androidx.viewpager", module = "viewpager")
-                exclude(group = "androidx.appcompat", module = "appcompat")
-                exclude(group = "androidx.fragment", module = "fragment")
-                exclude(group = "androidx.fragment", module = "fragment-ktx")
-                exclude(group = "androidx.preference", module = "preference")
-                exclude(group = "androidx.recyclerview", module = "recyclerview")
-                exclude(group = "androidx.slidingpanelayout", module = "slidingpanelayout")
-                exclude(group = "androidx.swiperefreshlayout", module = "swiperefreshlayout")
-                exclude(group = "com.google.android.material", module = "material")
+            // oneui-design replaces these AOSP AndroidX modules with Samsung's SESL forks, which
+            // keep the original package names — exclude the AOSP originals everywhere to prevent
+            // shadowing. androidTest specifically needs SESL: instrumented tests launch SESL
+            // activities calling SESL-only APIs (e.g. MenuItemCompat.setSeslNaviMenuItemType).
+            plugins.withId("com.android.application") {
+                configurations.configureEach {
+                    exclude(group = "androidx.core", module = "core")
+                    exclude(group = "androidx.core", module = "core-ktx")
+                    exclude(group = "androidx.customview", module = "customview")
+                    exclude(group = "androidx.coordinatorlayout", module = "coordinatorlayout")
+                    exclude(group = "androidx.drawerlayout", module = "drawerlayout")
+                    exclude(group = "androidx.viewpager2", module = "viewpager2")
+                    exclude(group = "androidx.viewpager", module = "viewpager")
+                    exclude(group = "androidx.appcompat", module = "appcompat")
+                    exclude(group = "androidx.fragment", module = "fragment")
+                    exclude(group = "androidx.fragment", module = "fragment-ktx")
+                    exclude(group = "androidx.preference", module = "preference")
+                    exclude(group = "androidx.recyclerview", module = "recyclerview")
+                    exclude(group = "androidx.slidingpanelayout", module = "slidingpanelayout")
+                    exclude(group = "androidx.swiperefreshlayout", module = "swiperefreshlayout")
+                    exclude(group = "com.google.android.material", module = "material")
+                }
+
+                // exclude() alone is unreliable for androidx.core/core-ktx: several real,
+                // non-SESL-forked libraries (activity, compose.ui, emoji2, autofill, window,
+                // graphics, savedstate) each pull a different real core version, and once enough
+                // conflicting real versions are in one graph, Gradle stops honoring the exclude
+                // rule for this pair. Declaring the SESL fork as an alternate provider of the real
+                // capability, then selecting it, closes that gap.
+                dependencies {
+                    components {
+                        withModule("sesl.androidx.core:core") {
+                            allVariants { withCapabilities { addCapability("androidx.core", "core", id.version) } }
+                        }
+                        withModule("sesl.androidx.core:core-ktx") {
+                            allVariants { withCapabilities { addCapability("androidx.core", "core-ktx", id.version) } }
+                        }
+                    }
+                }
+                configurations.configureEach {
+                    resolutionStrategy.capabilitiesResolution {
+                        withCapability("androidx.core:core") { select(candidates.first { it.id.toString().startsWith("sesl.") }) }
+                        withCapability("androidx.core:core-ktx") { select(candidates.first { it.id.toString().startsWith("sesl.") }) }
+                    }
+                }
             }
         }
     }
