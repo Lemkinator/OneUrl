@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalRoborazziApi::class)
+
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt.android)
@@ -24,6 +28,7 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.android.junit)
     alias(libs.plugins.kover)
+    alias(libs.plugins.roborazzi)
 }
 
 fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
@@ -99,6 +104,7 @@ android {
             excludes += "META-INF/LICENSE*"
             excludes += "META-INF/licenses/**"
         }
+        jniLibs.useLegacyPackaging = true // sets extractNativeLibs=true; affects only APK install-time .so extraction, not AAB publishing
     }
     lint {
         warningsAsErrors = true
@@ -114,8 +120,12 @@ android {
                 test.useJUnitPlatform()
                 // MockK ≥ 1.14 on JDK 21 needs this:
                 test.jvmArgs("-XX:+EnableDynamicAgentLoading")
+                test.systemProperty("robolectric.graphicsMode", "NATIVE")
+                test.systemProperty("roborazzi.test.record", project.findProperty("roborazzi.record") ?: "false")
+                test.systemProperty("roborazzi.test.verify", project.findProperty("roborazzi.verify") ?: "true")
             }
         }
+        animationsDisabled = true
     }
 }
 dependencies {
@@ -134,11 +144,14 @@ dependencies {
     testImplementation(libs.bundles.unit.test)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit4)
-    testImplementation(libs.robolectric)
+    testImplementation(libs.bundles.robolectric.test)
+    testImplementation(libs.arch.core.testing)
+    testImplementation(libs.hilt.android.testing)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.vintage.engine)
     testImplementation(testFixtures(libs.common.utils))
+    kspTest(libs.hilt.android.compiler)
 }
 secrets {
     propertiesFileName = "secrets.properties"
@@ -177,6 +190,13 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     reports {
         html.required.set(true)
         sarif.required.set(true)
+    }
+}
+
+roborazzi {
+    outputDir.set(layout.projectDirectory.dir("src/test/screenshots"))
+    compare {
+        outputDir.set(layout.buildDirectory.dir("reports/roborazzi"))
     }
 }
 
