@@ -48,10 +48,6 @@ class URLAdapter(
     ) {
     private val searchHighlighter = SearchHighlighter(context)
 
-    init {
-        setHasStableIds(true)
-    }
-
     private val asyncListDiffer =
         AsyncListDiffer(
             this,
@@ -74,11 +70,6 @@ class URLAdapter(
 
     var onLongClickItem: (() -> Unit)? = null
 
-    fun submitList(listItems: List<URL>) {
-        asyncListDiffer.submitList(listItems)
-        updateSelectableIds(listItems.map { it.id })
-    }
-
     var highlightWord = ""
         set(value) {
             if (value != field) {
@@ -89,7 +80,9 @@ class URLAdapter(
 
     private val currentList: List<URL> get() = asyncListDiffer.currentList
 
-    fun getItemByPosition(position: Int) = currentList[position]
+    init {
+        setHasStableIds(true)
+    }
 
     override fun getItemId(position: Int) = currentList[position].id
 
@@ -140,6 +133,13 @@ class URLAdapter(
         holder.bind(currentList[position])
         holder.bindActionMode(getItemId(position))
     }
+
+    fun submitList(listItems: List<URL>) {
+        asyncListDiffer.submitList(listItems)
+        updateSelectableIds(listItems.map { it.id })
+    }
+
+    fun getItemByPosition(position: Int) = currentList[position]
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var selectableLayout: SelectableLinearLayout = itemView.findViewById(R.id.listItemSelectableLayout)

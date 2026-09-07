@@ -24,6 +24,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 
 /*
 https://tinyurl.com/app
@@ -85,7 +86,7 @@ object Tinyurl : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with http(s)://tinyurl.com/, response: $response")
-                    errorCallback(GenerateURLError.Custom(200, response))
+                    errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, response))
                 }
             },
             { error ->
@@ -110,7 +111,7 @@ object Tinyurl : ShortURLProvider {
                             errorCallback(GenerateURLError.Unknown(statusCode))
                         }
 
-                        statusCode == 422 || statusCode == 400 -> {
+                        statusCode == HttpStatusCode.UNPROCESSABLE_ENTITY || statusCode == HttpStatusCode.BAD_REQUEST -> {
                             if (alias.isBlank()) {
                                 errorCallback(GenerateURLError.InvalidURL)
                             } else {

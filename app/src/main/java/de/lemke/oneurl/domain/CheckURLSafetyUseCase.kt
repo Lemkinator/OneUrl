@@ -34,12 +34,6 @@ class CheckURLSafetyUseCase @Inject constructor(
 ) {
     private val tag = "CheckURLSafetyUseCase"
 
-    sealed class UrlhausResult {
-        data object Ok : UrlhausResult()
-
-        data class Blacklisted(val message: String, val urlhausLink: String?, val virustotalLink: String?) : UrlhausResult()
-    }
-
     suspend operator fun invoke(url: String): UrlhausResult =
         suspendCancellableCoroutine { cont ->
             val checkUrlApi = "https://urlhaus-api.abuse.ch/v1/url"
@@ -136,4 +130,10 @@ class CheckURLSafetyUseCase @Inject constructor(
             "abused_redirector" -> context.getString(R.string.error_urlhaus_abused_redirector)
             else -> context.getString(R.string.error_urlhaus_default)
         }
+
+    sealed class UrlhausResult {
+        data object Ok : UrlhausResult()
+
+        data class Blacklisted(val message: String, val urlhausLink: String?, val virustotalLink: String?) : UrlhausResult()
+    }
 }

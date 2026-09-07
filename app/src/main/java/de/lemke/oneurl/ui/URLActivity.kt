@@ -60,11 +60,6 @@ import dev.oneuiproject.oneui.design.R as designR
 
 @AndroidEntryPoint
 class URLActivity : AppCompatActivity() {
-    companion object {
-        const val KEY_SHORTURL = "key_shorturl"
-        const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
-    }
-
     @Inject
     lateinit var settings: SettingsRepository
 
@@ -184,7 +179,7 @@ class URLActivity : AppCompatActivity() {
             .findItem(R.id.url_bnv_analytics)
             ?.isVisible = url.shortURLProvider.getAnalyticsURL(url.alias) != null
         binding.urlBnv.setOnItemSelectedListener { item -> handleBnvItemSelected(item, url) }
-        setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
+        setCustomBackAnimation(binding.root, inAppReview = settings)
     }
 
     private fun handleBnvItemSelected(
@@ -252,8 +247,8 @@ class URLActivity : AppCompatActivity() {
             binding.urlVisitsRefreshButton.rotation = 0f
             binding.urlVisitsRefreshButton
                 .animate()
-                .rotationBy(-1080f)
-                .setDuration(2500)
+                .rotationBy(-REFRESH_SPIN_DEGREES)
+                .setDuration(REFRESH_SPIN_DURATION_MS)
                 .interpolator = AccelerateDecelerateInterpolator()
         }
     }
@@ -267,8 +262,15 @@ class URLActivity : AppCompatActivity() {
                 }
 
                 is UrlDetailEvent.Deleted -> {
-                    showInAppReviewOrFinish()
+                    showInAppReviewOrFinish(settings)
                 }
             }
         }
+
+    companion object {
+        const val KEY_SHORTURL = "key_shorturl"
+        const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
+        private const val REFRESH_SPIN_DEGREES = 1080f
+        private const val REFRESH_SPIN_DURATION_MS = 2500L
+    }
 }

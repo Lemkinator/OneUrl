@@ -25,6 +25,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import org.json.JSONException
 import org.json.JSONObject
@@ -78,6 +79,7 @@ object Lstu : ShortURLProvider {
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
         }
+    private const val REQUEST_TIMEOUT_MS = 10000
 
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
@@ -160,16 +162,16 @@ object Lstu : ShortURLProvider {
                         }
 
                         json.has("msg") -> {
-                            errorCallback(GenerateURLError.Custom(200, json.getString("msg")))
+                            errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, json.getString("msg")))
                         }
 
                         else -> {
-                            errorCallback(GenerateURLError.Unknown(200))
+                            errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                         }
                     }
                 } catch (e: JSONException) {
                     Log.e(tag, "error parsing create response", e)
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
             },
             { error ->
@@ -196,7 +198,7 @@ object Lstu : ShortURLProvider {
 
             override fun getRetryPolicy() =
                 DefaultRetryPolicy(
-                    10000, // set timeout to 10 seconds
+                    REQUEST_TIMEOUT_MS, // set timeout to 10 seconds
                     DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
                 )

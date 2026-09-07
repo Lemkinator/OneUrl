@@ -87,8 +87,8 @@ class GenerateQRCodeUseCase @Inject constructor(
         val canvas = Canvas(result)
         val paint = Paint()
         paint.color = BLACK
-        paint.alpha = 255
-        paint.textSize = getPixel(16).toFloat()
+        paint.alpha = NO_SUPPORT_TEXT_ALPHA
+        paint.textSize = getPixel(NO_SUPPORT_TEXT_SIZE_DP).toFloat()
         paint.isAntiAlias = true
         val text1 = "QR Codes are not"
         val x1 = (result.width - paint.measureText(text1)) / 2
@@ -154,4 +154,9 @@ class GenerateQRCodeUseCase @Inject constructor(
         } else {
             applyDimension(COMPLEX_UNIT_DIP, dp.toFloat(), context.resources.displayMetrics).toInt()
         }
+
+    companion object {
+        private const val NO_SUPPORT_TEXT_ALPHA = 255
+        private const val NO_SUPPORT_TEXT_SIZE_DP = 16
+    }
 }

@@ -25,6 +25,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -117,7 +118,7 @@ sealed class VgdIsgd : ShortURLProvider {
                 else -> {
                     errorCallback(
                         GenerateURLError.Custom(
-                            200,
+                            HttpStatusCode.OK,
                             response.optString("errormessage") + " (${response.getString("errorcode")})",
                         ),
                     )
@@ -127,7 +128,7 @@ sealed class VgdIsgd : ShortURLProvider {
         }
         if (!response.has("shorturl")) {
             Log.e(tag, "error, response does not contain shorturl, response: $response")
-            errorCallback(GenerateURLError.Unknown(200))
+            errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
             return
         }
         val shortURL = response.getString("shorturl").trim()

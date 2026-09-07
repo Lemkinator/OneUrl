@@ -51,10 +51,6 @@ class URLViewModel @Inject constructor(
     private val _events = Channel<UrlDetailEvent>(Channel.BUFFERED)
     val events: Flow<UrlDetailEvent> = _events.receiveAsFlow()
 
-    companion object {
-        private const val TAG = "URLViewModel"
-    }
-
     init {
         val shortURL = savedStateHandle.get<String>(KEY_SHORTURL) ?: ""
         viewModelScope.launch {
@@ -99,6 +95,10 @@ class URLViewModel @Inject constructor(
             deleteURL(url)
             _events.send(UrlDetailEvent.Deleted)
         }
+    }
+
+    companion object {
+        private const val TAG = "URLViewModel"
     }
 }
 

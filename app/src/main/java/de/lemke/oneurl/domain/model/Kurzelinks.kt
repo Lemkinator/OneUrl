@@ -19,11 +19,13 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.withoutHttps
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import org.json.JSONException
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
@@ -107,30 +109,7 @@ sealed class Kurzelinks : ShortURLProvider {
                     errorCallback(GenerateURLError.Unknown())
                 }
             },
-            { error ->
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 400 || statusCode == 403 -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 423 -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                        statusCode == 429 -> errorCallback(GenerateURLError.RateLimitExceeded)
-                        statusCode == 444 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
-                }
-            },
+            { error -> handleKurzelinksError(tag, error, errorCallback) },
         ) {
             override fun getParams() =
                 mapOf(
@@ -141,6 +120,59 @@ sealed class Kurzelinks : ShortURLProvider {
                     "servicedomain" to baseURL.withoutHttps(),
                     "requesturl" to alias,
                 )
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleKurzelinksError(
+        tag: String,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+        // escaping exception here would crash the whole app.
+        try {
+            Log.e(tag, "error: $error")
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+            when {
+                error is NoConnectionError -> {
+                    errorCallback(GenerateURLError.ServiceOffline)
+                }
+
+                statusCode == null -> {
+                    errorCallback(GenerateURLError.Unknown())
+                }
+
+                data.isNullOrBlank() -> {
+                    errorCallback(GenerateURLError.Unknown(statusCode))
+                }
+
+                statusCode == HttpStatusCode.BAD_REQUEST || statusCode == HttpStatusCode.FORBIDDEN -> {
+                    errorCallback(GenerateURLError.Unknown(statusCode))
+                }
+
+                statusCode == HttpStatusCode.LOCKED -> {
+                    errorCallback(GenerateURLError.AliasAlreadyExists)
+                }
+
+                statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
+                    errorCallback(GenerateURLError.RateLimitExceeded)
+                }
+
+                statusCode == HttpStatusCode.NO_RESPONSE -> {
+                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                }
+
+                else -> {
+                    errorCallback(GenerateURLError.Custom(statusCode, data))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing error response", e)
+            errorCallback(GenerateURLError.Unknown())
         }
     }
 

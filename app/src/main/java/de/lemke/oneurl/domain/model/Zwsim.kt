@@ -24,6 +24,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -93,7 +94,7 @@ object Zwsim : ShortURLProvider {
 
                     else -> {
                         Log.e(tag, "error, response does not contain short url")
-                        errorCallback(GenerateURLError.Unknown(200))
+                        errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                     }
                 }
             },
@@ -108,12 +109,29 @@ object Zwsim : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: $message data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 422 && data.contains("Invalid url") -> errorCallback(GenerateURLError.InvalidURL)
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
+                        error is NoConnectionError -> {
+                            errorCallback(GenerateURLError.ServiceOffline)
+                        }
+
+                        statusCode == null -> {
+                            errorCallback(GenerateURLError.Unknown())
+                        }
+
+                        data.isNullOrBlank() -> {
+                            errorCallback(GenerateURLError.Unknown(statusCode))
+                        }
+
+                        statusCode == HttpStatusCode.UNPROCESSABLE_ENTITY && data.contains("Invalid url") -> {
+                            errorCallback(GenerateURLError.InvalidURL)
+                        }
+
+                        statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> {
+                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        }
+
+                        else -> {
+                            errorCallback(GenerateURLError.Custom(statusCode, data))
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error parsing error response", e)

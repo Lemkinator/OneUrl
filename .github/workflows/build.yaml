@@ -27,4 +27,6 @@ jobs:
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
-          ./gradlew build
+          ./gradlew build $LINT_ARGS
+        env:
+          LINT_ARGS: ${{ github.event.pull_request.user.login == 'renovate[bot]' && '-Plint.checkDependencyUpdates=false' || '' }}

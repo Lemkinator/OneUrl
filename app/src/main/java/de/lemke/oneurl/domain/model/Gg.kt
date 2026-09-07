@@ -50,6 +50,9 @@ object Gg : ShortURLProvider {
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
         }
+    private const val GG_ERROR_REDIRECT_TO_ROOT = 2001
+    private const val GG_ERROR_ALIAS_MISMATCH = 2002
+    private const val GG_ERROR_UNEXPECTED_RESPONSE = 2009
 
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
@@ -141,13 +144,21 @@ object Gg : ShortURLProvider {
                 try {
                     Log.d(tag, "response: $response")
                     when {
-                        response == "$baseURL/" -> errorCallback(GenerateURLError.Unknown(2001))
-                        alias.isNotBlank() && !response.endsWith("/$alias") -> errorCallback(GenerateURLError.Unknown(2002))
-                        else -> successCallback(response)
+                        response == "$baseURL/" -> {
+                            errorCallback(GenerateURLError.Unknown(GG_ERROR_REDIRECT_TO_ROOT))
+                        }
+
+                        alias.isNotBlank() && !response.endsWith("/$alias") -> {
+                            errorCallback(GenerateURLError.Unknown(GG_ERROR_ALIAS_MISMATCH))
+                        }
+
+                        else -> {
+                            successCallback(response)
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error parsing create response", e)
-                    errorCallback(GenerateURLError.Unknown(2009))
+                    errorCallback(GenerateURLError.Unknown(GG_ERROR_UNEXPECTED_RESPONSE))
                 }
             },
             { error ->

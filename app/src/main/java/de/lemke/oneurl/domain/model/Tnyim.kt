@@ -26,6 +26,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import org.json.JSONException
 import org.json.JSONObject
@@ -129,6 +130,7 @@ object Tnyim : ShortURLProvider {
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9-]+"))
         }
+    private const val REQUEST_TIMEOUT_MS = 10000
 
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
@@ -214,7 +216,7 @@ object Tnyim : ShortURLProvider {
                         }
                     } else {
                         Log.d(tag, "error: response does not contain short url or errors")
-                        errorCallback(GenerateURLError.Unknown(200))
+                        errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                     }
                 } catch (e: JSONException) {
                     Log.e(tag, "error parsing create response", e)
@@ -234,7 +236,7 @@ object Tnyim : ShortURLProvider {
                         error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                         statusCode == null -> errorCallback(GenerateURLError.Unknown())
                         data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 500 -> errorCallback(GenerateURLError.Unknown(statusCode))
+                        statusCode == HttpStatusCode.INTERNAL_SERVER_ERROR -> errorCallback(GenerateURLError.Unknown(statusCode))
                         else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                     }
                 } catch (e: Exception) {
@@ -245,7 +247,7 @@ object Tnyim : ShortURLProvider {
         ) {
             override fun getRetryPolicy() =
                 DefaultRetryPolicy(
-                    10000, // set timeout to 10 seconds
+                    REQUEST_TIMEOUT_MS, // set timeout to 10 seconds
                     DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
                 )

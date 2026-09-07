@@ -26,6 +26,7 @@ import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import org.json.JSONException
 import org.json.JSONObject
@@ -158,7 +159,7 @@ sealed class Spoome : ShortURLProvider {
             successCallback(shortURL)
         } else {
             Log.e(tag, "error: response does not contain short_url")
-            errorCallback(GenerateURLError.Unknown(200))
+            errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
         }
     }
 
@@ -199,7 +200,7 @@ sealed class Spoome : ShortURLProvider {
                     handleEmojiError(response.getString("EmojiError"), statusCode, errorCallback)
                 }
 
-                statusCode == 429 -> {
+                statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
                     errorCallback(GenerateURLError.RateLimitExceeded)
                 }
 

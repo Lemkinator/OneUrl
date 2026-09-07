@@ -23,6 +23,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import de.lemke.commonutils.R as commonutilsR
 
@@ -190,7 +191,7 @@ object Shorturlat : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error parsing create response")
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
             },
             { error ->

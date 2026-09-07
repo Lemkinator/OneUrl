@@ -34,7 +34,10 @@ complexity:
 style:
   active: true
   MagicNumber:
-    active: false
+    active: true
+    ignoreNumbers: [ '-1', '0', '1', '2', '0.5' ]
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
   MaxLineLength:
     maxLineLength: 140
   ForbiddenComment:

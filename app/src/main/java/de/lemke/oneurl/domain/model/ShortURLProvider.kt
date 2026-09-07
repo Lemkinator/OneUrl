@@ -214,13 +214,13 @@ class ProviderInfo(
 )
 
 interface AliasConfig {
-    companion object {
-        const val NO_MAX_ALIAS_SPECIFIED = 100
-    }
-
     val minAliasLength: Int
     val maxAliasLength: Int
     val allowedAliasCharacters: String
 
     fun isAliasValid(alias: String): Boolean
+
+    companion object {
+        const val NO_MAX_ALIAS_SPECIFIED = 100
+    }
 }

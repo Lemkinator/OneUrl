@@ -52,26 +52,6 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
             if (it.resultCode == RESULT_OK) requireContext().saveBitmapToUri(it.data?.data, qr)
         }
 
-    companion object {
-        const val KEY_TITLE = "key_title"
-        const val KEY_QR = "key_qr"
-        const val KEY_SAVE_LOCATION = "key_save_location"
-
-        fun createQRBottomSheet(
-            title: String,
-            qrCode: Bitmap,
-            saveLocation: SaveLocation,
-        ): QRBottomSheet =
-            QRBottomSheet().apply {
-                arguments =
-                    intentOf {
-                        +(KEY_TITLE to title)
-                        +(KEY_QR to qrCode.toByteArray())
-                        +(KEY_SAVE_LOCATION to saveLocation.toString())
-                    }.extras
-            }
-    }
-
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
             behavior.skipCollapsed = true
@@ -103,12 +83,34 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
             binding.saveButton.setOnClickListener { exportBitmap(saveLocation, qrCode, shortURL, exportQRCodeResultLauncher) }
         }
     }
+
+    companion object {
+        const val KEY_TITLE = "key_title"
+        const val KEY_QR = "key_qr"
+        const val KEY_SAVE_LOCATION = "key_save_location"
+
+        fun createQRBottomSheet(
+            title: String,
+            qrCode: Bitmap,
+            saveLocation: SaveLocation,
+        ): QRBottomSheet =
+            QRBottomSheet().apply {
+                arguments =
+                    intentOf {
+                        +(KEY_TITLE to title)
+                        +(KEY_QR to qrCode.toByteArray())
+                        +(KEY_SAVE_LOCATION to saveLocation.toString())
+                    }.extras
+            }
+    }
 }
+
+private const val BITMAP_COMPRESS_QUALITY = 100
 
 // java.lang.RuntimeException: Could not copy bitmap to parcel blob. ???????
 private fun Bitmap.toByteArray(): ByteArray =
     ByteArrayOutputStream().use { stream ->
-        compress(Bitmap.CompressFormat.PNG, 100, stream)
+        compress(Bitmap.CompressFormat.PNG, BITMAP_COMPRESS_QUALITY, stream)
         stream.toByteArray()
     }
 

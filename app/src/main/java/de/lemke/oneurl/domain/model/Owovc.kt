@@ -25,6 +25,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import org.json.JSONException
 import org.json.JSONObject
@@ -140,7 +141,7 @@ sealed class Owovc : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error: no shortURL in response")
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
             },
             { error ->
@@ -153,12 +154,29 @@ sealed class Owovc : ShortURLProvider {
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                     when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == 400 && data.contains("link must match pattern") -> errorCallback(GenerateURLError.InvalidURL)
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
+                        error is NoConnectionError -> {
+                            errorCallback(GenerateURLError.ServiceOffline)
+                        }
+
+                        statusCode == null -> {
+                            errorCallback(GenerateURLError.Unknown())
+                        }
+
+                        statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> {
+                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                        }
+
+                        data.isNullOrBlank() -> {
+                            errorCallback(GenerateURLError.Unknown(statusCode))
+                        }
+
+                        statusCode == HttpStatusCode.BAD_REQUEST && data.contains("link must match pattern") -> {
+                            errorCallback(GenerateURLError.InvalidURL)
+                        }
+
+                        else -> {
+                            errorCallback(GenerateURLError.Custom(statusCode, data))
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error parsing error response", e)

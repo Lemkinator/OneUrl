@@ -126,6 +126,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.konsist)
+    testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)

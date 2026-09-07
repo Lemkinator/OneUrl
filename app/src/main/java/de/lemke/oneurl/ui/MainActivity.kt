@@ -112,7 +112,7 @@ class MainActivity :
             allowSkip = BuildConfig.FIRST_RUN_SKIPPABLE,
         ) ?: return
         prepareActivityTransformationFrom()
-        if (SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
+        if (SDK_INT >= VERSION_CODES.UPSIDE_DOWN_CAKE) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         configureCommonUtilsSplashScreen(splashScreen, binding.root) { !viewModel.state.value.isUIReady }
@@ -128,6 +128,42 @@ class MainActivity :
             selectedIds = urlAdapter.getSelectedIds(),
         )
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.action == ACTION_SEARCH) binding.drawerLayout.setSearchQueryFromIntent(intent)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.main, menu).let { true }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.menu_item_show_all)?.isVisible = viewModel.filterFavorite.value
+        menu?.findItem(R.id.menu_item_only_show_favorites)?.isVisible = !viewModel.filterFavorite.value
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            R.id.menu_item_search -> {
+                startSearch().let { true }
+            }
+
+            R.id.menu_item_show_all -> {
+                viewModel.setFilterFavorite(false)
+                invalidateOptionsMenu()
+                true
+            }
+
+            R.id.menu_item_only_show_favorites -> {
+                viewModel.setFilterFavorite(true)
+                invalidateOptionsMenu()
+                true
+            }
+
+            else -> {
+                super.onOptionsItemSelected(item)
+            }
+        }
 
     private fun openMain(savedInstanceState: Bundle?) {
         setupCommonUtilsAboutActivity(appVersion = BuildConfig.VERSION_NAME)
@@ -176,42 +212,6 @@ class MainActivity :
             )
         }
     }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        if (intent.action == ACTION_SEARCH) binding.drawerLayout.setSearchQueryFromIntent(intent)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.main, menu).let { true }
-
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menu?.findItem(R.id.menu_item_show_all)?.isVisible = viewModel.filterFavorite.value
-        menu?.findItem(R.id.menu_item_only_show_favorites)?.isVisible = !viewModel.filterFavorite.value
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean =
-        when (item.itemId) {
-            R.id.menu_item_search -> {
-                startSearch().let { true }
-            }
-
-            R.id.menu_item_show_all -> {
-                viewModel.setFilterFavorite(false)
-                invalidateOptionsMenu()
-                true
-            }
-
-            R.id.menu_item_only_show_favorites -> {
-                viewModel.setFilterFavorite(true)
-                invalidateOptionsMenu()
-                true
-            }
-
-            else -> {
-                super.onOptionsItemSelected(item)
-            }
-        }
 
     private fun startSearch() =
         binding.drawerLayout.startSearchMode(
