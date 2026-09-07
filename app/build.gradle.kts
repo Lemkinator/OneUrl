@@ -105,8 +105,6 @@ android {
         // checkDependencies = false: private AAR deps surface
         // hundreds of unactionable warnings; flip to true once in-project surface is clean
         checkDependencies = false
-        checkReleaseBuilds = true
-        abortOnError = true
         baseline = file("lint-baseline.xml")
     }
     testOptions {
