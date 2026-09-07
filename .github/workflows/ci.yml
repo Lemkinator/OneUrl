@@ -1,0 +1,180 @@
+name: CI
+
+on:
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-formatting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Run formatting checks
+        run: chmod +x ./gradlew && ./gradlew spotlessCheck detekt --stacktrace
+        env:
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: Upload detekt report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: detekt-report
+          path: app/build/reports/detekt/
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: check-formatting
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Run lint
+        run: |
+          chmod +x ./gradlew
+          gradle_args=(lintDebug --stacktrace)
+          if [ "$SKIP_DEPENDENCY_UPDATES" = "true" ]; then
+            gradle_args+=(-Plint.checkDependencyUpdates=false)
+          fi
+          ./gradlew "${gradle_args[@]}"
+        env:
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          SKIP_DEPENDENCY_UPDATES: ${{ github.event.pull_request.user.login == 'renovate[bot]' || github.event_name == 'merge_group' }}
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-*
+
+  local-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: check-formatting
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Run local tests
+        run: chmod +x ./gradlew && ./gradlew testDebugUnitTest verifyRoborazziDebug koverXmlReportDebug koverHtmlReportDebug koverVerifyDebug --stacktrace
+        env:
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: app/build/reports/kover/reportDebug.xml
+          flags: unittests
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          files: app/build/test-results/testDebugUnitTest/*.xml
+          flags: unittests
+      - name: Upload coverage report on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kover-coverage-report
+          path: app/build/reports/kover/htmlDebug/
+      - name: Upload diff on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: roborazzi-diff
+          path: app/build/reports/roborazzi/
+
+  instrumented-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check-formatting
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run instrumented tests (GMD)
+        run: chmod +x ./gradlew && ./gradlew pixel9Api35DebugAndroidTest --stacktrace
+        env:
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [ lint, local-tests, instrumented-tests ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Assemble
+        run: chmod +x ./gradlew && ./gradlew assembleRelease --stacktrace
+        env:
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
