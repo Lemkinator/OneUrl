@@ -26,14 +26,24 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import de.lemke.commonutils.R as commonutilsR
 
-/** Verifies `res/xml/preferences.xml` is correctly bound to the real [UserSettings]. */
+/**
+ * Verifies every XML resource [de.lemke.oneurl.ui.MainActivity] composes together via
+ * `setupCommonUtilsSettingsActivity` is correctly bound to the real [UserSettings].
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class PreferenceXmlParityTest {
     @Test
     fun `preferences xml is bound to UserSettings`() {
-        assertPreferenceXmlBoundToSettings(R.xml.preferences, factory = { UserSettings(it, CoroutineScope(UnconfinedTestDispatcher())) })
+        assertPreferenceXmlBoundToSettings(
+            commonutilsR.xml.preferences_design,
+            R.xml.preferences,
+            commonutilsR.xml.preferences_dev_options_delete_app_data,
+            commonutilsR.xml.preferences_more_info,
+            factory = { UserSettings(it, CoroutineScope(UnconfinedTestDispatcher())) },
+        )
     }
 }
