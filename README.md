@@ -17,23 +17,29 @@ src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web
 [![](https://img.shields.io/github/repo-size/Lemkinator/OneURL)](https://github.com/Lemkinator/OneURL)
 [![](https://sloc.xyz/github/Lemkinator/OneURL)](https://github.com/Lemkinator/OneURL)
 [![CodeFactor](https://www.codefactor.io/repository/github/lemkinator/oneurl/badge)](https://www.codefactor.io/repository/github/lemkinator/oneurl)
+[![codecov](https://codecov.io/gh/Lemkinator/OneURL/graph/badge.svg)](https://codecov.io/gh/Lemkinator/OneURL)
 
 # OneURL
 
 A URL-Shortener with OneUI-Design.
 
-<img loading="lazy" src="img/mobile1.png" height="350" alt="Mobile 1"/>
-<img loading="lazy" src="img/mobile2.png" height="350" alt="Mobile 2"/>
-<img loading="lazy" src="img/mobile3.png" height="350" alt="Mobile 3"/>
-<img loading="lazy" src="img/mobile4.png" height="350" alt="Mobile 4"/>
-<img loading="lazy" src="img/mobile5.png" height="350" alt="Mobile 5"/>
-<img loading="lazy" src="img/mobile6.png" height="350" alt="Mobile 6"/>
+<img loading="lazy" src="app/src/test/screenshots/main_default_dark.png" height="350" alt="Main screen with saved URLs"/>
+<img loading="lazy" src="app/src/test/screenshots/main_empty_dark.png" height="350" alt="Main screen empty state"/>
+<img loading="lazy" src="app/src/test/screenshots/add_url_default_dark.png" height="350" alt="Add URL screen"/>
+<img loading="lazy" src="app/src/test/screenshots/provider_default_dark.png" height="350" alt="Provider selection screen"/>
+<img loading="lazy" src="app/src/test/screenshots/url_default_dark.png" height="350" alt="URL details screen"/>
+<img loading="lazy" src="app/src/test/screenshots/generate_qr_code_default_dark.png" height="350" alt="Generate QR code screen"/>
+<img loading="lazy" src="app/src/test/screenshots/help_default_dark.png" height="350" alt="Help screen"/>
 
 ## More Information: <a target="_blank" href='https://www.leonard-lemke.com/apps/oneurl'>www.leonard-lemke.com </a>
 
 <br>
 
 ![Alt](https://repobeats.axiom.co/api/embed/e036d9142181fc91f90663653abc32c087e7aef6.svg "Repobeats analytics image")
+
+<br>
+
+[![Coverage Sunburst](https://codecov.io/gh/Lemkinator/OneURL/graphs/sunburst.svg)](https://codecov.io/gh/Lemkinator/OneURL)
 
 <br>
 
