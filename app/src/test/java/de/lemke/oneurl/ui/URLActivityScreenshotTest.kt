@@ -69,7 +69,7 @@ class URLActivityScreenshotTest {
             favorite = false,
             title = "Seeded title",
             description = "Seeded description",
-            added = ZonedDateTime.now(),
+            added = ZonedDateTime.parse("2024-01-15T10:30:00Z"),
         )
 
     @Before
