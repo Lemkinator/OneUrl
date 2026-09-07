@@ -27,6 +27,10 @@ jobs:
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
-          ./gradlew build $LINT_ARGS
+          gradle_args=(build)
+          if [ "$SKIP_DEPENDENCY_UPDATES" = "true" ]; then
+            gradle_args+=(-Plint.checkDependencyUpdates=false)
+          fi
+          ./gradlew "${gradle_args[@]}"
         env:
-          LINT_ARGS: ${{ github.event.pull_request.user.login == 'renovate[bot]' && '-Plint.checkDependencyUpdates=false' || '' }}
+          SKIP_DEPENDENCY_UPDATES: ${{ github.event.pull_request.user.login == 'renovate[bot]' || github.event_name == 'merge_group' }}
