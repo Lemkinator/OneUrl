@@ -32,12 +32,8 @@ import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -45,15 +41,6 @@ import org.junit.runner.RunWith
 
 // URLActivity calls setWindowTransparent(true), so a plain CREATED-state check (no Espresso
 // root-view assertion) is used to avoid RootViewPicker window-focus timeouts.
-//
-// DB seeding uses GlobalScope.launch + CountDownLatch instead of runBlocking: androidx.room
-// 2.8.4 strictly pins kotlinx-coroutines-bom to 1.9.0, which (via Gradle's consistent
-// resolution between the main and androidTest runtime classpaths) downgrades
-// kotlinx-coroutines-core on-device to 1.9.0, while the androidTest *compile* classpath still
-// resolves the project's declared 1.11.0 (for kotlinx-coroutines-test). The compiler binds
-// runBlocking()/runTest() call sites to BuildersKt.runBlockingK$default, a symbol that only
-// exists in 1.11.0+, causing a NoSuchMethodError at runtime. launch()/launch$default has an
-// identical signature in both versions, so it isn't affected.
 @HiltAndroidTest
 @LargeTest
 @RunWith(AndroidJUnit4::class)
@@ -76,16 +63,10 @@ class URLActivityTest {
             added = ZonedDateTime.parse("2024-01-15T10:30:00Z"),
         )
 
-    @OptIn(DelicateCoroutinesApi::class)
     @Before
     fun setUp() {
         hiltRule.inject()
-        val latch = CountDownLatch(1)
-        GlobalScope.launch {
-            urlRepository.addURL(seededUrl)
-            latch.countDown()
-        }
-        latch.await(10, TimeUnit.SECONDS) shouldBe true
+        runBlocking { urlRepository.addURL(seededUrl) }
     }
 
     @Test

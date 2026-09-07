@@ -135,6 +135,7 @@ dependencies {
     implementation(libs.oneui.icons)
     implementation(libs.common.utils)
     implementation(libs.bundler)
+    implementation(libs.coroutines.android)
     implementation(libs.volley)
     implementation(libs.bundles.room)
     implementation(libs.hilt.android)
