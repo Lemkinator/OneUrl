@@ -89,7 +89,8 @@ after touching `libs.versions.toml` or a dependency block.
 **After any change** — run the full local CI suite before declaring work done:
 
 ```bash
-./gradlew spotlessCheck detekt lintDebug test assembleDebug
+./gradlew spotlessCheck detekt lintDebug testDebugUnitTest verifyRoborazziDebug koverVerifyDebug assembleDebug
 ```
 
-If `spotlessCheck` fails, fix with `./gradlew spotlessApply` then re-run.
+If `spotlessCheck` fails, fix with `./gradlew spotlessApply` then re-run. If a screenshot golden mismatch is expected
+(intentional UI change), re-record it with `./gradlew recordRoborazziDebug -Proborazzi.record=true`.

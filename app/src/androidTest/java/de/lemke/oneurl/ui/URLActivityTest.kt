@@ -27,7 +27,7 @@ import androidx.test.filters.LargeTest
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.shouldBe
@@ -41,6 +41,10 @@ import org.junit.runner.RunWith
 
 // URLActivity calls setWindowTransparent(true), so a plain CREATED-state check (no Espresso
 // root-view assertion) is used to avoid RootViewPicker window-focus timeouts.
+//
+// The seeded URL uses Dagd directly (rather than ShortURLProviderCompanion.default) since Dagd
+// does not override ShortURLProvider.getURLClickCount() — the interface default synchronously
+// calls callback(null) with no network I/O, avoiding a real network call from this test.
 @HiltAndroidTest
 @LargeTest
 @RunWith(AndroidJUnit4::class)
@@ -55,7 +59,7 @@ class URLActivityTest {
         URL(
             shortURL = "https://da.gd/seeded1",
             longURL = "https://example.com/seeded-page",
-            shortURLProvider = ShortURLProviderCompanion.default,
+            shortURLProvider = Dagd,
             qr = createBitmap(64, 64).apply { eraseColor(Color.WHITE) },
             favorite = false,
             title = "Seeded title",

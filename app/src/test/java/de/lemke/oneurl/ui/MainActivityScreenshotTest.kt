@@ -114,6 +114,6 @@ class MainActivityScreenshotTest {
         favorite = favorite,
         title = title,
         description = description,
-        added = ZonedDateTime.now(),
+        added = ZonedDateTime.parse("2024-01-15T10:30:00Z"),
     )
 }

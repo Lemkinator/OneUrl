@@ -28,7 +28,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import java.time.ZonedDateTime
@@ -45,10 +45,11 @@ import org.robolectric.annotation.GraphicsMode
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 //
-// The seeded URL uses ShortURLProviderCompanion.default (da.gd), which does not override
-// ShortURLProvider.getURLClickCount() — the interface default synchronously calls
-// callback(null) with no Volley/network I/O. refreshVisitCount() (fired from URLViewModel.init)
-// therefore resolves immediately instead of hitting the network Robolectric has no access to.
+// The seeded URL uses Dagd directly (rather than ShortURLProviderCompanion.default) since Dagd
+// does not override ShortURLProvider.getURLClickCount() — the interface default synchronously
+// calls callback(null) with no Volley/network I/O. refreshVisitCount() (fired from
+// URLViewModel.init) therefore resolves immediately instead of hitting the network Robolectric
+// has no access to.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
@@ -64,7 +65,7 @@ class URLActivityScreenshotTest {
         URL(
             shortURL = "https://da.gd/seeded1",
             longURL = "https://example.com/seeded-page",
-            shortURLProvider = ShortURLProviderCompanion.default,
+            shortURLProvider = Dagd,
             qr = createBitmap(64, 64).apply { eraseColor(Color.WHITE) },
             favorite = false,
             title = "Seeded title",
