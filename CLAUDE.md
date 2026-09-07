@@ -93,11 +93,3 @@ after touching `libs.versions.toml` or a dependency block.
 ```
 
 If `spotlessCheck` fails, fix with `./gradlew spotlessApply` then re-run.
-
-**Dependency analysis** — manual hygiene tool (not gated in CI). Invoke with:
-
-```bash
-./gradlew buildHealth
-```
-
-Report at `build/reports/dependency-analysis/build-health-report.txt`. Review findings case-by-case — autofixing creates breakage.
