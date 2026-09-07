@@ -144,7 +144,7 @@ object Tinube : ShortURLProvider {
                         ?.getOrNull(1)
                         ?.toIntOrNull()
                 val urlCode =
-                    if (status == 200) {
+                    if (status == HttpStatusCode.OK) {
                         data
                             .split("urlCode\":\"")
                             .getOrNull(1)
