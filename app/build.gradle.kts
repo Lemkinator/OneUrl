@@ -55,6 +55,7 @@ android {
         versionCode = 45
         versionName = "1.7.6"
         buildConfigField("boolean", "FIRST_RUN_SKIPPABLE", "false")
+        testInstrumentationRunner = "de.lemke.oneurl.HiltTestRunner"
     }
     @Suppress("UnstableApiUsage")
     androidResources.localeFilters += listOf("en", "de")
@@ -152,6 +153,15 @@ dependencies {
     testRuntimeOnly(libs.junit.vintage.engine)
     testImplementation(testFixtures(libs.common.utils))
     kspTest(libs.hilt.android.compiler)
+
+    androidTestImplementation(libs.bundles.android.test)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.turbine)
+    androidTestImplementation(libs.kotest.assertions.core)
+    androidTestImplementation(libs.coroutines.test)
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(testFixtures(libs.common.utils))
+    kspAndroidTest(libs.hilt.android.compiler)
 }
 secrets {
     propertiesFileName = "secrets.properties"
