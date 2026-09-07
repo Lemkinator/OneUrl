@@ -52,10 +52,6 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
         savedInstanceState: Bundle?,
     ): View = ViewProviderInfoBottomsheetBinding.inflate(inflater, container, false).also { binding = it }.root
 
-    private fun AppCompatButton.setIcon(icon: Int) {
-        setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(requireContext(), icon), null, null, null)
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -70,6 +66,10 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
         }
         bindInfoContents(provider)
         bindInfoButtons(provider)
+    }
+
+    private fun AppCompatButton.setIcon(icon: Int) {
+        setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawable(requireContext(), icon), null, null, null)
     }
 
     private fun infoContentViewsAt(index: Int): Pair<AppCompatButton, TextView>? =

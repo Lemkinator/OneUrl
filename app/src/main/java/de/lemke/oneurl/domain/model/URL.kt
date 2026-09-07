@@ -32,6 +32,13 @@ data class URL(
     val description: String,
     val added: ZonedDateTime,
 ) {
+    val id: Long get() = shortURL.hashCode().toLong()
+
+    val alias: String
+        get() = shortURL.trimEnd('/').substringAfterLast('/').substringBeforeLast('/') // does not work for Owovc(e.g. sketchy)
+
+    val addedFormatMedium: String get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -55,13 +62,6 @@ data class URL(
         result = 31 * result + added.hashCode()
         return result
     }
-
-    val id: Long get() = shortURL.hashCode().toLong()
-
-    val alias: String
-        get() = shortURL.trimEnd('/').substringAfterLast('/').substringBeforeLast('/') // does not work for Owovc(e.g. sketchy)
-
-    val addedFormatMedium: String get() = added.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
 
     fun contains(query: String): Boolean = contains(StringTokenizer(query))
 

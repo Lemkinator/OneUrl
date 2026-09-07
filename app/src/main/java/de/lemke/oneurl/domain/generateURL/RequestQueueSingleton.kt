@@ -22,18 +22,6 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 
 class RequestQueueSingleton(context: Context) {
-    companion object {
-        @Volatile
-        private var instance: RequestQueueSingleton? = null
-
-        fun getInstance(context: Context) =
-            instance ?: synchronized(this) {
-                instance ?: RequestQueueSingleton(context).also {
-                    instance = it
-                }
-            }
-    }
-
     private val requestQueue: RequestQueue by lazy {
         // applicationContext is key, it keeps you from leaking the
         // Activity or BroadcastReceiver if someone passes one in.
@@ -46,5 +34,17 @@ class RequestQueueSingleton(context: Context) {
 
     fun removeCacheEntry(url: String) {
         requestQueue.cache.remove(url)
+    }
+
+    companion object {
+        @Volatile
+        private var instance: RequestQueueSingleton? = null
+
+        fun getInstance(context: Context) =
+            instance ?: synchronized(this) {
+                instance ?: RequestQueueSingleton(context).also {
+                    instance = it
+                }
+            }
     }
 }

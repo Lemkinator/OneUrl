@@ -44,10 +44,6 @@ import dev.oneuiproject.oneui.utils.SemItemDecoration
 
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
-    companion object {
-        const val KEY_SELECT_PROVIDER = "key_select_provider"
-    }
-
     private lateinit var binding: ActivityProviderBinding
     private val viewModel: ProviderViewModel by viewModels()
     private val providerAdapter = ProviderAdapter()
@@ -87,13 +83,12 @@ class ProviderActivity : AppCompatActivity() {
         }
     }
 
+    companion object {
+        const val KEY_SELECT_PROVIDER = "key_select_provider"
+    }
+
     inner class ProviderAdapter : RecyclerView.Adapter<ProviderAdapter.ViewHolder>() {
         private var providers: List<ShortURLProvider> = emptyList()
-
-        fun updateProviders(newProviders: List<ShortURLProvider>) {
-            providers = newProviders
-            notifyDataSetChanged()
-        }
 
         override fun getItemCount(): Int = providers.size
 
@@ -122,6 +117,11 @@ class ProviderActivity : AppCompatActivity() {
             holder.parentView.setOnClickListener { viewModel.onProviderClick(provider) }
             holder.iconLayout.setOnClickListener { viewModel.onProviderInfoClick(provider) }
             holder.parentView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
+        }
+
+        fun updateProviders(newProviders: List<ShortURLProvider>) {
+            providers = newProviders
+            notifyDataSetChanged()
         }
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

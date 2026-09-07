@@ -60,11 +60,6 @@ import dev.oneuiproject.oneui.design.R as designR
 
 @AndroidEntryPoint
 class URLActivity : AppCompatActivity() {
-    companion object {
-        const val KEY_SHORTURL = "key_shorturl"
-        const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
-    }
-
     @Inject
     lateinit var settings: SettingsRepository
 
@@ -271,4 +266,9 @@ class URLActivity : AppCompatActivity() {
                 }
             }
         }
+
+    companion object {
+        const val KEY_SHORTURL = "key_shorturl"
+        const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
+    }
 }
