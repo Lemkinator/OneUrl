@@ -156,7 +156,7 @@ class AddURLActivity : AppCompatActivity() {
     }
 
     private fun initFooterButton() {
-        if (resources.configuration.screenWidthDp < 360) {
+        if (resources.configuration.screenWidthDp < COMPACT_SCREEN_WIDTH_DP) {
             binding.addUrlFooterButton.layoutParams.width = MATCH_PARENT
         }
         binding.addUrlFooterButton.setOnClickListener { submit() }
@@ -297,5 +297,9 @@ class AddURLActivity : AppCompatActivity() {
                 getString(commonutilsR.string.commonutils_error_unknown)
             },
         )
+    }
+
+    companion object {
+        private const val COMPACT_SCREEN_WIDTH_DP = 360
     }
 }

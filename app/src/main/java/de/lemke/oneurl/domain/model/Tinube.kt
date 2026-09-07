@@ -25,6 +25,7 @@ import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import org.json.JSONException
 import org.json.JSONObject
@@ -154,10 +155,10 @@ object Tinube : ShortURLProvider {
                     }
                 Log.d(tag, "status: $status, urlCode: $urlCode")
                 when {
-                    status == 200 && urlCode != null -> successCallback("$baseURL/$urlCode")
-                    status == 208 -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                    status == HttpStatusCode.OK && urlCode != null -> successCallback("$baseURL/$urlCode")
+                    status == HttpStatusCode.ALREADY_REPORTED -> errorCallback(GenerateURLError.AliasAlreadyExists)
                     status != null -> errorCallback(GenerateURLError.Unknown(status))
-                    else -> errorCallback(GenerateURLError.Unknown(200))
+                    else -> errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
             },
             { error ->

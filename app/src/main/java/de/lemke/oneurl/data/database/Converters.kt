@@ -26,6 +26,8 @@ import java.time.format.DateTimeParseException
 
 /** Type converters to map between SQLite types and entity types. */
 object Converters {
+    private const val BITMAP_COMPRESS_QUALITY = 100
+
     /** Returns the string representation of the [zonedDateTime]. */
     @TypeConverter
     fun zonedDateTimeToDb(zonedDateTime: ZonedDateTime?): String = zonedDateTime.toString()
@@ -46,7 +48,7 @@ object Converters {
     @TypeConverter
     fun bitmapToDb(bitmap: Bitmap): ByteArray =
         with(ByteArrayOutputStream()) {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, this)
+            bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_COMPRESS_QUALITY, this)
             return toByteArray()
         }
 

@@ -25,6 +25,7 @@ import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 
 /*
@@ -126,7 +127,7 @@ object Dagd : ShortURLProvider {
                         }
 
                         else -> {
-                            if (statusCode == 404) {
+                            if (statusCode == HttpStatusCode.NOT_FOUND) {
                                 Log.d(tag, "shortURL does not exist yet, creating it")
                             } else {
                                 Log.w(tag, "error, trying to create it anyway")
@@ -169,7 +170,7 @@ object Dagd : ShortURLProvider {
                     successCallback(shortURL)
                 } else {
                     Log.e(tag, "error, response does not start with https://da.gd, response: $response")
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
             },
             { error ->

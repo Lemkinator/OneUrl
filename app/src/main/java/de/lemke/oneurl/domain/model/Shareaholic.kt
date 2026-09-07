@@ -57,6 +57,9 @@ object Shareaholic : ShortURLProvider {
     override val apiURL = "$baseURL/v2/share/shorten_link"
     override val privacyURL = "$baseURL/privacy"
     override val termsURL = "$baseURL/terms"
+    private const val SHAREAHOLIC_ERROR_MISSING_API_KEY = 1100
+    private const val SHAREAHOLIC_ERROR_INVALID_API_KEY = 1101
+    private const val SHAREAHOLIC_ERROR_MISSING_URL = 1140
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
@@ -145,17 +148,17 @@ object Shareaholic : ShortURLProvider {
         Log.e(tag, "first error: $firstError")
         when (firstError?.optString("code")) {
             "100" -> {
-                errorCallback(GenerateURLError.Unknown(1100))
+                errorCallback(GenerateURLError.Unknown(SHAREAHOLIC_ERROR_MISSING_API_KEY))
             }
 
             // 100	apikey not provided
             "101" -> {
-                errorCallback(GenerateURLError.Unknown(1101))
+                errorCallback(GenerateURLError.Unknown(SHAREAHOLIC_ERROR_INVALID_API_KEY))
             }
 
             // 101	apikey provided is invalid
             "140" -> {
-                errorCallback(GenerateURLError.Unknown(1140))
+                errorCallback(GenerateURLError.Unknown(SHAREAHOLIC_ERROR_MISSING_URL))
             }
 
             // 140	Missing URL

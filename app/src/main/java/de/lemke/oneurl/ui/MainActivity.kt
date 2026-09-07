@@ -112,7 +112,7 @@ class MainActivity :
             allowSkip = BuildConfig.FIRST_RUN_SKIPPABLE,
         ) ?: return
         prepareActivityTransformationFrom()
-        if (SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
+        if (SDK_INT >= VERSION_CODES.UPSIDE_DOWN_CAKE) overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, fade_in, fade_out)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         configureCommonUtilsSplashScreen(splashScreen, binding.root) { !viewModel.state.value.isUIReady }

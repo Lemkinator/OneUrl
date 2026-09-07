@@ -19,10 +19,12 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 
 /*
 https://1s.is/
@@ -113,34 +115,40 @@ object Onesis : ShortURLProvider {
                         }
 
                         else -> {
-                            errorCallback(GenerateURLError.Unknown(200))
+                            errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                         }
                     }
                 }
             },
-            { error ->
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val message = error.message
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: $message data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
-                }
-            },
+            { error -> handleOnesisError(tag, error, errorCallback) },
         ) {
             override fun getParams() = mapOf("original_url" to longURL, "custom_short_url" to alias)
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun handleOnesisError(
+        tag: String,
+        error: VolleyError,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+        // escaping exception here would crash the whole app.
+        try {
+            Log.e(tag, "error: $error")
+            val networkResponse = error.networkResponse
+            val statusCode = networkResponse?.statusCode
+            val data = networkResponse?.data?.toString(Charsets.UTF_8)
+            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+            when {
+                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                else -> errorCallback(GenerateURLError.Unknown(statusCode))
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "error parsing error response", e)
+            errorCallback(GenerateURLError.Unknown())
         }
     }
 }

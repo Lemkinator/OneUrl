@@ -26,6 +26,7 @@ import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import de.lemke.commonutils.R as commonutilsR
 
@@ -148,7 +149,7 @@ object Murl : ShortURLProvider {
 
             else -> {
                 Log.e(tag, "error, response does not start with https://murl.com/, response: $response")
-                errorCallback(GenerateURLError.Unknown(200))
+                errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
             }
         }
     }
@@ -171,7 +172,7 @@ object Murl : ShortURLProvider {
             when {
                 error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                 statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                 data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
                 data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)

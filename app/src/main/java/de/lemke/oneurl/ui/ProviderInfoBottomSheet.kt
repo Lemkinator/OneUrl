@@ -77,7 +77,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
             0 -> binding.providerBottomSheetInfo1 to binding.providerBottomSheetInfoText1
             1 -> binding.providerBottomSheetInfo2 to binding.providerBottomSheetInfoText2
             2 -> binding.providerBottomSheetInfo3 to binding.providerBottomSheetInfoText3
-            3 -> binding.providerBottomSheetInfo4 to binding.providerBottomSheetInfoText4
+            LAST_INFO_CONTENT_INDEX -> binding.providerBottomSheetInfo4 to binding.providerBottomSheetInfoText4
             else -> null
         }
 
@@ -131,5 +131,6 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
             }
 
         const val KEY_PROVIDER = "key_provider"
+        private const val LAST_INFO_CONTENT_INDEX = 3
     }
 }

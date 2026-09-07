@@ -105,10 +105,12 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
     }
 }
 
+private const val BITMAP_COMPRESS_QUALITY = 100
+
 // java.lang.RuntimeException: Could not copy bitmap to parcel blob. ???????
 private fun Bitmap.toByteArray(): ByteArray =
     ByteArrayOutputStream().use { stream ->
-        compress(Bitmap.CompressFormat.PNG, 100, stream)
+        compress(Bitmap.CompressFormat.PNG, BITMAP_COMPRESS_QUALITY, stream)
         stream.toByteArray()
     }
 

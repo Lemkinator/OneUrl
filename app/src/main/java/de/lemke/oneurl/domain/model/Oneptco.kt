@@ -25,6 +25,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -62,6 +63,7 @@ object Oneptco : ShortURLProvider {
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
         }
+    private const val REQUEST_TIMEOUT_MS = 20000
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
@@ -98,7 +100,7 @@ object Oneptco : ShortURLProvider {
         ) {
             override fun getRetryPolicy() =
                 DefaultRetryPolicy(
-                    20000, // set timeout to 20 seconds
+                    REQUEST_TIMEOUT_MS, // set timeout to 20 seconds
                     DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
                 )
@@ -116,17 +118,17 @@ object Oneptco : ShortURLProvider {
             when {
                 !response.has("message") -> {
                     Log.e(tag, "error: no message")
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
 
                 response.getString("message") != "Added!" -> {
                     Log.e(tag, "error: ${response.getString("message")}")
-                    errorCallback(GenerateURLError.Custom(200, response.getString("message")))
+                    errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, response.getString("message")))
                 }
 
                 !response.has("short") -> {
                     Log.e(tag, "error: no short")
-                    errorCallback(GenerateURLError.Unknown(200))
+                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
 
                 response.has("receivedRequestedShort") && !response.getBoolean("receivedRequestedShort") -> {
@@ -142,7 +144,7 @@ object Oneptco : ShortURLProvider {
             }
         } catch (e: JSONException) {
             Log.e(tag, "error parsing create response", e)
-            errorCallback(GenerateURLError.Unknown(200))
+            errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
         }
     }
 
@@ -164,9 +166,9 @@ object Oneptco : ShortURLProvider {
                 error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                 statusCode == null -> errorCallback(GenerateURLError.Unknown())
                 data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                statusCode == 404 -> errorCallback(GenerateURLError.Unknown(statusCode))
-                statusCode == 500 -> errorCallback(GenerateURLError.InternalServerError)
-                statusCode == 503 -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                statusCode == HttpStatusCode.NOT_FOUND -> errorCallback(GenerateURLError.Unknown(statusCode))
+                statusCode == HttpStatusCode.INTERNAL_SERVER_ERROR -> errorCallback(GenerateURLError.InternalServerError)
+                statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 else -> errorCallback(GenerateURLError.Custom(statusCode, data))
             }
         } catch (e: Exception) {

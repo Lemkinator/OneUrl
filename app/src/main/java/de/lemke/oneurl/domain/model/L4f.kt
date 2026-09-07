@@ -25,6 +25,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import org.json.JSONObject
 
 /*
@@ -151,12 +152,12 @@ object L4f : ShortURLProvider {
                 }
 
                 else -> {
-                    errorCallback(GenerateURLError.Custom(200, message))
+                    errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, message))
                 }
             }
         } catch (e: Exception) {
             Log.e(tag, "error parsing response", e)
-            errorCallback(GenerateURLError.Unknown(200))
+            errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
         }
     }
 

@@ -105,7 +105,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             if (!isInitialized) {
                 isInitialized = true
                 initControls(state)
-                setCustomBackAnimation(binding.root, showInAppReviewIfPossible = true)
+                setCustomBackAnimation(binding.root, inAppReview = settings)
                 binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
             }
         }
