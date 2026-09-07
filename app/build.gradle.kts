@@ -111,6 +111,7 @@ android {
     }
     testOptions {
         unitTests {
+            isIncludeAndroidResources = true
             all { test ->
                 test.useJUnitPlatform()
                 // MockK ≥ 1.14 on JDK 21 needs this:
@@ -134,6 +135,8 @@ dependencies {
     testImplementation(libs.konsist)
     testImplementation(libs.bundles.unit.test)
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit4)
+    testImplementation(libs.robolectric)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.vintage.engine)
