@@ -57,6 +57,11 @@ android {
         buildConfigField("boolean", "FIRST_RUN_SKIPPABLE", "false")
         testInstrumentationRunner = "de.lemke.oneurl.HiltTestRunner"
     }
+    // Hosts the fake Hilt modules shared by testDebugUnitTest and connectedDebugAndroidTest.
+    @Suppress("UnstableApiUsage")
+    testFixtures {
+        enable = true
+    }
     @Suppress("UnstableApiUsage")
     androidResources.localeFilters += listOf("en", "de")
     signingConfigs {
@@ -143,6 +148,11 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
+
+    testFixturesImplementation(libs.bundles.room)
+    testFixturesImplementation(libs.hilt.android.testing)
+    testFixturesImplementation(testFixtures(libs.common.utils))
+    kspTestFixtures(libs.hilt.android.compiler)
 
     testImplementation(libs.konsist)
     testImplementation(libs.bundles.unit.test)
