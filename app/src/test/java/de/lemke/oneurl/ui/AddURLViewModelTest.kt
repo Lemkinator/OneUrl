@@ -31,6 +31,7 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
+import de.lemke.oneurl.domain.testUrl
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -42,26 +43,10 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
-import java.time.ZonedDateTime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-
-private fun testUrl(
-    shortURL: String,
-    longURL: String = "https://example.com",
-    provider: ShortURLProvider = ShortURLProviderCompanion.default,
-) = URL(
-    shortURL = shortURL,
-    longURL = longURL,
-    shortURLProvider = provider,
-    qr = mockk<Bitmap>(),
-    favorite = false,
-    title = "title",
-    description = "description",
-    added = ZonedDateTime.now(),
-)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddURLViewModelTest : ShouldSpec(
