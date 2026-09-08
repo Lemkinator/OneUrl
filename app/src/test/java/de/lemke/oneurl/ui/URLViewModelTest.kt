@@ -181,9 +181,9 @@ class URLViewModelTest : ShouldSpec(
         }
 
         should("delete is a no-op when no url is loaded") {
-            // No events.test wrapper here: init already sent a buffered NotFound event (this is the
-            // not-found case per the brief), which a fresh collector would immediately receive and
-            // make expectNoEvents() fail. Absence of a further event is implied by no deleteURL call.
+            // No events.test wrapper here: init already sent a buffered NotFound event, which a
+            // fresh collector would immediately receive and make expectNoEvents() fail. Absence
+            // of a further event is implied by no deleteURL call.
             val viewModel = newViewModel()
 
             viewModel.delete()
