@@ -48,7 +48,7 @@ class ProviderActivityTest {
             .launch<ProviderActivity>(
                 Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java),
             ).use { scenario ->
-                scenario.state.isAtLeast(Lifecycle.State.CREATED) shouldBe true
+                scenario.state shouldBe Lifecycle.State.RESUMED
             }
     }
 }

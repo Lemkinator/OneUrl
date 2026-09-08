@@ -48,7 +48,7 @@ class HelpActivityTest {
             .launch<HelpActivity>(
                 Intent(ApplicationProvider.getApplicationContext(), HelpActivity::class.java),
             ).use { scenario ->
-                scenario.state.isAtLeast(Lifecycle.State.CREATED) shouldBe true
+                scenario.state shouldBe Lifecycle.State.RESUMED
             }
     }
 }
