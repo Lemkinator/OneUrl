@@ -21,12 +21,16 @@ plugins {
 
 android {
     namespace = "de.lemke.oneurl.benchmarks"
-    compileSdk {
-        version = release(37) { minorApiLevel = 1 }
-    }
+    compileSdk =
+        libs.versions.compileSdk
+            .get()
+            .toInt()
     defaultConfig {
         minSdk = 28
-        targetSdk = 37
+        targetSdk =
+            libs.versions.targetSdk
+                .get()
+                .toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     targetProjectPath = ":app"

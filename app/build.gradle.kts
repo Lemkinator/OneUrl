@@ -47,12 +47,25 @@ fun com.android.build.api.dsl.ApplicationBuildType.addConstant(
 android {
     namespace = "de.lemke.oneurl"
     compileSdk {
-        version = release(37) { minorApiLevel = 1 }
+        version =
+            release(
+                libs.versions.compileSdk
+                    .get()
+                    .toInt(),
+            ) {
+                minorApiLevel =
+                    libs.versions.compileSdkMinor
+                        .get()
+                        .toInt()
+            }
     }
     defaultConfig {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
-        targetSdk = 37
+        targetSdk =
+            libs.versions.targetSdk
+                .get()
+                .toInt()
         versionCode = 45
         versionName = "1.7.6"
         testInstrumentationRunner = "de.lemke.oneurl.HiltTestRunner"
