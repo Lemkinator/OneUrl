@@ -34,7 +34,8 @@ class ProviderViewModelTest : ShouldSpec(
     {
         lateinit var userSettings: UserSettings
 
-        fun newViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()) = ProviderViewModel(savedStateHandle, userSettings)
+        fun newViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()) =
+            ProviderViewModel(savedStateHandle, userSettings, ShortURLProviderCompanion.enabled)
 
         beforeEach {
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))

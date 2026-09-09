@@ -23,6 +23,9 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.domain.model.Dagd
+import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,6 +35,10 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
+//
+// selectedShortURLProvider is pinned to Dagd rather than left at ShortURLProviderCompanion.default
+// (rendered as providerTitle text) so this screenshot stays stable if the real provider list's
+// first enabled entry changes.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
@@ -40,9 +47,13 @@ class AddURLActivityScreenshotTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
+    @Inject
+    lateinit var userSettings: UserSettings
+
     @Before
     fun setup() {
         hiltRule.inject()
+        userSettings.selectedShortURLProvider = Dagd
     }
 
     @Test
