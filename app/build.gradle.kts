@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalRoborazziApi::class)
+
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt.android)
@@ -22,6 +26,9 @@ plugins {
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.detekt)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.kover)
+    alias(libs.plugins.android.junit)
+    alias(libs.plugins.roborazzi)
 }
 
 fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
@@ -47,6 +54,7 @@ android {
         targetSdk = 37
         versionCode = 45
         versionName = "1.7.6"
+        testInstrumentationRunner = "de.lemke.oneurl.HiltTestRunner"
         buildConfigField("boolean", "FIRST_RUN_SKIPPABLE", "false")
     }
     @Suppress("UnstableApiUsage")
@@ -103,33 +111,66 @@ android {
         // checkDependencies = false: private AAR deps surface
         // hundreds of unactionable warnings; flip to true once in-project surface is clean
         checkDependencies = false
+        // Explicit: pins intent against future AGP default changes.
         checkReleaseBuilds = true
         abortOnError = true
         baseline = file("lint-baseline.xml")
     }
     testOptions {
         unitTests {
-            all { test -> test.useJUnitPlatform() }
+            isIncludeAndroidResources = true
+
+            all { test ->
+                test.useJUnitPlatform()
+                // MockK ≥ 1.14 on JDK 21 needs this:
+                test.jvmArgs("-XX:+EnableDynamicAgentLoading")
+                test.systemProperty("robolectric.graphicsMode", "NATIVE")
+                test.systemProperty("roborazzi.test.record", project.findProperty("roborazzi.record") ?: "false")
+                test.systemProperty("roborazzi.test.verify", project.findProperty("roborazzi.verify") ?: "true")
+            }
         }
+        animationsDisabled = true
     }
 }
 dependencies {
-    debugImplementation(libs.leakcanary)
     implementation(libs.oneui.design)
     implementation(libs.oneui.icons)
     implementation(libs.common.utils)
     implementation(libs.bundler)
+    // Pins kotlinx-coroutines-core for main/androidTest classpath parity - do not remove without
+    // re-checking dependencyInsight on both debugRuntimeClasspath and debugAndroidTestRuntimeClasspath
+    // (see commit 7e1ebd6).
+    implementation(libs.coroutines.android)
     implementation(libs.volley)
     implementation(libs.bundles.room)
     implementation(libs.hilt.android)
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
 
+    debugImplementation(libs.leakcanary)
+
+    testImplementation(testFixtures(libs.common.utils))
+
+    testImplementation(libs.arch.core.testing)
+    testImplementation(libs.bundles.unit.test)
+    testImplementation(libs.bundles.robolectric.test)
+    testImplementation(libs.hilt.android.testing)
     testImplementation(libs.konsist)
-    testImplementation(libs.kotest.runner.junit5)
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit4)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
+    kspTest(libs.hilt.compiler)
+
+    androidTestImplementation(testFixtures(libs.common.utils))
+    androidTestImplementation(libs.bundles.android.test)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.turbine)
+    androidTestImplementation(libs.kotest.assertions.core)
+    androidTestImplementation(libs.coroutines.test)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
 }
 secrets {
     propertiesFileName = "secrets.properties"
@@ -141,8 +182,8 @@ spotless {
     kotlin {
         target("src/**/*.kt")
         targetExclude("**/build/**", "**/generated/**")
-        ktlint(libs.versions.ktlint.get())
         licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.kt"))
+        ktlint(libs.versions.ktlint.get())
         trimTrailingWhitespace()
         endWithNewline()
     }
@@ -168,5 +209,41 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     reports {
         html.required.set(true)
         sarif.required.set(true)
+    }
+}
+
+roborazzi {
+    outputDir.set(layout.projectDirectory.dir("src/test/screenshots"))
+    compare {
+        outputDir.set(layout.buildDirectory.dir("reports/roborazzi"))
+    }
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*.databinding.*",
+                    "*.BuildConfig",
+                    "*.di.*",
+                    "*Hilt_*",
+                    "*_HiltModules*",
+                    "*_Factory",
+                    "*_Provide*",
+                    "*_MembersInjector",
+                    "dagger.hilt.*",
+                    "hilt_aggregated_deps.*",
+                )
+            }
+        }
+        variant("debug") {
+            verify {
+                rule {
+                    minBound(19, coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.INSTRUCTION)
+                    minBound(7, coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH)
+                }
+            }
+        }
     }
 }

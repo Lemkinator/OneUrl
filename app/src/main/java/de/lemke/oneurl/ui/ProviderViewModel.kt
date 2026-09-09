@@ -21,8 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.di.EnabledProviders
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 class ProviderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val userSettings: UserSettings,
+    @EnabledProviders private val enabledProviders: @JvmSuppressWildcards List<ShortURLProvider>,
 ) : ViewModel() {
     val state: StateFlow<ProviderUiState>
         field = MutableStateFlow(ProviderUiState())
@@ -46,8 +47,8 @@ class ProviderViewModel @Inject constructor(
     init {
         val selectMode = savedStateHandle.get<Boolean>(ProviderActivity.KEY_SELECT_PROVIDER) == true
         val currentSelected = userSettings.selectedShortURLProvider
-        state.update { it.copy(selectMode = selectMode, currentSelected = currentSelected) }
-        val position = ShortURLProviderCompanion.enabled.indexOf(currentSelected)
+        state.update { it.copy(providers = enabledProviders, selectMode = selectMode, currentSelected = currentSelected) }
+        val position = enabledProviders.indexOf(currentSelected)
         if (position >= 0) {
             viewModelScope.launch { _events.send(ProviderEvent.ScrollToSelected(position)) }
         }
@@ -68,7 +69,7 @@ class ProviderViewModel @Inject constructor(
 }
 
 data class ProviderUiState(
-    val providers: List<ShortURLProvider> = ShortURLProviderCompanion.enabled,
+    val providers: List<ShortURLProvider> = emptyList(),
     val selectMode: Boolean = false,
     val currentSelected: ShortURLProvider? = null,
 )

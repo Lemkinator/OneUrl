@@ -89,15 +89,8 @@ after touching `libs.versions.toml` or a dependency block.
 **After any change** — run the full local CI suite before declaring work done:
 
 ```bash
-./gradlew spotlessCheck detekt lintDebug test assembleDebug
+./gradlew spotlessCheck detekt lintDebug testDebugUnitTest koverVerifyDebug koverHtmlReportDebug verifyRoborazziDebug pixel9Api35DebugAndroidTest assembleRelease
 ```
 
-If `spotlessCheck` fails, fix with `./gradlew spotlessApply` then re-run.
-
-**Dependency analysis** — manual hygiene tool (not gated in CI). Invoke with:
-
-```bash
-./gradlew buildHealth
-```
-
-Report at `build/reports/dependency-analysis/build-health-report.txt`. Review findings case-by-case — autofixing creates breakage.
+If `spotlessCheck` fails, fix with `./gradlew spotlessApply` then re-run. If a screenshot golden mismatch is expected
+(intentional UI change), re-record it with `./gradlew recordRoborazziDebug -Proborazzi.record=true`.
