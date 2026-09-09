@@ -17,8 +17,6 @@
 package de.lemke.oneurl.ui
 
 import android.content.Intent
-import android.graphics.Color
-import androidx.core.graphics.createBitmap
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -28,6 +26,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.data.URLRepository
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -61,21 +60,25 @@ class URLActivityScreenshotTest {
     @Inject
     lateinit var urlRepository: URLRepository
 
-    private val seededUrl =
-        URL(
-            shortURL = "https://da.gd/seeded1",
-            longURL = "https://example.com/seeded-page",
-            shortURLProvider = Dagd,
-            qr = createBitmap(64, 64).apply { eraseColor(Color.WHITE) },
-            favorite = false,
-            title = "Seeded title",
-            description = "Seeded description",
-            added = ZonedDateTime.parse("2024-01-15T10:30:00Z"),
-        )
+    @Inject
+    lateinit var generateQRCode: GenerateQRCodeUseCase
+
+    private lateinit var seededUrl: URL
 
     @Before
     fun setup() {
         hiltRule.inject()
+        seededUrl =
+            URL(
+                shortURL = "https://da.gd/seeded1",
+                longURL = "https://example.com/seeded-page",
+                shortURLProvider = Dagd,
+                qr = generateQRCode("https://da.gd/seeded1"),
+                favorite = false,
+                title = "Seeded title",
+                description = "Seeded description",
+                added = ZonedDateTime.parse("2024-01-15T10:30:00Z"),
+            )
         runBlocking { urlRepository.addURL(seededUrl) }
     }
 

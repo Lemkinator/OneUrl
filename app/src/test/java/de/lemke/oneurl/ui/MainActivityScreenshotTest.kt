@@ -16,11 +16,12 @@
 
 package de.lemke.oneurl.ui
 
-import android.graphics.Color
-import androidx.core.graphics.createBitmap
+import android.view.ViewGroup
+import androidx.core.view.descendants
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
+import com.airbnb.lottie.LottieAnimationView
 import com.github.takahirom.roborazzi.captureRoboImage
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -28,6 +29,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.oneurl.data.URLRepository
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
@@ -56,6 +58,9 @@ class MainActivityScreenshotTest {
 
     @Inject
     lateinit var urlRepository: URLRepository
+
+    @Inject
+    lateinit var generateQRCode: GenerateQRCodeUseCase
 
     @Before
     fun setup() {
@@ -88,8 +93,20 @@ class MainActivityScreenshotTest {
     }
 
     private fun launchAndCapture(fileName: String) {
-        ActivityScenario.launch(MainActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             shadowOf(android.os.Looper.getMainLooper()).idle()
+            // Lottie drives its own Choreographer-based animator, independent of the Looper
+            // queue idle() drains above — an autoplaying/looping view is otherwise captured at
+            // a timing-dependent frame. Pin every one to frame 0 for a deterministic screenshot.
+            scenario.onActivity { activity ->
+                (activity.window.decorView as ViewGroup)
+                    .descendants
+                    .filterIsInstance<LottieAnimationView>()
+                    .forEach {
+                        it.pauseAnimation()
+                        it.progress = 0f
+                    }
+            }
             onView(isRoot()).captureRoboImage(fileName)
         }
     }
@@ -110,7 +127,7 @@ class MainActivityScreenshotTest {
         shortURL = shortURL,
         longURL = "https://example.com/${title.lowercase().replace(' ', '-')}",
         shortURLProvider = ShortURLProviderCompanion.default,
-        qr = createBitmap(64, 64).apply { eraseColor(Color.WHITE) },
+        qr = generateQRCode(shortURL),
         favorite = favorite,
         title = title,
         description = description,
