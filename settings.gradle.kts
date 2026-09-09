@@ -29,3 +29,4 @@ plugins {
 
 rootProject.name = "OneURL"
 include(":app")
+include(":benchmarks")

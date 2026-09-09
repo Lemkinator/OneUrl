@@ -29,6 +29,7 @@ plugins {
     alias(libs.plugins.kover)
     alias(libs.plugins.android.junit)
     alias(libs.plugins.roborazzi)
+    alias(libs.plugins.baselineprofile)
 }
 
 fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
@@ -132,6 +133,19 @@ android {
         animationsDisabled = true
     }
 }
+
+androidComponents {
+    listOf("nonMinifiedRelease", "benchmarkRelease").forEach { buildType ->
+        onVariants(selector().withBuildType(buildType)) { variant ->
+            variant.buildConfigFields!!.put(
+                "FIRST_RUN_SKIPPABLE",
+                com.android.build.api.variant
+                    .BuildConfigField("boolean", "true", "Allow benchmarks to skip the first-run chain"),
+            )
+        }
+    }
+}
+
 dependencies {
     implementation(libs.oneui.design)
     implementation(libs.oneui.icons)
@@ -147,6 +161,8 @@ dependencies {
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
 
+    implementation(libs.profileinstaller)
+    baselineProfile(project(":benchmarks"))
     debugImplementation(libs.leakcanary)
 
     testImplementation(testFixtures(libs.common.utils))
@@ -246,4 +262,8 @@ kover {
             }
         }
     }
+}
+
+baselineProfile {
+    dexLayoutOptimization = true
 }
