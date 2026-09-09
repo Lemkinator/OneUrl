@@ -26,8 +26,8 @@ plugins {
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.detekt)
     alias(libs.plugins.spotless)
-    alias(libs.plugins.android.junit)
     alias(libs.plugins.kover)
+    alias(libs.plugins.android.junit)
     alias(libs.plugins.roborazzi)
 }
 
@@ -54,8 +54,8 @@ android {
         targetSdk = 37
         versionCode = 45
         versionName = "1.7.6"
-        buildConfigField("boolean", "FIRST_RUN_SKIPPABLE", "false")
         testInstrumentationRunner = "de.lemke.oneurl.HiltTestRunner"
+        buildConfigField("boolean", "FIRST_RUN_SKIPPABLE", "false")
     }
     @Suppress("UnstableApiUsage")
     androidResources.localeFilters += listOf("en", "de")
@@ -111,11 +111,15 @@ android {
         // checkDependencies = false: private AAR deps surface
         // hundreds of unactionable warnings; flip to true once in-project surface is clean
         checkDependencies = false
+        // Explicit: pins intent against future AGP default changes.
+        checkReleaseBuilds = true
+        abortOnError = true
         baseline = file("lint-baseline.xml")
     }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+
             all { test ->
                 test.useJUnitPlatform()
                 // MockK ≥ 1.14 on JDK 21 needs this:
@@ -129,7 +133,6 @@ android {
     }
 }
 dependencies {
-    debugImplementation(libs.leakcanary)
     implementation(libs.oneui.design)
     implementation(libs.oneui.icons)
     implementation(libs.common.utils)
@@ -144,27 +147,30 @@ dependencies {
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
 
-    testImplementation(libs.konsist)
+    debugImplementation(libs.leakcanary)
+
+    testImplementation(testFixtures(libs.common.utils))
+
+    testImplementation(libs.arch.core.testing)
     testImplementation(libs.bundles.unit.test)
+    testImplementation(libs.bundles.robolectric.test)
+    testImplementation(libs.hilt.android.testing)
+    testImplementation(libs.konsist)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit4)
-    testImplementation(libs.bundles.robolectric.test)
-    testImplementation(libs.arch.core.testing)
-    testImplementation(libs.hilt.android.testing)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.vintage.engine)
-    testImplementation(testFixtures(libs.common.utils))
-    kspTest(libs.hilt.android.compiler)
+    kspTest(libs.hilt.compiler)
 
+    androidTestImplementation(testFixtures(libs.common.utils))
     androidTestImplementation(libs.bundles.android.test)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.turbine)
     androidTestImplementation(libs.kotest.assertions.core)
     androidTestImplementation(libs.coroutines.test)
     androidTestImplementation(libs.hilt.android.testing)
-    androidTestImplementation(testFixtures(libs.common.utils))
-    kspAndroidTest(libs.hilt.android.compiler)
+    kspAndroidTest(libs.hilt.compiler)
 }
 secrets {
     propertiesFileName = "secrets.properties"
@@ -176,8 +182,8 @@ spotless {
     kotlin {
         target("src/**/*.kt")
         targetExclude("**/build/**", "**/generated/**")
-        ktlint(libs.versions.ktlint.get())
         licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.kt"))
+        ktlint(libs.versions.ktlint.get())
         trimTrailingWhitespace()
         endWithNewline()
     }
