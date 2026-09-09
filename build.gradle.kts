@@ -19,11 +19,11 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.android.test) apply false
-    alias(libs.plugins.baselineprofile) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.spotless)
+    alias(libs.plugins.android.test) apply false
+    alias(libs.plugins.baselineprofile) apply false
     alias(libs.plugins.dependency.analysis)
 }
 
@@ -130,8 +130,10 @@ subprojects {
 
             // oneui-design replaces these AOSP AndroidX modules with Samsung's SESL forks, which
             // keep the original package names — exclude the AOSP originals everywhere to prevent
-            // shadowing. androidTest specifically needs SESL: instrumented tests launch SESL
-            // activities calling SESL-only APIs (e.g. MenuItemCompat.setSeslNaviMenuItemType).
+            // shadowing. com.android.test modules (:benchmarks) are not matched and keep genuine
+            // AOSP AndroidX for UiAutomator/benchmark deps. androidTest specifically needs SESL:
+            // instrumented tests launch SESL activities calling SESL-only APIs (e.g.
+            // MenuItemCompat.setSeslNaviMenuItemType).
             plugins.withId("com.android.application") {
                 configurations.configureEach {
                     exclude(group = "androidx.core", module = "core")

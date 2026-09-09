@@ -28,8 +28,8 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.kover)
     alias(libs.plugins.android.junit)
-    alias(libs.plugins.roborazzi)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.roborazzi)
 }
 
 fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
@@ -228,6 +228,10 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     }
 }
 
+baselineProfile {
+    dexLayoutOptimization = true
+}
+
 roborazzi {
     outputDir.set(layout.projectDirectory.dir("src/test/screenshots"))
     compare {
@@ -262,8 +266,4 @@ kover {
             }
         }
     }
-}
-
-baselineProfile {
-    dexLayoutOptimization = true
 }
