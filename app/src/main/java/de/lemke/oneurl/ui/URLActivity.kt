@@ -92,10 +92,22 @@ class URLActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val longURL =
             viewModel.state.value.url
-                ?.longURL ?: return false
-        val urlScanTemplate = urlScanTemplateFor(item.itemId) ?: return super.onOptionsItemSelected(item)
-        openURL(urlScanTemplate(longURL.urlEncode()))
-        return true
+                ?.longURL
+        val urlScanTemplate = longURL?.let { urlScanTemplateFor(item.itemId) }
+        return when {
+            longURL == null -> {
+                false
+            }
+
+            urlScanTemplate == null -> {
+                super.onOptionsItemSelected(item)
+            }
+
+            else -> {
+                openURL(urlScanTemplate(longURL.urlEncode()))
+                true
+            }
+        }
     }
 
     private fun urlScanTemplateFor(itemId: Int): ((encodedURL: String) -> String)? =

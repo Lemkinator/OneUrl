@@ -41,6 +41,7 @@ import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.model.AliasConfig
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
@@ -173,24 +174,35 @@ class AddURLActivity : AppCompatActivity() {
                 ?.toString()
                 ?.trim() ?: ""
         val provider = viewModel.state.value.selectedProvider
-        if (alias.isNotBlank()) {
-            provider.aliasConfig?.let {
-                if (alias.length < it.minAliasLength) {
-                    binding.editTextAlias.error = getString(R.string.error_alias_too_short, it.minAliasLength)
-                    return
-                }
-                if (alias.length > it.maxAliasLength) {
-                    binding.editTextAlias.error = getString(R.string.error_alias_too_long, it.maxAliasLength)
-                    return
-                }
-                if (!it.isAliasValid(alias)) {
-                    binding.editTextAlias.error = getString(R.string.error_invalid_alias_allowed_characters, it.allowedAliasCharacters)
-                    return
-                }
-            }
-        }
+        val aliasConfig = provider.aliasConfig
+        if (alias.isNotBlank() && aliasConfig != null && !isAliasValid(alias, aliasConfig)) return
         viewModel.submit(longURLRaw, alias, binding.editTextDescription.text?.toString() ?: "")
     }
+
+    private fun isAliasValid(
+        alias: String,
+        config: AliasConfig,
+    ): Boolean =
+        when {
+            alias.length < config.minAliasLength -> {
+                binding.editTextAlias.error = getString(R.string.error_alias_too_short, config.minAliasLength)
+                false
+            }
+
+            alias.length > config.maxAliasLength -> {
+                binding.editTextAlias.error = getString(R.string.error_alias_too_long, config.maxAliasLength)
+                false
+            }
+
+            !config.isAliasValid(alias) -> {
+                binding.editTextAlias.error = getString(R.string.error_invalid_alias_allowed_characters, config.allowedAliasCharacters)
+                false
+            }
+
+            else -> {
+                true
+            }
+        }
 
     private fun showAlreadyShortenedDialog(shortURL: String) {
         AlertDialog
