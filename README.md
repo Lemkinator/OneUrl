@@ -24,12 +24,11 @@ src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web
 A URL-Shortener with OneUI-Design.
 
 <img loading="lazy" src="app/src/test/screenshots/main_default_dark.png" height="350" alt="Main screen with saved URLs"/>
-<img loading="lazy" src="app/src/test/screenshots/main_empty_dark.png" height="350" alt="Main screen empty state"/>
 <img loading="lazy" src="app/src/test/screenshots/add_url_default_dark.png" height="350" alt="Add URL screen"/>
 <img loading="lazy" src="app/src/test/screenshots/provider_default_dark.png" height="350" alt="Provider selection screen"/>
 <img loading="lazy" src="app/src/test/screenshots/url_default_dark.png" height="350" alt="URL details screen"/>
 <img loading="lazy" src="app/src/test/screenshots/generate_qr_code_default_dark.png" height="350" alt="Generate QR code screen"/>
-<img loading="lazy" src="app/src/test/screenshots/help_default_dark.png" height="350" alt="Help screen"/>
+<img loading="lazy" src="app/src/test/screenshots/settings_default_dark.png" height="350" alt="Help screen"/>
 
 ## More Information: <a target="_blank" href='https://www.leonard-lemke.com/apps/oneurl'>www.leonard-lemke.com </a>
 
