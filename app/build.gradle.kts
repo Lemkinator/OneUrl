@@ -28,6 +28,7 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.kover)
     alias(libs.plugins.android.junit)
+    alias(libs.plugins.baselineprofile)
     alias(libs.plugins.roborazzi)
 }
 
@@ -46,12 +47,25 @@ fun com.android.build.api.dsl.ApplicationBuildType.addConstant(
 android {
     namespace = "de.lemke.oneurl"
     compileSdk {
-        version = release(37) { minorApiLevel = 1 }
+        version =
+            release(
+                libs.versions.compileSdk
+                    .get()
+                    .toInt(),
+            ) {
+                minorApiLevel =
+                    libs.versions.compileSdkMinor
+                        .get()
+                        .toInt()
+            }
     }
     defaultConfig {
         applicationId = "de.lemke.oneurl"
         minSdk = 26
-        targetSdk = 37
+        targetSdk =
+            libs.versions.targetSdk
+                .get()
+                .toInt()
         versionCode = 45
         versionName = "1.7.6"
         testInstrumentationRunner = "de.lemke.oneurl.HiltTestRunner"
@@ -132,6 +146,19 @@ android {
         animationsDisabled = true
     }
 }
+
+androidComponents {
+    listOf("nonMinifiedRelease", "benchmarkRelease").forEach { buildType ->
+        onVariants(selector().withBuildType(buildType)) { variant ->
+            variant.buildConfigFields!!.put(
+                "FIRST_RUN_SKIPPABLE",
+                com.android.build.api.variant
+                    .BuildConfigField("boolean", "true", "Allow benchmarks to skip the first-run chain"),
+            )
+        }
+    }
+}
+
 dependencies {
     implementation(libs.oneui.design)
     implementation(libs.oneui.icons)
@@ -147,6 +174,8 @@ dependencies {
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
 
+    implementation(libs.profileinstaller)
+    baselineProfile(project(":benchmarks"))
     debugImplementation(libs.leakcanary)
 
     testImplementation(testFixtures(libs.common.utils))
@@ -210,6 +239,10 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
         html.required.set(true)
         sarif.required.set(true)
     }
+}
+
+baselineProfile {
+    dexLayoutOptimization = true
 }
 
 roborazzi {

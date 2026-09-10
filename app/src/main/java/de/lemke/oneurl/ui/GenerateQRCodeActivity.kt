@@ -82,18 +82,21 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val state = viewModel.state.value
-        when (item.itemId) {
+        return when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
                 state.qrCode?.let { exportBitmap(settings.imageSaveLocation, it, state.url, exportQRCodeResultLauncher) }
-                return true
+                true
             }
 
             R.id.menu_item_qr_share -> {
                 state.qrCode?.share(this, "QRCode.png")
-                return true
+                true
+            }
+
+            else -> {
+                super.onOptionsItemSelected(item)
             }
         }
-        return super.onOptionsItemSelected(item)
     }
 
     private fun collectState() =

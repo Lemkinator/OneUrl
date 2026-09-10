@@ -38,6 +38,9 @@ class GenerateURLUseCase @Inject constructor(
     private val checkURLSafety: CheckURLSafetyUseCase,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
+    // Guard clauses are interleaved with onProgress() calls that must fire in order; collapsing
+    // to a single return would reorder those side effects for no readability gain.
+    @Suppress("ReturnCount")
     suspend operator fun invoke(
         provider: ShortURLProvider,
         longURL: String,

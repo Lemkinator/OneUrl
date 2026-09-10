@@ -22,6 +22,8 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.spotless)
+    alias(libs.plugins.android.test) apply false
+    alias(libs.plugins.baselineprofile) apply false
     alias(libs.plugins.dependency.analysis)
 }
 
@@ -93,16 +95,6 @@ allprojects {
 }
 
 subprojects {
-    configurations.configureEach {
-        resolutionStrategy.eachDependency {
-            if (requested.group == "org.jetbrains.kotlin" && requested.name == "kotlin-metadata-jvm") {
-                useVersion("2.4.0")
-                because(
-                    "Hilt 2.59.x does not support Kotlin 2.4 — its bundled kotlin-metadata-jvm only reads metadata format ≤ 2.3.0. Remove once Hilt ships native Kotlin 2.4 support (track: github.com/google/dagger/issues/5001)",
-                )
-            }
-        }
-    }
     plugins.withId("com.android.base") {
         project.extensions.findByType(CommonExtension::class.java)?.apply {
             compileOptions.apply {
@@ -128,8 +120,10 @@ subprojects {
 
             // oneui-design replaces these AOSP AndroidX modules with Samsung's SESL forks, which
             // keep the original package names — exclude the AOSP originals everywhere to prevent
-            // shadowing. androidTest specifically needs SESL: instrumented tests launch SESL
-            // activities calling SESL-only APIs (e.g. MenuItemCompat.setSeslNaviMenuItemType).
+            // shadowing. com.android.test modules (:benchmarks) are not matched and keep genuine
+            // AOSP AndroidX for UiAutomator/benchmark deps. androidTest specifically needs SESL:
+            // instrumented tests launch SESL activities calling SESL-only APIs (e.g.
+            // MenuItemCompat.setSeslNaviMenuItemType).
             plugins.withId("com.android.application") {
                 configurations.configureEach {
                     exclude(group = "androidx.core", module = "core")

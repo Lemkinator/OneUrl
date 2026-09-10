@@ -6,7 +6,7 @@ on:
     paths: [ 'app/build.gradle.kts' ]
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -15,6 +15,7 @@ permissions:
 jobs:
   build-and-publish-release:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       GH_USERNAME: ${{ secrets.GH_USERNAME }}
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
@@ -29,12 +30,14 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v6
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
-          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Extract version information
         id: version_info
@@ -44,26 +47,22 @@ jobs:
           VERSION_CODE=$(grep 'versionCode' app/build.gradle.kts | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
           VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | sed -E 's/.*versionName\s*=\s*"([^"]+)".*/\1/')
 
-          # Set outputs
           echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "changed=$([ "$OLD_VERSION_CODE" != "$VERSION_CODE" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
 
-          # Display info
           echo "Version: $VERSION_NAME (code: $VERSION_CODE, changed: $([ "$OLD_VERSION_CODE" != "$VERSION_CODE" ] && echo "true" || echo "false"))"
 
-      # All subsequent steps only run if version code has changed
       - name: Prepare for build
         if: steps.version_info.outputs.changed == 'true'
         run: |
-          chmod +x ./gradlew
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > keystore.jks
           echo -e "KURZELINKS_API_KEY=${{ secrets.KURZELINKS_API_KEY }}\nURL_HAUS_AUTH_KEY=${{ secrets.URL_HAUS_AUTH_KEY }}" > secrets.properties
 
       - name: Build APK
         if: steps.version_info.outputs.changed == 'true'
         run: |
-          ./gradlew :app:assembleRelease
+          chmod +x ./gradlew && ./gradlew :app:assembleRelease --stacktrace
           mkdir -p app/release
           cp -v -r app/build/outputs/apk/release app
 
@@ -87,18 +86,18 @@ jobs:
       - name: Prepare Play Store release
         if: steps.version_info.outputs.changed == 'true'
         run: |
-          ./gradlew :app:bundleRelease
+          ./gradlew :app:bundleRelease --stacktrace
           mkdir -p app/build/outputs/whatsNew
           echo "Automated Upload" > app/build/outputs/whatsNew/whatsnew-en-US
           echo "Automatischer Upload" > app/build/outputs/whatsNew/whatsnew-de-DE
 
       - name: Publish to Play Store
         if: steps.version_info.outputs.changed == 'true'
-        uses: r0adkll/upload-google-play@v1
+        uses: r0adkll/upload-google-play@v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           packageName: ${{ secrets.PACKAGE_NAME }}
-          track: internal
+          tracks: internal
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           mappingFile: app/build/outputs/mapping/release/mapping.txt
           debugSymbols: app/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
