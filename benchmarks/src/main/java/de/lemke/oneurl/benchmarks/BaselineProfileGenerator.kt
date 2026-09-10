@@ -30,13 +30,24 @@ class BaselineProfileGenerator {
     @get:Rule
     val rule = BaselineProfileRule()
 
+    // Startup profile drives dex layout optimization, so it must stay limited to the actual
+    // cold-start path — a secondary screen here would bloat startup-prof.txt with non-startup code.
+    @Test
+    fun startup() =
+        rule.collect(
+            packageName = PACKAGE_NAME,
+            includeInStartupProfile = true,
+        ) {
+            pressHome()
+            startActivityAndSkipOnboarding()
+        }
+
     @Test
     fun generate() =
         rule.collect(
             packageName = PACKAGE_NAME,
             stableIterations = 3,
             maxIterations = 10,
-            includeInStartupProfile = true,
         ) {
             pressHome()
             startActivityAndSkipOnboarding()

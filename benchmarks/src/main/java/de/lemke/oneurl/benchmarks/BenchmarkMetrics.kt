@@ -21,7 +21,7 @@ import androidx.benchmark.macro.TraceSectionMetric
 
 object BenchmarkMetrics {
     @OptIn(ExperimentalMetricApi::class)
-    val jitCompilationMetric = TraceSectionMetric("JIT Compiling %", label = "JIT compilation")
+    val jitCompilationMetric = TraceSectionMetric("JIT compiling %", label = "JIT compilation")
 
     @OptIn(ExperimentalMetricApi::class)
     val classInitMetric = TraceSectionMetric("L%/%;", label = "ClassInit")
