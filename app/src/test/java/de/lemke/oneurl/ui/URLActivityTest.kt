@@ -99,10 +99,21 @@ class URLActivityTest {
         }
     }
 
-    private fun withUrlActivity(block: (URLActivity) -> Unit) {
+    @Test
+    fun `onOptionsItemSelected returns false when no url is loaded`() {
+        withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
+            val handled = activity.onOptionsItemSelected(menuItem(R.id.url_toolbar_urlhaus))
+            handled.shouldBeFalse()
+        }
+    }
+
+    private fun withUrlActivity(
+        shortURL: String = seededUrl.shortURL,
+        block: (URLActivity) -> Unit,
+    ) {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                .putExtra(KEY_SHORTURL, seededUrl.shortURL)
+                .putExtra(KEY_SHORTURL, shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
             // URLViewModel.init loads the URL via a real IO-dispatched Room query, then resumes on
             // Main — a single idle() right after launch can race ahead of that background read

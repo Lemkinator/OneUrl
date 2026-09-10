@@ -24,6 +24,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.domain.model.Murl
 import de.lemke.oneurl.domain.model.VgdIsgd
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -96,6 +97,27 @@ class AddURLActivityTest {
         withAddURLActivity { _, urlField, aliasField, submit ->
             urlField.setText("https://example.com")
             aliasField.setText("valid_alias")
+            submit()
+            aliasField.error.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `submit skips alias validation for a blank alias`() {
+        withAddURLActivity { _, urlField, aliasField, submit ->
+            urlField.setText("https://example.com")
+            aliasField.setText("")
+            submit()
+            aliasField.error.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `submit skips alias validation for a provider without alias support`() {
+        userSettings.selectedShortURLProvider = Murl
+        withAddURLActivity { _, urlField, aliasField, submit ->
+            urlField.setText("https://example.com")
+            aliasField.setText("not valid!")
             submit()
             aliasField.error.shouldBeNull()
         }
