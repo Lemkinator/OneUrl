@@ -20,11 +20,13 @@ import android.content.Intent
 import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.net.toUri
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
@@ -33,6 +35,7 @@ import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import java.time.ZonedDateTime
@@ -88,6 +91,9 @@ class URLActivityTest {
         withUrlActivity { activity ->
             val handled = activity.onOptionsItemSelected(menuItem(R.id.url_toolbar_urlhaus))
             handled.shouldBeTrue()
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_VIEW
+            startedIntent.data shouldBe "https://urlhaus.abuse.ch/browse.php?search=${seededUrl.longURL.urlEncode()}".toUri()
         }
     }
 
