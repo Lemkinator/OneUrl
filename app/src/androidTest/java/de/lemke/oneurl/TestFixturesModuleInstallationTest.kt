@@ -58,8 +58,9 @@ class TestFixturesModuleInstallationTest {
 
     @Test
     fun injectedSettingsDoNotWriteThroughToProductionSharedPreferences() {
-        settings.lastAlias = "leak-guard-probe"
         val productionPrefs = PreferenceManager.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext())
+        productionPrefs.edit().remove("lastAlias").commit()
+        settings.lastAlias = "leak-guard-probe"
         assertFalse(
             "lastAlias leaked into production SharedPreferences - TestSettingsModule (src/testFixtures) was " +
                 "NOT installed; production SettingsProvideModule won instead",
