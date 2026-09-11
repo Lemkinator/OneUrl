@@ -203,7 +203,10 @@ class URLActivity : AppCompatActivity() {
             bindQrViews(url, cached)
             return
         }
+        binding.urlQrImageview.isEnabled = false
         binding.urlQrImageview.setImageBitmap(null)
+        binding.urlQrSaveButton.isEnabled = false
+        binding.urlQrShareButton.isEnabled = false
         qrLoadJob =
             lifecycleScope.launch {
                 val qr = withContext(defaultDispatcher) { generateQRCode(url.shortURL) }
@@ -217,7 +220,10 @@ class URLActivity : AppCompatActivity() {
         qr: Bitmap,
     ) {
         lastBoundQr = qr
+        binding.urlQrImageview.isEnabled = true
         binding.urlQrImageview.setImageBitmap(qr)
+        binding.urlQrSaveButton.isEnabled = true
+        binding.urlQrShareButton.isEnabled = true
         binding.urlQrImageview.setOnClickListener {
             createQRBottomSheet(url.shortURL, qr, settings.imageSaveLocation).show(supportFragmentManager, null)
         }
