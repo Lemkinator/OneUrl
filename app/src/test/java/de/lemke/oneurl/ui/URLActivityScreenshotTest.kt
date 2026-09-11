@@ -93,8 +93,17 @@ class URLActivityScreenshotTest {
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
                 .putExtra(KEY_SHORTURL, seededUrl.shortURL)
         ActivityScenario.launch<URLActivity>(intent).use {
-            shadowOf(android.os.Looper.getMainLooper()).idle()
+            // The QR bitmap now loads via a background-dispatched coroutine (see URLActivity.bindQrCode)
+            // - poll instead of a single idle() so the capture doesn't race ahead of that load.
+            awaitMainIdle()
             onView(isRoot()).captureRoboImage(fileName)
+        }
+    }
+
+    private fun awaitMainIdle(iterations: Int = 40) {
+        repeat(iterations) {
+            shadowOf(android.os.Looper.getMainLooper()).idle()
+            Thread.sleep(5)
         }
     }
 }

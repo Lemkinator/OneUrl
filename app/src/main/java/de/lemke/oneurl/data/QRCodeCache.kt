@@ -65,7 +65,7 @@ class QRCodeCache @Inject constructor() {
     ): String = "$url@$sizePx"
 
     private fun newBitmapCache(): LruCache<String, Bitmap> =
-        object : LruCache<String, Bitmap>(CACHE_BYTE_BUDGET_KB) {
+        object : LruCache<String, Bitmap>(CACHE_BYTE_BUDGET_KB / CACHE_COUNT) {
             override fun sizeOf(
                 key: String,
                 value: Bitmap,
@@ -76,5 +76,6 @@ class QRCodeCache @Inject constructor() {
         private const val BYTES_PER_KB = 1024
         private val CACHE_BYTE_BUDGET_KB = (Runtime.getRuntime().maxMemory() / BYTES_PER_KB / CACHE_MEMORY_FRACTION).toInt()
         private const val CACHE_MEMORY_FRACTION = 8
+        private const val CACHE_COUNT = 2
     }
 }
