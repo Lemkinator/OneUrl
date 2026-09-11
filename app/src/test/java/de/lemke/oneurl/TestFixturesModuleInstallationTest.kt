@@ -24,7 +24,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.data.database.AppDatabase
 import javax.inject.Inject
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
@@ -60,12 +60,13 @@ class TestFixturesModuleInstallationTest {
     @Test
     fun `injected settings do not write through to production SharedPreferences`() {
         val productionPrefs = PreferenceManager.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext())
-        productionPrefs.edit().remove("lastAlias").commit()
+        val lastAliasBefore = productionPrefs.all["lastAlias"]
         settings.lastAlias = "leak-guard-probe"
-        assertFalse(
-            "lastAlias leaked into production SharedPreferences - TestSettingsModule (src/testFixtures) was " +
+        assertEquals(
+            "lastAlias changed in production SharedPreferences - TestSettingsModule (src/testFixtures) was " +
                 "NOT installed; production SettingsProvideModule won instead",
-            productionPrefs.contains("lastAlias"),
+            lastAliasBefore,
+            productionPrefs.all["lastAlias"],
         )
     }
 
