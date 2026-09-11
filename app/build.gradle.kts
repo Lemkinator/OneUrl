@@ -71,6 +71,11 @@ android {
         testInstrumentationRunner = "de.lemke.oneurl.HiltTestRunner"
         buildConfigField("boolean", "FIRST_RUN_SKIPPABLE", "false")
     }
+    // Hosts the fake Hilt modules shared by testDebugUnitTest and connectedDebugAndroidTest.
+    @Suppress("UnstableApiUsage")
+    testFixtures {
+        enable = true
+    }
     @Suppress("UnstableApiUsage")
     androidResources.localeFilters += listOf("en", "de")
     signingConfigs {
@@ -137,7 +142,17 @@ android {
             all { test ->
                 test.useJUnitPlatform()
                 // MockK ≥ 1.14 on JDK 21 needs this:
-                test.jvmArgs("-XX:+EnableDynamicAgentLoading")
+                test.jvmArgs(
+                    "-XX:+EnableDynamicAgentLoading",
+                    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                    "--add-opens=java.base/java.util=ALL-UNNAMED",
+                    "--add-opens=java.base/java.io=ALL-UNNAMED",
+                    "--add-opens=java.base/java.net=ALL-UNNAMED",
+                    "--add-opens=java.base/java.security=ALL-UNNAMED",
+                    "--add-opens=java.base/java.text=ALL-UNNAMED",
+                    "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
+                    "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
+                )
                 test.systemProperty("robolectric.graphicsMode", "NATIVE")
                 test.systemProperty("roborazzi.test.record", project.findProperty("roborazzi.record") ?: "false")
                 test.systemProperty("roborazzi.test.verify", project.findProperty("roborazzi.verify") ?: "true")
@@ -179,6 +194,11 @@ dependencies {
     debugImplementation(libs.leakcanary)
 
     testImplementation(testFixtures(libs.common.utils))
+
+    testFixturesImplementation(libs.bundles.room)
+    testFixturesImplementation(libs.hilt.android.testing)
+    testFixturesImplementation(testFixtures(libs.common.utils))
+    kspTestFixtures(libs.hilt.compiler)
 
     testImplementation(libs.arch.core.testing)
     testImplementation(libs.bundles.unit.test)
