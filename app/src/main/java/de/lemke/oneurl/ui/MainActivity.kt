@@ -64,6 +64,7 @@ import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.databinding.ActivityMainBinding
+import de.lemke.oneurl.domain.GenerateQRCodeThumbnailUseCase
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.openLeakCanary
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
@@ -86,6 +87,8 @@ import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.R as iconsR
 import dev.oneuiproject.oneui.design.R as designR
@@ -103,6 +106,9 @@ class MainActivity :
     @Inject
     lateinit var generateQRCode: GenerateQRCodeUseCase
 
+    @Inject
+    lateinit var generateQRCodeThumbnail: GenerateQRCodeThumbnailUseCase
+
     @DefaultDispatcher
     @Inject
     lateinit var defaultDispatcher: CoroutineDispatcher
@@ -113,7 +119,7 @@ class MainActivity :
         URLAdapter(
             this,
             qrCodeCache,
-            generateQRCode,
+            generateQRCodeThumbnail,
             lifecycleScope,
             defaultDispatcher,
             onAllSelectorStateChanged = { viewModel.setAllSelectorState(it) },
@@ -310,6 +316,7 @@ class MainActivity :
                 toggleItem(url.id, position)
             } else {
                 hideSoftInput()
+                prefetchFullSizeQrCode(url.shortURL)
                 viewHolder.itemView.transformToActivity(
                     Intent(this@MainActivity, URLActivity::class.java)
                         .putExtra(KEY_HIGHLIGHT_TEXT, viewModel.search.value)
@@ -321,6 +328,18 @@ class MainActivity :
         onLongClickItem = {
             if (!isActionMode) launchActionMode()
             binding.urlList.seslStartLongPressMultiSelection()
+        }
+    }
+
+    // Starts the full-size QR generation URLActivity will need as soon as the row is tapped, so it
+    // overlaps with the activity transition instead of running after it. QRCodeCache is a singleton,
+    // so this is a cache hit for URLActivity.bindQrCode by the time it binds; a losing race with that
+    // call just regenerates once more into the same cache slot.
+    private fun prefetchFullSizeQrCode(shortURL: String) {
+        if (qrCodeCache[shortURL] != null) return
+        lifecycleScope.launch {
+            val qr = withContext(defaultDispatcher) { generateQRCode(shortURL) }
+            qrCodeCache[shortURL] = qr
         }
     }
 

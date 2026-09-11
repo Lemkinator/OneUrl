@@ -45,6 +45,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.verify
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -151,6 +152,7 @@ class URLActivityTest {
             withUrlActivity { activity ->
                 val handled = activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
                 handled.shouldBeTrue()
+                verify { FileProvider.getUriForFile(any(), any(), any()) }
             }
         } finally {
             unmockkAll()

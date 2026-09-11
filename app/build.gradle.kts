@@ -187,6 +187,7 @@ dependencies {
     // (see commit 7e1ebd6).
     implementation(libs.coroutines.android)
     implementation(libs.volley)
+    implementation(libs.zxing.core)
     implementation(libs.bundles.room)
     implementation(libs.hilt.android)
     ksp(libs.room.compiler)

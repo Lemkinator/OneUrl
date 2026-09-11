@@ -26,14 +26,18 @@ import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
+import de.lemke.oneurl.domain.GenerateQRCodeThumbnailUseCase
 import de.lemke.oneurl.domain.testUrl
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Before
 import org.junit.Rule
@@ -44,10 +48,12 @@ import org.robolectric.annotation.Config
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 //
-// Constructed directly (not via Hilt) so generateQRCode can be mocked; MainActivity only supplies
-// a themed Context/LayoutInflater to inflate listview_item.xml and stays on an empty list of its
-// own. Both scope and defaultDispatcher are UnconfinedTestDispatcher, so bindQrCode's coroutine
-// runs to completion synchronously - no idling required.
+// Constructed directly (not via Hilt) so generateQRCodeThumbnail can be mocked; MainActivity only
+// supplies a themed Context/LayoutInflater to inflate listview_item.xml and stays on an empty list
+// of its own. scope is always UnconfinedTestDispatcher; defaultDispatcher defaults to the same one
+// so bindQrCode's coroutine runs to completion synchronously (no idling required), but a test can
+// override it to hold the load pending instead - see `onViewRecycled cancels a pending qr load`.
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
@@ -62,7 +68,7 @@ class URLAdapterTest {
     lateinit var settings: SettingsRepository
 
     private val dispatcher = UnconfinedTestDispatcher()
-    private val generateQRCode = mockk<GenerateQRCodeUseCase>()
+    private val generateQRCodeThumbnail = mockk<GenerateQRCodeThumbnailUseCase>()
 
     @Before
     fun setup() {
@@ -72,16 +78,23 @@ class URLAdapterTest {
 
     private fun freshBitmap() = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
 
-    private fun withAdapter(block: (URLAdapter, URLAdapter.ViewHolder) -> Unit) {
+    // scope stays Unconfined so submitList/onBindViewHolder run synchronously up to the first real
+    // suspension point; defaultDispatcher is overridable so a test can hold a launched qr load
+    // pending (rather than let it complete inline) by passing a dispatcher that won't run until
+    // explicitly advanced.
+    private fun withAdapter(
+        defaultDispatcher: CoroutineDispatcher = dispatcher,
+        block: (URLAdapter, URLAdapter.ViewHolder) -> Unit,
+    ) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val adapter =
                     URLAdapter(
                         context = activity,
                         qrCodeCache = qrCodeCache,
-                        generateQRCode = generateQRCode,
+                        generateQRCodeThumbnail = generateQRCodeThumbnail,
                         scope = CoroutineScope(dispatcher),
-                        defaultDispatcher = dispatcher,
+                        defaultDispatcher = defaultDispatcher,
                         onAllSelectorStateChanged = {},
                         onBlockActionMode = {},
                     )
@@ -100,12 +113,30 @@ class URLAdapterTest {
 
     @Test
     fun `onViewRecycled cancels a pending qr load`() {
-        every { generateQRCode(any()) } returns freshBitmap()
-        withAdapter { adapter, holder ->
-            adapter.submitList(listOf(testUrl("https://short.url/recycle")))
+        // StandardTestDispatcher queues rather than runs its work, so the withContext dispatch in
+        // bindQrCode is still suspended (genuinely pending) when onViewRecycled cancels it below -
+        // unlike UnconfinedTestDispatcher, which would already have completed the load during
+        // onBindViewHolder, making the cancellation a no-op the test couldn't detect.
+        val pendingDispatcher = StandardTestDispatcher()
+        every { generateQRCodeThumbnail(any(), any()) } returns freshBitmap()
+        withAdapter(defaultDispatcher = pendingDispatcher) { adapter, holder ->
+            val url = testUrl("https://short.url/recycle")
+            adapter.submitList(listOf(url))
 
             adapter.onBindViewHolder(holder, 0)
+            // setImageBitmap(null) wraps a BitmapDrawable(resources, null) rather than clearing the
+            // drawable to a null reference, so "still not loaded" is asserted as "unchanged from the
+            // pre-load placeholder", not as a null drawable.
+            val placeholderDrawable = holder.listItemImg.drawable
             adapter.onViewRecycled(holder)
+            pendingDispatcher.scheduler.advanceUntilIdle()
+
+            val qrSizePx =
+                holder.itemView.context.resources
+                    .getDimensionPixelSize(R.dimen.list_item_qr_size)
+            verify(exactly = 0) { generateQRCodeThumbnail(any(), any()) }
+            qrCodeCache[url.shortURL, qrSizePx] shouldBe null
+            holder.listItemImg.drawable shouldBe placeholderDrawable
         }
     }
 
@@ -123,13 +154,13 @@ class URLAdapterTest {
             adapter.onBindViewHolder(holder, 0)
 
             holder.listItemImg.drawable shouldNotBe null
-            verify(exactly = 0) { generateQRCode(any()) }
+            verify(exactly = 0) { generateQRCodeThumbnail(any(), any()) }
         }
     }
 
     @Test
     fun `bind on cache miss generates and caches a thumbnail for a still-bound holder`() {
-        every { generateQRCode(any()) } returns freshBitmap()
+        every { generateQRCodeThumbnail(any(), any()) } returns freshBitmap()
         withAdapter { adapter, holder ->
             val url = testUrl("https://short.url/miss")
             adapter.submitList(listOf(url))

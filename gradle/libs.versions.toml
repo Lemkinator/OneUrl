@@ -47,6 +47,7 @@ spotless = "8.10.2"
 turbine = "1.2.1"
 uiautomator = "2.4.0"
 volley = "1.2.1"
+zxing-core = "3.5.4"
 
 [libraries]
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
@@ -90,6 +91,7 @@ room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing-core" }
 
 [bundles]
 android-test = ["androidx-test-runner", "androidx-test-rules", "androidx-test-ext-junit", "androidx-test-espresso-core", "androidx-test-espresso-intents"]

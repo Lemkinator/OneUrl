@@ -24,7 +24,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatButton
-import androidx.core.graphics.scale
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -32,7 +31,7 @@ import androidx.recyclerview.widget.RecyclerView.Adapter
 import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
+import de.lemke.oneurl.domain.GenerateQRCodeThumbnailUseCase
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import dev.oneuiproject.oneui.recyclerview.util.MultiSelector
@@ -48,7 +47,7 @@ import kotlinx.coroutines.withContext
 class URLAdapter(
     private val context: Context,
     private val qrCodeCache: QRCodeCache,
-    private val generateQRCode: GenerateQRCodeUseCase,
+    private val generateQRCodeThumbnail: GenerateQRCodeThumbnailUseCase,
     private val scope: CoroutineScope,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     onAllSelectorStateChanged: ((AllSelectorState) -> Unit),
@@ -160,12 +159,6 @@ class URLAdapter(
 
     fun getItemByPosition(position: Int) = currentList[position]
 
-    // QrEncoder overlays a fixed-size icon regardless of the requested QR size, so generating
-    // natively at the 55dp thumbnail size lets the icon swallow the whole code (see QrEncoder's
-    // qrIconSize). Generate at the default size instead and downscale, matching the fitXY
-    // scaling the ImageView used to do, and cache only the small result.
-    private fun generateThumbnail(shortURL: String) = generateQRCode(shortURL).scale(qrSizePx, qrSizePx)
-
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var selectableLayout: SelectableLinearLayout = itemView.findViewById(R.id.listItemSelectableLayout)
         var listItemTitle: TextView = itemView.findViewById(R.id.listItemTitle)
@@ -213,7 +206,7 @@ class URLAdapter(
             listItemImg.setImageBitmap(null)
             qrJob =
                 scope.launch {
-                    val thumbnail = withContext(defaultDispatcher) { generateThumbnail(shortURL) }
+                    val thumbnail = withContext(defaultDispatcher) { generateQRCodeThumbnail(shortURL, qrSizePx) }
                     qrCodeCache[shortURL, qrSizePx] = thumbnail
                     if (boundShortURL == shortURL) listItemImg.setImageBitmap(thumbnail)
                 }
