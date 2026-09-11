@@ -22,47 +22,55 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * In-memory cache of generated QR bitmaps, keyed by URL and pixel size. QR generation is a pure
- * function of (url, sizePx) — see [de.lemke.oneurl.domain.GenerateQRCodeUseCase] — so a cache hit
- * never goes stale. Evicted bitmaps are never recycled here: an evicted entry may still be
- * attached to a visible ImageView, and recycling it would crash that view's next draw.
+ * In-memory cache of generated QR bitmaps, keyed by URL and, for thumbnails, pixel size. QR
+ * generation is a pure function of (url, sizePx) — see
+ * [de.lemke.oneurl.domain.GenerateQRCodeUseCase] — so a cache hit never goes stale. Evicted
+ * bitmaps are never recycled here: an evicted entry may still be attached to a visible ImageView,
+ * and recycling it would crash that view's next draw.
+ *
+ * Full-size and sized (thumbnail) entries live in separate [LruCache] instances rather than a
+ * shared keyspace: a single map keyed by a delimited string (e.g. "$url@$sizePx") lets a shortURL
+ * that itself contains that delimiter collide with a differently-sized entry for another URL.
  */
 @Singleton
 class QRCodeCache @Inject constructor() {
-    private val cache =
-        object : LruCache<String, Bitmap>(CACHE_BYTE_BUDGET_KB) {
-            override fun sizeOf(
-                key: String,
-                value: Bitmap,
-            ): Int = value.byteCount / BYTES_PER_KB
-        }
+    private val fullSizeCache = newBitmapCache()
+    private val sizedCache = newBitmapCache()
 
-    operator fun get(url: String): Bitmap? = cache.get(url)
+    operator fun get(url: String): Bitmap? = fullSizeCache.get(url)
 
     operator fun set(
         url: String,
         bitmap: Bitmap,
     ) {
-        cache.put(url, bitmap)
+        fullSizeCache.put(url, bitmap)
     }
 
     operator fun get(
         url: String,
         sizePx: Int,
-    ): Bitmap? = cache.get(key(url, sizePx))
+    ): Bitmap? = sizedCache.get(key(url, sizePx))
 
     operator fun set(
         url: String,
         sizePx: Int,
         bitmap: Bitmap,
     ) {
-        cache.put(key(url, sizePx), bitmap)
+        sizedCache.put(key(url, sizePx), bitmap)
     }
 
     private fun key(
         url: String,
         sizePx: Int,
     ): String = "$url@$sizePx"
+
+    private fun newBitmapCache(): LruCache<String, Bitmap> =
+        object : LruCache<String, Bitmap>(CACHE_BYTE_BUDGET_KB) {
+            override fun sizeOf(
+                key: String,
+                value: Bitmap,
+            ): Int = value.byteCount / BYTES_PER_KB
+        }
 
     companion object {
         private const val BYTES_PER_KB = 1024

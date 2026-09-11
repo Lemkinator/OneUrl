@@ -37,11 +37,13 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
@@ -83,6 +85,7 @@ import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.R as iconsR
 import dev.oneuiproject.oneui.design.R as designR
@@ -100,6 +103,10 @@ class MainActivity :
     @Inject
     lateinit var generateQRCode: GenerateQRCodeUseCase
 
+    @DefaultDispatcher
+    @Inject
+    lateinit var defaultDispatcher: CoroutineDispatcher
+
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val urlAdapter: URLAdapter by lazy {
@@ -107,6 +114,8 @@ class MainActivity :
             this,
             qrCodeCache,
             generateQRCode,
+            lifecycleScope,
+            defaultDispatcher,
             onAllSelectorStateChanged = { viewModel.setAllSelectorState(it) },
             onBlockActionMode = ::launchActionMode,
         )

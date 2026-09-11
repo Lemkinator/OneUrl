@@ -78,4 +78,19 @@ class QRCodeCacheTest {
 
         cache["https://short.url/y", 165] shouldBe null
     }
+
+    @Test
+    fun `full-size key does not collide with a sized entry whose composite key matches it`() {
+        val cache = QRCodeCache()
+        val collidingFullSize = bitmap()
+        val sized = bitmap()
+
+        // The sized cache's composite key is "$url@$sizePx" - a full-size url that happens to
+        // equal that exact string must not read or overwrite the unrelated sized entry.
+        cache["https://short.url/x@165"] = collidingFullSize
+        cache["https://short.url/x", 165] = sized
+
+        cache["https://short.url/x@165"] shouldBe collidingFullSize
+        cache["https://short.url/x", 165] shouldBe sized
+    }
 }
