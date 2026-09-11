@@ -24,11 +24,14 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.graphics.scale
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeCache
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import dev.oneuiproject.oneui.recyclerview.util.MultiSelector
@@ -38,6 +41,8 @@ import dev.oneuiproject.oneui.widget.SelectableLinearLayout
 
 class URLAdapter(
     private val context: Context,
+    private val qrCodeCache: QRCodeCache,
+    private val generateQRCode: GenerateQRCodeUseCase,
     onAllSelectorStateChanged: ((AllSelectorState) -> Unit),
     onBlockActionMode: (() -> Unit),
 ) : Adapter<URLAdapter.ViewHolder>(),
@@ -47,6 +52,7 @@ class URLAdapter(
         selectionChangePayload = Payload.SELECTION_MODE,
     ) {
     private val searchHighlighter = SearchHighlighter(context)
+    private val qrSizePx = context.resources.getDimensionPixelSize(R.dimen.list_item_qr_size)
 
     private val asyncListDiffer =
         AsyncListDiffer(
@@ -141,6 +147,13 @@ class URLAdapter(
 
     fun getItemByPosition(position: Int) = currentList[position]
 
+    // QrEncoder overlays a fixed-size icon regardless of the requested QR size, so generating
+    // natively at the 55dp thumbnail size lets the icon swallow the whole code (see QrEncoder's
+    // qrIconSize). Generate at the default size instead and downscale, matching the fitXY
+    // scaling the ImageView used to do, and cache only the small result.
+    private fun getQrCode(shortURL: String) =
+        qrCodeCache[shortURL, qrSizePx] ?: generateQRCode(shortURL).scale(qrSizePx, qrSizePx).also { qrCodeCache[shortURL, qrSizePx] = it }
+
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var selectableLayout: SelectableLinearLayout = itemView.findViewById(R.id.listItemSelectableLayout)
         var listItemTitle: TextView = itemView.findViewById(R.id.listItemTitle)
@@ -154,7 +167,7 @@ class URLAdapter(
             listItemSubtitle1.text = searchHighlighter(url.longURL, highlightWord)
             listItemSubtitle2.text =
                 searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
-            listItemImg.setImageBitmap(url.qr)
+            listItemImg.setImageBitmap(getQrCode(url.shortURL))
             listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
                 null,
                 null,

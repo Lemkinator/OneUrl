@@ -60,7 +60,9 @@ import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.databinding.ActivityMainBinding
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.openLeakCanary
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -92,11 +94,19 @@ class MainActivity :
     @Inject
     lateinit var settings: SettingsRepository
 
+    @Inject
+    lateinit var qrCodeCache: QRCodeCache
+
+    @Inject
+    lateinit var generateQRCode: GenerateQRCodeUseCase
+
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val urlAdapter: URLAdapter by lazy {
         URLAdapter(
             this,
+            qrCodeCache,
+            generateQRCode,
             onAllSelectorStateChanged = { viewModel.setAllSelectorState(it) },
             onBlockActionMode = ::launchActionMode,
         )

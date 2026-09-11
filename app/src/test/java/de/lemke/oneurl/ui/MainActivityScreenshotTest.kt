@@ -29,7 +29,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
@@ -58,9 +57,6 @@ class MainActivityScreenshotTest {
 
     @Inject
     lateinit var urlRepository: URLRepository
-
-    @Inject
-    lateinit var generateQRCode: GenerateQRCodeUseCase
 
     @Before
     fun setup() {
@@ -127,7 +123,6 @@ class MainActivityScreenshotTest {
         shortURL = shortURL,
         longURL = "https://example.com/${title.lowercase().replace(' ', '-')}",
         shortURLProvider = ShortURLProviderCompanion.default,
-        qr = generateQRCode(shortURL),
         favorite = favorite,
         title = title,
         description = description,

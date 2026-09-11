@@ -17,8 +17,6 @@
 package de.lemke.oneurl.ui
 
 import android.content.Intent
-import android.graphics.Color
-import androidx.core.graphics.createBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -60,7 +58,6 @@ class URLActivityTest {
             shortURL = "https://da.gd/seeded1",
             longURL = "https://example.com/seeded-page",
             shortURLProvider = Dagd,
-            qr = createBitmap(64, 64).apply { eraseColor(Color.WHITE) },
             favorite = false,
             title = "Seeded title",
             description = "Seeded description",

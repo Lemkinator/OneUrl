@@ -29,7 +29,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -64,9 +63,6 @@ class URLActivityTest {
     @Inject
     lateinit var urlRepository: URLRepository
 
-    @Inject
-    lateinit var generateQRCode: GenerateQRCodeUseCase
-
     private lateinit var seededUrl: URL
 
     @Before
@@ -77,7 +73,6 @@ class URLActivityTest {
                 shortURL = "https://da.gd/seeded1",
                 longURL = "https://example.com/seeded-page",
                 shortURLProvider = Dagd,
-                qr = generateQRCode("https://da.gd/seeded1"),
                 favorite = false,
                 title = "Seeded title",
                 description = "Seeded description",

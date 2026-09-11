@@ -18,6 +18,7 @@ package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.text.style.UnderlineSpan
 import android.view.Menu
@@ -48,7 +49,9 @@ import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.databinding.ActivityUrlBinding
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
@@ -63,16 +66,21 @@ class URLActivity : AppCompatActivity() {
     @Inject
     lateinit var settings: SettingsRepository
 
+    @Inject
+    lateinit var qrCodeCache: QRCodeCache
+
+    @Inject
+    lateinit var generateQRCode: GenerateQRCodeUseCase
+
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
     private lateinit var searchHighlighter: SearchHighlighter
     private var lastBoundShortURL: String? = null
+    private var lastBoundQr: Bitmap? = null
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                viewModel.state.value.url
-                    ?.qr
-                    ?.let { saveBitmapToUri(result.data?.data, it) }
+                lastBoundQr?.let { saveBitmapToUri(result.data?.data, it) }
             }
         }
 
@@ -142,13 +150,15 @@ class URLActivity : AppCompatActivity() {
 
     private fun bindURL(url: URL) {
         val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
+        val qr = qrCodeCache[url.shortURL] ?: generateQRCode(url.shortURL).also { qrCodeCache[url.shortURL] = it }
+        lastBoundQr = qr
         binding.root.setTitle(url.shortURL)
-        binding.urlQrImageview.setImageBitmap(url.qr)
+        binding.urlQrImageview.setImageBitmap(qr)
         binding.urlQrImageview.setOnClickListener {
-            createQRBottomSheet(url.shortURL, url.qr, settings.imageSaveLocation).show(supportFragmentManager, null)
+            createQRBottomSheet(url.shortURL, qr, settings.imageSaveLocation).show(supportFragmentManager, null)
         }
         binding.urlQrImageview.setOnLongClickListener {
-            url.qr
+            qr
                 .copyToClipboard(
                     this@URLActivity,
                     "QR Code",
@@ -158,12 +168,12 @@ class URLActivity : AppCompatActivity() {
         binding.urlQrSaveButton.setOnClickListener {
             exportBitmap(
                 settings.imageSaveLocation,
-                url.qr,
+                qr,
                 url.shortURL,
                 exportQRCodeResultLauncher,
             )
         }
-        binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
+        binding.urlQrShareButton.setOnClickListener { shareBitmap(qr, "QRCode.png") }
         binding.urlShortButton.text =
             searchHighlighter(url.shortURL, highlightText).apply {
                 setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)

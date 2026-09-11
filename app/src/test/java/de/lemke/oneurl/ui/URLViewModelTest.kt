@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
@@ -49,7 +48,6 @@ private fun testUrl(
     shortURL = shortURL,
     longURL = longURL,
     shortURLProvider = provider,
-    qr = mockk<Bitmap>(),
     favorite = favorite,
     title = "title",
     description = "description",

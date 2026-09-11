@@ -16,11 +16,9 @@
 
 package de.lemke.oneurl.domain
 
-import android.graphics.Bitmap
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
-import io.mockk.mockk
 import java.time.ZonedDateTime
 
 internal fun testUrl(
@@ -34,7 +32,6 @@ internal fun testUrl(
     shortURL = shortURL,
     longURL = longURL,
     shortURLProvider = provider,
-    qr = mockk<Bitmap>(),
     favorite = favorite,
     title = title,
     description = description,
