@@ -59,17 +59,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run lint
-        run: |
-          chmod +x ./gradlew
-          gradle_args=(lintDebug --stacktrace)
-          if [ "$SKIP_DEPENDENCY_UPDATES" = "true" ]; then
-            gradle_args+=(-Plint.checkDependencyUpdates=false)
-          fi
-          ./gradlew "${gradle_args[@]}"
+        run: chmod +x ./gradlew && ./gradlew lintDebug --stacktrace
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-          SKIP_DEPENDENCY_UPDATES: ${{ github.event.pull_request.user.login == 'renovate[bot]' || github.event_name == 'merge_group' }}
       - name: Upload lint report
         if: always()
         uses: actions/upload-artifact@v7
