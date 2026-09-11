@@ -24,6 +24,7 @@ import android.graphics.Paint
 import android.graphics.Paint.Style.FILL
 import android.graphics.Paint.Style.STROKE
 import android.graphics.RectF
+import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.appcompat.content.res.AppCompatResources
@@ -178,19 +179,38 @@ class GenerateQRCodeThumbnailUseCase @Inject constructor(
     }
 
     private fun anchorBitmap(sizePx: Int): Bitmap =
-        anchorCache.getOrPut(sizePx) { rasterize(oneuiR.drawable.oui_des_qr_code_anchor, sizePx) }
+        anchorCache.getOrPut(sizePx) { rasterizeScaled(oneuiR.drawable.oui_des_qr_code_anchor, sizePx) }
 
     private fun iconBitmap(sizePx: Int): Bitmap = iconCache.getOrPut(sizePx) { rasterize(commonutilsR.drawable.ic_launcher_themed, sizePx) }
 
     private fun rasterize(
         drawableRes: Int,
         sizePx: Int,
+    ): Bitmap = rasterize(checkNotNull(AppCompatResources.getDrawable(context, drawableRes)), sizePx)
+
+    private fun rasterize(
+        drawable: Drawable,
+        sizePx: Int,
     ): Bitmap {
-        val drawable = checkNotNull(AppCompatResources.getDrawable(context, drawableRes))
         val bitmap = createBitmap(sizePx, sizePx)
         drawable.setBounds(0, 0, sizePx, sizePx)
         drawable.draw(Canvas(bitmap))
         return bitmap
+    }
+
+    // oui_des_qr_code_anchor.xml's stroke width and inner-circle inset are fixed dp values, not
+    // proportional to its bounds - drawing it directly at a small target size shrinks the gap
+    // between the ring and the inner dot faster than the ring itself, collapsing them into a solid
+    // blob. QrEncoder avoids this by rendering the drawable at its own intrinsic size (where those
+    // fixed values are correct) and bitmap-scaling the whole raster down; reproduced here.
+    private fun rasterizeScaled(
+        drawableRes: Int,
+        sizePx: Int,
+    ): Bitmap {
+        val drawable = checkNotNull(AppCompatResources.getDrawable(context, drawableRes))
+        val intrinsicSize = drawable.intrinsicWidth.takeIf { it > 0 } ?: sizePx
+        val raster = rasterize(drawable, intrinsicSize)
+        return if (intrinsicSize == sizePx) raster else raster.scale(sizePx, sizePx)
     }
 
     private fun leadingAnchorModuleCount(matrix: ByteMatrix): Int {
