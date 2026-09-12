@@ -112,7 +112,11 @@ class URLActivityScreenshotTest {
             shadowOf(Looper.getMainLooper()).idle()
             var loaded = false
             scenario.onActivity { activity ->
-                loaded = activity.findViewById<ImageView>(R.id.url_qr_imageview).drawable != null
+                loaded =
+                    (activity.findViewById<ImageView>(R.id.url_qr_imageview).drawable
+                        as? android.graphics.drawable.BitmapDrawable)
+                        ?.bitmap != null
+            }
             }
             if (loaded) return
             Thread.sleep(5)
