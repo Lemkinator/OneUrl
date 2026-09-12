@@ -17,6 +17,7 @@
 package de.lemke.oneurl.ui
 
 import android.content.Intent
+import android.graphics.drawable.BitmapDrawable
 import android.os.Looper
 import android.widget.ImageView
 import androidx.test.core.app.ActivityScenario
@@ -113,10 +114,8 @@ class URLActivityScreenshotTest {
             var loaded = false
             scenario.onActivity { activity ->
                 loaded =
-                    (activity.findViewById<ImageView>(R.id.url_qr_imageview).drawable
-                        as? android.graphics.drawable.BitmapDrawable)
+                    (activity.findViewById<ImageView>(R.id.url_qr_imageview).drawable as? BitmapDrawable)
                         ?.bitmap != null
-            }
             }
             if (loaded) return
             Thread.sleep(5)
