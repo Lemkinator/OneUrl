@@ -19,17 +19,27 @@ package de.lemke.oneurl.benchmarks
 import de.lemke.commonutils.ui.utils.EXTRA_SKIP_ONBOARDING
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import java.io.File
 
 /**
  * `:benchmarks` is a `com.android.test` module and cannot depend on common-utils (see the SESL
  * exclusion comment in the root build.gradle.kts), so `BenchmarkUtils.kt` hardcodes this key
- * instead of importing it. This pins that copy against the real constant, so a rename in
- * common-utils reddens this test instead of silently breaking benchmark generation at runtime.
+ * instead of importing it. Reads that file's actual declaration - not a second hardcoded literal -
+ * so either a rename in common-utils or independent drift in the benchmark copy reddens this test
+ * instead of silently breaking benchmark generation at runtime.
  */
 class BenchmarkOnboardingKeyTest : ShouldSpec(
     {
-        should("match the literal key hardcoded in benchmarks/src/main/.../BenchmarkUtils.kt") {
-            EXTRA_SKIP_ONBOARDING shouldBe "commonUtilsSkipOnboarding"
+        should("match the actual literal declared in benchmarks/src/main/.../BenchmarkUtils.kt") {
+            val benchmarkUtils = File("../benchmarks/src/main/java/de/lemke/oneurl/benchmarks/BenchmarkUtils.kt")
+            check(benchmarkUtils.isFile) { "BenchmarkUtils.kt not found at ${benchmarkUtils.absolutePath}" }
+            val declared =
+                Regex("""const val EXTRA_SKIP_ONBOARDING = "([^"]+)"""")
+                    .find(benchmarkUtils.readText())
+                    ?.groupValues
+                    ?.get(1)
+            checkNotNull(declared) { "EXTRA_SKIP_ONBOARDING declaration not found in BenchmarkUtils.kt" }
+            declared shouldBe EXTRA_SKIP_ONBOARDING
         }
     },
 )

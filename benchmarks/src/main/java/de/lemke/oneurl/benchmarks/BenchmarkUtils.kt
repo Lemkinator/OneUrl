@@ -25,7 +25,8 @@ import androidx.test.uiautomator.Until
 const val PACKAGE_NAME = "de.lemke.oneurl"
 const val TIMEOUT_MS = 5_000L
 
-// Must match de.lemke.commonutils.EXTRA_SKIP_ONBOARDING — cannot import from test module
+// Must match de.lemke.commonutils.ui.utils.EXTRA_SKIP_ONBOARDING — cannot import from test module.
+// Pinned by app/src/test/.../BenchmarkOnboardingKeyTest.kt.
 const val EXTRA_SKIP_ONBOARDING = "commonUtilsSkipOnboarding"
 
 fun MacrobenchmarkScope.startActivityAndSkipOnboarding() =
