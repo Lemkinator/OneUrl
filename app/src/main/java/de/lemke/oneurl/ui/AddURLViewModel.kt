@@ -20,11 +20,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.data.selectedShortURLProvider
 import de.lemke.oneurl.domain.AddURLUseCase
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLTitleUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -35,7 +33,6 @@ import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +41,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class AddURLViewModel @Inject constructor(
@@ -52,10 +48,8 @@ class AddURLViewModel @Inject constructor(
     private val userSettings: UserSettings,
     private val generateURL: GenerateURLUseCase,
     private val getURLTitle: GetURLTitleUseCase,
-    private val generateQRCode: GenerateQRCodeUseCase,
     private val addURL: AddURLUseCase,
     private val getURL: GetURLUseCase,
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     val state: StateFlow<AddUrlUiState>
         field = MutableStateFlow(AddUrlUiState())
@@ -139,13 +133,11 @@ class AddURLViewModel @Inject constructor(
                 }
 
                 is GenerateURLResult.Success -> {
-                    val qr = withContext(defaultDispatcher) { generateQRCode(result.shortURL) }
                     addURL(
                         URL(
                             shortURL = result.shortURL,
                             longURL = longURL,
                             shortURLProvider = provider,
-                            qr = qr,
                             favorite = false,
                             title = title,
                             description = description,

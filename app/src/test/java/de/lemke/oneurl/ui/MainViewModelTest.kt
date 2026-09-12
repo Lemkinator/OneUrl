@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import android.graphics.Bitmap
 import app.cash.turbine.test
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.ObserveURLsUseCase
@@ -47,7 +46,6 @@ private fun testUrl(
     shortURL = shortURL,
     longURL = longURL,
     shortURLProvider = provider,
-    qr = mockk<Bitmap>(),
     favorite = favorite,
     title = title,
     description = description,

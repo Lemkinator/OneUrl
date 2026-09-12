@@ -24,20 +24,34 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.graphics.scale
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter
+import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeCache
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import dev.oneuiproject.oneui.recyclerview.util.MultiSelector
 import dev.oneuiproject.oneui.recyclerview.util.MultiSelectorDelegate
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import dev.oneuiproject.oneui.widget.SelectableLinearLayout
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class URLAdapter(
     private val context: Context,
+    private val qrCodeCache: QRCodeCache,
+    private val generateQRCode: GenerateQRCodeUseCase,
+    private val scope: CoroutineScope,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     onAllSelectorStateChanged: ((AllSelectorState) -> Unit),
     onBlockActionMode: (() -> Unit),
 ) : Adapter<URLAdapter.ViewHolder>(),
@@ -47,6 +61,7 @@ class URLAdapter(
         selectionChangePayload = Payload.SELECTION_MODE,
     ) {
     private val searchHighlighter = SearchHighlighter(context)
+    private val qrSizePx = context.resources.getDimensionPixelSize(R.dimen.list_item_qr_size)
 
     private val asyncListDiffer =
         AsyncListDiffer(
@@ -134,12 +149,21 @@ class URLAdapter(
         holder.bindActionMode(getItemId(position))
     }
 
+    override fun onViewRecycled(holder: ViewHolder) {
+        super.onViewRecycled(holder)
+        holder.cancelQrLoad()
+    }
+
     fun submitList(listItems: List<URL>) {
         asyncListDiffer.submitList(listItems)
         updateSelectableIds(listItems.map { it.id })
     }
 
     fun getItemByPosition(position: Int) = currentList[position]
+
+    // QrEncoder's icon overlay is a fixed dp size regardless of requested QR size; it would swallow
+    // a 55dp code, so generate at QrEncoder's default size and downscale instead.
+    private fun generateThumbnail(shortURL: String) = generateQRCode(shortURL).scale(qrSizePx, qrSizePx)
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var selectableLayout: SelectableLinearLayout = itemView.findViewById(R.id.listItemSelectableLayout)
@@ -148,13 +172,15 @@ class URLAdapter(
         var listItemSubtitle2: TextView = itemView.findViewById(R.id.listItemSubtitle2)
         var listItemImg: ImageView = itemView.findViewById(R.id.listItemImg)
         var listItemFav: AppCompatButton = itemView.findViewById(R.id.listItemFav)
+        private var qrJob: Job? = null
+        private var boundShortURL: String? = null
 
         fun bind(url: URL) {
             listItemTitle.text = searchHighlighter(url.shortURL, highlightWord)
             listItemSubtitle1.text = searchHighlighter(url.longURL, highlightWord)
             listItemSubtitle2.text =
                 searchHighlighter(url.description.ifBlank { url.title }.ifBlank { url.addedFormatMedium }, highlightWord)
-            listItemImg.setImageBitmap(url.qr)
+            bindQrCode(url.shortURL)
             listItemFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
                 null,
                 null,
@@ -165,6 +191,33 @@ class URLAdapter(
                 },
                 null,
             )
+        }
+
+        fun cancelQrLoad() {
+            qrJob?.cancel()
+            qrJob = null
+        }
+
+        // Cache hit sets the bitmap immediately - no coroutine, no flash. On miss the ImageView is
+        // blanked and the thumbnail is generated off-main; the result is only applied if this
+        // holder is still bound to the same shortURL (guards against fast rebind/recycle mid-load).
+        private fun bindQrCode(shortURL: String) {
+            cancelQrLoad()
+            boundShortURL = shortURL
+            val cached = qrCodeCache[shortURL, qrSizePx]
+            if (cached != null) {
+                listItemImg.setImageBitmap(cached)
+                return
+            }
+            listItemImg.setImageBitmap(null)
+            qrJob =
+                scope.launch {
+                    val thumbnail =
+                        withContext(NonCancellable + defaultDispatcher) {
+                            generateThumbnail(shortURL).also { qrCodeCache[shortURL, qrSizePx] = it }
+                        }
+                    if (boundShortURL == shortURL) listItemImg.setImageBitmap(thumbnail)
+                }
         }
 
         fun bindActionMode(itemId: Long) {

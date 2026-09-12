@@ -18,20 +18,26 @@ package de.lemke.oneurl.data.database
 
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 
 @Database(
-    version = 2,
+    version = 3,
     entities = [
         URLDb::class,
     ],
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3, spec = AppDatabase.DeleteQrColumn::class),
     ],
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun urlDao(): URLDao
+
+    @DeleteColumn(tableName = "url", columnName = "qr")
+    class DeleteQrColumn : AutoMigrationSpec
 }

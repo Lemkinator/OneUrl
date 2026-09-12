@@ -16,13 +16,11 @@
 
 package de.lemke.oneurl.ui
 
-import android.graphics.Bitmap
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.AddURLUseCase
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLTitleUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -39,10 +37,8 @@ import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,7 +49,6 @@ class AddURLViewModelTest : ShouldSpec(
     {
         val generateURL = mockk<GenerateURLUseCase>()
         val getURLTitle = mockk<GetURLTitleUseCase>()
-        val generateQRCode = mockk<GenerateQRCodeUseCase>()
         val addURL = mockk<AddURLUseCase>()
         val getURL = mockk<GetURLUseCase>()
         lateinit var userSettings: UserSettings
@@ -64,18 +59,15 @@ class AddURLViewModelTest : ShouldSpec(
                 userSettings,
                 generateURL,
                 getURLTitle,
-                generateQRCode,
                 addURL,
                 getURL,
-                UnconfinedTestDispatcher(),
             )
 
         beforeEach {
-            clearMocks(generateURL, getURLTitle, generateQRCode, addURL, getURL)
+            clearMocks(generateURL, getURLTitle, addURL, getURL)
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
             coEvery { getURL(any<ShortURLProvider>(), any()) } returns emptyList()
             coEvery { getURLTitle(any()) } returns "title"
-            every { generateQRCode(any()) } returns mockk<Bitmap>()
             coEvery { addURL(any()) } returns Unit
             coEvery { generateURL(any(), any(), any(), any()) } returns GenerateURLResult.Success("https://short.url/abc")
         }
@@ -224,7 +216,6 @@ class AddURLViewModelTest : ShouldSpec(
                 awaitItem() shouldBe AddUrlEvent.Saved
             }
 
-            verify(exactly = 1) { generateQRCode(any()) }
             coVerify(exactly = 1) { addURL(any()) }
             slot.captured.shortURL shouldBe "https://short.url/abc"
             slot.captured.longURL shouldBe provider.sanitizeLongURL("https://example.com")

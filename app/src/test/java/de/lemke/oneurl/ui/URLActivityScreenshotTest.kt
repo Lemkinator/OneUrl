@@ -17,6 +17,9 @@
 package de.lemke.oneurl.ui
 
 import android.content.Intent
+import android.graphics.drawable.BitmapDrawable
+import android.os.Looper
+import android.widget.ImageView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -25,8 +28,8 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -60,9 +63,6 @@ class URLActivityScreenshotTest {
     @Inject
     lateinit var urlRepository: URLRepository
 
-    @Inject
-    lateinit var generateQRCode: GenerateQRCodeUseCase
-
     private lateinit var seededUrl: URL
 
     @Before
@@ -73,7 +73,6 @@ class URLActivityScreenshotTest {
                 shortURL = "https://da.gd/seeded1",
                 longURL = "https://example.com/seeded-page",
                 shortURLProvider = Dagd,
-                qr = generateQRCode("https://da.gd/seeded1"),
                 favorite = false,
                 title = "Seeded title",
                 description = "Seeded description",
@@ -97,9 +96,30 @@ class URLActivityScreenshotTest {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
                 .putExtra(KEY_SHORTURL, seededUrl.shortURL)
-        ActivityScenario.launch<URLActivity>(intent).use {
-            shadowOf(android.os.Looper.getMainLooper()).idle()
+        ActivityScenario.launch<URLActivity>(intent).use { scenario ->
+            // The QR bitmap now loads via a background-dispatched coroutine (see URLActivity.bindQrCode)
+            // - poll for the drawable instead of a fixed delay, so a coroutine that lands during the
+            // final sleep of a fixed-iteration wait can't still leave the capture with a blank QR.
+            awaitQrLoaded(scenario)
             onView(isRoot()).captureRoboImage(fileName)
         }
+    }
+
+    private fun awaitQrLoaded(
+        scenario: ActivityScenario<URLActivity>,
+        timeoutIterations: Int = 200,
+    ) {
+        repeat(timeoutIterations) {
+            shadowOf(Looper.getMainLooper()).idle()
+            var loaded = false
+            scenario.onActivity { activity ->
+                loaded =
+                    (activity.findViewById<ImageView>(R.id.url_qr_imageview).drawable as? BitmapDrawable)
+                        ?.bitmap != null
+            }
+            if (loaded) return
+            Thread.sleep(5)
+        }
+        error("QR drawable did not load within timeout")
     }
 }

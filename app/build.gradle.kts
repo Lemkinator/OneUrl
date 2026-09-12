@@ -76,6 +76,9 @@ android {
     testFixtures {
         enable = true
     }
+    // Exported Room schemas as androidTest assets, so MigrationTestHelper can build a prior-version
+    // database from de.lemke.oneurl.data.database.AppDatabase/<version>.json.
+    sourceSets.getByName("androidTest").assets.srcDirs("$projectDir/schemas")
     @Suppress("UnstableApiUsage")
     androidResources.localeFilters += listOf("en", "de")
     signingConfigs {
@@ -219,6 +222,7 @@ dependencies {
     androidTestImplementation(libs.kotest.assertions.core)
     androidTestImplementation(libs.coroutines.test)
     androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.room.testing)
     kspAndroidTest(libs.hilt.compiler)
 }
 secrets {

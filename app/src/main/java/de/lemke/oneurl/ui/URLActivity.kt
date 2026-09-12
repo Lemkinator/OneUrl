@@ -18,6 +18,7 @@ package de.lemke.oneurl.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.text.style.UnderlineSpan
 import android.view.Menu
@@ -29,9 +30,11 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
@@ -48,13 +51,19 @@ import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.databinding.ActivityUrlBinding
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import java.text.NumberFormat
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -63,16 +72,26 @@ class URLActivity : AppCompatActivity() {
     @Inject
     lateinit var settings: SettingsRepository
 
+    @Inject
+    lateinit var qrCodeCache: QRCodeCache
+
+    @Inject
+    lateinit var generateQRCode: GenerateQRCodeUseCase
+
+    @Inject
+    @DefaultDispatcher
+    lateinit var defaultDispatcher: CoroutineDispatcher
+
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
     private lateinit var searchHighlighter: SearchHighlighter
     private var lastBoundShortURL: String? = null
+    private var lastBoundQr: Bitmap? = null
+    private var qrLoadJob: Job? = null
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                viewModel.state.value.url
-                    ?.qr
-                    ?.let { saveBitmapToUri(result.data?.data, it) }
+                lastBoundQr?.let { saveBitmapToUri(result.data?.data, it) }
             }
         }
 
@@ -142,28 +161,8 @@ class URLActivity : AppCompatActivity() {
 
     private fun bindURL(url: URL) {
         val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
+        bindQrCode(url)
         binding.root.setTitle(url.shortURL)
-        binding.urlQrImageview.setImageBitmap(url.qr)
-        binding.urlQrImageview.setOnClickListener {
-            createQRBottomSheet(url.shortURL, url.qr, settings.imageSaveLocation).show(supportFragmentManager, null)
-        }
-        binding.urlQrImageview.setOnLongClickListener {
-            url.qr
-                .copyToClipboard(
-                    this@URLActivity,
-                    "QR Code",
-                    "QRCode.png",
-                ).let { true }
-        }
-        binding.urlQrSaveButton.setOnClickListener {
-            exportBitmap(
-                settings.imageSaveLocation,
-                url.qr,
-                url.shortURL,
-                exportQRCodeResultLauncher,
-            )
-        }
-        binding.urlQrShareButton.setOnClickListener { shareBitmap(url.qr, "QRCode.png") }
         binding.urlShortButton.text =
             searchHighlighter(url.shortURL, highlightText).apply {
                 setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
@@ -192,6 +191,59 @@ class URLActivity : AppCompatActivity() {
             ?.isVisible = url.shortURLProvider.getAnalyticsURL(url.alias) != null
         binding.urlBnv.setOnItemSelectedListener { item -> handleBnvItemSelected(item, url) }
         setCustomBackAnimation(binding.root, inAppReview = settings)
+    }
+
+    // Cache hit sets the bitmap immediately - no coroutine, no flash. On miss the ImageView is
+    // blanked and generation moves off main; the result is only applied if this activity still
+    // shows the same shortURL (guards against a fast rebind mid-generation).
+    private fun bindQrCode(url: URL) {
+        qrLoadJob?.cancel()
+        val cached = qrCodeCache[url.shortURL]
+        if (cached != null) {
+            bindQrViews(url, cached)
+            return
+        }
+        binding.urlQrImageview.isEnabled = false
+        binding.urlQrImageview.setImageBitmap(null)
+        binding.urlQrSaveButton.isEnabled = false
+        binding.urlQrShareButton.isEnabled = false
+        qrLoadJob =
+            lifecycleScope.launch {
+                val qr = withContext(defaultDispatcher) { generateQRCode(url.shortURL) }
+                qrCodeCache[url.shortURL] = qr
+                if (url.shortURL == lastBoundShortURL) bindQrViews(url, qr)
+            }
+    }
+
+    private fun bindQrViews(
+        url: URL,
+        qr: Bitmap,
+    ) {
+        lastBoundQr = qr
+        binding.urlQrImageview.isEnabled = true
+        binding.urlQrImageview.setImageBitmap(qr)
+        binding.urlQrSaveButton.isEnabled = true
+        binding.urlQrShareButton.isEnabled = true
+        binding.urlQrImageview.setOnClickListener {
+            createQRBottomSheet(url.shortURL, qr, settings.imageSaveLocation).show(supportFragmentManager, null)
+        }
+        binding.urlQrImageview.setOnLongClickListener {
+            qr
+                .copyToClipboard(
+                    this@URLActivity,
+                    "QR Code",
+                    "QRCode.png",
+                ).let { true }
+        }
+        binding.urlQrSaveButton.setOnClickListener {
+            exportBitmap(
+                settings.imageSaveLocation,
+                qr,
+                url.shortURL,
+                exportQRCodeResultLauncher,
+            )
+        }
+        binding.urlQrShareButton.setOnClickListener { shareBitmap(qr, "QRCode.png") }
     }
 
     private fun handleBnvItemSelected(

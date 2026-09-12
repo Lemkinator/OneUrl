@@ -16,10 +16,14 @@
 
 package de.lemke.oneurl.ui
 
+import android.app.Activity.RESULT_OK
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -28,16 +32,20 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -48,6 +56,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowToast
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 //
@@ -65,7 +74,7 @@ class URLActivityTest {
     lateinit var urlRepository: URLRepository
 
     @Inject
-    lateinit var generateQRCode: GenerateQRCodeUseCase
+    lateinit var qrCodeCache: QRCodeCache
 
     private lateinit var seededUrl: URL
 
@@ -77,7 +86,6 @@ class URLActivityTest {
                 shortURL = "https://da.gd/seeded1",
                 longURL = "https://example.com/seeded-page",
                 shortURLProvider = Dagd,
-                qr = generateQRCode("https://da.gd/seeded1"),
                 favorite = false,
                 title = "Seeded title",
                 description = "Seeded description",
@@ -110,6 +118,71 @@ class URLActivityTest {
         withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
             val handled = activity.onOptionsItemSelected(menuItem(R.id.url_toolbar_urlhaus))
             handled.shouldBeFalse()
+        }
+    }
+
+    @Test
+    fun `bindURL uses a cached qr bitmap without generating a new one`() {
+        val cached = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+        qrCodeCache[seededUrl.shortURL] = cached
+
+        withUrlActivity { activity ->
+            val shown = (activity.findViewById<android.widget.ImageView>(R.id.url_qr_imageview).drawable as BitmapDrawable).bitmap
+            shown shouldBe cached
+        }
+    }
+
+    @Test
+    fun `clicking the qr imageview shows the qr bottom sheet`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_qr_imageview).performClick()
+            activity.supportFragmentManager.executePendingTransactions()
+
+            activity.supportFragmentManager.fragments
+                .any { it is QRBottomSheet }
+                .shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `long-clicking the qr imageview copies it to the clipboard`() {
+        mockkStatic(FileProvider::class)
+        every { FileProvider.getUriForFile(any(), any(), any()) } returns "content://de.lemke.test.fileprovider/QRCode.png".toUri()
+        try {
+            withUrlActivity { activity ->
+                val handled = activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
+                handled.shouldBeTrue()
+                verify { FileProvider.getUriForFile(any(), any(), any()) }
+            }
+        } finally {
+            unmockkAll()
+        }
+    }
+
+    @Test
+    fun `clicking the qr save button launches the export picker`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
+
+            val startedForResult = shadowOf(activity).peekNextStartedActivityForResult()
+            startedForResult shouldNotBe null
+        }
+    }
+
+    @Test
+    fun `export result OK saves the last bound qr bitmap`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
+            val shadowActivity = shadowOf(activity)
+            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+
+            shadowActivity.receiveResult(
+                startedForResult.intent,
+                RESULT_OK,
+                Intent().apply { data = "content://de.lemke.oneurl.debug.fileprovider/export.png".toUri() },
+            )
+
+            ShadowToast.getLatestToast() shouldNotBe null
         }
     }
 
