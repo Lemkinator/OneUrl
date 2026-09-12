@@ -266,7 +266,15 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
 }
 
 baselineProfile {
+    // Generation is wired to the release variant only, so a debug or PR assemble never boots the GMD.
+    automaticGenerationDuringBuild = false
     dexLayoutOptimization = true
+    saveInSrc = false
+    variants {
+        create("release") {
+            automaticGenerationDuringBuild = true
+        }
+    }
 }
 
 roborazzi {
