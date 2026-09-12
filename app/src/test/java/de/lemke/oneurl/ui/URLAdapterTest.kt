@@ -17,6 +17,7 @@
 package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.widget.FrameLayout
 import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -106,7 +107,7 @@ class URLAdapterTest {
     }
 
     @Test
-    fun `onViewRecycled cancels a pending qr load`() {
+    fun `onViewRecycled cancels a pending qr load's UI update but keeps the cache write`() {
         val pendingDispatcher = StandardTestDispatcher()
         every { generateQRCode(any()) } returns freshBitmap()
         withAdapter(defaultDispatcher = pendingDispatcher) { adapter, holder ->
@@ -122,8 +123,8 @@ class URLAdapterTest {
             val qrSizePx =
                 holder.itemView.context.resources
                     .getDimensionPixelSize(R.dimen.list_item_qr_size)
-            verify(exactly = 0) { generateQRCode(any()) }
-            qrCodeCache[url.shortURL, qrSizePx] shouldBe null
+            verify(exactly = 1) { generateQRCode(any()) }
+            qrCodeCache[url.shortURL, qrSizePx] shouldNotBe null
             holder.listItemImg.drawable shouldBe placeholderDrawable
         }
     }
@@ -159,7 +160,7 @@ class URLAdapterTest {
                 holder.itemView.context.resources
                     .getDimensionPixelSize(R.dimen.list_item_qr_size)
             qrCodeCache[url.shortURL, qrSizePx] shouldNotBe null
-            holder.listItemImg.drawable shouldNotBe null
+            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldNotBe null
         }
     }
 }

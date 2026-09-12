@@ -42,6 +42,7 @@ import dev.oneuiproject.oneui.widget.SelectableLinearLayout
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -211,8 +212,10 @@ class URLAdapter(
             listItemImg.setImageBitmap(null)
             qrJob =
                 scope.launch {
-                    val thumbnail = withContext(defaultDispatcher) { generateThumbnail(shortURL) }
-                    qrCodeCache[shortURL, qrSizePx] = thumbnail
+                    val thumbnail =
+                        withContext(NonCancellable + defaultDispatcher) {
+                            generateThumbnail(shortURL).also { qrCodeCache[shortURL, qrSizePx] = it }
+                        }
                     if (boundShortURL == shortURL) listItemImg.setImageBitmap(thumbnail)
                 }
         }
