@@ -163,7 +163,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Assemble
-        run: chmod +x ./gradlew && ./gradlew assembleRelease -Pandroidx.baselineprofile.skipgeneration --stacktrace
+        run: chmod +x ./gradlew && ./gradlew assembleRelease -Pandroidx.baselineprofile.skipgeneration -x :benchmarks:pixel9Api35Setup --stacktrace
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
