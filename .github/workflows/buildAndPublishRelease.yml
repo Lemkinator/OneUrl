@@ -76,8 +76,6 @@ jobs:
         run: |
           chmod +x ./gradlew && ./gradlew :app:assembleRelease \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect --stacktrace
-          mkdir -p app/release
-          cp -v -r app/build/outputs/apk/release app
 
       - name: Verify baseline profile packaged
         if: steps.version_info.outputs.changed == 'true'
@@ -94,15 +92,6 @@ jobs:
             [ "$size" -gt 1024 ] || { echo "::error::$dm too small ($size bytes)"; exit 1; }
             echo "Packaged baseline profile: $dm ($size bytes)"
           done
-
-      - name: Commit artifacts
-        if: steps.version_info.outputs.changed == 'true'
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add app/release/*
-          git commit -m "Update APK to v${{ steps.version_info.outputs.version_name }}" || echo "No changes to commit"
-          git push
 
       - name: Create GitHub Release
         if: steps.version_info.outputs.changed == 'true'
