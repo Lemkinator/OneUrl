@@ -23,6 +23,7 @@
 
 build/
 *.aab
+/app/release/
 
 /captures
 .externalNativeBuild

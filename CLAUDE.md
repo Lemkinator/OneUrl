@@ -36,6 +36,32 @@ Secret keys (API keys for Kurzelinks, URLhaus) go in `secrets.properties` (see `
 
 Debug APK has `applicationId = "de.lemke.oneurl.debug"` so it can coexist with release.
 
+### Baseline Profile & Benchmarks
+
+The baseline profile is generated automatically as part of every `assembleRelease` — no manual step
+and nothing committed to git (`app/build.gradle.kts`'s `baselineProfile { variants { create("release") { ... } } }`).
+PR CI passes `-Pandroidx.baselineprofile.skipgeneration` so a PR's `assembleRelease` never boots the
+GMD; the release workflow and a weekly smoke test (`baseline-profile.yml`) don't, so they always
+generate fresh. `./gradlew :app:generateBaselineProfile` still works standalone as a local diagnostic
+(same GMD device — image already cached if you ran instrumented tests) — run it in the background,
+not a foreground shell with a short timeout; it takes ~9-10 minutes:
+
+```bash
+./gradlew :app:generateBaselineProfile -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+```
+
+Run macrobenchmarks manually on a **connected physical device**, never the GMD (the library flags an
+emulator as an `EMULATOR` error condition) — never in CI, only after touching the startup path or a
+benchmarked journey:
+
+```bash
+./gradlew :benchmarks:connectedBenchmarkReleaseAndroidTest
+```
+
+Read the delta between `startupBaselineProfile` and `startupNoCompilation` (same device, so noise
+cancels) — that delta is what the profile is worth. Don't chase absolute ms, don't gate on them,
+don't store history.
+
 ## Architecture
 
 Clean Architecture with three layers:
