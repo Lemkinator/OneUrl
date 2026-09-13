@@ -21,63 +21,62 @@ import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.ext.list.withPackage
 import com.lemonappdev.konsist.api.verify.assertFalse
 import com.lemonappdev.konsist.api.verify.assertTrue
-import org.junit.jupiter.api.Test
+import io.kotest.core.spec.style.ShouldSpec
 
-class ArchitectureTest {
-    private val scope = Konsist.scopeFromProduction()
+class ArchitectureTest : ShouldSpec() {
+    private val codeScope = Konsist.scopeFromProduction()
 
-    @Test
-    fun `data layer does not depend on ui`() {
-        scope.files
-            .withPackage("de.lemke.oneurl.data..")
-            .assertFalse { it.hasImport { import -> import.name.startsWith("de.lemke.oneurl.ui.") } }
-    }
-
-    @Test
-    fun `data layer does not depend on domain business logic`() {
+    init {
+        should("data layer does not depend on ui") {
+            codeScope.files
+                .withPackage("de.lemke.oneurl.data..")
+                .assertFalse(testName = this.testCase.name.toString()) {
+                    it.hasImport { import -> import.name.startsWith("de.lemke.oneurl.ui.") }
+                }
+        }
         // data may depend on domain.model (shared value types, e.g. URL, ShortURLProvider) to
         // map DB entities to domain models, but never on use cases or other domain logic.
-        scope.files
-            .withPackage("de.lemke.oneurl.data..")
-            .assertFalse {
-                it.hasImport { import ->
-                    import.name.startsWith("de.lemke.oneurl.domain.") && !import.name.startsWith("de.lemke.oneurl.domain.model.")
+        should("data layer does not depend on domain business logic") {
+            codeScope.files
+                .withPackage("de.lemke.oneurl.data..")
+                .assertFalse(testName = this.testCase.name.toString()) {
+                    it.hasImport { import ->
+                        import.name.startsWith("de.lemke.oneurl.domain.") && !import.name.startsWith("de.lemke.oneurl.domain.model.")
+                    }
                 }
-            }
-    }
-
-    @Test
-    fun `domain layer does not depend on ui`() {
-        scope.files
-            .withPackage("de.lemke.oneurl.domain..")
-            .assertFalse { it.hasImport { import -> import.name.startsWith("de.lemke.oneurl.ui.") } }
-    }
-
-    @Test
-    fun `use case classes declare operator fun invoke`() {
-        scope
-            .classes()
-            .filter { it.name.endsWith("UseCase") }
-            .assertTrue { koClass ->
-                koClass
-                    .functions(includeNested = false, includeLocal = false)
-                    .any { it.name == "invoke" && it.hasModifier(KoModifier.OPERATOR) }
-            }
-    }
-
-    @Test
-    fun `classes named ViewModel extend ViewModel`() {
-        scope
-            .classes()
-            .filter { it.name.endsWith("ViewModel") }
-            .assertTrue { it.hasParentWithName("ViewModel", "AndroidViewModel", indirectParents = true) }
-    }
-
-    @Test
-    fun `HiltViewModel classes use Inject constructor`() {
-        scope
-            .classes()
-            .filter { it.hasAnnotation { ann -> ann.name == "HiltViewModel" } }
-            .assertTrue { it.primaryConstructor?.hasAnnotation { ann -> ann.name == "Inject" } == true }
+        }
+        should("domain layer does not depend on ui") {
+            codeScope.files
+                .withPackage("de.lemke.oneurl.domain..")
+                .assertFalse(testName = this.testCase.name.toString()) {
+                    it.hasImport { import -> import.name.startsWith("de.lemke.oneurl.ui.") }
+                }
+        }
+        should("use case classes declare operator fun invoke") {
+            codeScope
+                .classes()
+                .filter { it.name.endsWith("UseCase") }
+                .assertTrue(testName = this.testCase.name.toString()) { koClass ->
+                    koClass
+                        .functions(includeNested = false, includeLocal = false)
+                        .any { it.name == "invoke" && it.hasModifier(KoModifier.OPERATOR) }
+                }
+        }
+        should("classes named ViewModel extend ViewModel") {
+            codeScope
+                .classes()
+                .filter { it.name.endsWith("ViewModel") }
+                .assertTrue(testName = this.testCase.name.toString()) {
+                    it.hasParentWithName("ViewModel", "AndroidViewModel", indirectParents = true)
+                }
+        }
+        should("HiltViewModel classes use Inject constructor") {
+            codeScope
+                .classes()
+                .filter { it.hasAnnotation { ann -> ann.name == "HiltViewModel" } }
+                .assertTrue(testName = this.testCase.name.toString()) {
+                    it.primaryConstructor?.hasAnnotation { ann -> ann.name == "Inject" } == true
+                }
+        }
     }
 }
