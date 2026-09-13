@@ -17,6 +17,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
       - name: Set up JDK
         uses: actions/setup-java@v6
         with:
