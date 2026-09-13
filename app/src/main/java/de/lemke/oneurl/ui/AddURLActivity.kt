@@ -185,12 +185,14 @@ class AddURLActivity : AppCompatActivity() {
     ): Boolean =
         when {
             alias.length < config.minAliasLength -> {
-                binding.editTextAlias.error = getString(R.string.error_alias_too_short, config.minAliasLength)
+                binding.editTextAlias.error =
+                    resources.getQuantityString(R.plurals.error_alias_too_short, config.minAliasLength, config.minAliasLength)
                 false
             }
 
             alias.length > config.maxAliasLength -> {
-                binding.editTextAlias.error = getString(R.string.error_alias_too_long, config.maxAliasLength)
+                binding.editTextAlias.error =
+                    resources.getQuantityString(R.plurals.error_alias_too_long, config.maxAliasLength, config.maxAliasLength)
                 false
             }
 

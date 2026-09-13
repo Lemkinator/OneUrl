@@ -55,8 +55,9 @@ object Tinyurl : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.getString(
-                    R.string.alias_text,
+                context.resources.getQuantityString(
+                    R.plurals.alias_text,
+                    aliasConfig.maxAliasLength,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

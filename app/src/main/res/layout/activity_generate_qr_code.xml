@@ -42,8 +42,7 @@
                 android:id="@+id/qr_code"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="QR Code"
-                tools:ignore="HardcodedText" />
+                android:contentDescription="@string/content_description_qr_code" />
 
         </LinearLayout>
 

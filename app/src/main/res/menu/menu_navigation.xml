@@ -17,7 +17,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="AppCompatResource,HardcodedText,AlwaysShowAction">
+    tools:ignore="AppCompatResource,AlwaysShowAction">
 
     <item
         android:id="@+id/qr_code_dest"
