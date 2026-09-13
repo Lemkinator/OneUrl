@@ -24,10 +24,17 @@ complexity:
   active: true
   LongParameterList:
     active: true
-    allowedFunctionParameters: 8
-    allowedConstructorParameters: 8
+    allowedFunctionParameters: 6
+    allowedConstructorParameters: 7
   TooManyFunctions:
-    active: false
+    active: true
+    # Why (2026-09-13): ignoreOverridden — Activity lifecycle callbacks (onCreate, onNewIntent,
+    # ...) are framework-mandated, not class-owned complexity. allowedFunctionsPerClass raised
+    # from the default 11 — OneUI activities (this app is multi-activity, see GetIcon/CLAUDE.md)
+    # own lifecycle + view setup + state collection + click handlers in one class by design;
+    # IconActivity currently needs 12.
+    ignoreOverridden: true
+    allowedFunctionsPerClass: 12
   ComplexCondition:
     allowedConditions: 4
 
@@ -35,8 +42,8 @@ style:
   active: true
   MagicNumber:
     active: true
-    ignoreNumbers: [ '-1', '0', '1', '2', '0.5' ]
-    ignorePropertyDeclaration: true
+    ignoreNumbers: [ '-1', '0', '1', '2' ]
+    ignorePropertyDeclaration: false
     ignoreCompanionObjectPropertyDeclaration: true
   MaxLineLength:
     maxLineLength: 140
@@ -57,7 +64,7 @@ naming:
 empty-blocks:
   EmptyFunctionBlock:
     active: true
-    ignoreOverridden: true
+    ignoreOverridden: false
 
 exceptions:
   active: true

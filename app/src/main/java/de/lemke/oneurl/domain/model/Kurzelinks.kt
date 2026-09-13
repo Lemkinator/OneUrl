@@ -45,12 +45,15 @@ error:
 444: the API cannot be accessed at the moment (please try again later)
 
 */
+private const val MIN_ALIAS_LENGTH = 5
+private const val MAX_ALIAS_LENGTH = 100 // tested up to 250
+
 sealed class Kurzelinks : ShortURLProvider {
     final override val group = "kurzelinks.de, 0cn.de, t1p.de, ogy.de"
     final override val aliasConfig =
         object : AliasConfig {
-            override val minAliasLength = 5
-            override val maxAliasLength = 100 // tested up to 250
+            override val minAliasLength = MIN_ALIAS_LENGTH
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))

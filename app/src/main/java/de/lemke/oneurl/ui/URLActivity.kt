@@ -306,7 +306,7 @@ class URLActivity : AppCompatActivity() {
 
     private fun renderVisitCountRefresh(isRefreshing: Boolean) {
         binding.urlVisitsRefreshButton.isEnabled = !isRefreshing
-        binding.urlVisitsRefreshButton.alpha = if (isRefreshing) 0.5f else 1f
+        binding.urlVisitsRefreshButton.alpha = if (isRefreshing) DISABLED_ALPHA else 1f
         if (isRefreshing) {
             binding.urlVisitsRefreshButton.rotation = 0f
             binding.urlVisitsRefreshButton
@@ -336,5 +336,6 @@ class URLActivity : AppCompatActivity() {
         const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
         private const val REFRESH_SPIN_DEGREES = 1080f
         private const val REFRESH_SPIN_DURATION_MS = 2500L
+        private const val DISABLED_ALPHA = 0.5f
     }
 }

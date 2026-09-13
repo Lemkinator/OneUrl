@@ -86,6 +86,8 @@ stats: https://ulvis.net/API/read/get?id=example1
   }
 }
  */
+private const val MAX_ALIAS_LENGTH = 60
+
 object Ulvis : ShortURLProvider {
     override val enabled = false // deletes short URLs???? https://ulvis.net/bHPs
     override val name = "ulvis.net"
@@ -97,7 +99,7 @@ object Ulvis : ShortURLProvider {
     override val aliasConfig =
         object : AliasConfig {
             override val minAliasLength = 0
-            override val maxAliasLength = 60
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))

@@ -37,12 +37,15 @@ example:
 https://v.gd/create.php?format=json&url=www.example.com&shorturl=example
 https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
  */
+private const val MIN_ALIAS_LENGTH = 5
+private const val MAX_ALIAS_LENGTH = 30
+
 sealed class VgdIsgd : ShortURLProvider {
     final override val group = "v.gd, is.gd"
     final override val aliasConfig =
         object : AliasConfig {
-            override val minAliasLength = 5
-            override val maxAliasLength = 30
+            override val minAliasLength = MIN_ALIAS_LENGTH
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))

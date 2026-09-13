@@ -135,7 +135,9 @@ class Unknown : ShortURLProvider {
         Log.e("UnknownProvider", "Tried to generate short URL with unknown provider")
         errorCallback(GenerateURLError.Unknown())
         return object : Request<Any>(Method.GET, "", Response.ErrorListener { }) {
-            override fun deliverResponse(response: Any?) {}
+            override fun deliverResponse(response: Any?) {
+                // no-op: errorCallback above already reported the failure
+            }
 
             override fun parseNetworkResponse(response: NetworkResponse?) = null
         }
