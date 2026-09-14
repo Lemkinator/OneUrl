@@ -28,13 +28,9 @@ complexity:
     allowedConstructorParameters: 7
   TooManyFunctions:
     active: true
-    # Why (2026-09-13): ignoreOverridden — Activity lifecycle callbacks (onCreate, onNewIntent,
-    # ...) are framework-mandated, not class-owned complexity. allowedFunctionsPerClass raised
-    # from the default 11 — OneUI activities (this app is multi-activity, see GetIcon/CLAUDE.md)
-    # own lifecycle + view setup + state collection + click handlers in one class by design;
-    # IconActivity currently needs 12.
+    # ignoreOverridden: framework-mandated lifecycle callbacks (onCreate, onNewIntent, ...) are
+    # not class-owned complexity.
     ignoreOverridden: true
-    allowedFunctionsPerClass: 12
   ComplexCondition:
     allowedConditions: 4
 

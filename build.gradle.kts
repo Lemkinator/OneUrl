@@ -22,8 +22,11 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.spotless)
+    alias(libs.plugins.kover) apply false
+    alias(libs.plugins.android.junit) apply false
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.baselineprofile) apply false
+    alias(libs.plugins.roborazzi) apply false
     alias(libs.plugins.dependency.analysis)
 }
 
