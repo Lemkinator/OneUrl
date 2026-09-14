@@ -16,10 +16,11 @@
 
 package de.lemke.oneurl.domain
 
+import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.URL
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.map
 
 class ObserveURLsUseCase @Inject constructor(
     private val urlRepository: URLRepository,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(
@@ -57,5 +59,5 @@ class ObserveURLsUseCase @Inject constructor(
                         }
                     }
                 }
-            }.flowOn(Dispatchers.Default)
+            }.flowOn(defaultDispatcher)
 }
