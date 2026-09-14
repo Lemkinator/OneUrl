@@ -26,6 +26,7 @@ import dagger.hilt.testing.TestInstallIn
 import de.lemke.oneurl.data.database.AppDatabase
 import de.lemke.oneurl.data.database.URLDao
 import de.lemke.oneurl.di.PersistenceModule
+import java.util.concurrent.Executor
 import javax.inject.Singleton
 
 @Module
@@ -39,6 +40,11 @@ object TestPersistenceModule {
         Room
             .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
+            // Runs Room's suspend DAO calls on the calling thread instead of its default
+            // background thread pool, so a Robolectric shadowOf(Looper).idle() call - not a
+            // real-time wait for a background thread - is enough for a test to observe the result.
+            .setQueryExecutor(Executor { it.run() })
+            .setTransactionExecutor(Executor { it.run() })
             .build()
 
     @Provides

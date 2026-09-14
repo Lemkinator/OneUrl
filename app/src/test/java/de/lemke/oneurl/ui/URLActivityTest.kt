@@ -194,19 +194,13 @@ class URLActivityTest {
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
                 .putExtra(KEY_SHORTURL, shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
-            // URLViewModel.init loads the URL via a real IO-dispatched Room query, then resumes on
-            // Main — a single idle() right after launch can race ahead of that background read
-            // finishing, especially under full-suite load. Poll instead of a single idle() call.
             awaitMainIdle()
             scenario.onActivity(block)
         }
     }
 
-    private fun awaitMainIdle(iterations: Int = 40) {
-        repeat(iterations) {
-            shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(5)
-        }
+    private fun awaitMainIdle() {
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
     private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
