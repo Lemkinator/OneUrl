@@ -28,9 +28,13 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GenerateQRCodeViewModelTest : ShouldSpec(
@@ -181,6 +185,64 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
 
             viewModel.state.value.recentBackgroundColors shouldBe listOf(0x7, 0x1, 0x2, 0x3, 0x4, 0x5)
             userSettings.qrRecentBackgroundColors shouldBe listOf(0x7, 0x1, 0x2, 0x3, 0x4, 0x5)
+        }
+
+        should("setUrl persists the debounced value to userSettings.qrURL once the delay elapses") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setUrl("https://debounced.example.com")
+            dispatcher.scheduler.advanceUntilIdle()
+
+            userSettings.qrURL shouldBe "https://debounced.example.com"
+        }
+
+        should("setUrl cancels the previous debounce job so only the latest value is ever persisted") {
+            userSettings.qrURL = "https://initial.example.com"
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setUrl("https://first.example.com")
+            dispatcher.scheduler.advanceTimeBy(100.milliseconds)
+            viewModel.setUrl("https://second.example.com")
+            // The first job's original 300ms deadline has now passed; if it hadn't been
+            // cancelled it would already have overwritten qrURL with "first.example.com".
+            dispatcher.scheduler.advanceTimeBy(200.milliseconds)
+            userSettings.qrURL shouldBe "https://initial.example.com"
+
+            dispatcher.scheduler.advanceUntilIdle()
+            userSettings.qrURL shouldBe "https://second.example.com"
+        }
+
+        should("setSize persists the debounced value to userSettings.qrSize once the delay elapses") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setSize(900)
+            dispatcher.scheduler.advanceUntilIdle()
+
+            userSettings.qrSize shouldBe 900
+        }
+
+        should("setSize cancels the previous debounce job so only the latest value is ever persisted") {
+            userSettings.qrSize = 512
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setSize(700)
+            dispatcher.scheduler.advanceTimeBy(100.milliseconds)
+            viewModel.setSize(900)
+            // Same reasoning as the setUrl cancellation test: the first job's deadline has
+            // passed here, so a non-cancelled job would have already written 700.
+            dispatcher.scheduler.advanceTimeBy(200.milliseconds)
+            userSettings.qrSize shouldBe 512
+
+            dispatcher.scheduler.advanceUntilIdle()
+            userSettings.qrSize shouldBe 900
         }
     },
 )
