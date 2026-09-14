@@ -17,16 +17,24 @@
 package de.lemke.oneurl.domain
 
 import android.graphics.Color
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.test.core.app.ApplicationProvider
 import de.lemke.oneurl.App
+import dev.oneuiproject.oneui.qr.utils.QrEncoder
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.every
+import io.mockk.mockkConstructor
+import io.mockk.mockkStatic
+import io.mockk.unmockkConstructor
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import de.lemke.commonutils.R as commonutilsR
 
 // QrEncoder draws through android.graphics; the default Robolectric legacy graphics stub cannot
 // produce a real bitmap, hence the native graphics mode.
@@ -95,5 +103,43 @@ class GenerateQRCodeUseCaseTest {
                 )
 
             result shouldNotBe null
+        }
+
+    @Test
+    fun `default overload falls back to the no-support placeholder when QrEncoder throws`() =
+        runTest {
+            mockkConstructor(QrEncoder::class)
+            every { anyConstructed<QrEncoder>().setIcon(any<Int>()) } throws RuntimeException("boom")
+
+            try {
+                generateQRCode("https://example.com") shouldNotBe null
+            } finally {
+                unmockkConstructor(QrEncoder::class)
+            }
+        }
+
+    @Test
+    fun `no-support placeholder still renders when the launcher icon drawable is unavailable`() =
+        runTest {
+            mockkStatic(AppCompatResources::class)
+            every { AppCompatResources.getDrawable(context, commonutilsR.drawable.ic_launcher_themed) } returns null
+
+            try {
+                val result =
+                    generateQRCode(
+                        "https://example.com",
+                        size = -1,
+                        foregroundColor = Color.BLACK,
+                        backgroundColor = Color.WHITE,
+                        tintAnchor = false,
+                        tintBorder = false,
+                        icon = false,
+                        roundedFrame = false,
+                    )
+
+                result shouldNotBe null
+            } finally {
+                unmockkStatic(AppCompatResources::class)
+            }
         }
 }

@@ -24,10 +24,16 @@ import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.shouldBe
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import io.mockk.unmockkObject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -45,8 +51,17 @@ private fun Request<*>.deliverStringResponse(response: String) {
     method.invoke(this, response)
 }
 
+// The compiled response listener null-checks its parameter before use; invoking it through the
+// erasure bridge with a null argument reaches that check without a real malformed network reply.
+private fun Request<*>.deliverNullResponse() {
+    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
+    method.isAccessible = true
+    method.invoke(this, null)
+}
+
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class GetURLTitleUseCaseTest {
@@ -93,5 +108,54 @@ class GetURLTitleUseCaseTest {
             }
 
             getURLTitle("example.com") shouldBe null
+        }
+
+    @Test
+    fun `returns null and logs when parsing the response throws`() =
+        runTest {
+            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
+                firstArg<StringRequest>().deliverNullResponse()
+            }
+
+            getURLTitle("example.com") shouldBe null
+        }
+
+    @Test
+    fun `ignores a response delivered after the continuation already resumed`() =
+        runTest {
+            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
+                val request = firstArg<StringRequest>()
+                request.deliverStringResponse("<html><head><title>First</title></head></html>")
+                request.deliverStringResponse("<html><head><title>Second</title></head></html>")
+            }
+
+            getURLTitle("example.com") shouldBe "First"
+        }
+
+    @Test
+    fun `ignores a network error delivered after the continuation already resumed`() =
+        runTest {
+            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
+                val request = firstArg<StringRequest>()
+                val error = VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList()))
+                request.deliverError(error)
+                request.deliverError(error)
+            }
+
+            getURLTitle("example.com") shouldBe null
+        }
+
+    @Test
+    fun `cancelling the coroutine cancels the underlying request`() =
+        runTest {
+            val requestSlot = slot<StringRequest>()
+            every { requestQueue.addToRequestQueue(capture(requestSlot)) } just Runs
+
+            val job = launch { getURLTitle("example.com") }
+            runCurrent()
+            job.cancel()
+            runCurrent()
+
+            requestSlot.captured.isCanceled shouldBe true
         }
 }

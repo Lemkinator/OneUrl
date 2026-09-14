@@ -34,7 +34,12 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 
 private fun connectivityManager(
     hasNetwork: Boolean = true,
@@ -52,6 +57,7 @@ private fun connectivityManager(
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GenerateURLUseCaseTest : ShouldSpec(
     {
         val context = mockk<Context>()
@@ -142,6 +148,59 @@ class GenerateURLUseCaseTest : ShouldSpec(
             val result = generateURL(provider, "https://example.com", "alias") {}
 
             result shouldBe GenerateURLResult.Failure(GenerateURLError.RateLimitExceeded)
+        }
+
+        should("ignore a second success callback delivered after the continuation already resumed") {
+            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
+            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            val provider =
+                mockk<ShortURLProvider> {
+                    every { getCreateRequest(context, any(), any(), any(), any()) } answers {
+                        arg<(String) -> Unit>(3).invoke("https://short.url/first")
+                        arg<(String) -> Unit>(3).invoke("https://short.url/second")
+                        mockk<Request<Any>>(relaxed = true)
+                    }
+                }
+
+            val result = generateURL(provider, "https://example.com", "alias") {}
+
+            result shouldBe GenerateURLResult.Success("https://short.url/first")
+        }
+
+        should("ignore a second failure callback delivered after the continuation already resumed") {
+            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
+            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            val provider =
+                mockk<ShortURLProvider> {
+                    every { getCreateRequest(context, any(), any(), any(), any()) } answers {
+                        arg<(GenerateURLError) -> Unit>(4).invoke(GenerateURLError.RateLimitExceeded)
+                        arg<(GenerateURLError) -> Unit>(4).invoke(GenerateURLError.NoInternet)
+                        mockk<Request<Any>>(relaxed = true)
+                    }
+                }
+
+            val result = generateURL(provider, "https://example.com", "alias") {}
+
+            result shouldBe GenerateURLResult.Failure(GenerateURLError.RateLimitExceeded)
+        }
+
+        should("cancel the provider's request when the coroutine is cancelled") {
+            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
+            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            val createdRequest = mockk<Request<Any>>(relaxed = true)
+            val provider =
+                mockk<ShortURLProvider> {
+                    every { getCreateRequest(context, any(), any(), any(), any()) } returns createdRequest
+                }
+
+            runTest {
+                val job = launch { generateURL(provider, "https://example.com", "alias") {} }
+                runCurrent()
+                job.cancel()
+                runCurrent()
+            }
+
+            verify { createdRequest.cancel() }
         }
     },
 )
