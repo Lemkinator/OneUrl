@@ -219,4 +219,38 @@ class TnyimTest {
 
         clicks shouldBe null
     }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `getURLClickCount callback that throws once is caught and resolves to null`() {
+        val slot = slot<JsonObjectRequest>()
+        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
+        var callbackCount = 0
+        var clicks: Int? = -1
+        val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
+
+        Tnyim.getURLClickCount(context, url) {
+            callbackCount++
+            if (callbackCount == 1) throw RuntimeException("boom") else clicks = it
+        }
+        slot.captured.deliverJsonResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
+
+        clicks shouldBe null
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
+    }
 }

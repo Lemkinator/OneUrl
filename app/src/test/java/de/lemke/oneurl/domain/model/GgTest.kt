@@ -187,4 +187,73 @@ class GgTest {
 
         error shouldBe GenerateURLError.Unknown(500)
     }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `check response handling that throws still falls back to creating the alias`() {
+        var result: String? = null
+        val innerReq = slot<StringRequest>()
+        var enqueueCount = 0
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } answers {
+            enqueueCount++
+            if (enqueueCount == 1) throw RuntimeException("boom")
+        }
+        val req = Gg.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverStringResponse("ok")
+        innerReq.captured.deliverStringResponse("https://gg.gg/abc")
+
+        result shouldBe "https://gg.gg/abc"
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `check error handling that throws still falls back to creating the alias`() {
+        var result: String? = null
+        val innerReq = slot<StringRequest>()
+        var enqueueCount = 0
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } answers {
+            enqueueCount++
+            if (enqueueCount == 1) throw RuntimeException("boom")
+        }
+        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverError(VolleyError("no network"))
+        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+
+        result shouldBe "https://gg.gg/random"
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create response success callback that throws is caught and reported as unexpected response`() {
+        var error: GenerateURLError? = null
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req = Gg.getCreateRequest(context, longURL, "", { throw RuntimeException("boom") }, { error = it })
+        req.deliverStringResponse("ok")
+
+        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+
+        error shouldBe GenerateURLError.Unknown(2009)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req =
+            Gg.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+        req.deliverStringResponse("ok")
+
+        innerReq.captured.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
+    }
 }

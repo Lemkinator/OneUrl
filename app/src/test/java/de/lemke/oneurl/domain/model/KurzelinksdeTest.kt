@@ -160,4 +160,20 @@ class KurzelinksdeTest {
         Kurzelinks.Kurzelinksde.aliasConfig.isAliasValid("abc-DEF_123") shouldBe true
         Kurzelinks.Kurzelinksde.aliasConfig.isAliasValid("abc def") shouldBe false
     }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
+    }
 }
