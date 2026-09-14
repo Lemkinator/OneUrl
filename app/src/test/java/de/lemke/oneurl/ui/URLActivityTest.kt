@@ -17,16 +17,21 @@
 package de.lemke.oneurl.ui
 
 import android.app.Activity.RESULT_OK
+import android.content.ClipboardManager
+import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import androidx.core.view.isVisible
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -35,6 +40,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
+import de.lemke.oneurl.domain.model.Gg
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.booleans.shouldBeFalse
@@ -56,6 +62,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDialog
 import org.robolectric.shadows.ShadowToast
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
@@ -183,6 +190,246 @@ class URLActivityTest {
             )
 
             ShadowToast.getLatestToast() shouldNotBe null
+        }
+    }
+
+    @Test
+    fun `clicking the short url button opens the short url`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_short_button).performClick()
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_VIEW
+            startedIntent.data shouldBe seededUrl.shortURL.toUri()
+        }
+    }
+
+    @Test
+    fun `long-clicking the short url button copies it to the clipboard`() {
+        withUrlActivity { activity ->
+            val handled = activity.findViewById<android.view.View>(R.id.url_short_button).performLongClick()
+            handled.shouldBeTrue()
+            val clipboard = activity.getSystemService(ClipboardManager::class.java)
+            clipboard.primaryClip
+                ?.getItemAt(0)
+                ?.text
+                .toString() shouldBe seededUrl.shortURL
+        }
+    }
+
+    @Test
+    fun `clicking the short url share button shares the short url text`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_short_share_button).performClick()
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_CHOOSER
+            val inner = startedIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+            inner?.getStringExtra(Intent.EXTRA_TEXT) shouldBe seededUrl.shortURL
+        }
+    }
+
+    @Test
+    fun `clicking the long url button opens the long url`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_long_button).performClick()
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_VIEW
+            startedIntent.data shouldBe seededUrl.longURL.toUri()
+        }
+    }
+
+    @Test
+    fun `long-clicking the long url button copies it to the clipboard`() {
+        withUrlActivity { activity ->
+            val handled = activity.findViewById<android.view.View>(R.id.url_long_button).performLongClick()
+            handled.shouldBeTrue()
+            val clipboard = activity.getSystemService(ClipboardManager::class.java)
+            clipboard.primaryClip
+                ?.getItemAt(0)
+                ?.text
+                .toString() shouldBe seededUrl.longURL
+        }
+    }
+
+    @Test
+    fun `clicking the long url share button shares the long url text`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_long_share_button).performClick()
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_CHOOSER
+            val inner = startedIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+            inner?.getStringExtra(Intent.EXTRA_TEXT) shouldBe seededUrl.longURL
+        }
+    }
+
+    @Test
+    fun `bindURL shows the title and description when non-blank`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_title_layout).isVisible.shouldBeTrue()
+            activity.findViewById<android.view.View>(R.id.url_description_layout).isVisible.shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `bindURL hides the title and description when blank`() {
+        val blankUrl = seededUrl.copy(shortURL = "https://da.gd/blankfields", title = "", description = "")
+        runBlocking { urlRepository.addURL(blankUrl) }
+
+        withUrlActivity(shortURL = blankUrl.shortURL) { activity ->
+            activity.findViewById<android.view.View>(R.id.url_title_layout).isVisible.shouldBeFalse()
+            activity.findViewById<android.view.View>(R.id.url_description_layout).isVisible.shouldBeFalse()
+        }
+    }
+
+    @Test
+    fun `urlVisitsRefreshButton is enabled and fully opaque once the initial refresh completes`() {
+        withUrlActivity { activity ->
+            val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
+            button.isEnabled.shouldBeTrue()
+            button.alpha shouldBe 1f
+        }
+    }
+
+    // Dagd's getURLClickCount resolves synchronously (see the class-level comment), so the
+    // isRefreshing=true render is a same-frame transient that settles back to false before this
+    // click returns - it cannot be observed here without a provider that leaves the request
+    // in flight, which would require real Volley/network I/O this suite must not depend on.
+    @Test
+    fun `urlVisitsRefreshButton click re-invokes refreshVisitCount`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_visits_refresh_button).performClick()
+            awaitMainIdle()
+            val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
+            button.isEnabled.shouldBeTrue()
+            button.alpha shouldBe 1f
+        }
+    }
+
+    @Test
+    fun `bnv analytics item is visible for a provider with analytics and opens the analytics URL`() {
+        withUrlActivity { activity ->
+            val bnv = activity.findViewById<BottomNavigationView>(R.id.url_bnv)
+            bnv.menu
+                .findItem(R.id.url_bnv_analytics)
+                .isVisible
+                .shouldBeTrue()
+
+            bnv.selectedItemId = R.id.url_bnv_analytics
+
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_VIEW
+            startedIntent.data shouldBe seededUrl.shortURLProvider.getAnalyticsURL(seededUrl.alias)!!.toUri()
+        }
+    }
+
+    @Test
+    fun `bnv analytics item is hidden and a no-op for a provider without analytics`() {
+        val url = seededUrl.copy(shortURL = "https://gg.gg/no-analytics", shortURLProvider = Gg)
+        runBlocking { urlRepository.addURL(url) }
+
+        withUrlActivity(shortURL = url.shortURL) { activity ->
+            val bnv = activity.findViewById<BottomNavigationView>(R.id.url_bnv)
+            bnv.menu
+                .findItem(R.id.url_bnv_analytics)
+                .isVisible
+                .shouldBeFalse()
+
+            bnv.selectedItemId = R.id.url_bnv_analytics
+
+            shadowOf(activity).nextStartedActivity shouldBe null
+        }
+    }
+
+    @Test
+    fun `bnv provider info item shows the provider info bottom sheet`() {
+        withUrlActivity { activity ->
+            activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_provider_info
+            activity.supportFragmentManager.executePendingTransactions()
+
+            activity.supportFragmentManager.fragments
+                .any { it is ProviderInfoBottomSheet }
+                .shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `urlBnv shows add-to-fav and hides remove-from-fav for a non-favorite url`() {
+        withUrlActivity { activity ->
+            val menu = activity.findViewById<BottomNavigationView>(R.id.url_bnv).menu
+            menu.findItem(R.id.url_bnv_add_to_fav).isVisible.shouldBeTrue()
+            menu.findItem(R.id.url_bnv_remove_from_fav).isVisible.shouldBeFalse()
+        }
+    }
+
+    @Test
+    fun `urlBnv hides add-to-fav and shows remove-from-fav for a favorite url`() {
+        val favUrl = seededUrl.copy(shortURL = "https://da.gd/fav-visible", favorite = true)
+        runBlocking { urlRepository.addURL(favUrl) }
+
+        withUrlActivity(shortURL = favUrl.shortURL) { activity ->
+            val menu = activity.findViewById<BottomNavigationView>(R.id.url_bnv).menu
+            menu.findItem(R.id.url_bnv_add_to_fav).isVisible.shouldBeFalse()
+            menu.findItem(R.id.url_bnv_remove_from_fav).isVisible.shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `bnv add-to-fav item toggles favorite from false to true`() {
+        withUrlActivity { activity ->
+            activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_add_to_fav
+            awaitMainIdle()
+
+            runBlocking { urlRepository.getURL(seededUrl.shortURL)?.favorite } shouldBe true
+        }
+    }
+
+    @Test
+    fun `bnv remove-from-fav item toggles favorite from true to false`() {
+        val favUrl = seededUrl.copy(shortURL = "https://da.gd/fav-toggle", favorite = true)
+        runBlocking { urlRepository.addURL(favUrl) }
+
+        withUrlActivity(shortURL = favUrl.shortURL) { activity ->
+            activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_remove_from_fav
+            awaitMainIdle()
+
+            runBlocking { urlRepository.getURL(favUrl.shortURL)?.favorite } shouldBe false
+        }
+    }
+
+    @Test
+    fun `bnv delete item positive button deletes the url and finishes the activity`() {
+        withUrlActivity { activity ->
+            activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_delete
+
+            val dialog = ShadowDialog.getLatestDialog() as? AlertDialog
+            dialog shouldNotBe null
+            dialog!!.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
+            awaitMainIdle()
+
+            runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
+            activity.isFinishing.shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `bnv delete item negative button leaves the url intact`() {
+        withUrlActivity { activity ->
+            activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_delete
+
+            val dialog = ShadowDialog.getLatestDialog() as? AlertDialog
+            dialog shouldNotBe null
+            dialog!!.getButton(DialogInterface.BUTTON_NEGATIVE).performClick()
+            awaitMainIdle()
+
+            runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldNotBe null
+            activity.isFinishing.shouldBeFalse()
+        }
+    }
+
+    @Test
+    fun `loading a missing url toasts not-found and finishes the activity`() {
+        withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
+            ShadowToast.getLatestToast() shouldNotBe null
+            activity.isFinishing.shouldBeTrue()
         }
     }
 
