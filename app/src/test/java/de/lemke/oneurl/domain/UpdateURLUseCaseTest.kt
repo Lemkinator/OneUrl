@@ -21,11 +21,12 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 
 class UpdateURLUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val updateURL = UpdateURLUseCase(urlRepository)
+        val updateURL = UpdateURLUseCase(urlRepository, Dispatchers.Unconfined)
 
         should("invoke(url) delegates to urlRepository.updateURL with the given url") {
             val url = testUrl(shortURL = "https://short.url/abc")

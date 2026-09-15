@@ -21,11 +21,12 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 
 class AddURLUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val addURL = AddURLUseCase(urlRepository)
+        val addURL = AddURLUseCase(urlRepository, Dispatchers.Unconfined)
 
         should("invoke delegates to urlRepository.addURL with the given url") {
             val url = testUrl(shortURL = "https://short.url/abc")

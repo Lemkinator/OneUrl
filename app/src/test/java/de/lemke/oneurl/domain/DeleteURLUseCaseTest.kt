@@ -21,11 +21,12 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 
 class DeleteURLUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val deleteURL = DeleteURLUseCase(urlRepository)
+        val deleteURL = DeleteURLUseCase(urlRepository, Dispatchers.Unconfined)
 
         should("invoke(url) delegates to urlRepository.deleteURL with the given url") {
             val url = testUrl(shortURL = "https://short.url/abc")
