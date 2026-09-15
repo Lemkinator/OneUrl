@@ -18,10 +18,12 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
@@ -38,6 +40,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import de.lemke.commonutils.R as commonutilsR
 
 // Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
 // it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
@@ -53,6 +56,7 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
 @Config(application = Application::class, sdk = [36])
 class TlyDefaultTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
 
@@ -182,5 +186,48 @@ class TlyDefaultTest {
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Custom(400, "something went wrong")
+    }
+
+    @Test
+    fun `error Unknown with status code when the error body is not valid JSON`() {
+        var error: GenerateURLError? = null
+        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, "not json".toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(NoConnectionError())
+
+        error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
+    fun `getInfoContents returns the experimental info`() {
+        val infoContents = Tly.Default.getInfoContents(realContext)
+
+        infoContents.size shouldBe 1
+        infoContents[0].title shouldBe realContext.getString(commonutilsR.string.commonutils_experimental)
+        infoContents[0].linkOrDescription shouldBe realContext.getString(R.string.tly_info)
+    }
+
+    @Test
+    fun `getTipsCardTitleAndInfo returns the info title and experimental text`() {
+        val (title, info) = Tly.Default.getTipsCardTitleAndInfo(realContext)!!
+
+        title shouldBe realContext.getString(commonutilsR.string.commonutils_info)
+        info shouldBe realContext.getString(R.string.tly_info)
     }
 }

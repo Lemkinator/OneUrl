@@ -18,10 +18,12 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -47,6 +49,7 @@ private fun Request<*>.deliverStringResponse(response: String) {
 @Config(application = Application::class, sdk = [36])
 class OnesisTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
     @Test
@@ -145,5 +148,55 @@ class OnesisTest {
 
             error shouldBe expected
         }
+    }
+
+    @Test
+    fun `getInfoContents returns the alias info`() {
+        val infoContents = Onesis.getInfoContents(realContext)
+
+        infoContents.size shouldBe 1
+        infoContents[0].title shouldBe realContext.getString(R.string.alias)
+        infoContents[0].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                Onesis.aliasConfig.maxAliasLength,
+                Onesis.aliasConfig.minAliasLength,
+                Onesis.aliasConfig.maxAliasLength,
+                Onesis.aliasConfig.allowedAliasCharacters,
+            )
+    }
+
+    @Test
+    fun `sanitizeLongURL adds https and trims trailing whitespace`() {
+        Onesis.sanitizeLongURL("example.com") shouldBe "https://example.com"
+        Onesis.sanitizeLongURL("https://example.com ") shouldBe "https://example.com"
+    }
+
+    @Test
+    fun `response containing an unresolvable short url span maps to Unknown 200`() {
+        var error: GenerateURLError? = null
+        val req = Onesis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverStringResponse(
+            """<span id="shortlink-url" style="color: #007bff; font-weight: bold;">https://other.example/K5F8WO</span>""",
+        )
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Onesis.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
     }
 }

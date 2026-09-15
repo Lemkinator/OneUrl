@@ -18,10 +18,12 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import io.kotest.matchers.shouldBe
@@ -47,6 +49,7 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
 @Config(application = Application::class, sdk = [36])
 class OneptcoTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
     @Test
@@ -54,6 +57,27 @@ class OneptcoTest {
         Oneptco.aliasConfig.isAliasValid("abc_DEF_123") shouldBe true
         Oneptco.aliasConfig.isAliasValid("abc-def") shouldBe false
         Oneptco.aliasConfig.isAliasValid("") shouldBe false
+    }
+
+    @Test
+    fun `sanitizeLongURL encodes ampersands and trims`() {
+        Oneptco.sanitizeLongURL("https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1%26b=2"
+    }
+
+    @Test
+    fun `getInfoContents returns the alias info`() {
+        val infoContents = Oneptco.getInfoContents(realContext)
+
+        infoContents.size shouldBe 1
+        infoContents[0].title shouldBe realContext.getString(R.string.alias)
+        infoContents[0].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                Oneptco.aliasConfig.maxAliasLength,
+                Oneptco.aliasConfig.minAliasLength,
+                Oneptco.aliasConfig.maxAliasLength,
+                Oneptco.aliasConfig.allowedAliasCharacters,
+            )
     }
 
     @Test
@@ -198,5 +222,31 @@ class OneptcoTest {
         req.deliverError(VolleyError(NetworkResponse(400, "server exploded".toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Custom(400, "server exploded")
+    }
+
+    @Test
+    fun `create request with a null error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(400, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(400)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create request error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
     }
 }

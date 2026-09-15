@@ -18,11 +18,13 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.shouldBe
@@ -61,6 +63,7 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
 @Config(application = Application::class, sdk = [36])
 class TnyimTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
 
@@ -176,6 +179,39 @@ class TnyimTest {
     }
 
     @Test
+    fun `error with a null body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(404)
+    }
+
+    @Test
+    fun `sanitizeLongURL encodes ampersands and trims`() {
+        Tnyim.sanitizeLongURL("https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1%26b=2"
+    }
+
+    @Test
+    fun `getInfoContents returns the alias and analytics info`() {
+        val infoContents = Tnyim.getInfoContents(realContext)
+
+        infoContents.size shouldBe 2
+        infoContents[0].title shouldBe realContext.getString(R.string.alias)
+        infoContents[0].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                Tnyim.aliasConfig.maxAliasLength,
+                Tnyim.aliasConfig.minAliasLength,
+                Tnyim.aliasConfig.maxAliasLength,
+                Tnyim.aliasConfig.allowedAliasCharacters,
+            )
+        infoContents[1].title shouldBe realContext.getString(R.string.analytics)
+        infoContents[1].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
+    }
+
+    @Test
     fun `isAliasValid accepts alphanumerics and hyphens, rejects other characters`() {
         Tnyim.aliasConfig.isAliasValid("abc-123") shouldBe true
         Tnyim.aliasConfig.isAliasValid("abc_123") shouldBe false
@@ -192,6 +228,19 @@ class TnyimTest {
         slot.captured.deliverJsonResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
 
         clicks shouldBe 3
+    }
+
+    @Test
+    fun `getURLClickCount resolves to null when the clicks field is not numeric`() {
+        val slot = slot<JsonObjectRequest>()
+        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
+        var clicks: Int? = -1
+        val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
+
+        Tnyim.getURLClickCount(context, url) { clicks = it }
+        slot.captured.deliverJsonResponse(JSONObject().put("link", JSONObject().put("clicks", "not-a-number")))
+
+        clicks shouldBe null
     }
 
     @Test

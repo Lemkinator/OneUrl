@@ -18,12 +18,14 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.Header
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.VolleyError
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -54,6 +56,7 @@ private fun Request<*>.callParseNetworkError(volleyError: VolleyError?): VolleyE
 @Config(application = Application::class, sdk = [36])
 class ShrtlnkTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
     @Test
@@ -126,5 +129,14 @@ class ShrtlnkTest {
 
         error shouldBe GenerateURLError.Unknown()
         returned.message shouldBe "unknown error"
+    }
+
+    @Test
+    fun `getInfoContents returns the redirect hint info`() {
+        val infoContents = Shrtlnk.getInfoContents(realContext)
+
+        infoContents.size shouldBe 1
+        infoContents[0].title shouldBe realContext.getString(R.string.redirect_hint)
+        infoContents[0].linkOrDescription shouldBe realContext.getString(R.string.redirect_hint_text)
     }
 }

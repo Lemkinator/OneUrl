@@ -18,11 +18,13 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.booleans.shouldBeFalse
@@ -68,6 +70,7 @@ private fun testURL(shortURL: String) =
 @Config(application = Application::class, sdk = [36])
 class UlvisTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
 
@@ -87,6 +90,30 @@ class UlvisTest {
         Ulvis.aliasConfig.isAliasValid("Example12").shouldBeTrue()
         Ulvis.aliasConfig.isAliasValid("example-12").shouldBeFalse()
         Ulvis.aliasConfig.isAliasValid("").shouldBeFalse()
+    }
+
+    @Test
+    fun `sanitizeLongURL adds https, encodes ampersands, and trims`() {
+        Ulvis.sanitizeLongURL("example.com") shouldBe "https://example.com"
+        Ulvis.sanitizeLongURL("https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1%26b=2"
+    }
+
+    @Test
+    fun `getInfoContents returns the alias and analytics info`() {
+        val infoContents = Ulvis.getInfoContents(realContext)
+
+        infoContents.size shouldBe 2
+        infoContents[0].title shouldBe realContext.getString(R.string.alias)
+        infoContents[0].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                Ulvis.aliasConfig.maxAliasLength,
+                Ulvis.aliasConfig.minAliasLength,
+                Ulvis.aliasConfig.maxAliasLength,
+                Ulvis.aliasConfig.allowedAliasCharacters,
+            )
+        infoContents[1].title shouldBe realContext.getString(R.string.analytics)
+        infoContents[1].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
     }
 
     @Test
@@ -175,6 +202,26 @@ class UlvisTest {
         req.deliverJSONResponse(JSONObject().put("error", JSONObject().put("code", "not-a-number")))
 
         error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `create request falls back to Unknown when data status is neither custom-taken nor a usable url`() {
+        var error: GenerateURLError? = null
+        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverJSONResponse(JSONObject().put("data", JSONObject().put("status", "queued")))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `create request with a null error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
     }
 
     @Test

@@ -18,11 +18,13 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.shouldBe
@@ -53,6 +55,7 @@ private fun Request<*>.deliverStringResponse(response: String) {
 @Config(application = Application::class, sdk = [36])
 class GgTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
 
@@ -255,5 +258,40 @@ class GgTest {
         innerReq.captured.deliverError(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
+    fun `getInfoContents returns the alias info`() {
+        val infoContents = Gg.getInfoContents(realContext)
+
+        infoContents.size shouldBe 1
+        infoContents[0].title shouldBe realContext.getString(R.string.alias)
+        infoContents[0].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                Gg.aliasConfig.maxAliasLength,
+                Gg.aliasConfig.minAliasLength,
+                Gg.aliasConfig.maxAliasLength,
+                Gg.aliasConfig.allowedAliasCharacters,
+            )
+    }
+
+    @Test
+    fun `sanitizeLongURL adds https and trims trailing whitespace`() {
+        Gg.sanitizeLongURL("example.com") shouldBe "https://example.com"
+        Gg.sanitizeLongURL("https://example.com ") shouldBe "https://example.com"
+    }
+
+    @Test
+    fun `check error with a status code still falls through and creates the alias`() {
+        var result: String? = null
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverError(VolleyError(NetworkResponse(500, "body".toByteArray(), false, 0L, emptyList())))
+        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+
+        result shouldBe "https://gg.gg/random"
     }
 }

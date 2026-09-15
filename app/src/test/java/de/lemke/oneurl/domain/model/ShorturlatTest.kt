@@ -18,11 +18,13 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
@@ -40,6 +42,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import de.lemke.commonutils.R as commonutilsR
 
 // Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
 // it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
@@ -55,6 +58,7 @@ private fun Request<*>.deliverStringResponse(response: String) {
 @Config(application = Application::class, sdk = [36])
 class ShorturlatTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
     private val url =
@@ -89,6 +93,16 @@ class ShorturlatTest {
         )
 
         result shouldBe "https://shorturl.at/R8dPc"
+    }
+
+    @Test
+    fun `create request succeeds with the remainder of the response when no onClick delimiter follows the value`() {
+        var result: String? = null
+        val req = Shorturlat.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverStringResponse("""<input id="shortenurl" type="text" value="https://shorturl.at/R8dPc">""")
+
+        result shouldBe "https://shorturl.at/R8dPc\">"
     }
 
     @Test
@@ -156,6 +170,18 @@ class ShorturlatTest {
     }
 
     @Test
+    fun `getURLClickCount reports null when the click count marker is present but not numeric`() {
+        val reqSlot = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(reqSlot)) } returns Unit
+        var clicks: Int? = -1
+        Shorturlat.getURLClickCount(context, url) { clicks = it }
+
+        reqSlot.captured.deliverStringResponse("""<div class="squarebox"><div class="squareboxtext">many</div></div>""")
+
+        clicks shouldBe null
+    }
+
+    @Test
     fun `getURLClickCount reports null on a network error`() {
         val reqSlot = slot<StringRequest>()
         every { requestQueue.addToRequestQueue(capture(reqSlot)) } returns Unit
@@ -165,5 +191,40 @@ class ShorturlatTest {
         reqSlot.captured.deliverError(VolleyError("no network"))
 
         clicks shouldBe null
+    }
+
+    @Test
+    fun `getInfoContents returns the experimental notice and analytics info`() {
+        val infoContents = Shorturlat.getInfoContents(realContext)
+
+        infoContents.size shouldBe 2
+        infoContents[0].title shouldBe realContext.getString(commonutilsR.string.commonutils_experimental)
+        infoContents[0].linkOrDescription shouldBe realContext.getString(R.string.shorturlat_info)
+        infoContents[1].title shouldBe realContext.getString(R.string.analytics)
+        infoContents[1].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
+    }
+
+    @Test
+    fun `getTipsCardTitleAndInfo pairs the info title with the shorturlat info text`() {
+        val tipsCardTitleAndInfo = Shorturlat.getTipsCardTitleAndInfo(realContext)
+        val expected = Pair(realContext.getString(commonutilsR.string.commonutils_info), realContext.getString(R.string.shorturlat_info))
+
+        tipsCardTitleAndInfo shouldBe expected
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create request error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Shorturlat.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
     }
 }
