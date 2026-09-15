@@ -232,6 +232,26 @@ class LstuTest {
         infoContents[1].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
     }
 
+    @Test
+    fun `create request falls through to Unknown when success is true but short is missing`() {
+        var error: GenerateURLError? = null
+        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverStringResponse("""{"success":true}""")
+
+        error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
+    }
+
+    @Test
+    fun `create request with a status code and a null response body maps to Unknown with that status`() {
+        var error: GenerateURLError? = null
+        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
     @Suppress("TooGenericExceptionThrown")
     @Test
     fun `error callback that throws once is caught and reported as unknown`() {

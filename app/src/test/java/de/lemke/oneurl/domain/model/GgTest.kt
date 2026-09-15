@@ -191,6 +191,19 @@ class GgTest {
         error shouldBe GenerateURLError.Unknown(500)
     }
 
+    @Test
+    fun `create error with a null response body maps to Unknown with that status code`() {
+        var error: GenerateURLError? = null
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req = Gg.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        req.deliverStringResponse("ok")
+
+        innerReq.captured.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
     @Suppress("TooGenericExceptionThrown")
     @Test
     fun `check response handling that throws still falls back to creating the alias`() {

@@ -166,6 +166,26 @@ class L4fTest {
     }
 
     @Test
+    fun `network error with a null response body maps to Unknown with that status code`() {
+        var error: GenerateURLError? = null
+        val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
+    @Test
+    fun `response with no error and no shorturl falls back to Custom`() {
+        var error: GenerateURLError? = null
+        val req = L4f.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverJSONResponse(JSONObject("""{"error":false,"message":"unexpected shape"}"""))
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "unexpected shape")
+    }
+
+    @Test
     fun `sanitizeLongURL trims and url-encodes ampersands`() {
         L4f.sanitizeLongURL(" https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1%26b=2"
     }

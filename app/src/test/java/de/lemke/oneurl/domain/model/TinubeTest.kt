@@ -145,6 +145,27 @@ class TinubeTest {
     }
 
     @Test
+    fun `status ok without a urlCode maps to Unknown 200`() {
+        var error: GenerateURLError? = null
+        val req = Tinube.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val response = """1:{"status":200,"data":{"longUrl":"$longURL"}}"""
+
+        req.deliverStringResponse(response)
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `error with a status code and a null response body maps to Unknown with that status`() {
+        var error: GenerateURLError? = null
+        val req = Tinube.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(404)
+    }
+
+    @Test
     fun `isAliasValid accepts alphanumerics, underscores and hyphens, rejects other characters`() {
         Tinube.aliasConfig.isAliasValid("abc_123-xyz") shouldBe true
         Tinube.aliasConfig.isAliasValid("abc.123") shouldBe false
