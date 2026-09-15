@@ -230,6 +230,23 @@ class AddURLActivityTest {
         }
     }
 
+    // The toolbar's navigation icon runs in showNavButtonAsBack mode (activity_add_url.xml sets
+    // app:showNavButtonAsBack="true"), so ToolbarLayoutButtonsHandler.updateNavButton wires the
+    // real navigation click straight to onBackPressedDispatcher.onBackPressed() and never calls this
+    // listener - the only way to reach it is to invoke the compiled callback directly.
+    @Test
+    fun `onCreate navigation button listener hides the keyboard and finishes`() {
+        withAddURLActivity { activity, _, _, _ ->
+            val onNavigationClick =
+                AddURLActivity::class.java.getDeclaredMethod("onCreate\$lambda\$0", AddURLActivity::class.java, View::class.java)
+            onNavigationClick.isAccessible = true
+
+            onNavigationClick.invoke(null, activity, activity.findViewById<View>(R.id.urlInputLayout))
+
+            activity.isFinishing.shouldBeTrue()
+        }
+    }
+
     @Test
     fun `submit sets empty-url error for a blank url`() {
         withAddURLActivity { activity, urlField, _, submit ->

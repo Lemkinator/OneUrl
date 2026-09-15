@@ -30,6 +30,7 @@ import android.widget.Button
 import android.widget.CompoundButton
 import android.widget.EditText
 import androidx.appcompat.widget.SeslSeekBar
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.picker3.app.SeslColorPickerDialog
 import androidx.test.core.app.ActivityScenario
@@ -44,6 +45,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
@@ -54,6 +57,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
 import org.robolectric.shadows.ShadowToast
+import de.lemke.commonutils.R as commonutilsR
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 @HiltAndroidTest
@@ -126,6 +130,22 @@ class GenerateQRCodeActivityTest {
             shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
 
             ShadowToast.getLatestToast() shouldBe null
+        }
+    }
+
+    @Test
+    fun `clicking the qr code image copies it to the clipboard`() {
+        mockkStatic(FileProvider::class)
+        every { FileProvider.getUriForFile(any(), any(), any()) } returns "content://de.lemke.test.fileprovider/QRCode.png".toUri()
+        try {
+            withActivity { activity ->
+                activity.findViewById<View>(R.id.qr_code).performClick()
+                shadowOf(Looper.getMainLooper()).idle()
+
+                ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
+            }
+        } finally {
+            unmockkAll()
         }
     }
 

@@ -21,6 +21,7 @@ import app.cash.turbine.test
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.Tinyurl
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -68,6 +69,16 @@ class ProviderViewModelTest : ShouldSpec(
 
             viewModel.events.test {
                 awaitItem() shouldBe ProviderEvent.ScrollToSelected(expectedIndex)
+            }
+        }
+
+        should("init does not emit ScrollToSelected when the selected provider is not in the enabled list") {
+            userSettings.selectedShortURLProvider = Tinyurl
+
+            val viewModel = newViewModel()
+
+            viewModel.events.test {
+                expectNoEvents()
             }
         }
 

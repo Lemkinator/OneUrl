@@ -16,8 +16,10 @@
 
 package de.lemke.oneurl.ui
 
+import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.Intent
+import android.content.pm.PackageInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.os.Looper
@@ -54,6 +56,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowToast
+import de.lemke.commonutils.R as commonutilsR
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 //
@@ -128,6 +131,48 @@ class QRBottomSheetTest {
         }
     }
 
+    // Package must be installed before show() so it is visible by the time onViewCreated runs -
+    // withQrBottomSheet's own show() call happens too early for that ordering.
+    @Test
+    fun `onViewCreated shows quick share when Samsung Quick Share is available`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                shadowOf(activity.packageManager).installPackage(
+                    PackageInfo().also { it.packageName = "com.samsung.android.app.sharelive" },
+                )
+                val sheet = createQRBottomSheet("https://short.url/quick-share", freshQrBitmap(), SaveLocation.CUSTOM)
+                sheet.show(activity.supportFragmentManager, "qr-quick-share")
+                activity.supportFragmentManager.executePendingTransactions()
+                shadowOf(Looper.getMainLooper()).idle()
+
+                sheet
+                    .requireView()
+                    .findViewById<View>(R.id.quickShareButton)
+                    .isVisible
+                    .shouldBeTrue()
+            }
+        }
+    }
+
+    // createQRBottomSheet always supplies a non-null Bitmap, so a bare QRBottomSheet() with no
+    // arguments is the only way to reach a null qr: bundleValue<ByteArray>(KEY_QR) returns null
+    // against an absent arguments Bundle, same as bundleValue(KEY_TITLE, "") falling back to "".
+    @Test
+    fun `onViewCreated with no bundled qr leaves the title bound and skips wiring the qr buttons`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val sheet = QRBottomSheet()
+                sheet.show(activity.supportFragmentManager, "qr-empty")
+                activity.supportFragmentManager.executePendingTransactions()
+                shadowOf(Looper.getMainLooper()).idle()
+
+                val view = sheet.requireView()
+                view.findViewById<TextView>(R.id.title).text.toString() shouldBe ""
+                view.findViewById<View>(R.id.saveButton).performClick().shouldBeFalse()
+            }
+        }
+    }
+
     @Test
     fun `share button click starts the share chooser`() {
         mockkStatic(FileProvider::class)
@@ -168,6 +213,32 @@ class QRBottomSheetTest {
             )
 
             ShadowToast.getLatestToast() shouldNotBe null
+        }
+    }
+
+    @Test
+    fun `export result cancelled does not save and shows no toast`() {
+        withQrBottomSheet { activity, sheet ->
+            sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
+            val shadowActivity = shadowOf(activity)
+            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+
+            shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
+
+            ShadowToast.getLatestToast() shouldBe null
+        }
+    }
+
+    @Test
+    fun `export result OK without a destination uri shows the creating-file error toast`() {
+        withQrBottomSheet { activity, sheet ->
+            sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
+            val shadowActivity = shadowOf(activity)
+            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+
+            shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
         }
     }
 }

@@ -17,6 +17,7 @@
 package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
@@ -81,6 +82,17 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             verify(exactly = 1) {
                 generateQRCode("https://example.com", 256, 0x111111, 0x333333, true, true, false, false)
             }
+        }
+
+        should("init falls back to default colors when no recent colors are persisted") {
+            userSettings.qrRecentForegroundColors = emptyList()
+            userSettings.qrRecentBackgroundColors = emptyList()
+
+            val viewModel = newViewModel()
+            val state = viewModel.state.value
+
+            state.foregroundColor shouldBe Color.BLACK
+            state.backgroundColor shouldBe Color.WHITE
         }
 
         should("setUrl updates state.url immediately and regenerates the QR code") {

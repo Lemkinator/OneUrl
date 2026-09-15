@@ -235,6 +235,30 @@ class URLAdapterTest {
     }
 
     @Test
+    fun `itemView click without a registered onClickItem callback is a safe no-op`() {
+        val url = testUrl("https://short.url/click-unregistered")
+        withAttachedAdapter(listOf(url)) { _, holder ->
+            holder.itemView.performClick().shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `itemView long-click without a registered onLongClickItem callback still returns true`() {
+        val url = testUrl("https://short.url/longclick-unregistered")
+        withAttachedAdapter(listOf(url)) { _, holder ->
+            holder.itemView.performLongClick().shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `listItemFav click without a registered onClickItemFavorite callback is a safe no-op`() {
+        val url = testUrl("https://short.url/fav-click-unregistered")
+        withAttachedAdapter(listOf(url)) { _, holder ->
+            holder.listItemFav.performClick().shouldBeTrue()
+        }
+    }
+
+    @Test
     fun `listItemFav click invokes onClickItemFavorite with the position and url`() {
         val url = testUrl("https://short.url/fav-click")
         withAttachedAdapter(listOf(url)) { adapter, holder ->

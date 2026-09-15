@@ -42,6 +42,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -63,6 +64,7 @@ import dev.oneuiproject.oneui.layout.NavDrawerLayout
 import dev.oneuiproject.oneui.navigation.widget.DrawerNavigationView
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
@@ -205,6 +207,25 @@ class MainActivityTest {
     }
 
     @Test
+    fun `onPrepareOptionsMenu with a null menu returns early without crashing`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity -> activity.onPrepareOptionsMenu(null).shouldBeTrue() }
+        }
+    }
+
+    @Test
+    fun `onPrepareOptionsMenu with a menu missing the filter items does not crash`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val menu = mockk<Menu> { every { findItem(any()) } returns null }
+                activity.onPrepareOptionsMenu(menu).shouldBeTrue()
+            }
+        }
+    }
+
+    @Test
     fun `onOptionsItemSelected toggles filterFavorite and flips the menu visibility both ways`() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
@@ -304,6 +325,42 @@ class MainActivityTest {
         }
     }
 
+    @Test
+    fun `checkIntent action send with a non text-plain type does nothing`() {
+        val intent =
+            Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+                .setAction(ACTION_SEND)
+                .setType("image/png")
+                .putExtra(EXTRA_TEXT, "https://example.com/wrong-type")
+        ActivityScenario.launch<MainActivity>(intent).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity -> shadowOf(activity).nextStartedActivity shouldBe null }
+        }
+    }
+
+    @Test
+    fun `checkIntent action send without extra text does nothing`() {
+        val intent =
+            Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+                .setAction(ACTION_SEND)
+                .setType("text/plain")
+        ActivityScenario.launch<MainActivity>(intent).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity -> shadowOf(activity).nextStartedActivity shouldBe null }
+        }
+    }
+
+    @Test
+    fun `checkIntent action process text without extra does nothing`() {
+        val intent =
+            Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+                .setAction(ACTION_PROCESS_TEXT)
+        ActivityScenario.launch<MainActivity>(intent).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity -> shadowOf(activity).nextStartedActivity shouldBe null }
+        }
+    }
+
     // startSearch
 
     @Test
@@ -394,6 +451,27 @@ class MainActivityTest {
                     .findViewById<DrawerNavigationView>(R.id.navigationView)
                     .findMenuItem(R.id.leaks_dest)
                     ?.isVisible shouldBe BuildConfig.DEBUG
+            }
+        }
+    }
+
+    @Test
+    fun `initDrawer skips setting leaks item visibility when the item is not present in the navigation menu`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val navigationView = activity.findViewById<DrawerNavigationView>(R.id.navigationView)
+                navigationView.drawerMenu().removeItem(R.id.leaks_dest)
+                activity.callInitDrawer()
+                navigationView.findMenuItem(R.id.leaks_dest).shouldBeNull()
+            }
+            advanceClockPastDebounce()
+            scenario.onActivity { activity ->
+                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.qr_code_dest, 0)
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                shadowOf(activity).nextStartedActivity?.component?.className shouldBe GenerateQRCodeActivity::class.java.name
             }
         }
     }
@@ -719,6 +797,49 @@ class MainActivityTest {
         }
     }
 
+    @Test
+    fun `launchActionMode onSelectMenuItem unmapped item is not handled and action mode stays open`() {
+        seedUrl("https://da.gd/unmappedaction1")
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val menu =
+                    activity
+                        .findViewById<NavDrawerLayout>(R.id.drawerLayout)
+                        .bottomActionModeBar()
+                        .menu
+                menu.add(Menu.NONE, UNMAPPED_ACTION_ITEM_ID, Menu.NONE, "unmapped")
+                menu.performIdentifierAction(UNMAPPED_ACTION_ITEM_ID, 0)
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).isActionMode.shouldBeTrue()
+            }
+        }
+    }
+
+    // urlAdapter (block multi-selection via S-Pen/mouse drag, bypassing onLongClickItem entirely)
+
+    @Test
+    fun `block multi-selection outside action mode starts it via onBlockActionMode`() {
+        seedUrl("https://da.gd/blockselect1")
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val recycler = activity.findViewById<RecyclerView>(R.id.urlList)
+                val listener = checkNotNull(recycler.seslGetOnMultiSelectedListener())
+                listener.onMultiSelectStart(1, 1)
+                listener.onMultiSelectStop(1, 1)
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).isActionMode.shouldBeTrue()
+            }
+        }
+    }
+
     // Helpers
 
     private fun assertNavItemStarts(
@@ -739,6 +860,30 @@ class MainActivityTest {
     }
 
     private fun MainActivity.searchView(): SearchView = (window.decorView as ViewGroup).descendants.filterIsInstance<SearchView>().first()
+
+    private fun MainActivity.callInitDrawer() {
+        MainActivity::class.java
+            .getDeclaredMethod("initDrawer")
+            .apply { isAccessible = true }
+            .invoke(this)
+    }
+
+    // The bottom action-mode menu (a plain, unnamed BottomNavigationView added programmatically to
+    // the footer) is a private field on ToolbarLayout, a superclass of NavDrawerLayout - walk up the
+    // hierarchy since Java reflection's getDeclaredField only searches the exact class it's called on.
+    private fun NavDrawerLayout.bottomActionModeBar(): BottomNavigationView {
+        var cls: Class<*> = javaClass
+        while (true) {
+            try {
+                return cls
+                    .getDeclaredField("bottomActionModeBar")
+                    .apply { isAccessible = true }
+                    .get(this) as BottomNavigationView
+            } catch (e: NoSuchFieldException) {
+                cls = cls.superclass ?: throw e
+            }
+        }
+    }
 
     // NavDrawerLayout wires setSupportActionBar to its own internal Toolbar rather than the
     // window's native action bar, so shadowOf(activity).optionsMenu (which shadows the framework
@@ -857,5 +1002,6 @@ class MainActivityTest {
     private companion object {
         const val PRESCROLL_ITEM_COUNT = 30
         const val UNMAPPED_NAV_ITEM_ID = 987654321
+        const val UNMAPPED_ACTION_ITEM_ID = 987654322
     }
 }

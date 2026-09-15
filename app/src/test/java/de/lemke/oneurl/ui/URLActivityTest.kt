@@ -16,6 +16,7 @@
 
 package de.lemke.oneurl.ui
 
+import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.ClipboardManager
 import android.content.DialogInterface
@@ -64,6 +65,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
 import org.robolectric.shadows.ShadowToast
+import de.lemke.commonutils.R as commonutilsR
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 //
@@ -129,6 +131,29 @@ class URLActivityTest {
     }
 
     @Test
+    fun `onOptionsItemSelected opens the mapped scan URL for every remaining toolbar item`() {
+        withUrlActivity { activity ->
+            val encoded = seededUrl.longURL.urlEncode()
+            val expectedByItemId =
+                mapOf(
+                    R.id.url_toolbar_norton_safe_web to "https://safeweb.norton.com/report/show?url=$encoded",
+                    R.id.url_toolbar_google_safe_browsing to
+                        "https://transparencyreport.google.com/safe-browsing/search?url=$encoded",
+                    R.id.url_toolbar_link_shield to "https://linkshieldapi.com/?url=$encoded",
+                    R.id.url_toolbar_malshare to "https://malshare.com/search.php?query=$encoded",
+                    R.id.url_toolbar_kaspersky to "https://opentip.kaspersky.com/$encoded/?tab=lookup",
+                )
+            expectedByItemId.forEach { (itemId, expectedURL) ->
+                val handled = activity.onOptionsItemSelected(menuItem(itemId))
+                handled.shouldBeTrue()
+                val startedIntent = shadowOf(activity).nextStartedActivity
+                startedIntent.action shouldBe Intent.ACTION_VIEW
+                startedIntent.data shouldBe expectedURL.toUri()
+            }
+        }
+    }
+
+    @Test
     fun `bindURL uses a cached qr bitmap without generating a new one`() {
         val cached = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
         qrCodeCache[seededUrl.shortURL] = cached
@@ -190,6 +215,32 @@ class URLActivityTest {
             )
 
             ShadowToast.getLatestToast() shouldNotBe null
+        }
+    }
+
+    @Test
+    fun `export result cancelled does not save and shows no toast`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
+            val shadowActivity = shadowOf(activity)
+            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+
+            shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
+
+            ShadowToast.getLatestToast() shouldBe null
+        }
+    }
+
+    @Test
+    fun `export result OK without a destination uri shows the creating-file error toast`() {
+        withUrlActivity { activity ->
+            activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
+            val shadowActivity = shadowOf(activity)
+            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+
+            shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
         }
     }
 
@@ -304,6 +355,21 @@ class URLActivityTest {
         }
     }
 
+    // Gg has no getURLClickCount override, so the interface default (`callback(null)`) resolves
+    // synchronously and visitCount stays null forever - a stable end state, unlike Dagd's transient
+    // isRefreshingVisits=true render noted above.
+    @Test
+    fun `visit views stay hidden when the provider never returns a visit count`() {
+        val url = seededUrl.copy(shortURL = "https://gg.gg/no-visit-count", shortURLProvider = Gg)
+        runBlocking { urlRepository.addURL(url) }
+
+        withUrlActivity(shortURL = url.shortURL) { activity ->
+            awaitMainIdle()
+            activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeFalse()
+            activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeFalse()
+        }
+    }
+
     @Test
     fun `bnv analytics item is visible for a provider with analytics and opens the analytics URL`() {
         withUrlActivity { activity ->
@@ -348,6 +414,25 @@ class URLActivityTest {
             activity.supportFragmentManager.fragments
                 .any { it is ProviderInfoBottomSheet }
                 .shouldBeTrue()
+        }
+    }
+
+    // NavigationBarView wires its MenuBuilder's callback to the registered OnItemSelectedListener
+    // unconditionally in its constructor, so performIdentifierAction reaches handleBnvItemSelected
+    // for any item id in the menu - including one added at runtime that has no mapped case.
+    @Test
+    fun `bnv item selection with an unmapped id is a no-op`() {
+        withUrlActivity { activity ->
+            val bnv = activity.findViewById<BottomNavigationView>(R.id.url_bnv)
+            val unmappedId = android.view.View.generateViewId()
+            bnv.menu.add(Menu.NONE, unmappedId, Menu.NONE, "unmapped")
+
+            bnv.menu.performIdentifierAction(unmappedId, 0)
+
+            shadowOf(activity).nextStartedActivity shouldBe null
+            activity.supportFragmentManager.fragments
+                .any { it is QRBottomSheet || it is ProviderInfoBottomSheet }
+                .shouldBeFalse()
         }
     }
 
