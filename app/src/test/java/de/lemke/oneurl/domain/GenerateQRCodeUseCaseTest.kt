@@ -142,4 +142,29 @@ class GenerateQRCodeUseCaseTest {
                 unmockkStatic(AppCompatResources::class)
             }
         }
+
+    @Test
+    fun `customized overload falls back to the no-support placeholder when QrEncoder throws`() =
+        runTest {
+            mockkConstructor(QrEncoder::class)
+            every { anyConstructed<QrEncoder>().setBackgroundColor(any()) } throws RuntimeException("boom")
+
+            try {
+                val result =
+                    generateQRCode(
+                        "https://example.com",
+                        size = 300,
+                        foregroundColor = Color.BLACK,
+                        backgroundColor = Color.WHITE,
+                        tintAnchor = true,
+                        tintBorder = true,
+                        icon = true,
+                        roundedFrame = true,
+                    )
+
+                result shouldNotBe null
+            } finally {
+                unmockkConstructor(QrEncoder::class)
+            }
+        }
 }

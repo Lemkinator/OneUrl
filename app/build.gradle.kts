@@ -299,6 +299,8 @@ kover {
                     "*_MembersInjector",
                     "dagger.hilt.*",
                     "hilt_aggregated_deps.*",
+                    "*_Impl",
+                    "*_Impl\$*",
                 )
             }
         }
