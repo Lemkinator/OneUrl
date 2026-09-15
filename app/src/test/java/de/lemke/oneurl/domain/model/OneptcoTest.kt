@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain.model
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
@@ -248,5 +249,16 @@ class OneptcoTest {
         req.deliverError(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
+    fun `getRetryPolicy returns a policy with the request timeout and default retry settings`() {
+        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
+
+        val retryPolicy = req.retryPolicy as DefaultRetryPolicy
+
+        retryPolicy.currentTimeout shouldBe 20000
+        retryPolicy.currentRetryCount shouldBe 0
+        retryPolicy.backoffMultiplier shouldBe DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
     }
 }

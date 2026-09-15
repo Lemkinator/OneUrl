@@ -18,6 +18,7 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import com.android.volley.Request
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.shouldBe
@@ -58,5 +59,17 @@ class UnknownTest {
         method.isAccessible = true
 
         method.invoke(req, null) shouldBe null
+    }
+
+    @Test
+    fun `getCreateRequest returns a request whose deliverResponse is a no-op`() {
+        var errorCount = 0
+        val req = unknown.getCreateRequest(context, "https://example.com", "alias", { fail("unexpected success") }, { errorCount++ })
+
+        val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
+        method.isAccessible = true
+        method.invoke(req, "anything")
+
+        errorCount shouldBe 1
     }
 }
