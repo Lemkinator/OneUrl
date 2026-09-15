@@ -111,6 +111,7 @@ class AddURLErrorDialogsTest {
         dialog.titleText() shouldBe activity.getString(commonutilsR.string.commonutils_error)
         dialog.messageText() shouldBe error.message
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).isVisible.shouldBeFalse()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).text.toString() shouldBe activity.getString(R.string.url_safety_urlhaus)
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
         idleMainLooper()
@@ -125,6 +126,7 @@ class AddURLErrorDialogsTest {
 
         dialog.messageText() shouldBe activity.getString(R.string.error_blacklisted_url)
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).isVisible.shouldBeFalse()
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).text.toString() shouldBe activity.getString(R.string.url_safety_virustotal)
 
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick()
         idleMainLooper()
