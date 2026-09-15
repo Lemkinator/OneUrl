@@ -84,6 +84,20 @@ class ShorturlatTest {
     }
 
     @Test
+    fun `create request body is the form-urlencoded long url`() {
+        val req = Shorturlat.getCreateRequest(context, longURL, "", { }, { fail("unexpected error") })
+
+        String(req.body!!, Charsets.UTF_8) shouldBe "u=$longURL"
+    }
+
+    @Test
+    fun `create request content type is form-urlencoded`() {
+        val req = Shorturlat.getCreateRequest(context, longURL, "", { }, { fail("unexpected error") })
+
+        req.bodyContentType shouldBe "application/x-www-form-urlencoded; charset=UTF-8"
+    }
+
+    @Test
     fun `create request succeeds when the response contains the shortened url`() {
         var result: String? = null
         val req = Shorturlat.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })

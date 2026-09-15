@@ -149,6 +149,16 @@ class MurlTest {
     }
 
     @Test
+    fun `create request with a null error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Murl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(400, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(400)
+    }
+
+    @Test
     fun `create request maps every known error message to its GenerateURLError`() {
         val cases =
             mapOf(

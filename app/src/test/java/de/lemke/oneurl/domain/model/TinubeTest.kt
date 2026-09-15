@@ -72,6 +72,20 @@ class TinubeTest {
     }
 
     @Test
+    fun `create request sends the expected next-action header`() {
+        val req = Tinube.getCreateRequest(context, longURL, "abc", { }, { fail("unexpected error") })
+
+        req.headers shouldBe mapOf("next-action" to "74b2f223fe2b6e65737e07eeabae72c67abf76b2")
+    }
+
+    @Test
+    fun `create request body contains the longURL and alias as urlCode`() {
+        val req = Tinube.getCreateRequest(context, longURL, "abc", { }, { fail("unexpected error") })
+
+        String(req.body!!, Charsets.UTF_8) shouldBe """[{"longUrl":"$longURL","urlCode":"abc"}]"""
+    }
+
+    @Test
     fun `succeeds with the short url when status is ok and a urlCode is present`() {
         var result: String? = null
         val req = Tinube.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })

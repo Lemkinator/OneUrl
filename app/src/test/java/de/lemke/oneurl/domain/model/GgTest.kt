@@ -49,6 +49,14 @@ private fun Request<*>.deliverStringResponse(response: String) {
     method.invoke(this, response)
 }
 
+// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
+// Tests reach it via reflection to assert what the request actually sends.
+private fun Request<*>.paramsViaReflection(): Map<*, *>? {
+    val method = Request::class.java.getDeclaredMethod("getParams")
+    method.isAccessible = true
+    return method.invoke(this) as Map<*, *>?
+}
+
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
@@ -306,5 +314,23 @@ class GgTest {
         innerReq.captured.deliverStringResponse("https://gg.gg/random")
 
         result shouldBe "https://gg.gg/random"
+    }
+
+    @Test
+    fun `check request getParams returns the long url and custom path params`() {
+        val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
+
+        req.paramsViaReflection() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
+    }
+
+    @Test
+    fun `create request getParams returns the long url and custom path params`() {
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
+
+        req.deliverStringResponse("ok")
+
+        innerReq.captured.paramsViaReflection() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
     }
 }

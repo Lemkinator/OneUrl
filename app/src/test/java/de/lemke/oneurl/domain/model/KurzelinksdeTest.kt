@@ -140,6 +140,16 @@ class KurzelinksdeTest {
     }
 
     @Test
+    fun `error with a null body maps to Unknown with status code`() {
+        var error: GenerateURLError? = null
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
+    @Test
     fun `error maps every known status code to its GenerateURLError`() {
         val cases =
             mapOf(

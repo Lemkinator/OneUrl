@@ -153,6 +153,18 @@ class DagdTest {
         result shouldBe "https://da.gd/abc"
     }
 
+    @Test
+    fun `cancel also cancels the inner create request once the coshorten check has queued it`() {
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req = Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error") })
+
+        req.deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
+        req.cancel()
+
+        innerReq.captured.isCanceled shouldBe true
+    }
+
     @Suppress("TooGenericExceptionThrown")
     @Test
     fun `alias coshorten check callback that throws once is caught and reported as unknown`() {

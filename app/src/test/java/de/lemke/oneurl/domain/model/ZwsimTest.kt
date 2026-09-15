@@ -133,6 +133,16 @@ class ZwsimTest {
     }
 
     @Test
+    fun `create request with a null error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
+    @Test
     fun `create request maps 422 invalid url to InvalidURL`() {
         var error: GenerateURLError? = null
         val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })

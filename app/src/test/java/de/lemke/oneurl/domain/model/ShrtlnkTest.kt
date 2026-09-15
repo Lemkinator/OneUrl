@@ -50,6 +50,14 @@ private fun Request<*>.callParseNetworkError(volleyError: VolleyError?): VolleyE
     return method.invoke(this, volleyError) as VolleyError
 }
 
+// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
+// Tests reach it via reflection to assert what the request actually sends.
+private fun Request<*>.paramsViaReflection(): Map<*, *>? {
+    val method = Request::class.java.getDeclaredMethod("getParams")
+    method.isAccessible = true
+    return method.invoke(this) as Map<*, *>?
+}
+
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
@@ -129,6 +137,27 @@ class ShrtlnkTest {
 
         error shouldBe GenerateURLError.Unknown()
         returned.message shouldBe "unknown error"
+    }
+
+    @Test
+    fun `getParams returns the long url param`() {
+        val req = Shrtlnk.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
+
+        req.paramsViaReflection() shouldBe mapOf("url" to longURL)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `parseNetworkResponse fails with Unknown when the success callback throws`() {
+        var error: GenerateURLError? = null
+        val req = Shrtlnk.getCreateRequest(context, longURL, "", { throw RuntimeException("boom") }, { error = it })
+        val networkResponse =
+            NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
+
+        val response = req.callParseNetworkResponse(networkResponse)
+
+        error shouldBe GenerateURLError.Unknown()
+        response.isSuccess shouldBe false
     }
 
     @Test

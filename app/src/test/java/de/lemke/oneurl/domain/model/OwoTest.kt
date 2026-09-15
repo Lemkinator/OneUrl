@@ -112,6 +112,7 @@ class OwoTest {
                 VolleyError(NetworkResponse(503, ByteArray(0), false, 0L, emptyList())) to
                     GenerateURLError.ServiceTemporarilyUnavailable(Owovc.Owo.baseURL),
                 VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())) to GenerateURLError.Unknown(500),
+                VolleyError(NetworkResponse(500, null, false, 0L, emptyList())) to GenerateURLError.Unknown(500),
                 VolleyError(
                     NetworkResponse(
                         400,

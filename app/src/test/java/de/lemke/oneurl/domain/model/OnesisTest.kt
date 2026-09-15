@@ -43,6 +43,14 @@ private fun Request<*>.deliverStringResponse(response: String) {
     method.invoke(this, response)
 }
 
+// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
+// Tests reach it via reflection to assert what the request actually sends.
+private fun Request<*>.paramsViaReflection(): Map<*, *>? {
+    val method = Request::class.java.getDeclaredMethod("getParams")
+    method.isAccessible = true
+    return method.invoke(this) as Map<*, *>?
+}
+
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
@@ -198,5 +206,12 @@ class OnesisTest {
         req.deliverError(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
+    fun `getParams returns the original url and custom short url params`() {
+        val req = Onesis.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
+
+        req.paramsViaReflection() shouldBe mapOf("original_url" to longURL, "custom_short_url" to "abc")
     }
 }

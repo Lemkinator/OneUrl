@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain.model
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
@@ -49,6 +50,14 @@ private fun Request<*>.deliverStringResponse(response: String) {
     val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
     method.isAccessible = true
     method.invoke(this, response)
+}
+
+// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
+// Tests reach it via reflection to assert what the request actually sends.
+private fun Request<*>.paramsViaReflection(): Map<*, *>? {
+    val method = Request::class.java.getDeclaredMethod("getParams")
+    method.isAccessible = true
+    return method.invoke(this) as Map<*, *>?
 }
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
@@ -266,5 +275,23 @@ class LstuTest {
         req.deliverError(NoConnectionError())
 
         error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
+    fun `getParams returns the lsturl, alias, and format params`() {
+        val req = Lstu.getCreateRequest(context, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
+
+        req.paramsViaReflection() shouldBe mapOf("lsturl" to longURL, "lsturl-custom" to "test", "format" to "json")
+    }
+
+    @Test
+    fun `getRetryPolicy returns a policy with the request timeout and default retry settings`() {
+        val req = Lstu.getCreateRequest(context, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
+
+        val retryPolicy = req.retryPolicy
+
+        retryPolicy.currentTimeout shouldBe 10000
+        retryPolicy.currentRetryCount shouldBe 0
+        (retryPolicy as DefaultRetryPolicy).backoffMultiplier shouldBe DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
     }
 }

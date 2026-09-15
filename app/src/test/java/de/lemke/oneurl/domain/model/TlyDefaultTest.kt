@@ -86,6 +86,18 @@ class TlyDefaultTest {
     }
 
     @Test
+    fun `create request sends the expected headers`() {
+        val req = Tly.Default.getCreateRequest(context, longURL, "", { }, { fail("unexpected error") })
+
+        req.headers shouldBe
+            mapOf(
+                "accept" to "application/json",
+                "content-type" to "application/json;charset=UTF-8",
+                "origin" to "chrome-extension://oodfdmglhbbkkcngodjjagblikmoegpa",
+            )
+    }
+
+    @Test
     fun `succeeds when the response contains a short_url`() {
         var result: String? = null
         val req = Tly.Default.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
@@ -141,6 +153,16 @@ class TlyDefaultTest {
         val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
+    @Test
+    fun `error Unknown with status code when the error body is null`() {
+        var error: GenerateURLError? = null
+        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
