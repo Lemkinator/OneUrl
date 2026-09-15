@@ -16,18 +16,20 @@
 
 package de.lemke.oneurl.domain
 
+import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.URL
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 class GetURLUseCase @Inject constructor(
     private val urlRepository: URLRepository,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
     suspend operator fun invoke(shortURL: String): URL? =
-        withContext(Dispatchers.Default) {
+        withContext(defaultDispatcher) {
             urlRepository.getURL(shortURL)
         }
 
@@ -35,7 +37,7 @@ class GetURLUseCase @Inject constructor(
         shortURLProvider: ShortURLProvider,
         longURL: String,
     ): List<URL> =
-        withContext(Dispatchers.Default) {
+        withContext(defaultDispatcher) {
             urlRepository.getURL(shortURLProvider, longURL)
         }
 }
