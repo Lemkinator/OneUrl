@@ -18,9 +18,11 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.VolleyError
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.shouldBe
@@ -36,6 +38,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import de.lemke.commonutils.R as commonutilsR
 
 // Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
 // it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
@@ -51,6 +54,7 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
 @Config(application = Application::class, sdk = [36])
 class SpoomeEmojiTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
 
@@ -112,5 +116,33 @@ class SpoomeEmojiTest {
     fun `isAliasValid accepts emoji characters, rejects plain text`() {
         Spoome.Emoji.aliasConfig.isAliasValid("😀") shouldBe true
         Spoome.Emoji.aliasConfig.isAliasValid("abc") shouldBe false
+    }
+
+    @Test
+    fun `getTipsCardTitleAndInfo returns the info title and emoji text`() {
+        val (title, info) = Spoome.Emoji.getTipsCardTitleAndInfo(realContext)
+
+        title shouldBe realContext.getString(commonutilsR.string.commonutils_info)
+        info shouldBe realContext.getString(R.string.emoji_text)
+    }
+
+    @Test
+    fun `getInfoContents returns the emoji, alias and analytics info`() {
+        val infoContents = Spoome.Emoji.getInfoContents(realContext)
+
+        infoContents.size shouldBe 3
+        infoContents[0].title shouldBe realContext.getString(R.string.emoji)
+        infoContents[0].linkOrDescription shouldBe realContext.getString(R.string.emoji_text)
+        infoContents[1].title shouldBe realContext.getString(R.string.alias)
+        infoContents[1].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                Spoome.Emoji.aliasConfig.maxAliasLength,
+                Spoome.Emoji.aliasConfig.minAliasLength,
+                Spoome.Emoji.aliasConfig.maxAliasLength,
+                Spoome.Emoji.aliasConfig.allowedAliasCharacters,
+            )
+        infoContents[2].title shouldBe realContext.getString(R.string.analytics)
+        infoContents[2].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
     }
 }

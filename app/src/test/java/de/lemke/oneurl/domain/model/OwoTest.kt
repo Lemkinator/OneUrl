@@ -121,6 +121,8 @@ class OwoTest {
                         emptyList(),
                     ),
                 ) to GenerateURLError.InvalidURL,
+                VolleyError(NetworkResponse(400, "different problem".toByteArray(), false, 0L, emptyList())) to
+                    GenerateURLError.Custom(400, "different problem"),
                 VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())) to
                     GenerateURLError.Custom(500, "server exploded"),
             )
@@ -132,6 +134,22 @@ class OwoTest {
 
             error shouldBe expected
         }
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Owovc.Owo.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(NoConnectionError())
+
+        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test
@@ -185,5 +203,11 @@ class OwoTest {
         infoContents.size shouldBe 1
         infoContents[0].title shouldBe context.getString(R.string.analytics)
         infoContents[0].linkOrDescription shouldBe context.getString(R.string.analytics_text)
+    }
+
+    @Test
+    fun `sanitizeLongURL adds https when missing and trims trailing whitespace`() {
+        Owovc.Owo.sanitizeLongURL("example.com") shouldBe "https://example.com"
+        Owovc.Owo.sanitizeLongURL("https://example.com ") shouldBe "https://example.com"
     }
 }

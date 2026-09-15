@@ -171,6 +171,16 @@ class IsgdTest {
     }
 
     @Test
+    fun `error Unknown with status code when the error body is null`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(404)
+    }
+
+    @Test
     fun `error Custom with a localized message on JSONException`() {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
@@ -193,6 +203,37 @@ class IsgdTest {
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Custom(500, "server exploded")
+    }
+
+    @Test
+    fun `error Custom with the raw body when the message does not mention JSONException`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(
+            volleyErrorWithMessage(
+                NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList()),
+                "org.json.JSONArray: some other message",
+            ),
+        )
+
+        error shouldBe GenerateURLError.Custom(500, "server exploded")
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(NoConnectionError())
+
+        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

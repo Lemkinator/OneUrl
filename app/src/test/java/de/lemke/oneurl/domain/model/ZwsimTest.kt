@@ -18,10 +18,12 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import io.kotest.matchers.shouldBe
@@ -32,6 +34,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import de.lemke.commonutils.R as commonutilsR
 
 // JsonRequest#deliverResponse(T) is protected - only Volley's own RequestQueue can normally
 // trigger it. Tests stand in for the queue, so they reach it via reflection instead of a real
@@ -48,11 +51,20 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
 @Config(application = Application::class, sdk = [36])
 class ZwsimTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
     @Test
     fun `sanitizeLongURL adds https when the scheme is missing`() {
         Zwsim.sanitizeLongURL("example.com") shouldBe "https://example.com"
+    }
+
+    @Test
+    fun `getTipsCardTitleAndInfo returns the info title and zws text`() {
+        val (title, info) = Zwsim.getTipsCardTitleAndInfo(realContext)
+
+        title shouldBe realContext.getString(commonutilsR.string.commonutils_info)
+        info shouldBe realContext.getString(R.string.zwsim_zws)
     }
 
     @Test
@@ -167,5 +179,21 @@ class ZwsimTest {
         req.deliverError(VolleyError(NetworkResponse(500, body.toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Custom(500, body)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(NoConnectionError())
+
+        error shouldBe GenerateURLError.Unknown()
     }
 }

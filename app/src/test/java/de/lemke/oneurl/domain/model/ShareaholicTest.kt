@@ -178,4 +178,15 @@ class ShareaholicTest {
 
         error shouldBe GenerateURLError.Unknown(400)
     }
+
+    @Test
+    fun `create request with an errors field that is not a json array maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val body = """{"errors":"not an array"}"""
+
+        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(400)
+    }
 }

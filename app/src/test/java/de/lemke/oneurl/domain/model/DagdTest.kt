@@ -141,6 +141,35 @@ class DagdTest {
     }
 
     @Test
+    fun `alias coshorten check with a non-404 status still falls through to creating the alias`() {
+        var result: String? = null
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req = Dagd.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
+        innerReq.captured.deliverStringResponse("https://da.gd/abc")
+
+        result shouldBe "https://da.gd/abc"
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `alias coshorten check callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
     fun `create request maps every known error message to its GenerateURLError`() {
         val cases =
             mapOf(
@@ -181,6 +210,32 @@ class DagdTest {
     }
 
     @Test
+    fun `create request maps a null error body to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(500)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `create error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(VolleyError("no network"))
+
+        error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
     fun `create request offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
         val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
@@ -198,5 +253,12 @@ class DagdTest {
         req.deliverError(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
+    fun `isAliasValid accepts alphanumerics and underscores, rejects other characters`() {
+        Dagd.aliasConfig.isAliasValid("abc_DEF_123") shouldBe true
+        Dagd.aliasConfig.isAliasValid("abc-123") shouldBe false
+        Dagd.aliasConfig.isAliasValid("") shouldBe false
     }
 }

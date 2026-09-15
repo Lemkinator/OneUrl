@@ -70,6 +70,19 @@ class SpoomeDefaultTest {
     }
 
     @Test
+    fun `sanitizeLongURL adds https, encodes ampersands, and trims`() {
+        Spoome.Default.sanitizeLongURL("example.com") shouldBe "https://example.com"
+        Spoome.Default.sanitizeLongURL("https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1%26b=2"
+    }
+
+    @Test
+    fun `create request sends the expected Accept header`() {
+        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { }, { fail("unexpected error") })
+
+        req.headers["Accept"] shouldBe "application/json"
+    }
+
+    @Test
     fun `succeeds with the trimmed short url when the response contains one`() {
         var result: String? = null
         val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })

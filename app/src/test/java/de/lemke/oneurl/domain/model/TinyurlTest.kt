@@ -66,6 +66,11 @@ class TinyurlTest {
     }
 
     @Test
+    fun `sanitizeLongURL encodes ampersands and trims`() {
+        Tinyurl.sanitizeLongURL(" https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1%26b=2"
+    }
+
+    @Test
     fun `succeeds with the trimmed short url when the response starts with https`() {
         var result: String? = null
         val req = Tinyurl.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
@@ -126,6 +131,16 @@ class TinyurlTest {
     }
 
     @Test
+    fun `error with a null body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(503, null, false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(503)
+    }
+
+    @Test
     fun `422 with a blank alias maps to InvalidURL`() {
         var error: GenerateURLError? = null
         val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
@@ -159,5 +174,21 @@ class TinyurlTest {
     fun `isAliasValid accepts alphanumerics and underscores, rejects other characters`() {
         Tinyurl.aliasConfig.isAliasValid("abc_123") shouldBe true
         Tinyurl.aliasConfig.isAliasValid("abc-123") shouldBe false
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(NoConnectionError())
+
+        error shouldBe GenerateURLError.Unknown()
     }
 }
