@@ -50,8 +50,10 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.unmockkObject
 import io.mockk.verify
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -367,6 +369,25 @@ class URLActivityTest {
             awaitMainIdle()
             activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeFalse()
             activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeFalse()
+        }
+    }
+
+    @Test
+    fun `visit count textview shows the formatted click count when the provider returns one`() {
+        val url = seededUrl.copy(shortURL = "https://da.gd/visit-count-shown")
+        runBlocking { urlRepository.addURL(url) }
+        mockkObject(Dagd)
+        every { Dagd.getURLClickCount(any(), any(), any()) } answers { thirdArg<(Int?) -> Unit>().invoke(42) }
+
+        try {
+            withUrlActivity(shortURL = url.shortURL) { activity ->
+                awaitMainIdle()
+                activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeTrue()
+                activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeTrue()
+                activity.findViewById<android.widget.TextView>(R.id.url_visits_textview).text.toString() shouldBe "42"
+            }
+        } finally {
+            unmockkObject(Dagd)
         }
     }
 
