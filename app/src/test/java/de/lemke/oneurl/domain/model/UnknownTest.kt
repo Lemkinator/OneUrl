@@ -55,7 +55,7 @@ class UnknownTest {
     fun `getCreateRequest returns a request whose network response parses to null`() {
         val req = unknown.getCreateRequest(context, "https://example.com", "alias", {}, {})
 
-        val method = req.javaClass.getMethod("parseNetworkResponse", com.android.volley.NetworkResponse::class.java)
+        val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", com.android.volley.NetworkResponse::class.java)
         method.isAccessible = true
 
         method.invoke(req, null) shouldBe null
