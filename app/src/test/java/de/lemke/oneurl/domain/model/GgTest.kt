@@ -317,6 +317,19 @@ class GgTest {
     }
 
     @Test
+    fun `check error with a null response body still falls through and creates the alias`() {
+        var result: String? = null
+        val innerReq = slot<StringRequest>()
+        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
+        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+
+        result shouldBe "https://gg.gg/random"
+    }
+
+    @Test
     fun `check request getParams returns the long url and custom path params`() {
         val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
 

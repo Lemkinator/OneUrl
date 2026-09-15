@@ -165,6 +165,15 @@ class DagdTest {
         innerReq.captured.isCanceled shouldBe true
     }
 
+    @Test
+    fun `cancel before the inner create request exists only cancels the check request`() {
+        val req = Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error") })
+
+        req.cancel()
+
+        req.isCanceled shouldBe true
+    }
+
     @Suppress("TooGenericExceptionThrown")
     @Test
     fun `alias coshorten check callback that throws once is caught and reported as unknown`() {
