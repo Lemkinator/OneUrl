@@ -23,6 +23,8 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -175,6 +177,45 @@ class URLDaoTest {
             dao.delete(removed)
 
             dao.getAll() shouldBe listOf(kept)
+        }
+
+    // URLDao_Impl generates its own concrete override of delete(List<URLDb>) (Room special-cases
+    // @Transaction default methods), so the interface's own default body is only reachable through
+    // a fake that doesn't override it.
+    @Test
+    fun `interface default delete by list delegates to per-url delete`() =
+        runTest {
+            val deleted = mutableListOf<String>()
+            val fakeDao =
+                object : URLDao {
+                    override suspend fun insert(url: URLDb) = Unit
+
+                    override suspend fun getURL(shortURL: String): URLDb? = null
+
+                    override suspend fun getURL(
+                        shortURLProvider: String,
+                        longURL: String,
+                    ): List<URLDb> = emptyList()
+
+                    override suspend fun getAll(): List<URLDb> = emptyList()
+
+                    override fun observeAll(): Flow<List<URLDb>> = emptyFlow()
+
+                    override suspend fun update(url: URLDb) = Unit
+
+                    override suspend fun updateMultiple(urls: List<URLDb>) = Unit
+
+                    override suspend fun delete(shortURL: String) {
+                        deleted += shortURL
+                    }
+
+                    override suspend fun deleteAll() = Unit
+                }
+            val urls = listOf(url("https://short.url/a"), url("https://short.url/b"))
+
+            fakeDao.delete(urls)
+
+            deleted shouldContainExactly urls.map { it.shortURL }
         }
 
     @Test

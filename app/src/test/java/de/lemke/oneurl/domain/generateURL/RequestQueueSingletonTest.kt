@@ -19,6 +19,8 @@ package de.lemke.oneurl.domain.generateURL
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import io.kotest.matchers.shouldBe
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -28,6 +30,20 @@ import org.robolectric.annotation.Config
 @Config(application = Application::class, sdk = [36])
 class RequestQueueSingletonTest {
     private val context = ApplicationProvider.getApplicationContext<Application>()
+
+    // Clears the production @Volatile companion instance so this test's own singleton never
+    // leaks into unrelated tests that run in the same JVM/classloader.
+    private fun resetInstance() {
+        val field = RequestQueueSingleton::class.java.getDeclaredField("instance")
+        field.isAccessible = true
+        field.set(null, null)
+    }
+
+    @Before
+    fun setUp() = resetInstance()
+
+    @After
+    fun tearDown() = resetInstance()
 
     @Test
     fun `getInstance returns the same instance for repeated calls`() {

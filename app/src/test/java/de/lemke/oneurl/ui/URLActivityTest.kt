@@ -348,12 +348,20 @@ class URLActivityTest {
     // in flight, which would require real Volley/network I/O this suite must not depend on.
     @Test
     fun `urlVisitsRefreshButton click re-invokes refreshVisitCount`() {
-        withUrlActivity { activity ->
-            activity.findViewById<android.view.View>(R.id.url_visits_refresh_button).performClick()
-            awaitMainIdle()
-            val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
-            button.isEnabled.shouldBeTrue()
-            button.alpha shouldBe 1f
+        mockkObject(Dagd)
+        every { Dagd.getURLClickCount(any(), any(), any()) } answers { thirdArg<(Int?) -> Unit>().invoke(1) }
+        try {
+            withUrlActivity { activity ->
+                awaitMainIdle()
+                activity.findViewById<android.view.View>(R.id.url_visits_refresh_button).performClick()
+                awaitMainIdle()
+                verify(exactly = 2) { Dagd.getURLClickCount(any(), any(), any()) }
+                val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
+                button.isEnabled.shouldBeTrue()
+                button.alpha shouldBe 1f
+            }
+        } finally {
+            unmockkObject(Dagd)
         }
     }
 
@@ -534,7 +542,7 @@ class URLActivityTest {
     @Test
     fun `loading a missing url toasts not-found and finishes the activity`() {
         withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
-            ShadowToast.getLatestToast() shouldNotBe null
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(R.string.error_url_not_found)
             activity.isFinishing.shouldBeTrue()
         }
     }

@@ -109,7 +109,10 @@ class URLAdapterTest {
     @Test
     fun `onViewRecycled with no pending qr load is a no-op`() {
         withAdapter { adapter, holder ->
+            val drawableBefore = holder.listItemImg.drawable
             adapter.onViewRecycled(holder)
+            holder.listItemImg.drawable shouldBe drawableBefore
+            verify(exactly = 0) { generateQRCode(any()) }
         }
     }
 

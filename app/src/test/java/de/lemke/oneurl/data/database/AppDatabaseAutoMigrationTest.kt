@@ -23,6 +23,7 @@ import androidx.test.core.app.ApplicationProvider
 import io.kotest.matchers.shouldBe
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.util.UUID
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,9 +43,11 @@ class AppDatabaseAutoMigrationTest {
     @Test
     fun `opening a version 1 database runs both auto-migrations and preserves rows`() =
         runTest {
-            val dbFile = context.getDatabasePath("auto-migration-test.db")
+            // A short suffix, not a full UUID: Robolectric's per-test sandbox dir is already a long
+            // path derived from this test's method name, and a full 36-char UUID pushes the combined
+            // db file path past Windows' 260-character MAX_PATH, failing with SQLITE_CANTOPEN.
+            val dbFile = context.getDatabasePath("amt-${UUID.randomUUID().toString().take(8)}.db")
             dbFile.parentFile?.mkdirs()
-            dbFile.delete()
             SQLiteDatabase.openOrCreateDatabase(dbFile, null).use { seed ->
                 seed.execSQL(
                     "CREATE TABLE IF NOT EXISTS `url` (`shortURL` TEXT NOT NULL, `longURL` TEXT NOT NULL, " +

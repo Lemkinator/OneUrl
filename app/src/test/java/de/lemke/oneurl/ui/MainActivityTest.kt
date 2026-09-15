@@ -52,6 +52,7 @@ import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
+import de.lemke.commonutils.ui.utils.COMMONUTILS_KEY_IS_SEARCH_MODE
 import de.lemke.commonutils.ui.widget.NoEntryView
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
@@ -144,7 +145,9 @@ class MainActivityTest {
                 .start()
                 .resume()
         try {
-            controller.pause().saveInstanceState(Bundle())
+            val outState = Bundle()
+            controller.pause().saveInstanceState(outState)
+            outState.containsKey(COMMONUTILS_KEY_IS_SEARCH_MODE).shouldBeFalse()
         } finally {
             controller.destroy()
         }
