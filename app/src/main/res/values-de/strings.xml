@@ -108,6 +108,7 @@
     <string name="error_domain_not_allowed">Diese Domain ist nicht erlaubt.</string>
     <string name="error_internal_server_error">Interner Serverfehler.</string>
     <string name="error_service_offline">Der Dienst dieses Anbieters ist offline. Bitte wähle einen anderen Anbieter.</string>
+    <string name="error_unknown_with_status_code">Fehler %1$d</string>
 
     <string name="error_urlhaus_blacklisted">Diese URL ist auf der Blacklist von: %1$s.\n%2$s\nWenn du weiterhin versuchst, URLs aus der Blacklist zu verkürzen, könntest du von der Nutzung dieser App ausgeschlossen werden.</string>
     <string name="error_urlhaus_default">Sie wurde möglicherweise in der Vergangenheit missbräuchlich verwendet oder verweist auf einen anderen URL-Verkürzungsdienst.</string>
@@ -130,6 +131,7 @@
     <string name="url_safety_link_shield">Link Shield</string>
     <string name="url_safety_malshare">MalShare</string>
     <string name="url_safety_urlhaus">URLhaus</string>
+    <string name="url_safety_virustotal">VirusTotal</string>
     <string name="url_safety_kaspersky">Kaspersky</string>
 
 </resources>

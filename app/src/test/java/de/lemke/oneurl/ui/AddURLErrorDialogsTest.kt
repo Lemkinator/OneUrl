@@ -180,7 +180,7 @@ class AddURLErrorDialogsTest {
         val dialog = dialogFor(activity, GenerateURLError.Unknown(statusCode = 500))
 
         dialog.titleText() shouldBe activity.getString(commonutilsR.string.commonutils_error)
-        dialog.messageText() shouldBe "Error 500"
+        dialog.messageText() shouldBe activity.getString(R.string.error_unknown_with_status_code, 500)
     }
 
     @Test

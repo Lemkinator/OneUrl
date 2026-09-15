@@ -112,6 +112,7 @@
     <string name="error_domain_not_allowed">Domain not allowed.</string>
     <string name="error_internal_server_error">Internal server error.</string>
     <string name="error_service_offline">The service of this provider is offline. Please use another provider.</string>
+    <string name="error_unknown_with_status_code">Error %1$d</string>
 
     <string name="error_urlhaus_blacklisted">This URL is blacklisted on: %1$s.\n%2$s\nIf you continue trying to shorten blacklisted URLs, you may be blocked from using this App.</string>
     <string name="error_urlhaus_default">It may have been used abusively in the past, or it may link to another URL redirection service.</string>
@@ -134,6 +135,7 @@
     <string name="url_safety_link_shield">Link Shield</string>
     <string name="url_safety_malshare">MalShare</string>
     <string name="url_safety_urlhaus">URLhaus</string>
+    <string name="url_safety_virustotal">VirusTotal</string>
     <string name="url_safety_kaspersky">Kaspersky</string>
 
 </resources>

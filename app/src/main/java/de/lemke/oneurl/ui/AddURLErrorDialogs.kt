@@ -81,7 +81,7 @@ private fun AlertDialog.Builder.configureNoInternet(context: Context) {
         try {
             context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
         } catch (e: ActivityNotFoundException) {
-            Log.e("AddURLActivity", "could not open wireless settings", e)
+            Log.e("AddURLErrorDialogs", "could not open wireless settings", e)
             context.toast(commonutilsR.string.commonutils_error)
         }
     }
@@ -93,8 +93,8 @@ private fun AlertDialog.Builder.configureBlacklisted(
 ) {
     setTitle(commonutilsR.string.commonutils_error)
     setMessage(error.message ?: context.getString(R.string.error_blacklisted_url))
-    if (error.urlhausLink != null) setPositiveButton("URLhaus") { _, _ -> context.openURL(error.urlhausLink) }
-    if (error.virustotalLink != null) setNegativeButton("VirusTotal") { _, _ -> context.openURL(error.virustotalLink) }
+    if (error.urlhausLink != null) setPositiveButton(R.string.url_safety_urlhaus) { _, _ -> context.openURL(error.urlhausLink) }
+    if (error.virustotalLink != null) setNegativeButton(R.string.url_safety_virustotal) { _, _ -> context.openURL(error.virustotalLink) }
 }
 
 private fun AlertDialog.Builder.configureServiceUnavailable(
@@ -121,7 +121,7 @@ private fun AlertDialog.Builder.configureUnknown(
     setTitle(commonutilsR.string.commonutils_error)
     setMessage(
         if (error.statusCode != null) {
-            "Error ${error.statusCode}"
+            context.getString(R.string.error_unknown_with_status_code, error.statusCode)
         } else {
             context.getString(commonutilsR.string.commonutils_error_unknown)
         },
