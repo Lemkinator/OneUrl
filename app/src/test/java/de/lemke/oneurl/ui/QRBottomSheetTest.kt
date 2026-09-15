@@ -22,6 +22,7 @@ import android.content.Intent
 import android.content.pm.PackageInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Looper
 import android.view.View
 import android.widget.ImageView
@@ -47,6 +48,7 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import java.io.File
 import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
@@ -205,14 +207,17 @@ class QRBottomSheetTest {
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+            // A real, writable file:// uri - a fake content:// uri has no registered provider under
+            // Robolectric, so openOutputStream throws and the write never actually happens.
+            val exportFile = File(activity.cacheDir, "export.png").also { it.createNewFile() }
 
             shadowActivity.receiveResult(
                 startedForResult.intent,
                 RESULT_OK,
-                Intent().apply { data = "content://de.lemke.oneurl.debug.fileprovider/export.png".toUri() },
+                Intent().apply { data = Uri.fromFile(exportFile) },
             )
 
-            ShadowToast.getLatestToast() shouldNotBe null
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
         }
     }
 
