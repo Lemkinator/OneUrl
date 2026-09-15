@@ -18,10 +18,12 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
@@ -53,6 +55,7 @@ private fun Request<*>.deliverJSONResponse(response: JSONObject) {
 @Config(application = Application::class, sdk = [36])
 class L4fTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
 
@@ -171,5 +174,50 @@ class L4fTest {
     fun `alias validity follows the allowed character set`() {
         L4f.aliasConfig.isAliasValid("abc123") shouldBe true
         L4f.aliasConfig.isAliasValid("abc-123") shouldBe false
+    }
+
+    @Test
+    fun `getInfoContents returns the alias info`() {
+        val infoContents = L4f.getInfoContents(realContext)
+
+        infoContents.size shouldBe 1
+        infoContents[0].title shouldBe realContext.getString(R.string.alias)
+        infoContents[0].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                L4f.aliasConfig.maxAliasLength,
+                L4f.aliasConfig.minAliasLength,
+                L4f.aliasConfig.maxAliasLength,
+                L4f.aliasConfig.allowedAliasCharacters,
+            )
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `response success callback that throws is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        val req = L4f.getCreateRequest(context, longURL, "", { throw RuntimeException("boom") }, { error = it })
+
+        req.deliverJSONResponse(
+            JSONObject("""{"error":false,"message":"Link has been shortened","data":{"id":7498,"shorturl":"https://l4f.com/xyz"}}"""),
+        )
+
+        error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `network error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(NoConnectionError())
+
+        error shouldBe GenerateURLError.Unknown()
     }
 }

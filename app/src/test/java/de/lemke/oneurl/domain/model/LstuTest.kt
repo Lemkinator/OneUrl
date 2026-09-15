@@ -18,11 +18,13 @@ package de.lemke.oneurl.domain.model
 
 import android.app.Application
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
+import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
@@ -55,6 +57,7 @@ private fun Request<*>.deliverStringResponse(response: String) {
 @Config(application = Application::class, sdk = [36])
 class LstuTest {
     private val context = mockk<Context>()
+    private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
 
@@ -203,5 +206,45 @@ class LstuTest {
         innerReq.captured.deliverError(VolleyError("no network"))
 
         clicks shouldBe null
+    }
+
+    @Test
+    fun `sanitizeLongURL adds https and trims`() {
+        Lstu.sanitizeLongURL("example.com") shouldBe "https://example.com"
+        Lstu.sanitizeLongURL("https://example.com ") shouldBe "https://example.com"
+    }
+
+    @Test
+    fun `getInfoContents returns the alias and analytics info`() {
+        val infoContents = Lstu.getInfoContents(realContext)
+
+        infoContents.size shouldBe 2
+        infoContents[0].title shouldBe realContext.getString(R.string.alias)
+        infoContents[0].linkOrDescription shouldBe
+            realContext.resources.getQuantityString(
+                R.plurals.alias_text,
+                Lstu.aliasConfig.maxAliasLength,
+                Lstu.aliasConfig.minAliasLength,
+                Lstu.aliasConfig.maxAliasLength,
+                Lstu.aliasConfig.allowedAliasCharacters,
+            )
+        infoContents[1].title shouldBe realContext.getString(R.string.analytics)
+        infoContents[1].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
+    }
+
+    @Suppress("TooGenericExceptionThrown")
+    @Test
+    fun `error callback that throws once is caught and reported as unknown`() {
+        var error: GenerateURLError? = null
+        var errorCallbackCount = 0
+        val req =
+            Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+                errorCallbackCount++
+                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+            }
+
+        req.deliverError(NoConnectionError())
+
+        error shouldBe GenerateURLError.Unknown()
     }
 }
