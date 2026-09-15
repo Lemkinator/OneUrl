@@ -80,6 +80,9 @@ MaxClicksError	400	The user entered max-clicks is not a positive integer.
 
 
  */
+private const val MAX_ALIAS_LENGTH_DEFAULT = 15
+private const val MAX_ALIAS_LENGTH_EMOJI = 30 // returns invalid alias if more than 30
+
 sealed class Spoome : ShortURLProvider {
     final override val group = "spoo.me, spoo.me (emoji)"
     final override val baseURL = "https://spoo.me"
@@ -244,7 +247,7 @@ sealed class Spoome : ShortURLProvider {
         override val aliasConfig =
             object : AliasConfig {
                 override val minAliasLength = 0
-                override val maxAliasLength = 15
+                override val maxAliasLength = MAX_ALIAS_LENGTH_DEFAULT
                 override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
 
                 override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
@@ -255,8 +258,9 @@ sealed class Spoome : ShortURLProvider {
                 ProviderInfo(
                     dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                     context.getString(R.string.alias),
-                    context.getString(
-                        R.string.alias_text,
+                    context.resources.getQuantityString(
+                        R.plurals.alias_text,
+                        aliasConfig.maxAliasLength,
                         aliasConfig.minAliasLength,
                         aliasConfig.maxAliasLength,
                         aliasConfig.allowedAliasCharacters,
@@ -276,7 +280,7 @@ sealed class Spoome : ShortURLProvider {
         override val aliasConfig =
             object : AliasConfig {
                 override val minAliasLength = 0
-                override val maxAliasLength = 30 // returns invalid alias if more than 30
+                override val maxAliasLength = MAX_ALIAS_LENGTH_EMOJI
                 override val allowedAliasCharacters = "Emojis"
 
                 // one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
@@ -299,8 +303,9 @@ sealed class Spoome : ShortURLProvider {
                 ProviderInfo(
                     dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                     context.getString(R.string.alias),
-                    context.getString(
-                        R.string.alias_text,
+                    context.resources.getQuantityString(
+                        R.plurals.alias_text,
+                        aliasConfig.maxAliasLength,
                         aliasConfig.minAliasLength,
                         aliasConfig.maxAliasLength,
                         aliasConfig.allowedAliasCharacters,

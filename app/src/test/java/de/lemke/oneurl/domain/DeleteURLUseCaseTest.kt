@@ -21,28 +21,45 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DeleteURLUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val deleteURL = DeleteURLUseCase(urlRepository)
+        val dispatcher = StandardTestDispatcher()
+        val deleteURL = DeleteURLUseCase(urlRepository, dispatcher)
 
-        should("invoke(url) delegates to urlRepository.deleteURL with the given url") {
+        should("invoke(url) suspends on the injected dispatcher before delegating to urlRepository.deleteURL") {
             val url = testUrl(shortURL = "https://short.url/abc")
             coEvery { urlRepository.deleteURL(url) } returns Unit
 
-            deleteURL(url)
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { deleteURL(url) }
+                coVerify(exactly = 0) { urlRepository.deleteURL(url) }
 
-            coVerify(exactly = 1) { urlRepository.deleteURL(url) }
+                dispatcher.scheduler.advanceUntilIdle()
+
+                coVerify(exactly = 1) { urlRepository.deleteURL(url) }
+            }
         }
 
-        should("invoke(urls) delegates to urlRepository.deleteURLs with the given urls") {
+        should("invoke(urls) suspends on the injected dispatcher before delegating to urlRepository.deleteURLs") {
             val urls = listOf(testUrl(shortURL = "https://short.url/a"), testUrl(shortURL = "https://short.url/b"))
             coEvery { urlRepository.deleteURLs(urls) } returns Unit
 
-            deleteURL(urls)
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { deleteURL(urls) }
+                coVerify(exactly = 0) { urlRepository.deleteURLs(urls) }
 
-            coVerify(exactly = 1) { urlRepository.deleteURLs(urls) }
+                dispatcher.scheduler.advanceUntilIdle()
+
+                coVerify(exactly = 1) { urlRepository.deleteURLs(urls) }
+            }
         }
     },
 )

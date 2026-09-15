@@ -43,6 +43,8 @@ The custom short URL must follow the correct format: no spaces, no accents, only
 use "-", not at the beginning or end, and no consecutive hyphens.
 Short URL already exists. Please choose another one.
  */
+private const val MAX_ALIAS_LENGTH = 100
+
 object Onesis : ShortURLProvider {
     override val enabled = false // security check failed
     override val name = "1s.is"
@@ -50,7 +52,7 @@ object Onesis : ShortURLProvider {
     override val aliasConfig =
         object : AliasConfig {
             override val minAliasLength = 1
-            override val maxAliasLength = 100
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, 0-9"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-z0-9]+"))
@@ -61,8 +63,9 @@ object Onesis : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.getString(
-                    R.string.alias_text,
+                context.resources.getQuantityString(
+                    R.plurals.alias_text,
+                    aliasConfig.maxAliasLength,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

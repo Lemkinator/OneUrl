@@ -22,13 +22,14 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 class ObserveURLsUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val observeURLs = ObserveURLsUseCase(urlRepository)
+        val observeURLs = ObserveURLsUseCase(urlRepository, Dispatchers.Unconfined)
 
         val favoriteUrl = testUrl(shortURL = "https://short.url/fav", favorite = true, title = "favorite title")
         val plainUrl = testUrl(shortURL = "https://short.url/plain", favorite = false, title = "plain title")

@@ -61,6 +61,9 @@ error (still return 200):
   "Retry-After": 41
 }
  */
+private const val MIN_ALIAS_LENGTH = 3
+private const val MAX_ALIAS_LENGTH = 100
+
 object L4f : ShortURLProvider {
     override val enabled = false // redirects to apioption.com ??
     override val name = "l4f.com"
@@ -68,8 +71,8 @@ object L4f : ShortURLProvider {
     override val apiURL = "$baseURL/shorten"
     override val aliasConfig =
         object : AliasConfig {
-            override val minAliasLength = 3
-            override val maxAliasLength = 100
+            override val minAliasLength = MIN_ALIAS_LENGTH
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))
@@ -80,8 +83,9 @@ object L4f : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.getString(
-                    R.string.alias_text,
+                context.resources.getQuantityString(
+                    R.plurals.alias_text,
+                    aliasConfig.maxAliasLength,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

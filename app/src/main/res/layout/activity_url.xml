@@ -48,8 +48,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="10dp"
                     android:layout_marginTop="10dp"
-                    android:contentDescription="QR Code"
-                    tools:ignore="HardcodedText" />
+                    android:contentDescription="@string/content_description_qr_code" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

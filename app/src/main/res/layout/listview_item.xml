@@ -41,9 +41,8 @@
             android:id="@+id/listItemImg"
             android:layout_width="@dimen/list_item_qr_size"
             android:layout_height="@dimen/list_item_qr_size"
-            android:contentDescription="QR Code"
-            android:scaleType="fitXY"
-            tools:ignore="HardcodedText" />
+            android:contentDescription="@string/content_description_qr_code"
+            android:scaleType="fitXY" />
 
         <LinearLayout
             android:layout_width="0dp"

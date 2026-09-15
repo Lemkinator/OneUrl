@@ -97,29 +97,19 @@ class URLActivityScreenshotTest {
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
                 .putExtra(KEY_SHORTURL, seededUrl.shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
-            // The QR bitmap now loads via a background-dispatched coroutine (see URLActivity.bindQrCode)
-            // - poll for the drawable instead of a fixed delay, so a coroutine that lands during the
-            // final sleep of a fixed-iteration wait can't still leave the capture with a blank QR.
-            awaitQrLoaded(scenario)
+            shadowOf(Looper.getMainLooper()).idle()
+            assertQrLoaded(scenario)
             onView(isRoot()).captureRoboImage(fileName)
         }
     }
 
-    private fun awaitQrLoaded(
-        scenario: ActivityScenario<URLActivity>,
-        timeoutIterations: Int = 200,
-    ) {
-        repeat(timeoutIterations) {
-            shadowOf(Looper.getMainLooper()).idle()
-            var loaded = false
-            scenario.onActivity { activity ->
-                loaded =
-                    (activity.findViewById<ImageView>(R.id.url_qr_imageview).drawable as? BitmapDrawable)
-                        ?.bitmap != null
-            }
-            if (loaded) return
-            Thread.sleep(5)
+    private fun assertQrLoaded(scenario: ActivityScenario<URLActivity>) {
+        var loaded = false
+        scenario.onActivity { activity ->
+            loaded =
+                (activity.findViewById<ImageView>(R.id.url_qr_imageview).drawable as? BitmapDrawable)
+                    ?.bitmap != null
         }
-        error("QR drawable did not load within timeout")
+        check(loaded) { "QR drawable did not load" }
     }
 }

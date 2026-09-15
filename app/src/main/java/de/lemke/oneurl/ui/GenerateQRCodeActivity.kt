@@ -48,6 +48,10 @@ import dev.oneuiproject.oneui.ktx.hideSoftInput
 import java.util.Locale
 import javax.inject.Inject
 
+private const val MIN_SIZE = 512
+private const val MAX_SIZE = 1024
+private const val LIGHT_TEXT_LUMINANCE_THRESHOLD = 0.5
+
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
     @Inject
@@ -55,8 +59,8 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private val viewModel: GenerateQRCodeViewModel by viewModels()
-    private val minSize = 512
-    private val maxSize = 1024
+    private val minSize = MIN_SIZE
+    private val maxSize = MAX_SIZE
     private var isInitialized = false
     private val exportQRCodeResultLauncher =
         registerForActivityResult(StartActivityForResult()) { result ->
@@ -154,9 +158,13 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                     viewModel.setSize(progress)
                 }
 
-                override fun onStartTrackingTouch(seekBar: SeslSeekBar) {}
+                override fun onStartTrackingTouch(seekBar: SeslSeekBar) {
+                    // no-op: only the live progress value (onProgressChanged) is needed
+                }
 
-                override fun onStopTrackingTouch(seekBar: SeslSeekBar) {}
+                override fun onStopTrackingTouch(seekBar: SeslSeekBar) {
+                    // no-op: only the live progress value (onProgressChanged) is needed
+                }
             },
         )
     }
@@ -214,7 +222,11 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     ) {
         binding.colorButtonBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)
         binding.colorButtonForeground.backgroundTintList = ColorStateList.valueOf(foregroundColor)
-        binding.colorButtonBackground.setTextColor(if (backgroundColor.toColor().luminance() >= 0.5) BLACK else WHITE)
-        binding.colorButtonForeground.setTextColor(if (foregroundColor.toColor().luminance() >= 0.5) BLACK else WHITE)
+        binding.colorButtonBackground.setTextColor(
+            if (backgroundColor.toColor().luminance() >= LIGHT_TEXT_LUMINANCE_THRESHOLD) BLACK else WHITE,
+        )
+        binding.colorButtonForeground.setTextColor(
+            if (foregroundColor.toColor().luminance() >= LIGHT_TEXT_LUMINANCE_THRESHOLD) BLACK else WHITE,
+        )
     }
 }

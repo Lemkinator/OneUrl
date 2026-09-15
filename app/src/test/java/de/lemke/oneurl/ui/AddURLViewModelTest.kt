@@ -225,6 +225,36 @@ class AddURLViewModelTest : ShouldSpec(
             slot.captured.favorite.shouldBeFalse()
         }
 
+        should("submit falls back to an empty title when getURLTitle returns null") {
+            coEvery { getURLTitle(any()) } returns null
+            val slot = slot<URL>()
+            coEvery { addURL(capture(slot)) } returns Unit
+            val viewModel = newViewModel()
+
+            viewModel.events.test {
+                viewModel.submit("https://example.com", "", "")
+                awaitItem() shouldBe AddUrlEvent.Saved
+            }
+
+            slot.captured.title shouldBe ""
+        }
+
+        should("submit forwards generateURL's progress callback into loadingMessageRes") {
+            val progress = slot<(Int) -> Unit>()
+            coEvery { generateURL(any(), any(), any(), capture(progress)) } coAnswers {
+                progress.captured(de.lemke.oneurl.R.string.generating_url)
+                GenerateURLResult.Success("https://short.url/abc")
+            }
+            val viewModel = newViewModel()
+
+            viewModel.events.test {
+                viewModel.submit("https://example.com", "", "")
+                awaitItem() shouldBe AddUrlEvent.Saved
+            }
+
+            viewModel.state.value.loadingMessageRes shouldBe de.lemke.oneurl.R.string.generating_url
+        }
+
         should("submit emits CopyAndFinish on Success when autoCopyOnCreate is true") {
             userSettings.autoCopyOnCreate = true
             coEvery { getURLTitle(any()) } returns "my title"

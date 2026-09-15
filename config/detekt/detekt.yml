@@ -24,10 +24,13 @@ complexity:
   active: true
   LongParameterList:
     active: true
-    allowedFunctionParameters: 8
-    allowedConstructorParameters: 8
+    allowedFunctionParameters: 6
+    allowedConstructorParameters: 7
   TooManyFunctions:
-    active: false
+    active: true
+    # ignoreOverridden: framework-mandated lifecycle callbacks (onCreate, onNewIntent, ...) are
+    # not class-owned complexity.
+    ignoreOverridden: true
   ComplexCondition:
     allowedConditions: 4
 
@@ -35,8 +38,8 @@ style:
   active: true
   MagicNumber:
     active: true
-    ignoreNumbers: [ '-1', '0', '1', '2', '0.5' ]
-    ignorePropertyDeclaration: true
+    ignoreNumbers: [ '-1', '0', '1', '2' ]
+    ignorePropertyDeclaration: false
     ignoreCompanionObjectPropertyDeclaration: true
   MaxLineLength:
     maxLineLength: 140
@@ -57,7 +60,7 @@ naming:
 empty-blocks:
   EmptyFunctionBlock:
     active: true
-    ignoreOverridden: true
+    ignoreOverridden: false
 
 exceptions:
   active: true

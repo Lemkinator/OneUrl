@@ -18,44 +18,68 @@ package de.lemke.oneurl.domain
 
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.URL
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GetURLUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val getURL = GetURLUseCase(urlRepository)
+        val dispatcher = StandardTestDispatcher()
+        val getURL = GetURLUseCase(urlRepository, dispatcher)
 
-        should("invoke(shortURL) delegates to urlRepository.getURL and returns its result") {
+        should("invoke(shortURL) suspends on the injected dispatcher before delegating to urlRepository.getURL") {
             val url = testUrl(shortURL = "https://short.url/abc")
             coEvery { urlRepository.getURL("https://short.url/abc") } returns url
+            var result: URL? = null
 
-            val result = getURL("https://short.url/abc")
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { result = getURL("https://short.url/abc") }
+                coVerify(exactly = 0) { urlRepository.getURL("https://short.url/abc") }
 
+                dispatcher.scheduler.advanceUntilIdle()
+
+                coVerify(exactly = 1) { urlRepository.getURL("https://short.url/abc") }
+            }
             result shouldBe url
-            coVerify(exactly = 1) { urlRepository.getURL("https://short.url/abc") }
         }
 
         should("invoke(shortURL) returns null when urlRepository has no match") {
             coEvery { urlRepository.getURL("https://short.url/missing") } returns null
+            var result: URL? = null
 
-            val result = getURL("https://short.url/missing")
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { result = getURL("https://short.url/missing") }
+                dispatcher.scheduler.advanceUntilIdle()
+            }
 
             result shouldBe null
         }
 
-        should("invoke(shortURLProvider, longURL) delegates to urlRepository.getURL and returns its result") {
+        should("invoke(shortURLProvider, longURL) suspends on the injected dispatcher before delegating to urlRepository.getURL") {
             val provider = ShortURLProviderCompanion.default
             val urls = listOf(testUrl(shortURL = "https://short.url/abc", provider = provider))
             coEvery { urlRepository.getURL(provider, "https://example.com") } returns urls
+            var result: List<URL>? = null
 
-            val result = getURL(provider, "https://example.com")
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { result = getURL(provider, "https://example.com") }
+                coVerify(exactly = 0) { urlRepository.getURL(provider, "https://example.com") }
 
+                dispatcher.scheduler.advanceUntilIdle()
+
+                coVerify(exactly = 1) { urlRepository.getURL(provider, "https://example.com") }
+            }
             result shouldBe urls
-            coVerify(exactly = 1) { urlRepository.getURL(provider, "https://example.com") }
         }
     },
 )

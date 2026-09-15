@@ -33,7 +33,10 @@
     <string name="privacy_text">Dieser Anbieter wurde so konzipiert, dass er so datensparsam arbeitet, wie möglich. Er wird von Deutschland aus betrieben und hält sich an die geltenden Datenschutzregelungen in Deutschland und Europa.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">Dieser URL-Verkürzer verwendet Emojis, um personalisierte und leicht zu merkende Links zu erstellen. Falls ein eigenes Kürzel angegeben wird, sind nur Emojis erlaubt.</string>
-    <string name="alias_text">Die individuellen Kürzel können eine Länge zwischen %1$d und %2$d Zeichen haben und dürfen ausschließlich aus den Zeichen \"%3$s\" bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</string>
+    <plurals name="alias_text">
+        <item quantity="one">Die individuellen Kürzel können eine Länge zwischen %1$d und %2$d Zeichen haben und dürfen ausschließlich aus den Zeichen \"%3$s\" bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</item>
+        <item quantity="other">Die individuellen Kürzel können eine Länge zwischen %1$d und %2$d Zeichen haben und dürfen ausschließlich aus den Zeichen \"%3$s\" bestehen. Diese Funktion ermöglicht den Nutzern, personalisierte und leicht zu merkende Kürzel für ihre Links zu erstellen.</item>
+    </plurals>
     <string name="analytics">Analytics</string>
     <string name="analytics_text">Dieser Anbieter bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten.</string>
     <string name="analytics_dagd">Der Anbieter da.gd bietet die Möglichkeit, Analytics zu nutzen, um Einblicke in die Leistung der verkürzten Links zu erhalten. Bei da.gd müssen die Links innerhalb der letzten 60 Tage mindestens einmal aufgerufen worden sein, ansonsten wird ein Fehler angezeigt (404).</string>
@@ -86,8 +89,14 @@
     <string name="error_url_already_exists">URL bereits gekürzt</string>
     <string name="error_url_already_exists_with_different_alias">Diese URL wurde bereits mit einem anderen Kürzel verkürzt. Versuche, eine andere URL zu verkürzen oder kein Kürzel anzugeben.</string>
     <string name="error_alias_already_exists">Kürzel existiert bereits. Bitte wähle ein anderes Kürzel oder lasse das Feld leer, um ein zufälliges Kürzel zu generieren.</string>
-    <string name="error_alias_too_short">Kürzel zu kurz (min. %1$d Zeichen).</string>
-    <string name="error_alias_too_long">Kürzel zu lang (max. %1$d Zeichen).</string>
+    <plurals name="error_alias_too_short">
+        <item quantity="one">Kürzel zu kurz (min. %1$d Zeichen).</item>
+        <item quantity="other">Kürzel zu kurz (min. %1$d Zeichen).</item>
+    </plurals>
+    <plurals name="error_alias_too_long">
+        <item quantity="one">Kürzel zu lang (max. %1$d Zeichen).</item>
+        <item quantity="other">Kürzel zu lang (max. %1$d Zeichen).</item>
+    </plurals>
     <string name="error_invalid_url">Ungültige URL.</string>
     <string name="error_invalid_alias">Ungültiges Kürzel.</string>
     <string name="error_invalid_alias_allowed_characters">Ungültiges Kürzel (erlaubte Zeichen: %1$s).</string>
@@ -99,6 +108,7 @@
     <string name="error_domain_not_allowed">Diese Domain ist nicht erlaubt.</string>
     <string name="error_internal_server_error">Interner Serverfehler.</string>
     <string name="error_service_offline">Der Dienst dieses Anbieters ist offline. Bitte wähle einen anderen Anbieter.</string>
+    <string name="error_unknown_with_status_code">Fehler %1$d</string>
 
     <string name="error_urlhaus_blacklisted">Diese URL ist auf der Blacklist von: %1$s.\n%2$s\nWenn du weiterhin versuchst, URLs aus der Blacklist zu verkürzen, könntest du von der Nutzung dieser App ausgeschlossen werden.</string>
     <string name="error_urlhaus_default">Sie wurde möglicherweise in der Vergangenheit missbräuchlich verwendet oder verweist auf einen anderen URL-Verkürzungsdienst.</string>
@@ -115,5 +125,13 @@
     <string name="generate_qr_code">QR-Code generieren</string>
     <string name="scan_qr">Scanne diesen QR-Code auf einem anderen Gerät, um die URL anzuzeigen.</string>
     <string name="delete_url_message">Möchtest du diese URL wirklich löschen?</string>
+    <string name="content_description_qr_code">QR-Code</string>
+    <string name="url_safety_google_safe_browsing">Google Safe Browsing</string>
+    <string name="url_safety_norton_safe_web">Norton Safe Web</string>
+    <string name="url_safety_link_shield">Link Shield</string>
+    <string name="url_safety_malshare">MalShare</string>
+    <string name="url_safety_urlhaus">URLhaus</string>
+    <string name="url_safety_virustotal">VirusTotal</string>
+    <string name="url_safety_kaspersky">Kaspersky</string>
 
 </resources>

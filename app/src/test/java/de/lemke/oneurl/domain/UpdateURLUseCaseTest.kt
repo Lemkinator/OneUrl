@@ -21,28 +21,45 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class UpdateURLUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val updateURL = UpdateURLUseCase(urlRepository)
+        val dispatcher = StandardTestDispatcher()
+        val updateURL = UpdateURLUseCase(urlRepository, dispatcher)
 
-        should("invoke(url) delegates to urlRepository.updateURL with the given url") {
+        should("invoke(url) suspends on the injected dispatcher before delegating to urlRepository.updateURL") {
             val url = testUrl(shortURL = "https://short.url/abc")
             coEvery { urlRepository.updateURL(url) } returns Unit
 
-            updateURL(url)
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { updateURL(url) }
+                coVerify(exactly = 0) { urlRepository.updateURL(url) }
 
-            coVerify(exactly = 1) { urlRepository.updateURL(url) }
+                dispatcher.scheduler.advanceUntilIdle()
+
+                coVerify(exactly = 1) { urlRepository.updateURL(url) }
+            }
         }
 
-        should("invoke(urls) delegates to urlRepository.updateURLs with the given urls") {
+        should("invoke(urls) suspends on the injected dispatcher before delegating to urlRepository.updateURLs") {
             val urls = listOf(testUrl(shortURL = "https://short.url/a"), testUrl(shortURL = "https://short.url/b"))
             coEvery { urlRepository.updateURLs(urls) } returns Unit
 
-            updateURL(urls)
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { updateURL(urls) }
+                coVerify(exactly = 0) { urlRepository.updateURLs(urls) }
 
-            coVerify(exactly = 1) { urlRepository.updateURLs(urls) }
+                dispatcher.scheduler.advanceUntilIdle()
+
+                coVerify(exactly = 1) { urlRepository.updateURLs(urls) }
+            }
         }
     },
 )
