@@ -133,6 +133,16 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.2
+        with:
+          android: false
+          tool-cache: true
+          dotnet: true
+          haskell: true
+          swap-storage: true
+          docker-images: false
+          large-packages: false
       - name: Copy CI gradle.properties
         run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
       - name: Set up JDK
@@ -151,16 +161,20 @@ jobs:
       - name: Check runner
         # /dev/kvm may legitimately be absent here; that's what this step is diagnosing.
         run: |
+          date -u
           ls -l /dev/kvm || true
           nproc
           free -m
           df -h /
       - name: Run instrumented tests (GMD)
         run: |
+          set -o pipefail
           chmod +x ./gradlew
           ./gradlew pixel9Api35DebugAndroidTest \
             -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
-            --stacktrace
+            --info \
+            --stacktrace \
+            | tee gmd-build.log
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
@@ -174,8 +188,8 @@ jobs:
           name: gmd-diagnostics
           if-no-files-found: ignore
           path: |
-            ~/.android/avd/gradle-managed/**/*.log
             ~/.android/avd/gradle-managed/**/*.txt
+            gmd-build.log
             app/build/outputs/androidTest-results/managedDevice/
 
   assemble:
