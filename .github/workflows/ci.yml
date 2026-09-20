@@ -115,6 +115,15 @@ jobs:
         with:
           name: roborazzi-diff
           path: app/build/reports/roborazzi/
+      # Gradle's console prints only "<exceptionClass> at <frame>"; the message is in these.
+      - name: Upload unit test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-test-report
+          path: |
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/test-results/testDebugUnitTest/
 
   instrumented-tests:
     runs-on: ubuntu-latest
