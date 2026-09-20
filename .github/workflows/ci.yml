@@ -148,11 +148,35 @@ jobs:
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Check runner
+        # /dev/kvm may legitimately be absent here; that's what this step is diagnosing.
+        run: |
+          ls -l /dev/kvm || true
+          nproc
+          free -m
+          df -h /
       - name: Run instrumented tests (GMD)
-        run: chmod +x ./gradlew && ./gradlew pixel9Api35DebugAndroidTest --stacktrace
+        run: |
+          chmod +x ./gradlew
+          ./gradlew pixel9Api35DebugAndroidTest \
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
+            --stacktrace
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: Dump kernel log on failure
+        if: failure()
+        run: sudo dmesg --ctime | tail -n 200 || true
+      - name: Upload GMD diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gmd-diagnostics
+          if-no-files-found: ignore
+          path: |
+            ~/.android/avd/gradle-managed/**/*.log
+            ~/.android/avd/gradle-managed/**/*.txt
+            app/build/outputs/androidTest-results/managedDevice/
 
   assemble:
     runs-on: ubuntu-latest
