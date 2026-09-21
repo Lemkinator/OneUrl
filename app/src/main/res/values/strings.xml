@@ -37,10 +37,7 @@
     <string name="privacy_text">This provider has been designed to be as data efficient as possible. It is operated from Germany and complies with the applicable privacy regulations in Germany and Europe.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">This URL shortener uses emojis to create personalized and easy-to-remember links. When specifying an alias, only emojis are allowed.</string>
-    <plurals name="alias_text">
-        <item quantity="one">The individual aliases can have a length between %1$d and %2$d character and may only consist of the characters \"%3$s\". This feature allows users to create personalized and easy-to-remember aliases for their links.</item>
-        <item quantity="other">The individual aliases can have a length between %1$d and %2$d characters and may only consist of the characters \"%3$s\". This feature allows users to create personalized and easy-to-remember aliases for their links.</item>
-    </plurals>
+    <string name="alias_text">The individual aliases must be %1$d–%2$d characters long, using only the characters \"%3$s\". This feature lets users create personalized, easy-to-remember aliases for their links.</string>
     <string name="analytics">Analytics</string>
     <string name="analytics_text">This provider offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
     <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
@@ -97,10 +94,7 @@
         <item quantity="one">Alias too short (min. %1$d character).</item>
         <item quantity="other">Alias too short (min. %1$d characters).</item>
     </plurals>
-    <plurals name="error_alias_too_long">
-        <item quantity="one">Alias too long (max. %1$d character).</item>
-        <item quantity="other">Alias too long (max. %1$d characters).</item>
-    </plurals>
+    <string name="error_alias_too_long">Alias too long (max. %1$d characters).</string>
     <string name="error_invalid_url">Invalid URL.</string>
     <string name="error_invalid_alias">Invalid alias.</string>
     <string name="error_invalid_alias_allowed_characters">Invalid alias (allowed characters: %1$s).</string>
@@ -112,7 +106,8 @@
     <string name="error_domain_not_allowed">Domain not allowed.</string>
     <string name="error_internal_server_error">Internal server error.</string>
     <string name="error_service_offline">The service of this provider is offline. Please use another provider.</string>
-    <string name="error_unknown_with_status_code">Error %1$d</string>
+    <string name="error_unknown_with_status_code">An unknown error occurred (HTTP %1$d).</string>
+    <string name="error_custom_with_status_code">Error (HTTP %1$d)</string>
 
     <string name="error_urlhaus_blacklisted">This URL is blacklisted on: %1$s.\n%2$s\nIf you continue trying to shorten blacklisted URLs, you may be blocked from using this App.</string>
     <string name="error_urlhaus_default">It may have been used abusively in the past, or it may link to another URL redirection service.</string>
@@ -129,13 +124,13 @@
     <string name="generate_qr_code">Generate QR-Code</string>
     <string name="scan_qr">Scan this QR code on another device to view the url.</string>
     <string name="delete_url_message">Do you really want to delete this URL?</string>
-    <string name="content_description_qr_code">QR Code</string>
-    <string name="url_safety_google_safe_browsing">Google Safe Browsing</string>
-    <string name="url_safety_norton_safe_web">Norton Safe Web</string>
-    <string name="url_safety_link_shield">Link Shield</string>
-    <string name="url_safety_malshare">MalShare</string>
-    <string name="url_safety_urlhaus">URLhaus</string>
-    <string name="url_safety_virustotal">VirusTotal</string>
-    <string name="url_safety_kaspersky">Kaspersky</string>
+    <string name="content_description_qr_code">QR code</string>
+    <string name="url_safety_google_safe_browsing" translatable="false">Google Safe Browsing</string>
+    <string name="url_safety_norton_safe_web" translatable="false">Norton Safe Web</string>
+    <string name="url_safety_link_shield" translatable="false">Link Shield</string>
+    <string name="url_safety_malshare" translatable="false">MalShare</string>
+    <string name="url_safety_urlhaus" translatable="false">URLhaus</string>
+    <string name="url_safety_virustotal" translatable="false">VirusTotal</string>
+    <string name="url_safety_kaspersky" translatable="false">Kaspersky</string>
 
 </resources>

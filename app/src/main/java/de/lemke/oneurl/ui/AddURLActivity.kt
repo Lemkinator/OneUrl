@@ -188,8 +188,7 @@ class AddURLActivity : AppCompatActivity() {
             }
 
             alias.length > config.maxAliasLength -> {
-                binding.editTextAlias.error =
-                    resources.getQuantityString(R.plurals.error_alias_too_long, config.maxAliasLength, config.maxAliasLength)
+                binding.editTextAlias.error = getString(R.string.error_alias_too_long, config.maxAliasLength)
                 false
             }
 
@@ -221,7 +220,7 @@ class AddURLActivity : AppCompatActivity() {
         AlertDialog
             .Builder(this)
             .setNeutralButton(commonutilsR.string.commonutils_ok, null)
-            .apply { configureFor(this@AddURLActivity, error) }
+            .apply { configureFor(error) }
             .show()
     }
 

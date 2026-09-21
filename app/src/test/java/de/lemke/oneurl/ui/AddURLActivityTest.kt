@@ -130,8 +130,7 @@ class AddURLActivityTest {
             urlField.setText("https://example.com")
             aliasField.setText("a".repeat(31))
             submit()
-            aliasField.error shouldBe
-                activity.resources.getQuantityString(R.plurals.error_alias_too_long, aliasConfig.maxAliasLength, aliasConfig.maxAliasLength)
+            aliasField.error shouldBe activity.getString(R.string.error_alias_too_long, aliasConfig.maxAliasLength)
         }
     }
 
