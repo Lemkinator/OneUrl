@@ -62,7 +62,7 @@ class AddURLErrorDialogsTest {
         context: Context,
         error: GenerateURLError,
     ): AlertDialog =
-        AlertDialog.Builder(context).apply { configureFor(context, error) }.create().apply {
+        AlertDialog.Builder(context).apply { configureFor(error) }.create().apply {
             show()
             shadowOf(Looper.getMainLooper()).idle()
         }
@@ -172,7 +172,7 @@ class AddURLErrorDialogsTest {
         val error = GenerateURLError.Custom(statusCode = 503, customMessage = "unavailable")
         val dialog = dialogFor(activity, error)
 
-        dialog.titleText() shouldBe "${activity.getString(commonutilsR.string.commonutils_error)} (${error.statusCode})"
+        dialog.titleText() shouldBe activity.getString(R.string.error_custom_with_status_code, error.statusCode)
         dialog.messageText() shouldBe error.customMessage
     }
 

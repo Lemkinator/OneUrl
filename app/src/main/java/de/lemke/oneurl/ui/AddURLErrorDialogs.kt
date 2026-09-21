@@ -17,7 +17,6 @@
 package de.lemke.oneurl.ui
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.util.Log
@@ -28,29 +27,26 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.commonutils.R as commonutilsR
 
-fun AlertDialog.Builder.configureFor(
-    context: Context,
-    error: GenerateURLError,
-) {
+internal fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
     when (error) {
         GenerateURLError.NoInternet -> {
-            configureNoInternet(context)
+            configureNoInternet()
         }
 
         is GenerateURLError.BlacklistedURL -> {
-            configureBlacklisted(context, error)
+            configureBlacklisted(error)
         }
 
         is GenerateURLError.ServiceTemporarilyUnavailable -> {
-            configureServiceUnavailable(context, error)
+            configureServiceUnavailable(error)
         }
 
         is GenerateURLError.Custom -> {
-            configureCustom(context, error)
+            configureCustom(error)
         }
 
         is GenerateURLError.Unknown -> {
-            configureUnknown(context, error)
+            configureUnknown(error)
         }
 
         else -> {
@@ -74,56 +70,46 @@ private fun simpleErrorMessageRes(error: GenerateURLError): Int =
         else -> commonutilsR.string.commonutils_error_unknown
     }
 
-private fun AlertDialog.Builder.configureNoInternet(context: Context) {
+private fun AlertDialog.Builder.configureNoInternet() {
     setTitle(R.string.no_internet)
     setMessage(R.string.no_internet_text)
     setPositiveButton(commonutilsR.string.commonutils_settings) { _, _ ->
         try {
-            context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+            this.context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
         } catch (e: ActivityNotFoundException) {
             Log.e("AddURLErrorDialogs", "could not open wireless settings", e)
-            context.toast(commonutilsR.string.commonutils_error)
+            this.context.toast(commonutilsR.string.commonutils_error)
         }
     }
 }
 
-private fun AlertDialog.Builder.configureBlacklisted(
-    context: Context,
-    error: GenerateURLError.BlacklistedURL,
-) {
+private fun AlertDialog.Builder.configureBlacklisted(error: GenerateURLError.BlacklistedURL) {
     setTitle(commonutilsR.string.commonutils_error)
-    setMessage(error.message ?: context.getString(R.string.error_blacklisted_url))
-    if (error.urlhausLink != null) setPositiveButton(R.string.url_safety_urlhaus) { _, _ -> context.openURL(error.urlhausLink) }
-    if (error.virustotalLink != null) setNegativeButton(R.string.url_safety_virustotal) { _, _ -> context.openURL(error.virustotalLink) }
+    setMessage(error.message ?: this.context.getString(R.string.error_blacklisted_url))
+    if (error.urlhausLink != null) setPositiveButton(R.string.url_safety_urlhaus) { _, _ -> this.context.openURL(error.urlhausLink) }
+    if (error.virustotalLink != null) {
+        setNegativeButton(R.string.url_safety_virustotal) { _, _ -> this.context.openURL(error.virustotalLink) }
+    }
 }
 
-private fun AlertDialog.Builder.configureServiceUnavailable(
-    context: Context,
-    error: GenerateURLError.ServiceTemporarilyUnavailable,
-) {
+private fun AlertDialog.Builder.configureServiceUnavailable(error: GenerateURLError.ServiceTemporarilyUnavailable) {
     setTitle(R.string.error_service_unavailable)
     setMessage(R.string.error_service_unavailable_text)
-    setPositiveButton(commonutilsR.string.commonutils_more_information) { _, _ -> context.openURL(error.providerBaseURL) }
+    setPositiveButton(commonutilsR.string.commonutils_more_information) { _, _ -> this.context.openURL(error.providerBaseURL) }
 }
 
-private fun AlertDialog.Builder.configureCustom(
-    context: Context,
-    error: GenerateURLError.Custom,
-) {
-    setTitle(error.customTitle ?: "${context.getString(commonutilsR.string.commonutils_error)} (${error.statusCode})")
+private fun AlertDialog.Builder.configureCustom(error: GenerateURLError.Custom) {
+    setTitle(error.customTitle ?: this.context.getString(R.string.error_custom_with_status_code, error.statusCode))
     setMessage(error.customMessage)
 }
 
-private fun AlertDialog.Builder.configureUnknown(
-    context: Context,
-    error: GenerateURLError.Unknown,
-) {
+private fun AlertDialog.Builder.configureUnknown(error: GenerateURLError.Unknown) {
     setTitle(commonutilsR.string.commonutils_error)
     setMessage(
         if (error.statusCode != null) {
-            context.getString(R.string.error_unknown_with_status_code, error.statusCode)
+            this.context.getString(R.string.error_unknown_with_status_code, error.statusCode)
         } else {
-            context.getString(commonutilsR.string.commonutils_error_unknown)
+            this.context.getString(commonutilsR.string.commonutils_error_unknown)
         },
     )
 }
