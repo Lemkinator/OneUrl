@@ -27,10 +27,10 @@ complexity:
     allowedFunctionParameters: 6
     allowedConstructorParameters: 7
   TooManyFunctions:
-    active: true
-    # ignoreOverridden: framework-mandated lifecycle callbacks (onCreate, onNewIntent, ...) are
-    # not class-owned complexity.
-    ignoreOverridden: true
+    active: false
+    # Why: the 11-function ceiling only ever produced mechanical splits (extension files, helpers
+    # over fields opened to internal, sibling repositories over one table) that hurt cohesion.
+    # Class size is a review concern, not a lint gate.
   ComplexCondition:
     allowedConditions: 4
 
