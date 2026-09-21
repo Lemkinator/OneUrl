@@ -50,7 +50,7 @@ import javax.inject.Inject
 
 private const val MIN_SIZE = 512
 private const val MAX_SIZE = 1024
-private const val LIGHT_TEXT_LUMINANCE_THRESHOLD = 0.5
+private const val LIGHT_BACKGROUND_LUMINANCE_THRESHOLD = 0.17912878474
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
@@ -59,8 +59,6 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private val viewModel: GenerateQRCodeViewModel by viewModels()
-    private val minSize = MIN_SIZE
-    private val maxSize = MAX_SIZE
     private var isInitialized = false
     private val exportQRCodeResultLauncher =
         registerForActivityResult(StartActivityForResult()) { result ->
@@ -136,7 +134,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         binding.sizeEdittext.setOnEditorActionListener { textView, _, _ ->
             val newSize = textView.text.toString().toIntOrNull()
             if (newSize != null) {
-                val clamped = newSize.coerceAtLeast(minSize).coerceAtMost(maxSize)
+                val clamped = newSize.coerceAtLeast(MIN_SIZE).coerceAtMost(MAX_SIZE)
                 binding.sizeSeekbar.progress = clamped
                 viewModel.setSize(clamped)
             }
@@ -144,8 +142,8 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             textView.clearFocus()
             true
         }
-        binding.sizeSeekbar.max = maxSize
-        binding.sizeSeekbar.min = minSize
+        binding.sizeSeekbar.max = MAX_SIZE
+        binding.sizeSeekbar.min = MIN_SIZE
         binding.sizeSeekbar.progress = initialState.size
         binding.sizeSeekbar.setOnSeekBarChangeListener(
             object : SeslSeekBar.OnSeekBarChangeListener {
@@ -223,10 +221,10 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         binding.colorButtonBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)
         binding.colorButtonForeground.backgroundTintList = ColorStateList.valueOf(foregroundColor)
         binding.colorButtonBackground.setTextColor(
-            if (backgroundColor.toColor().luminance() >= LIGHT_TEXT_LUMINANCE_THRESHOLD) BLACK else WHITE,
+            if (backgroundColor.toColor().luminance() >= LIGHT_BACKGROUND_LUMINANCE_THRESHOLD) BLACK else WHITE,
         )
         binding.colorButtonForeground.setTextColor(
-            if (foregroundColor.toColor().luminance() >= LIGHT_TEXT_LUMINANCE_THRESHOLD) BLACK else WHITE,
+            if (foregroundColor.toColor().luminance() >= LIGHT_BACKGROUND_LUMINANCE_THRESHOLD) BLACK else WHITE,
         )
     }
 }
