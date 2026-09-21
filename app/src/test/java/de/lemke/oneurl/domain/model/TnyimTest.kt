@@ -201,9 +201,8 @@ class TnyimTest {
         infoContents.size shouldBe 2
         infoContents[0].title shouldBe realContext.getString(R.string.alias)
         infoContents[0].linkOrDescription shouldBe
-            realContext.resources.getQuantityString(
-                R.plurals.alias_text,
-                Tnyim.aliasConfig.maxAliasLength,
+            realContext.getString(
+                R.string.alias_text,
                 Tnyim.aliasConfig.minAliasLength,
                 Tnyim.aliasConfig.maxAliasLength,
                 Tnyim.aliasConfig.allowedAliasCharacters,

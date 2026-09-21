@@ -232,9 +232,8 @@ class KurzelinksdeTest {
         infoContents[0].linkOrDescription shouldBe realContext.getString(R.string.privacy_text)
         infoContents[1].title shouldBe realContext.getString(R.string.alias)
         infoContents[1].linkOrDescription shouldBe
-            realContext.resources.getQuantityString(
-                R.plurals.alias_text,
-                Kurzelinks.Kurzelinksde.aliasConfig.maxAliasLength,
+            realContext.getString(
+                R.string.alias_text,
                 Kurzelinks.Kurzelinksde.aliasConfig.minAliasLength,
                 Kurzelinks.Kurzelinksde.aliasConfig.maxAliasLength,
                 Kurzelinks.Kurzelinksde.aliasConfig.allowedAliasCharacters,

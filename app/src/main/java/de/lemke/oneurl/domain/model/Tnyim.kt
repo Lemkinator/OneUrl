@@ -116,10 +116,10 @@ https://tny.im/yourls-api.php?action=url-stats&format=json&shorturl=a54321
   "message": "Error: short URL not found"
 }
 */
-private const val MIN_ALIAS_LENGTH = 5
-private const val MAX_ALIAS_LENGTH = 100 // no info, tested up to 100
-
 object Tnyim : ShortURLProvider {
+    private const val MIN_ALIAS_LENGTH = 5
+    private const val MAX_ALIAS_LENGTH = 100 // no info, tested up to 100
+
     override val enabled = false
     override val name = "tny.im"
     override val baseURL = "https://tny.im"
@@ -140,9 +140,8 @@ object Tnyim : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

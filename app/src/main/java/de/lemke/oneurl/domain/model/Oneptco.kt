@@ -72,9 +72,8 @@ object Oneptco : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

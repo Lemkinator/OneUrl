@@ -32,10 +32,10 @@ example: https://tinyurl.com/api-create.php?url=https://example.com&alias=exampl
 
 analytics require api token
  */
-private const val MIN_ALIAS_LENGTH = 5
-private const val MAX_ALIAS_LENGTH = 30
-
 object Tinyurl : ShortURLProvider {
+    private const val MIN_ALIAS_LENGTH = 5
+    private const val MAX_ALIAS_LENGTH = 30
+
     override val enabled = false // https://tinyurl.com/blog/retiring-our-old-api-endpoint/
     override val name = "tinyurl.com"
     override val baseURL = "https://tinyurl.com"
@@ -58,9 +58,8 @@ object Tinyurl : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

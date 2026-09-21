@@ -45,9 +45,6 @@ error:
 444: the API cannot be accessed at the moment (please try again later)
 
 */
-private const val MIN_ALIAS_LENGTH = 5
-private const val MAX_ALIAS_LENGTH = 100 // tested up to 250
-
 sealed class Kurzelinks : ShortURLProvider {
     final override val group = "kurzelinks.de, 0cn.de, t1p.de, ogy.de"
     final override val aliasConfig =
@@ -69,9 +66,8 @@ sealed class Kurzelinks : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,
@@ -178,6 +174,11 @@ sealed class Kurzelinks : ShortURLProvider {
             Log.e(tag, "error parsing error response", e)
             errorCallback(GenerateURLError.Unknown())
         }
+    }
+
+    private companion object {
+        const val MIN_ALIAS_LENGTH = 5
+        const val MAX_ALIAS_LENGTH = 100 // tested up to 250
     }
 
     object Kurzelinksde : Kurzelinks() {

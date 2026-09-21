@@ -86,9 +86,9 @@ stats: https://ulvis.net/API/read/get?id=example1
   }
 }
  */
-private const val MAX_ALIAS_LENGTH = 60
-
 object Ulvis : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 60
+
     override val enabled = false // deletes short URLs???? https://ulvis.net/bHPs
     override val name = "ulvis.net"
     override val baseURL = "https://ulvis.net"
@@ -112,9 +112,8 @@ object Ulvis : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

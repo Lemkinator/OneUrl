@@ -165,9 +165,8 @@ class OnesisTest {
         infoContents.size shouldBe 1
         infoContents[0].title shouldBe realContext.getString(R.string.alias)
         infoContents[0].linkOrDescription shouldBe
-            realContext.resources.getQuantityString(
-                R.plurals.alias_text,
-                Onesis.aliasConfig.maxAliasLength,
+            realContext.getString(
+                R.string.alias_text,
                 Onesis.aliasConfig.minAliasLength,
                 Onesis.aliasConfig.maxAliasLength,
                 Onesis.aliasConfig.allowedAliasCharacters,

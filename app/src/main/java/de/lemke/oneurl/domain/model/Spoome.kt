@@ -80,9 +80,6 @@ MaxClicksError	400	The user entered max-clicks is not a positive integer.
 
 
  */
-private const val MAX_ALIAS_LENGTH_DEFAULT = 15
-private const val MAX_ALIAS_LENGTH_EMOJI = 30 // returns invalid alias if more than 30
-
 sealed class Spoome : ShortURLProvider {
     final override val group = "spoo.me, spoo.me (emoji)"
     final override val baseURL = "https://spoo.me"
@@ -241,6 +238,11 @@ sealed class Spoome : ShortURLProvider {
         }
     }
 
+    private companion object {
+        const val MAX_ALIAS_LENGTH_DEFAULT = 15
+        const val MAX_ALIAS_LENGTH_EMOJI = 30 // returns invalid alias if more than 30
+    }
+
     object Default : Spoome() {
         override val name = "spoo.me"
         override val apiURL = "https://spoo.me/"
@@ -258,9 +260,8 @@ sealed class Spoome : ShortURLProvider {
                 ProviderInfo(
                     dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                     context.getString(R.string.alias),
-                    context.resources.getQuantityString(
-                        R.plurals.alias_text,
-                        aliasConfig.maxAliasLength,
+                    context.getString(
+                        R.string.alias_text,
                         aliasConfig.minAliasLength,
                         aliasConfig.maxAliasLength,
                         aliasConfig.allowedAliasCharacters,
@@ -303,9 +304,8 @@ sealed class Spoome : ShortURLProvider {
                 ProviderInfo(
                     dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                     context.getString(R.string.alias),
-                    context.resources.getQuantityString(
-                        R.plurals.alias_text,
-                        aliasConfig.maxAliasLength,
+                    context.getString(
+                        R.string.alias_text,
                         aliasConfig.minAliasLength,
                         aliasConfig.maxAliasLength,
                         aliasConfig.allowedAliasCharacters,

@@ -39,9 +39,10 @@ errors:
 400: Short URL already taken. Pick a different one.
 400: Custom short URL contained invalid characters.     //should not happen, checked before
  */
-private const val MAX_ALIAS_LENGTH = 10
 
 object Dagd : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 10
+
     override val name = "da.gd"
     override val baseURL = "https://da.gd"
     override val apiURL = "$baseURL/shorten"
@@ -59,9 +60,8 @@ object Dagd : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

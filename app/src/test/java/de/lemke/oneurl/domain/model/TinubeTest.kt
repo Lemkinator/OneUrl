@@ -237,9 +237,8 @@ class TinubeTest {
         infoContents.size shouldBe 2
         infoContents[0].title shouldBe realContext.getString(R.string.alias)
         infoContents[0].linkOrDescription shouldBe
-            realContext.resources.getQuantityString(
-                R.plurals.alias_text,
-                Tinube.aliasConfig.maxAliasLength,
+            realContext.getString(
+                R.string.alias_text,
                 Tinube.aliasConfig.minAliasLength,
                 Tinube.aliasConfig.maxAliasLength,
                 Tinube.aliasConfig.allowedAliasCharacters,

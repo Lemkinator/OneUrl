@@ -37,9 +37,6 @@ example:
 https://v.gd/create.php?format=json&url=www.example.com&shorturl=example
 https://is.gd/create.php?format=json&url=www.example.com&shorturl=example
  */
-private const val MIN_ALIAS_LENGTH = 5
-private const val MAX_ALIAS_LENGTH = 30
-
 sealed class VgdIsgd : ShortURLProvider {
     final override val group = "v.gd, is.gd"
     final override val aliasConfig =
@@ -184,6 +181,11 @@ sealed class VgdIsgd : ShortURLProvider {
         }
     }
 
+    private companion object {
+        const val MIN_ALIAS_LENGTH = 5
+        const val MAX_ALIAS_LENGTH = 30
+    }
+
     object Vgd : VgdIsgd() {
         override val name = "v.gd"
         override val baseURL = "https://v.gd"
@@ -207,9 +209,8 @@ sealed class VgdIsgd : ShortURLProvider {
                 ProviderInfo(
                     dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                     context.getString(R.string.alias),
-                    context.resources.getQuantityString(
-                        R.plurals.alias_text,
-                        aliasConfig.maxAliasLength,
+                    context.getString(
+                        R.string.alias_text,
                         aliasConfig.minAliasLength,
                         aliasConfig.maxAliasLength,
                         aliasConfig.allowedAliasCharacters,
@@ -243,9 +244,8 @@ sealed class VgdIsgd : ShortURLProvider {
                 ProviderInfo(
                     dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                     context.getString(R.string.alias),
-                    context.resources.getQuantityString(
-                        R.plurals.alias_text,
-                        aliasConfig.maxAliasLength,
+                    context.getString(
+                        R.string.alias_text,
                         aliasConfig.minAliasLength,
                         aliasConfig.maxAliasLength,
                         aliasConfig.allowedAliasCharacters,

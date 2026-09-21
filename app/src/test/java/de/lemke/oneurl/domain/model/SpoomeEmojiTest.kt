@@ -135,9 +135,8 @@ class SpoomeEmojiTest {
         infoContents[0].linkOrDescription shouldBe realContext.getString(R.string.emoji_text)
         infoContents[1].title shouldBe realContext.getString(R.string.alias)
         infoContents[1].linkOrDescription shouldBe
-            realContext.resources.getQuantityString(
-                R.plurals.alias_text,
-                Spoome.Emoji.aliasConfig.maxAliasLength,
+            realContext.getString(
+                R.string.alias_text,
                 Spoome.Emoji.aliasConfig.minAliasLength,
                 Spoome.Emoji.aliasConfig.maxAliasLength,
                 Spoome.Emoji.aliasConfig.allowedAliasCharacters,

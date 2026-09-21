@@ -288,9 +288,8 @@ class GgTest {
         infoContents.size shouldBe 1
         infoContents[0].title shouldBe realContext.getString(R.string.alias)
         infoContents[0].linkOrDescription shouldBe
-            realContext.resources.getQuantityString(
-                R.plurals.alias_text,
-                Gg.aliasConfig.maxAliasLength,
+            realContext.getString(
+                R.string.alias_text,
                 Gg.aliasConfig.minAliasLength,
                 Gg.aliasConfig.maxAliasLength,
                 Gg.aliasConfig.allowedAliasCharacters,

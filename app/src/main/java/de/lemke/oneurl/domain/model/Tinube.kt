@@ -53,9 +53,9 @@ https://api.tinu.be/Nx1ByyelU/stats
   "urlCode": "Nx1ByyelU"
 }
  */
-private const val MAX_ALIAS_LENGTH = 100 // no info, tested up to 100
-
 object Tinube : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 100 // no info, tested up to 100
+
     override val name = "tinu.be"
     override val baseURL = "https://tinu.be"
     override val apiURL = "$baseURL/en"
@@ -75,9 +75,8 @@ object Tinube : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

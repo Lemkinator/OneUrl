@@ -36,9 +36,9 @@ https://gg.gg/create {long_url=https://example.com custom_path=1cbz0v}
 response: 200: http://gg.gg/1cbz0v
 fail: 200: http://gg.gg/
  */
-private const val MAX_ALIAS_LENGTH = 200 // no info, tested up to 500
-
 object Gg : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 200 // no info, tested up to 500
+
     override val enabled: Boolean = false // offline?
     override val name = "gg.gg"
     override val baseURL = "https://gg.gg"
@@ -61,9 +61,8 @@ object Gg : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

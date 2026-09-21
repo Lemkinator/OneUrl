@@ -61,10 +61,10 @@ error (still return 200):
   "Retry-After": 41
 }
  */
-private const val MIN_ALIAS_LENGTH = 3
-private const val MAX_ALIAS_LENGTH = 100
-
 object L4f : ShortURLProvider {
+    private const val MIN_ALIAS_LENGTH = 3
+    private const val MAX_ALIAS_LENGTH = 100
+
     override val enabled = false // redirects to apioption.com ??
     override val name = "l4f.com"
     override val baseURL = "https://l4f.com"
@@ -83,9 +83,8 @@ object L4f : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,

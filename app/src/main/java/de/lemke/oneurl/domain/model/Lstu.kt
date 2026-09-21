@@ -66,9 +66,9 @@ https://lstu.fr/stats/test
   "url": "https://linuxfr.org"
 }
  */
-private const val MAX_ALIAS_LENGTH = 200 // no info, tested up to 500
-
 object Lstu : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 200 // no info, tested up to 500
+
     override val enabled = false // discontinued because of abuse: https://lstu.fr/
     override val name = "lstu.fr"
     override val baseURL = "https://lstu.fr"
@@ -88,9 +88,8 @@ object Lstu : ShortURLProvider {
             ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
-                context.resources.getQuantityString(
-                    R.plurals.alias_text,
-                    aliasConfig.maxAliasLength,
+                context.getString(
+                    R.string.alias_text,
                     aliasConfig.minAliasLength,
                     aliasConfig.maxAliasLength,
                     aliasConfig.allowedAliasCharacters,
