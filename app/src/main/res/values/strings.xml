@@ -121,7 +121,7 @@
     <string name="error_urlhaus_abused_redirector">It is a known abused redirector or URL shortener.</string>
 
     <!--Others-->
-    <string name="generate_qr_code">Generate QR-Code</string>
+    <string name="generate_qr_code">Generate QR code</string>
     <string name="scan_qr">Scan this QR code on another device to view the url.</string>
     <string name="delete_url_message">Do you really want to delete this URL?</string>
     <string name="content_description_qr_code">QR code</string>
