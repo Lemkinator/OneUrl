@@ -37,7 +37,7 @@
     <string name="privacy_text">This provider has been designed to be as data efficient as possible. It is operated from Germany and complies with the applicable privacy regulations in Germany and Europe.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">This URL shortener uses emojis to create personalized and easy-to-remember links. When specifying an alias, only emojis are allowed.</string>
-    <string name="alias_text">The individual aliases must be %1$d–%2$d characters long, using only the characters \"%3$s\". This feature lets users create personalized, easy-to-remember aliases for their links.</string>
+    <string name="alias_text">The individual aliases can only use the characters \"%3$s\" and must be %1$d–%2$d in length. This feature lets users create personalized, easy-to-remember aliases for their links.</string>
     <string name="analytics">Analytics</string>
     <string name="analytics_text">This provider offers the possibility to use analytics to get insights into the performance of the shortened links.</string>
     <string name="analytics_dagd">The provider da.gd offers the possibility to use analytics to get insights into the performance of the shortened links. With da.gd, the links must have been accessed at least once within the last 60 days, otherwise an error will be displayed (404).</string>
@@ -94,7 +94,7 @@
         <item quantity="one">Alias too short (min. %1$d character).</item>
         <item quantity="other">Alias too short (min. %1$d characters).</item>
     </plurals>
-    <string name="error_alias_too_long">Alias too long (max. %1$d characters).</string>
+    <string name="error_alias_too_long">Alias exceeds the %1$d-character limit.</string>
     <string name="error_invalid_url">Invalid URL.</string>
     <string name="error_invalid_alias">Invalid alias.</string>
     <string name="error_invalid_alias_allowed_characters">Invalid alias (allowed characters: %1$s).</string>
