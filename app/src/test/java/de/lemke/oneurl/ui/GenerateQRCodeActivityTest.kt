@@ -318,7 +318,7 @@ class GenerateQRCodeActivityTest {
     @Test
     fun `updateButtonColors uses dark text for a mid-grey background above the WCAG crossover luminance`() {
         // #808080's relative luminance (~0.216) is above LIGHT_BACKGROUND_LUMINANCE_THRESHOLD (~0.179),
-        // so contrast to black is higher than contrast to white, even though 0.216 is well below 0.5.
+        // so contrast to black is higher than contrast to white.
         userSettings.qrRecentBackgroundColors = listOf(0x808080)
 
         withActivity { activity ->
