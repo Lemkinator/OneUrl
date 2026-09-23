@@ -296,33 +296,49 @@ class GenerateQRCodeActivityTest {
     }
 
     @Test
-    fun `updateButtonColors uses dark text for the default light background and white text for the dark foreground`() {
+    fun `color buttons show the default white background and black foreground swatches`() {
         withActivity { activity ->
-            // Defaults: backgroundColor = WHITE (light, >= threshold), foregroundColor = BLACK (dark).
-            activity.findViewById<Button>(R.id.color_button_background).currentTextColor shouldBe Color.BLACK
-            activity.findViewById<Button>(R.id.color_button_foreground).currentTextColor shouldBe Color.WHITE
+            val backgroundButton = activity.findViewById<Button>(R.id.color_button_background)
+            val foregroundButton = activity.findViewById<Button>(R.id.color_button_foreground)
+
+            backgroundButton.isEnabled.shouldBeTrue()
+            backgroundButton.backgroundTintList?.defaultColor shouldBe Color.WHITE
+            backgroundButton.currentTextColor shouldBe Color.BLACK
+            foregroundButton.isEnabled.shouldBeTrue()
+            foregroundButton.backgroundTintList?.defaultColor shouldBe Color.BLACK
+            foregroundButton.currentTextColor shouldBe Color.WHITE
         }
     }
 
     @Test
-    fun `updateButtonColors uses light text for a dark background and dark text for a light foreground`() {
-        userSettings.qrRecentBackgroundColors = listOf(Color.BLACK)
-        userSettings.qrRecentForegroundColors = listOf(Color.WHITE)
+    fun `color buttons show the most recent stored colors as swatches`() {
+        userSettings.qrRecentBackgroundColors = listOf(Color.BLACK, Color.RED)
+        userSettings.qrRecentForegroundColors = listOf(Color.WHITE, Color.BLUE)
 
         withActivity { activity ->
-            activity.findViewById<Button>(R.id.color_button_background).currentTextColor shouldBe Color.WHITE
-            activity.findViewById<Button>(R.id.color_button_foreground).currentTextColor shouldBe Color.BLACK
+            val backgroundButton = activity.findViewById<Button>(R.id.color_button_background)
+            val foregroundButton = activity.findViewById<Button>(R.id.color_button_foreground)
+
+            backgroundButton.backgroundTintList?.defaultColor shouldBe Color.BLACK
+            backgroundButton.currentTextColor shouldBe Color.WHITE
+            foregroundButton.backgroundTintList?.defaultColor shouldBe Color.WHITE
+            foregroundButton.currentTextColor shouldBe Color.BLACK
         }
     }
 
     @Test
-    fun `updateButtonColors uses dark text for a mid-grey background above the WCAG crossover luminance`() {
-        // #808080's relative luminance (~0.216) is above LIGHT_BACKGROUND_LUMINANCE_THRESHOLD (~0.179),
-        // so contrast to black is higher than contrast to white.
-        userSettings.qrRecentBackgroundColors = listOf(0x808080)
-
+    fun `confirming the background color picker rebinds the background swatch`() {
         withActivity { activity ->
-            activity.findViewById<Button>(R.id.color_button_background).currentTextColor shouldBe Color.BLACK
+            val backgroundButton = activity.findViewById<Button>(R.id.color_button_background)
+            backgroundButton.performClick()
+            val dialog = ShadowDialog.getLatestDialog() as SeslColorPickerDialog
+
+            dialog.setNewColor(0xFF336699.toInt())
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            backgroundButton.backgroundTintList?.defaultColor shouldBe 0xFF336699.toInt()
+            backgroundButton.currentTextColor shouldBe Color.WHITE
         }
     }
 

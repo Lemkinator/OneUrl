@@ -16,9 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import android.content.res.ColorStateList
-import android.graphics.Color.BLACK
-import android.graphics.Color.WHITE
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -27,11 +24,11 @@ import androidx.activity.result.contract.ActivityResultContracts.StartActivityFo
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SeslSeekBar
-import androidx.core.graphics.toColor
 import androidx.core.widget.addTextChangedListener
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.bindColorSwatch
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
 import de.lemke.commonutils.ui.utils.exportBitmap
@@ -50,7 +47,6 @@ import javax.inject.Inject
 
 private const val MIN_SIZE = 512
 private const val MAX_SIZE = 1024
-private const val LIGHT_BACKGROUND_LUMINANCE_THRESHOLD = 0.17912878474
 
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
@@ -106,7 +102,8 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             if (state.isLoading) return@collectState
             state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
             binding.qrCode.setOnClickListener { state.qrCode?.copyToClipboard(this@GenerateQRCodeActivity, "QR Code", "QRCode.png") }
-            updateButtonColors(state.foregroundColor, state.backgroundColor)
+            binding.colorButtonForeground.bindColorSwatch(state.foregroundColor)
+            binding.colorButtonBackground.bindColorSwatch(state.backgroundColor)
             if (!isInitialized) {
                 isInitialized = true
                 initControls(state)
@@ -212,19 +209,5 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 show()
             }
         }
-    }
-
-    private fun updateButtonColors(
-        foregroundColor: Int,
-        backgroundColor: Int,
-    ) {
-        binding.colorButtonBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)
-        binding.colorButtonForeground.backgroundTintList = ColorStateList.valueOf(foregroundColor)
-        binding.colorButtonBackground.setTextColor(
-            if (backgroundColor.toColor().luminance() >= LIGHT_BACKGROUND_LUMINANCE_THRESHOLD) BLACK else WHITE,
-        )
-        binding.colorButtonForeground.setTextColor(
-            if (foregroundColor.toColor().luminance() >= LIGHT_BACKGROUND_LUMINANCE_THRESHOLD) BLACK else WHITE,
-        )
     }
 }
