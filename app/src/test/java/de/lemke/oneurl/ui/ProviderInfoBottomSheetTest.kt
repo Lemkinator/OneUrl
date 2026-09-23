@@ -45,12 +45,6 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
-// No registered provider currently returns more than 3 getInfoContents entries (VgdIsgd.Vgd and
-// Spoome.Emoji are the largest, at 3), so infoContentViewsAt's LAST_INFO_CONTENT_INDEX branch and
-// its index>=4 else-branch are unreachable through real provider data - covered here only up to
-// index 2. Likewise, the default getInfoButtons() implementation caps at 3 entries (privacy, terms,
-// info), so infoButtonAt's else-branch is unreachable too.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])

@@ -42,12 +42,6 @@ import androidx.appcompat.R as appcompatR
 import de.lemke.commonutils.R as commonutilsR
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
-// GenerateURLError is a sealed class with exactly 14 subtypes; 5 are handled explicitly in
-// configureFor (NoInternet, BlacklistedURL, ServiceTemporarilyUnavailable, Custom, Unknown) and the
-// remaining 9 are exactly the named branches in simpleErrorMessageRes. Since the hierarchy is
-// closed, there is no way to construct a GenerateURLError that reaches simpleErrorMessageRes'
-// `else -> commonutils_error_unknown` branch - it is unreachable dead code and is not covered here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class AddURLErrorDialogsTest {

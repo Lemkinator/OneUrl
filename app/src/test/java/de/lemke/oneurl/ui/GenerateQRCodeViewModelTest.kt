@@ -219,8 +219,6 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.setUrl("https://first.example.com")
             dispatcher.scheduler.advanceTimeBy(100.milliseconds)
             viewModel.setUrl("https://second.example.com")
-            // The first job's original 300ms deadline has now passed; if it hadn't been
-            // cancelled it would already have overwritten qrURL with "first.example.com".
             dispatcher.scheduler.advanceTimeBy(200.milliseconds)
             userSettings.qrURL shouldBe "https://initial.example.com"
 
@@ -248,8 +246,6 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.setSize(700)
             dispatcher.scheduler.advanceTimeBy(100.milliseconds)
             viewModel.setSize(900)
-            // Same reasoning as the setUrl cancellation test: the first job's deadline has
-            // passed here, so a non-cancelled job would have already written 700.
             dispatcher.scheduler.advanceTimeBy(200.milliseconds)
             userSettings.qrSize shouldBe 512
 

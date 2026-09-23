@@ -31,8 +31,6 @@ import org.robolectric.annotation.Config
 class RequestQueueSingletonTest {
     private val context = ApplicationProvider.getApplicationContext<Application>()
 
-    // Clears the production @Volatile companion instance so this test's own singleton never
-    // leaks into unrelated tests that run in the same JVM/classloader.
     private fun resetInstance() {
         val field = RequestQueueSingleton::class.java.getDeclaredField("instance")
         field.isAccessible = true

@@ -116,8 +116,6 @@ class QRBottomSheetTest {
             val view = sheet.requireView()
             view.findViewById<TextView>(R.id.title).text.toString() shouldBe "https://short.url/qr-title"
             val shown = (view.findViewById<ImageView>(R.id.qrCode).drawable as BitmapDrawable).bitmap
-            // Bitmap round-trips through a PNG-encoded byte array in the fragment's arguments, so
-            // the decoded instance is never reference-equal to the original - compare content.
             shown.sameAs(qr).shouldBeTrue()
         }
     }
@@ -133,8 +131,6 @@ class QRBottomSheetTest {
         }
     }
 
-    // Package must be installed before show() so it is visible by the time onViewCreated runs -
-    // withQrBottomSheet's own show() call happens too early for that ordering.
     @Test
     fun `onViewCreated shows quick share when Samsung Quick Share is available`() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -156,9 +152,6 @@ class QRBottomSheetTest {
         }
     }
 
-    // createQRBottomSheet always supplies a non-null Bitmap, so a bare QRBottomSheet() with no
-    // arguments is the only way to reach a null qr: bundleValue<ByteArray>(KEY_QR) returns null
-    // against an absent arguments Bundle, same as bundleValue(KEY_TITLE, "") falling back to "".
     @Test
     fun `onViewCreated with no bundled qr leaves the title bound and skips wiring the qr buttons`() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->

@@ -34,9 +34,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-// Exercises the real Room-generated DAO/database implementation against an in-memory database -
-// every other test in this module mocks URLDao, so its own generated implementation (queries,
-// converters, migrations wiring) is only ever compiled, never run, without this test.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class URLDaoTest {

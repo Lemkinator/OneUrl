@@ -342,10 +342,6 @@ class URLActivityTest {
         }
     }
 
-    // Dagd's getURLClickCount resolves synchronously (see the class-level comment), so the
-    // isRefreshing=true render is a same-frame transient that settles back to false before this
-    // click returns - it cannot be observed here without a provider that leaves the request
-    // in flight, which would require real Volley/network I/O this suite must not depend on.
     @Test
     fun `urlVisitsRefreshButton click re-invokes refreshVisitCount`() {
         mockkObject(Dagd)
@@ -365,9 +361,6 @@ class URLActivityTest {
         }
     }
 
-    // Gg has no getURLClickCount override, so the interface default (`callback(null)`) resolves
-    // synchronously and visitCount stays null forever - a stable end state, unlike Dagd's transient
-    // isRefreshingVisits=true render noted above.
     @Test
     fun `visit views stay hidden when the provider never returns a visit count`() {
         val url = seededUrl.copy(shortURL = "https://gg.gg/no-visit-count", shortURLProvider = Gg)

@@ -154,11 +154,11 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeslSeekBar) {
-                    // no-op: only the live progress value (onProgressChanged) is needed
+                    // no-op
                 }
 
                 override fun onStopTrackingTouch(seekBar: SeslSeekBar) {
-                    // no-op: only the live progress value (onProgressChanged) is needed
+                    // no-op
                 }
             },
         )

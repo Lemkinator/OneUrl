@@ -257,9 +257,6 @@ class AddURLActivityTest {
 
     @Test
     fun `renderLoadingState shows progress and disables inputs while a lookup is pending`() {
-        // getURL is resolved with a blank-alias match (not emptyList()) so the coroutine takes the
-        // AlreadyShortened early-return - the only path that reaches isLoading=false without a real
-        // Dispatchers.Default hop through the (unmocked) Room-backed AddURLUseCase.
         val pending = CompletableDeferred<List<URL>>()
         coEvery { getURL(any<ShortURLProvider>(), any()) } coAnswers { pending.await() }
 

@@ -27,7 +27,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Confirms end-to-end Hilt wiring: [UserSettings] resolves through the real dependency graph on-device. */
 @HiltAndroidTest
 @LargeTest
 @RunWith(AndroidJUnit4::class)

@@ -30,11 +30,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-// AppDatabaseMigrationTest (androidTest) proves the SQL migration is correct but runs outside
-// Kover's testDebugUnitTest measurement. This builds a real file-backed database through
-// Room.databaseBuilder instead of the in-memory builder every other JVM test uses, so opening it
-// exercises the generated open/upgrade/validate path (AppDatabase_Impl's open delegate, both
-// generated AutoMigration_*_Impl classes) that an in-memory build-at-latest-version never runs.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class AppDatabaseAutoMigrationTest {

@@ -100,12 +100,6 @@ class GenerateQRCodeActivityTest {
         }
     }
 
-    // qrCode is populated synchronously in the ViewModel's init block (real, non-nullable
-    // GenerateQRCodeUseCase), and the Activity only reads viewModel.state.value (which forces
-    // that init) from onOptionsItemSelected. There is no reachable path where the save-as-image
-    // branch runs with state.qrCode == null, so that half of `state.qrCode?.let { ... }` is
-    // intentionally left untested.
-
     @Test
     fun `export result OK with a qr code saves the bitmap`() {
         withActivity { activity ->

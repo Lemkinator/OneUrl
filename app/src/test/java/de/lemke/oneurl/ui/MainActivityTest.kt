@@ -98,9 +98,6 @@ class MainActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    // Default answer delegates to a real ObserveURLsUseCase backed by the injected repository, so
-    // every test other than the isUIReady ones below gets full real search/filterFavorite
-    // reactivity. Only overridden where the emission itself (not its content) is what's under test.
     @BindValue
     @JvmField
     val observeURLsStub: ObserveURLsUseCase = mockk()
@@ -123,8 +120,6 @@ class MainActivityTest {
         }
     }
 
-    // onCreate / onboarding
-
     @Test
     fun `onCreate onboarding required finishes the activity`() {
         settings.lastVersionCode = -1
@@ -132,8 +127,6 @@ class MainActivityTest {
             scenario.state shouldBe Lifecycle.State.DESTROYED
         }
     }
-
-    // onSaveInstanceState
 
     @Test
     fun `onSaveInstanceState without initialized binding returns early`() {
@@ -165,8 +158,6 @@ class MainActivityTest {
         }
     }
 
-    // onNewIntent
-
     @Test
     fun `onNewIntent action search sets the query on the active search view`() {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
@@ -194,8 +185,6 @@ class MainActivityTest {
             controller.destroy()
         }
     }
-
-    // onCreateOptionsMenu / onPrepareOptionsMenu / onOptionsItemSelected
 
     @Test
     fun `onPrepareOptionsMenu shows only-show-favorites item while filter is off`() {
@@ -267,8 +256,6 @@ class MainActivityTest {
             }
         }
     }
-
-    // checkIntent
 
     @Test
     fun `checkIntent action send with text opens AddURLActivity with the shared text`() {
@@ -364,8 +351,6 @@ class MainActivityTest {
         }
     }
 
-    // startSearch
-
     @Test
     fun `startSearch onStart hides the fab and pre-fills the query from settings`() {
         settings.search = "prefill"
@@ -443,8 +428,6 @@ class MainActivityTest {
             scenario.onActivity { activity -> activity.findViewById<View>(R.id.addFab).isVisible.shouldBeTrue() }
         }
     }
-
-    // initDrawer
 
     @Test
     fun `initDrawer leaks menu item visibility matches debug build config`() {
@@ -537,8 +520,6 @@ class MainActivityTest {
         }
     }
 
-    // initRecycler
-
     @Test
     @Config(sdk = [29])
     fun `initRecycler below API R skips imm bottom padding`() {
@@ -552,8 +533,6 @@ class MainActivityTest {
             }
         }
     }
-
-    // updateRecyclerView
 
     @Test
     fun `updateRecyclerView shows no-urls message when the list is empty`() {
@@ -605,8 +584,6 @@ class MainActivityTest {
         }
     }
 
-    // collectEvents
-
     @Test
     fun `collectEvents NewItemAdded scrolls the list back to the top`() {
         repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
@@ -632,8 +609,6 @@ class MainActivityTest {
         }
     }
 
-    // collectState (isUIReady early return)
-
     // common-utils' configureCommonUtilsSplashScreen keeps the real splash screen on-screen via a
     // pre-draw block for as long as !isUIReady; ActivityScenario.launch's visible() transition
     // idles the main looper until that resolves, which never happens with an ever-empty flow -
@@ -649,15 +624,11 @@ class MainActivityTest {
                 .resume()
         try {
             awaitMainIdle()
-            // updateRecyclerView (which would overwrite this) never runs while isUIReady is false,
-            // so noEntryView keeps widget_no_entry_view.xml's own design-time placeholder text.
             controller.get().noEntryView().text shouldBe controller.get().getString(commonutilsR.string.commonutils_no_results_found)
         } finally {
             controller.pause().stop().destroy()
         }
     }
-
-    // setupOnClickListeners
 
     @Test
     fun `onClickItem without action mode opens URLActivity for that url`() {
@@ -682,7 +653,6 @@ class MainActivityTest {
             scenario.onActivity { activity -> activity.longClickFirstItem() }
             awaitMainIdle()
             scenario.onActivity { activity -> activity.findViewById<View>(R.id.addFab).isVisible.shouldBeFalse() }
-            // Long-clicking again while already in action mode must not crash or relaunch it.
             scenario.onActivity { activity -> activity.longClickFirstItem() }
             awaitMainIdle()
             scenario.onActivity { activity -> activity.firstItemView().performClick() }
@@ -705,8 +675,6 @@ class MainActivityTest {
         }
     }
 
-    // configureItemSwipeAnimator
-
     @Test
     fun `configureItemSwipeAnimator swipe start adds the item to favorites`() {
         val url = seedUrl("https://da.gd/swipestart1", favorite = false)
@@ -728,8 +696,6 @@ class MainActivityTest {
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe false
         }
     }
-
-    // launchActionMode
 
     @Test
     fun `launchActionMode onSelectAll selects and unselects every item`() {
@@ -823,8 +789,6 @@ class MainActivityTest {
         }
     }
 
-    // urlAdapter (block multi-selection via S-Pen/mouse drag, bypassing onLongClickItem entirely)
-
     @Test
     fun `block multi-selection outside action mode starts it via onBlockActionMode`() {
         seedUrl("https://da.gd/blockselect1")
@@ -842,8 +806,6 @@ class MainActivityTest {
             }
         }
     }
-
-    // Helpers
 
     private fun assertNavItemStarts(
         @IdRes navItemId: Int,
