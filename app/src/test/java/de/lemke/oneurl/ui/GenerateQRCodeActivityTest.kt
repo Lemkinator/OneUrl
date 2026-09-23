@@ -20,7 +20,9 @@ import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
 import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
@@ -47,6 +49,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import java.io.File
 import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
@@ -109,14 +112,31 @@ class GenerateQRCodeActivityTest {
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+            // A fake content:// uri has no registered provider under Robolectric, so openOutputStream
+            // throws and the write never happens; a real file:// uri is actually writable.
+            val exportFile = File(activity.cacheDir, "export.png").also { it.createNewFile() }
 
             shadowActivity.receiveResult(
                 startedForResult.intent,
                 RESULT_OK,
-                Intent().apply { data = "content://de.lemke.oneurl.debug.fileprovider/export.png".toUri() },
+                Intent().apply { data = Uri.fromFile(exportFile) },
             )
 
-            ShadowToast.getLatestToast() shouldNotBe null
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
+            BitmapFactory.decodeFile(exportFile.path) shouldNotBe null
+        }
+    }
+
+    @Test
+    fun `export result OK without a destination uri shows the creating-file error toast`() {
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            val shadowActivity = shadowOf(activity)
+            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
+
+            shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
         }
     }
 
