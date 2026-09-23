@@ -342,6 +342,34 @@ class GenerateQRCodeActivityTest {
         }
     }
 
+    @Test
+    fun `confirming the foreground color picker rebinds the foreground swatch`() {
+        withActivity { activity ->
+            val foregroundButton = activity.findViewById<Button>(R.id.color_button_foreground)
+            foregroundButton.performClick()
+            val dialog = ShadowDialog.getLatestDialog() as SeslColorPickerDialog
+
+            dialog.setNewColor(0xFFEEEEEE.toInt())
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            foregroundButton.backgroundTintList?.defaultColor shouldBe 0xFFEEEEEE.toInt()
+            foregroundButton.currentTextColor shouldBe Color.BLACK
+        }
+    }
+
+    @Test
+    fun `a translucent black swatch over the light window background gets black text`() {
+        userSettings.qrRecentBackgroundColors = listOf(0x80000000.toInt())
+
+        withActivity { activity ->
+            val backgroundButton = activity.findViewById<Button>(R.id.color_button_background)
+
+            backgroundButton.backgroundTintList?.defaultColor shouldBe 0x80000000.toInt()
+            backgroundButton.currentTextColor shouldBe Color.BLACK
+        }
+    }
+
     private fun withActivity(block: (GenerateQRCodeActivity) -> Unit) {
         ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario -> scenario.onActivity(block) }
     }
