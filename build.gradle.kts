@@ -103,7 +103,7 @@ subprojects {
                 targetCompatibility = JavaVersion.toVersion(libs.versions.jvmTarget.get())
             }
 
-            lint.informational += setOf("GradleDependency", "NewerVersionAvailable")
+            lint.informational += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
 
             @Suppress("UnstableApiUsage")
             testOptions.managedDevices.localDevices {
