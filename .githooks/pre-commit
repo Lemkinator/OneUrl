@@ -13,12 +13,14 @@ if [ "$autocrlf" = "true" ]; then
     exit 1
 fi
 
+gradle=${PRECOMMIT_GRADLE:-./gradlew}
+
 echo "Running static analysis..."
-./gradlew spotlessCheck detekt --quiet || {
+$gradle spotlessCheck detekt --quiet || {
     echo ""
     echo "ERROR: Static analysis failed."
-    echo "Fix formatting with: ./gradlew spotlessApply"
-    echo "Check Detekt report:  ./gradlew detekt"
+    echo "Fix formatting with: $gradle spotlessApply"
+    echo "Check Detekt report:  $gradle detekt"
     echo ""
     exit 1
 }
