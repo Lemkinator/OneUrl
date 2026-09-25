@@ -21,6 +21,7 @@ import android.app.Activity.RESULT_OK
 import android.content.ClipboardManager
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
@@ -90,9 +91,15 @@ class GenerateQRCodeActivityTest {
     }
 
     @Test
-    fun `onOptionsItemSelected handles share and returns true`() {
+    fun `onOptionsItemSelected handles share and starts the chooser with the qr code uri`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_CHOOSER
+            val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
+            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) shouldBe activity.qrCodeContentUri("QRCode.png")
+            (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
         }
     }
 

@@ -186,8 +186,9 @@ class URLActivityTest {
         withUrlActivity { activity ->
             activity.registerPngTypeProvider()
 
-            val handled = activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
-            handled.shouldBeTrue()
+            activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
+
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
             val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip
             clip?.getItemAt(0)?.uri shouldBe activity.qrCodeContentUri("QRCode.png")
         }
