@@ -7,6 +7,7 @@
     ":configMigration"
   ],
   "platformAutomerge": true,
+  "minimumReleaseAge": "3 days",
   "packageRules": [
     {
       "matchUpdateTypes": [
