@@ -201,7 +201,8 @@ jobs:
                 status=1
               fi
             done
-            expected=$({ grep -rhoE --include='*.kt' --include='*.java' '(^|[[:space:]])@(org\.junit\.)?Test\b' "$module/src/androidTest" || true; } | wc -l)
+            sources=("$module"/src/androidTest/**/*.{kt,java})
+            expected=$(perl -0777 -ne 's{"(?:\\.|[^"\\\n])*"|/\*.*?\*/|//[^\n]*}{}gs; $n += () = /@(?:org\.junit\.)?Test\b/g; END { print $n + 0 }' "${sources[@]}" </dev/null)
             echo "$module: Executed $executed instrumented tests (expected ≥ $expected)"
             if [ "$executed" -eq 0 ] || [ "$executed" -lt "$expected" ]; then
               echo "::error::$module: the managed device ran $executed instrumented tests, expected at least $expected"
