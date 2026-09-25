@@ -27,7 +27,6 @@ import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.test.core.app.ActivityScenario
@@ -36,6 +35,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
@@ -51,13 +51,12 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import io.mockk.unmockkObject
 import io.mockk.verify
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -76,7 +75,7 @@ import de.lemke.commonutils.R as commonutilsR
 // never touches the network Robolectric has no access to.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
-@Config(application = HiltTestApplication::class, sdk = [36])
+@Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
 class URLActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -104,6 +103,9 @@ class URLActivityTest {
             )
         runBlocking { urlRepository.addURL(seededUrl) }
     }
+
+    @After
+    fun tearDown() = resetFileProviderCache()
 
     @Test
     fun `onOptionsItemSelected opens the mapped scan URL and returns true`() {
@@ -180,16 +182,13 @@ class URLActivityTest {
 
     @Test
     fun `long-clicking the qr imageview copies it to the clipboard`() {
-        mockkStatic(FileProvider::class)
-        every { FileProvider.getUriForFile(any(), any(), any()) } returns "content://de.lemke.test.fileprovider/QRCode.png".toUri()
-        try {
-            withUrlActivity { activity ->
-                val handled = activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
-                handled.shouldBeTrue()
-                verify { FileProvider.getUriForFile(any(), any(), any()) }
-            }
-        } finally {
-            unmockkAll()
+        withUrlActivity { activity ->
+            activity.registerPngTypeProvider()
+
+            val handled = activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
+            handled.shouldBeTrue()
+            val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip
+            clip?.getItemAt(0)?.uri shouldBe activity.qrCodeContentUri("QRCode.png")
         }
     }
 
