@@ -51,8 +51,6 @@ private fun Request<*>.deliverStringResponse(response: String) {
     method.invoke(this, response)
 }
 
-// Request#parseNetworkResponse is protected - tests reach it via reflection to run the request's
-// real parsing on a raw reply body.
 private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
     val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
     method.isAccessible = true
