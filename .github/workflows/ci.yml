@@ -178,6 +178,37 @@ jobs:
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      # The GMD task passes when the app process crashes before any test starts (0 tests run).
+      - name: Check instrumented test count
+        run: |
+          shopt -s globstar nullglob
+          pattern='<testsuites[^>]*[[:space:]]tests="([0-9]+)"'
+          status=0
+          for module in app; do
+            results="$module/build/outputs/androidTest-results/managedDevice/debug"
+            reports=("$results"/**/TEST-*.xml)
+            if [ ${#reports[@]} -eq 0 ]; then
+              echo "::error::$module: no TEST-*.xml report under $results"
+              status=1
+              continue
+            fi
+            executed=0
+            for report in "${reports[@]}"; do
+              if [[ $(<"$report") =~ $pattern ]]; then
+                executed=$((executed + 10#${BASH_REMATCH[1]}))
+              else
+                echo "::error::$module: no <testsuites tests=\"N\"> in $report"
+                status=1
+              fi
+            done
+            expected=$({ grep -rhoE --include='*.kt' --include='*.java' '(^|[[:space:]])@(org\.junit\.)?Test\b' "$module/src/androidTest" || true; } | wc -l)
+            echo "$module: Executed $executed instrumented tests (expected ≥ $expected)"
+            if [ "$executed" -eq 0 ] || [ "$executed" -lt "$expected" ]; then
+              echo "::error::$module: the managed device ran $executed instrumented tests, expected at least $expected"
+              status=1
+            fi
+          done
+          exit "$status"
       - name: Dump kernel log on failure
         if: failure()
         run: sudo dmesg --ctime | tail -n 200 || true
