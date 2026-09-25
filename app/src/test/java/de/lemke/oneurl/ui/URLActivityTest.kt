@@ -90,6 +90,7 @@ class URLActivityTest {
 
     @Before
     fun setup() {
+        resetFileProviderCache()
         hiltRule.inject()
         seededUrl =
             URL(

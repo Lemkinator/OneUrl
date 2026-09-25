@@ -35,11 +35,11 @@ private fun Context.fileProviderAuthority(): String =
         .single { it.name == FileProvider::class.java.name }
         .authority
 
-/** The content URI the manifest's FileProvider serves for [fileName] under the `qrCodes` cache root. */
 internal fun Context.qrCodeContentUri(fileName: String): Uri = "content://${fileProviderAuthority()}/qrCodes/$fileName".toUri()
 
-// FileProvider caches its path roots per authority in a static map, which outlives the cache dir of
-// the Robolectric test that filled it.
+// FileProvider caches its path roots per authority in the static sCache map, which outlives the cache
+// dir of the Robolectric test that filled it. The published ShadowFileProvider (common-utils 1.2.7)
+// resolves roots through sCache, so a strategy cached by an earlier test breaks later getUriForFile calls.
 internal fun resetFileProviderCache() {
     val sCache = FileProvider::class.java.getDeclaredField("sCache")
     sCache.isAccessible = true

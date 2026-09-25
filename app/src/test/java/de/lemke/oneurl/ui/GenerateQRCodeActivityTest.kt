@@ -74,6 +74,7 @@ class GenerateQRCodeActivityTest {
 
     @Before
     fun setup() {
+        resetFileProviderCache()
         hiltRule.inject()
         userSettings.qrURL = "https://example.com"
     }

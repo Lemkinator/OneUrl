@@ -75,6 +75,7 @@ class QRBottomSheetTest {
 
     @Before
     fun setup() {
+        resetFileProviderCache()
         hiltRule.inject()
         settings.bypassOobe()
     }
