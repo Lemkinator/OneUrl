@@ -41,8 +41,8 @@ sealed class VgdIsgd : ShortURLProvider {
     final override val group = "v.gd, is.gd"
     final override val aliasConfig =
         object : AliasConfig {
-            override val minAliasLength = 5
-            override val maxAliasLength = 30
+            override val minAliasLength = MIN_ALIAS_LENGTH
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
@@ -179,6 +179,11 @@ sealed class VgdIsgd : ShortURLProvider {
             Log.e(tag, "error: $e", e)
             errorCallback(GenerateURLError.Unknown())
         }
+    }
+
+    private companion object {
+        const val MIN_ALIAS_LENGTH = 5
+        const val MAX_ALIAS_LENGTH = 30
     }
 
     object Vgd : VgdIsgd() {

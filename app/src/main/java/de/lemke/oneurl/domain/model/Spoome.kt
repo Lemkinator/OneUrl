@@ -238,13 +238,18 @@ sealed class Spoome : ShortURLProvider {
         }
     }
 
+    private companion object {
+        const val MAX_ALIAS_LENGTH_DEFAULT = 15
+        const val MAX_ALIAS_LENGTH_EMOJI = 30 // returns invalid alias if more than 30
+    }
+
     object Default : Spoome() {
         override val name = "spoo.me"
         override val apiURL = "https://spoo.me/"
         override val aliasConfig =
             object : AliasConfig {
                 override val minAliasLength = 0
-                override val maxAliasLength = 15
+                override val maxAliasLength = MAX_ALIAS_LENGTH_DEFAULT
                 override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
 
                 override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
@@ -276,7 +281,7 @@ sealed class Spoome : ShortURLProvider {
         override val aliasConfig =
             object : AliasConfig {
                 override val minAliasLength = 0
-                override val maxAliasLength = 30 // returns invalid alias if more than 30
+                override val maxAliasLength = MAX_ALIAS_LENGTH_EMOJI
                 override val allowedAliasCharacters = "Emojis"
 
                 // one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters

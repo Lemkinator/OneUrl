@@ -49,8 +49,8 @@ sealed class Kurzelinks : ShortURLProvider {
     final override val group = "kurzelinks.de, 0cn.de, t1p.de, ogy.de"
     final override val aliasConfig =
         object : AliasConfig {
-            override val minAliasLength = 5
-            override val maxAliasLength = 100 // tested up to 250
+            override val minAliasLength = MIN_ALIAS_LENGTH
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
@@ -174,6 +174,11 @@ sealed class Kurzelinks : ShortURLProvider {
             Log.e(tag, "error parsing error response", e)
             errorCallback(GenerateURLError.Unknown())
         }
+    }
+
+    private companion object {
+        const val MIN_ALIAS_LENGTH = 5
+        const val MAX_ALIAS_LENGTH = 100 // tested up to 250
     }
 
     object Kurzelinksde : Kurzelinks() {

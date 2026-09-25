@@ -120,6 +120,14 @@ class URLViewModelTest : ShouldSpec(
             coVerify(exactly = 0) { updateURL(any<URL>()) }
         }
 
+        should("refreshVisitCount is a no-op when no url is loaded") {
+            val viewModel = newViewModel()
+
+            viewModel.refreshVisitCount()
+
+            coVerify(exactly = 0) { getVisitCount(any()) }
+        }
+
         should("refreshVisitCount called again after init re-triggers getVisitCount") {
             val url = testUrl()
             coEvery { getURL(url.shortURL) } returns url

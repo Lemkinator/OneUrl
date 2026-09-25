@@ -22,8 +22,11 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.spotless)
+    alias(libs.plugins.kover) apply false
+    alias(libs.plugins.android.junit) apply false
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.baselineprofile) apply false
+    alias(libs.plugins.roborazzi) apply false
     alias(libs.plugins.dependency.analysis)
 }
 
@@ -96,8 +99,8 @@ subprojects {
     plugins.withId("com.android.base") {
         project.extensions.findByType(CommonExtension::class.java)?.apply {
             compileOptions.apply {
-                sourceCompatibility = JavaVersion.VERSION_21
-                targetCompatibility = JavaVersion.VERSION_21
+                sourceCompatibility = JavaVersion.toVersion(libs.versions.jvmTarget.get())
+                targetCompatibility = JavaVersion.toVersion(libs.versions.jvmTarget.get())
             }
 
             lint.informational += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")

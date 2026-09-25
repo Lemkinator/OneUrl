@@ -39,14 +39,17 @@ errors:
 400: Short URL already taken. Pick a different one.
 400: Custom short URL contained invalid characters.     //should not happen, checked before
  */
+
 object Dagd : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 10
+
     override val name = "da.gd"
     override val baseURL = "https://da.gd"
     override val apiURL = "$baseURL/shorten"
     override val aliasConfig =
         object : AliasConfig {
             override val minAliasLength = 0
-            override val maxAliasLength = 10
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))

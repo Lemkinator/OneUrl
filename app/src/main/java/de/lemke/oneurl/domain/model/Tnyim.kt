@@ -117,6 +117,9 @@ https://tny.im/yourls-api.php?action=url-stats&format=json&shorturl=a54321
 }
 */
 object Tnyim : ShortURLProvider {
+    private const val MIN_ALIAS_LENGTH = 5
+    private const val MAX_ALIAS_LENGTH = 100 // no info, tested up to 100
+
     override val enabled = false
     override val name = "tny.im"
     override val baseURL = "https://tny.im"
@@ -124,8 +127,8 @@ object Tnyim : ShortURLProvider {
     override val termsURL = "$baseURL/rules.php"
     override val aliasConfig =
         object : AliasConfig {
-            override val minAliasLength = 5
-            override val maxAliasLength = 100 // no info, tested up to 100
+            override val minAliasLength = MIN_ALIAS_LENGTH
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, -"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9-]+"))

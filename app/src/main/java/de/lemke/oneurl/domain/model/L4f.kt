@@ -62,14 +62,17 @@ error (still return 200):
 }
  */
 object L4f : ShortURLProvider {
+    private const val MIN_ALIAS_LENGTH = 3
+    private const val MAX_ALIAS_LENGTH = 100
+
     override val enabled = false // redirects to apioption.com ??
     override val name = "l4f.com"
     override val baseURL = "https://l4f.com"
     override val apiURL = "$baseURL/shorten"
     override val aliasConfig =
         object : AliasConfig {
-            override val minAliasLength = 3
-            override val maxAliasLength = 100
+            override val minAliasLength = MIN_ALIAS_LENGTH
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9]+"))

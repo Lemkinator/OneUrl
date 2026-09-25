@@ -26,6 +26,7 @@ import dagger.hilt.testing.TestInstallIn
 import de.lemke.oneurl.data.database.AppDatabase
 import de.lemke.oneurl.data.database.URLDao
 import de.lemke.oneurl.di.PersistenceModule
+import java.util.concurrent.Executor
 import javax.inject.Singleton
 
 @Module
@@ -39,6 +40,8 @@ object TestPersistenceModule {
         Room
             .inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
+            .setQueryExecutor(Executor { it.run() })
+            .setTransactionExecutor(Executor { it.run() })
             .build()
 
     @Provides

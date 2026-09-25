@@ -17,6 +17,7 @@
 package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
@@ -28,9 +29,13 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GenerateQRCodeViewModelTest : ShouldSpec(
@@ -77,6 +82,17 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             verify(exactly = 1) {
                 generateQRCode("https://example.com", 256, 0x111111, 0x333333, true, true, false, false)
             }
+        }
+
+        should("init falls back to default colors when no recent colors are persisted") {
+            userSettings.qrRecentForegroundColors = emptyList()
+            userSettings.qrRecentBackgroundColors = emptyList()
+
+            val viewModel = newViewModel()
+            val state = viewModel.state.value
+
+            state.foregroundColor shouldBe Color.BLACK
+            state.backgroundColor shouldBe Color.WHITE
         }
 
         should("setUrl updates state.url immediately and regenerates the QR code") {
@@ -181,6 +197,60 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
 
             viewModel.state.value.recentBackgroundColors shouldBe listOf(0x7, 0x1, 0x2, 0x3, 0x4, 0x5)
             userSettings.qrRecentBackgroundColors shouldBe listOf(0x7, 0x1, 0x2, 0x3, 0x4, 0x5)
+        }
+
+        should("setUrl persists the debounced value to userSettings.qrURL once the delay elapses") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setUrl("https://debounced.example.com")
+            dispatcher.scheduler.advanceUntilIdle()
+
+            userSettings.qrURL shouldBe "https://debounced.example.com"
+        }
+
+        should("setUrl cancels the previous debounce job so only the latest value is ever persisted") {
+            userSettings.qrURL = "https://initial.example.com"
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setUrl("https://first.example.com")
+            dispatcher.scheduler.advanceTimeBy(100.milliseconds)
+            viewModel.setUrl("https://second.example.com")
+            dispatcher.scheduler.advanceTimeBy(200.milliseconds)
+            userSettings.qrURL shouldBe "https://initial.example.com"
+
+            dispatcher.scheduler.advanceUntilIdle()
+            userSettings.qrURL shouldBe "https://second.example.com"
+        }
+
+        should("setSize persists the debounced value to userSettings.qrSize once the delay elapses") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setSize(900)
+            dispatcher.scheduler.advanceUntilIdle()
+
+            userSettings.qrSize shouldBe 900
+        }
+
+        should("setSize cancels the previous debounce job so only the latest value is ever persisted") {
+            userSettings.qrSize = 512
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val viewModel = newViewModel()
+
+            viewModel.setSize(700)
+            dispatcher.scheduler.advanceTimeBy(100.milliseconds)
+            viewModel.setSize(900)
+            dispatcher.scheduler.advanceTimeBy(200.milliseconds)
+            userSettings.qrSize shouldBe 512
+
+            dispatcher.scheduler.advanceUntilIdle()
+            userSettings.qrSize shouldBe 900
         }
     },
 )

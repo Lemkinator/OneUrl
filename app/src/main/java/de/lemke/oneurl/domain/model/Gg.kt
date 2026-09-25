@@ -37,6 +37,8 @@ response: 200: http://gg.gg/1cbz0v
 fail: 200: http://gg.gg/
  */
 object Gg : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 200 // no info, tested up to 500
+
     override val enabled: Boolean = false // offline?
     override val name = "gg.gg"
     override val baseURL = "https://gg.gg"
@@ -45,7 +47,7 @@ object Gg : ShortURLProvider {
     override val aliasConfig =
         object : AliasConfig {
             override val minAliasLength = 0
-            override val maxAliasLength = 200 // no info, tested up to 500
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, A-Z, 0-9, -, _"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))

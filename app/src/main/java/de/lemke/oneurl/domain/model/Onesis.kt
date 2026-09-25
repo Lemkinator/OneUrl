@@ -44,13 +44,15 @@ use "-", not at the beginning or end, and no consecutive hyphens.
 Short URL already exists. Please choose another one.
  */
 object Onesis : ShortURLProvider {
+    private const val MAX_ALIAS_LENGTH = 100
+
     override val enabled = false // security check failed
     override val name = "1s.is"
     override val baseURL = "https://1s.is"
     override val aliasConfig =
         object : AliasConfig {
             override val minAliasLength = 1
-            override val maxAliasLength = 100
+            override val maxAliasLength = MAX_ALIAS_LENGTH
             override val allowedAliasCharacters = "a-z, 0-9"
 
             override fun isAliasValid(alias: String) = alias.matches(Regex("[a-z0-9]+"))

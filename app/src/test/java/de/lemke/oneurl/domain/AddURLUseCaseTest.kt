@@ -21,19 +21,31 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AddURLUseCaseTest : ShouldSpec(
     {
         val urlRepository = mockk<URLRepository>()
-        val addURL = AddURLUseCase(urlRepository)
+        val dispatcher = StandardTestDispatcher()
+        val addURL = AddURLUseCase(urlRepository, dispatcher)
 
-        should("invoke delegates to urlRepository.addURL with the given url") {
+        should("invoke suspends on the injected dispatcher before delegating to urlRepository.addURL") {
             val url = testUrl(shortURL = "https://short.url/abc")
             coEvery { urlRepository.addURL(url) } returns Unit
 
-            addURL(url)
+            coroutineScope {
+                launch(Dispatchers.Unconfined) { addURL(url) }
+                coVerify(exactly = 0) { urlRepository.addURL(url) }
 
-            coVerify(exactly = 1) { urlRepository.addURL(url) }
+                dispatcher.scheduler.advanceUntilIdle()
+
+                coVerify(exactly = 1) { urlRepository.addURL(url) }
+            }
         }
     },
 )
