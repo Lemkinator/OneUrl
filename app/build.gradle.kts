@@ -301,6 +301,7 @@ kover {
                     "hilt_aggregated_deps.*",
                     "*_Impl",
                     "*_Impl\$*",
+                    "*ComposableSingletons\$*",
                 )
             }
         }
