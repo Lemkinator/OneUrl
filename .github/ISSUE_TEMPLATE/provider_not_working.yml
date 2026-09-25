@@ -1,0 +1,63 @@
+name: Provider not working
+description: A shortening provider fails in the app
+labels: [bug, provider]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One provider per issue. Please check the provider's own website first:
+        the app can't fix an outage on the provider's side.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you report
+      options:
+        - label: I use the latest version of the app.
+          required: true
+        - label: I searched the existing issues, including closed ones.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown on the app's About screen.
+      placeholder: e.g. 1.7.6
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider
+      description: Exactly one provider, as the app names it.
+      placeholder: e.g. da.gd
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL you tried to shorten
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Exact error message
+      description: Copy the text the app shows.
+    validations:
+      required: true
+  - type: dropdown
+    id: website
+    attributes:
+      label: Does shortening work on the provider's own website?
+      options:
+        - "Yes"
+        - "No"
+        - Not tested
+    validations:
+      required: true
+  - type: upload
+    id: files
+    attributes:
+      label: Screenshot
+    validations:
+      accept: ".png,.jpg,.jpeg,.gif,.webp"
