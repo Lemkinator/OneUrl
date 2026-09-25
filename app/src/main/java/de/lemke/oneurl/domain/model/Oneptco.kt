@@ -20,6 +20,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
+import com.android.volley.ParseError
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
@@ -164,6 +165,7 @@ object Oneptco : ShortURLProvider {
             Log.e(tag, "$statusCode: message: ${error.message} data: $data")
             when {
                 error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                error is ParseError -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 statusCode == null -> errorCallback(GenerateURLError.Unknown())
                 data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                 statusCode == HttpStatusCode.NOT_FOUND -> errorCallback(GenerateURLError.Unknown(statusCode))

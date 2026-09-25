@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
+import com.android.volley.ParseError
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -163,6 +164,7 @@ sealed class Tly : ShortURLProvider {
             Log.e(tag, "response message: $message")
             when {
                 error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                error is ParseError -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 statusCode == null -> errorCallback(GenerateURLError.Unknown())
                 statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))

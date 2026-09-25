@@ -23,6 +23,7 @@ import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.Response
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
@@ -56,6 +57,14 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
     val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
     method.isAccessible = true
     method.invoke(this, response)
+}
+
+// Request#parseNetworkResponse is protected - tests reach it via reflection to run the request's
+// real parsing on a raw reply body.
+private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
+    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
+    method.isAccessible = true
+    return method.invoke(this, response) as Response<*>
 }
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
@@ -120,13 +129,14 @@ class TnyimTest {
     }
 
     @Test
-    fun `fails with Unknown when the response is not valid json`() {
+    fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
         val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("not json")
+        val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
+        req.deliverStringResponse(parsed.result as String)
 
-        error shouldBe GenerateURLError.Unknown()
+        error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://tny.im")
     }
 
     @Test
