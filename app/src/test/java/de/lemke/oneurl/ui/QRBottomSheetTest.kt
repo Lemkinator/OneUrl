@@ -19,6 +19,7 @@ package de.lemke.oneurl.ui
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.Intent
+import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.content.pm.PackageInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -27,8 +28,6 @@ import android.os.Looper
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.test.core.app.ActivityScenario
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -36,6 +35,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.data.SettingsRepository
@@ -45,11 +45,9 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import java.io.File
 import javax.inject.Inject
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -67,7 +65,7 @@ import de.lemke.commonutils.R as commonutilsR
 // quickShareButton stays at its XML default (gone) in every test here.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
-@Config(application = HiltTestApplication::class, sdk = [36])
+@Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
 class QRBottomSheetTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -77,9 +75,13 @@ class QRBottomSheetTest {
 
     @Before
     fun setup() {
+        resetFileProviderCache()
         hiltRule.inject()
         settings.bypassOobe()
     }
+
+    @After
+    fun tearDown() = resetFileProviderCache()
 
     private fun freshQrBitmap(): Bitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
 
@@ -170,17 +172,14 @@ class QRBottomSheetTest {
 
     @Test
     fun `share button click starts the share chooser`() {
-        mockkStatic(FileProvider::class)
-        every { FileProvider.getUriForFile(any(), any(), any()) } returns "content://de.lemke.test.fileprovider/QRCode.png".toUri()
-        try {
-            withQrBottomSheet { activity, sheet ->
-                sheet.requireView().findViewById<View>(R.id.shareButton).performClick()
+        withQrBottomSheet { activity, sheet ->
+            sheet.requireView().findViewById<View>(R.id.shareButton).performClick()
 
-                val startedIntent = shadowOf(activity).nextStartedActivity
-                startedIntent.action shouldBe Intent.ACTION_CHOOSER
-            }
-        } finally {
-            unmockkAll()
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_CHOOSER
+            val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
+            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) shouldBe activity.qrCodeContentUri("QRCode.png")
+            (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
         }
     }
 

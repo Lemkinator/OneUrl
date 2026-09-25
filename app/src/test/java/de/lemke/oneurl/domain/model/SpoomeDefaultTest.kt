@@ -21,6 +21,7 @@ import android.content.Context
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.Response
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -47,6 +48,12 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
     val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
     method.isAccessible = true
     method.invoke(this, response)
+}
+
+private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
+    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
+    method.isAccessible = true
+    return method.invoke(this, response) as Response<*>
 }
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
@@ -110,6 +117,17 @@ class SpoomeDefaultTest {
         req.deliverError(NoConnectionError())
 
         error shouldBe GenerateURLError.ServiceOffline
+    }
+
+    @Test
+    fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+
+        val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
+        req.deliverError(parsed.error)
+
+        error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://spoo.me")
     }
 
     @Test

@@ -18,8 +18,10 @@ package de.lemke.oneurl.ui
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
+import android.content.ClipboardManager
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
@@ -32,13 +34,12 @@ import android.widget.Button
 import android.widget.CompoundButton
 import android.widget.EditText
 import androidx.appcompat.widget.SeslSeekBar
-import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.picker3.app.SeslColorPickerDialog
 import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import io.kotest.matchers.booleans.shouldBeFalse
@@ -47,10 +48,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import java.io.File
 import javax.inject.Inject
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -65,7 +65,7 @@ import de.lemke.commonutils.R as commonutilsR
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
-@Config(application = HiltTestApplication::class, sdk = [36])
+@Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
 class GenerateQRCodeActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -75,9 +75,13 @@ class GenerateQRCodeActivityTest {
 
     @Before
     fun setup() {
+        resetFileProviderCache()
         hiltRule.inject()
         userSettings.qrURL = "https://example.com"
     }
+
+    @After
+    fun tearDown() = resetFileProviderCache()
 
     @Test
     fun `onOptionsItemSelected handles save-as-image and returns true`() {
@@ -87,9 +91,15 @@ class GenerateQRCodeActivityTest {
     }
 
     @Test
-    fun `onOptionsItemSelected handles share and returns true`() {
+    fun `onOptionsItemSelected handles share and starts the chooser with the qr code uri`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.action shouldBe Intent.ACTION_CHOOSER
+            val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
+            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) shouldBe activity.qrCodeContentUri("QRCode.png")
+            (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
         }
     }
 
@@ -149,17 +159,15 @@ class GenerateQRCodeActivityTest {
 
     @Test
     fun `clicking the qr code image copies it to the clipboard`() {
-        mockkStatic(FileProvider::class)
-        every { FileProvider.getUriForFile(any(), any(), any()) } returns "content://de.lemke.test.fileprovider/QRCode.png".toUri()
-        try {
-            withActivity { activity ->
-                activity.findViewById<View>(R.id.qr_code).performClick()
-                shadowOf(Looper.getMainLooper()).idle()
+        withActivity { activity ->
+            activity.registerPngTypeProvider()
 
-                ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
-            }
-        } finally {
-            unmockkAll()
+            activity.findViewById<View>(R.id.qr_code).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
+            val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip
+            clip?.getItemAt(0)?.uri shouldBe activity.qrCodeContentUri("QRCode.png")
         }
     }
 

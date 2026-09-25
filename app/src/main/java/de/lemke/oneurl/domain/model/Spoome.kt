@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
+import com.android.volley.ParseError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
@@ -178,6 +179,10 @@ sealed class Spoome : ShortURLProvider {
             when {
                 error is NoConnectionError -> {
                     errorCallback(GenerateURLError.ServiceOffline)
+                }
+
+                error is ParseError -> {
+                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 }
 
                 statusCode == null -> {

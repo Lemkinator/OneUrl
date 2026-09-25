@@ -22,8 +22,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.Response
 import com.android.volley.VolleyError
-import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
@@ -49,17 +49,10 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
     method.invoke(this, response)
 }
 
-// VolleyError has no constructor taking both a NetworkResponse and a message/cause - real Volley
-// (e.g. a ParseError from malformed JSON) can still surface both, so tests reach it via reflection.
-private fun volleyErrorWithMessage(
-    response: NetworkResponse,
-    message: String,
-): VolleyError {
-    val error = VolleyError(response)
-    val field = Throwable::class.java.getDeclaredField("detailMessage")
-    field.isAccessible = true
-    field.set(error, message)
-    return error
+private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
+    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
+    method.isAccessible = true
+    return method.invoke(this, response) as Response<*>
 }
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
@@ -181,18 +174,28 @@ class IsgdTest {
     }
 
     @Test
-    fun `error Custom with a localized message on JSONException`() {
+    fun `error ServiceTemporarilyUnavailable when the reply is not JSON`() {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(
-            volleyErrorWithMessage(
-                NetworkResponse(500, "some data".toByteArray(), false, 0L, emptyList()),
-                "org.json.JSONException: Unterminated object",
-            ),
-        )
+        val parsed =
+            req.parseResponse(
+                NetworkResponse(200, "Error, database insert failed".toByteArray(), false, 0L, emptyList()),
+            )
+        req.deliverError(parsed.error)
 
-        error shouldBe GenerateURLError.Custom(500, context.getString(R.string.error_vgd_isgd))
+        error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://is.gd")
+    }
+
+    @Test
+    fun `error ServiceTemporarilyUnavailable when the reply is a JSON array`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        val parsed = req.parseResponse(NetworkResponse(200, "[]".toByteArray(), false, 0L, emptyList()))
+        req.deliverError(parsed.error)
+
+        error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://is.gd")
     }
 
     @Test
@@ -201,21 +204,6 @@ class IsgdTest {
         val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
-
-        error shouldBe GenerateURLError.Custom(500, "server exploded")
-    }
-
-    @Test
-    fun `error Custom with the raw body when the message does not mention JSONException`() {
-        var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
-
-        req.deliverError(
-            volleyErrorWithMessage(
-                NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList()),
-                "org.json.JSONArray: some other message",
-            ),
-        )
 
         error shouldBe GenerateURLError.Custom(500, "server exploded")
     }

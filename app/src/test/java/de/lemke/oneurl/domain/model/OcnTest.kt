@@ -86,13 +86,13 @@ class OcnTest {
     }
 
     @Test
-    fun `create request fails with Unknown when the response is not valid json`() {
+    fun `create request fails with ServiceTemporarilyUnavailable when the response is not valid json`() {
         var error: GenerateURLError? = null
         val req = Kurzelinks.Ocn.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverStringResponse("not json")
 
-        error shouldBe GenerateURLError.Unknown()
+        error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://0cn.de")
     }
 
     @Test

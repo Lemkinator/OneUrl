@@ -173,7 +173,7 @@ object Lstu : ShortURLProvider {
                     }
                 } catch (e: JSONException) {
                     Log.e(tag, "error parsing create response", e)
-                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
+                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 }
             },
             { error ->
