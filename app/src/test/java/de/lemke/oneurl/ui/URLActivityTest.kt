@@ -56,7 +56,6 @@ import io.mockk.verify
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -90,7 +89,6 @@ class URLActivityTest {
 
     @Before
     fun setup() {
-        resetFileProviderCache()
         hiltRule.inject()
         seededUrl =
             URL(
@@ -104,9 +102,6 @@ class URLActivityTest {
             )
         runBlocking { urlRepository.addURL(seededUrl) }
     }
-
-    @After
-    fun tearDown() = resetFileProviderCache()
 
     @Test
     fun `onOptionsItemSelected opens the mapped scan URL and returns true`() {
@@ -184,13 +179,14 @@ class URLActivityTest {
     @Test
     fun `long-clicking the qr imageview copies it to the clipboard`() {
         withUrlActivity { activity ->
-            activity.registerPngTypeProvider()
-
             activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
-            val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip
-            clip?.getItemAt(0)?.uri shouldBe activity.qrCodeContentUri("QRCode.png")
+            val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip!!
+            val uri = activity.qrCodeContentUri("QRCode.png")
+            clip.getItemAt(0).uri shouldBe uri
+            clip.description.getMimeType(0) shouldBe "image/png"
+            activity.contentResolver.getType(uri) shouldBe "image/png"
         }
     }
 
