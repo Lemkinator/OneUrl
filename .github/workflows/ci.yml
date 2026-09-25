@@ -202,7 +202,7 @@ jobs:
               fi
             done
             sources=("$module"/src/androidTest/**/*.{kt,java})
-            expected=$(perl -0777 -ne 's{"(?:\\.|[^"\\\n])*"|(/\*(?:(?1)|.)*?\*/)|//[^\n]*}{}gs; $n += () = /@(?:org\.junit\.)?Test\b/g; END { print $n + 0 }' "${sources[@]}" </dev/null)
+            expected=$(perl -0777 -ne 's{"""[\s\S]*?"{3,}|"(?:\\.|[^"\\\n])*"|(/\*(?:(?1)|.)*?\*/)|//[^\n]*}{}gs; $n += () = /@(?:org\.junit\.)?Test\b/g; END { print $n + 0 }' "${sources[@]}" </dev/null)
             echo "$module: Executed $executed instrumented tests (expected ≥ $expected)"
             if [ "$executed" -eq 0 ] || [ "$executed" -lt "$expected" ]; then
               echo "::error::$module: the managed device ran $executed instrumented tests, expected at least $expected"
