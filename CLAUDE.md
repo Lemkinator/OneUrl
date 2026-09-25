@@ -87,7 +87,8 @@ directly.
 
 1. Create `app/src/main/java/de/lemke/oneurl/domain/model/ProviderName.kt` implementing `ShortURLProvider`.
 2. Implement `getCreateRequest()` using Volley — follow the pattern in `Dagd.kt` (parse error body strings for specific `GenerateURLError`
-   subtypes). A `JsonObjectRequest` provider maps `ParseError` (a non-JSON reply) to `ServiceTemporarilyUnavailable(baseURL)`.
+   subtypes). A provider maps a 2xx body that is not a JSON object to `ServiceTemporarilyUnavailable(baseURL)`: the `ParseError` of a
+   `JsonObjectRequest`, or the `JSONException` from `JSONObject(response)` in a `StringRequest` listener.
 3. Add to the `provider` list in `ShortURLProviderCompanion` in `ShortURLProvider.kt`.
 4. If the provider supports aliases, implement `AliasConfig`.
 

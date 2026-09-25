@@ -22,6 +22,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.Response
 import com.android.volley.VolleyError
 import de.lemke.commonutils.ui.utils.withoutHttps
 import de.lemke.oneurl.BuildConfig
@@ -48,6 +49,14 @@ private fun Request<*>.deliverStringResponse(response: String) {
     val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
     method.isAccessible = true
     method.invoke(this, response)
+}
+
+// Request#parseNetworkResponse is protected - tests reach it via reflection to run the request's
+// real parsing on a raw reply body.
+private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
+    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
+    method.isAccessible = true
+    return method.invoke(this, response) as Response<*>
 }
 
 // Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
@@ -100,13 +109,14 @@ class KurzelinksdeTest {
     }
 
     @Test
-    fun `create request fails with Unknown when the response is not valid json`() {
+    fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
         val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("not json")
+        val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
+        req.deliverStringResponse(parsed.result as String)
 
-        error shouldBe GenerateURLError.Unknown()
+        error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://kurzelinks.de")
     }
 
     @Test

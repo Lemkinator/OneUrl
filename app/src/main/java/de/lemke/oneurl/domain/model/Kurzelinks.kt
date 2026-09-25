@@ -106,7 +106,7 @@ sealed class Kurzelinks : ShortURLProvider {
                     }
                 } catch (e: JSONException) {
                     Log.e(tag, "error parsing create response", e)
-                    errorCallback(GenerateURLError.Unknown())
+                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 }
             },
             { error -> handleKurzelinksError(tag, error, errorCallback) },
