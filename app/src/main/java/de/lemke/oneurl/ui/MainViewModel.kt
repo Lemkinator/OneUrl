@@ -63,12 +63,8 @@ class MainViewModel @Inject constructor(
                 state.update { it.copy(urls = urls, isUIReady = true) }
                 val snapshot = ScrollSnapshot(urls.mapTo(mutableSetOf()) { it.shortURL }, search.value, filterFavorite.value)
                 val previous = previousSnapshot
-                if (previous != null &&
-                    previous.search == snapshot.search &&
-                    previous.filterFavorite == snapshot.filterFavorite &&
-                    (snapshot.ids - previous.ids).isNotEmpty()
-                ) {
-                    _events.send(MainEvent.NewItemAdded)
+                if (previous != null && previous.search == snapshot.search && previous.filterFavorite == snapshot.filterFavorite) {
+                    urls.firstOrNull { it.shortURL !in previous.ids }?.let { _events.send(MainEvent.NewItemAdded(it.shortURL)) }
                 }
                 previousSnapshot = snapshot
             }
@@ -118,5 +114,7 @@ private data class ScrollSnapshot(
 )
 
 sealed class MainEvent {
-    data object NewItemAdded : MainEvent()
+    data class NewItemAdded(
+        val shortURL: String,
+    ) : MainEvent()
 }

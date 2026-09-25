@@ -18,6 +18,7 @@ package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.os.Looper
 import android.text.Spanned
 import android.text.style.TextAppearanceSpan
 import android.view.View
@@ -52,6 +53,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
@@ -199,6 +201,43 @@ class URLAdapterTest {
     fun `getItemViewType always returns 0`() {
         withAdapter { adapter, _ ->
             adapter.getItemViewType(0) shouldBe 0
+        }
+    }
+
+    @Test
+    fun `submitList runs the commit callback once the diffed list is current`() {
+        withAdapter { adapter, _ ->
+            adapter.submitList(listOf(testUrl("https://short.url/old")))
+            var positionAtCommit: Int? = null
+            adapter.submitList(listOf(testUrl("https://short.url/new"), testUrl("https://short.url/old"))) {
+                positionAtCommit = adapter.positionOf("https://short.url/new")
+            }
+            repeat(AWAIT_COMMIT_ATTEMPTS) {
+                if (positionAtCommit == null) {
+                    Thread.sleep(AWAIT_COMMIT_STEP_MS)
+                    shadowOf(Looper.getMainLooper()).idle()
+                }
+            }
+            positionAtCommit shouldBe 0
+        }
+    }
+
+    @Test
+    fun `positionOf returns NO_POSITION for a url outside the current list`() {
+        withAdapter { adapter, _ ->
+            adapter.submitList(listOf(testUrl("https://short.url/listed")))
+            adapter.positionOf("https://short.url/listed") shouldBe 0
+            adapter.positionOf("https://short.url/missing") shouldBe RecyclerView.NO_POSITION
+        }
+    }
+
+    @Test
+    fun `isCurrentList compares the committed list by content`() {
+        withAdapter { adapter, _ ->
+            val listed = testUrl("https://short.url/listed")
+            adapter.submitList(listOf(listed))
+            adapter.isCurrentList(listOf(listed)) shouldBe true
+            adapter.isCurrentList(listOf(listed.copy(favorite = true))) shouldBe false
         }
     }
 
@@ -371,5 +410,10 @@ class URLAdapterTest {
         ) {
             changeCount++
         }
+    }
+
+    private companion object {
+        const val AWAIT_COMMIT_ATTEMPTS = 200
+        const val AWAIT_COMMIT_STEP_MS = 10L
     }
 }

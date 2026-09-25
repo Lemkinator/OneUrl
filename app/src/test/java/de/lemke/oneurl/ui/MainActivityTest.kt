@@ -37,6 +37,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.descendants
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -609,6 +610,125 @@ class MainActivityTest {
         }
     }
 
+    @Test
+    fun `NewItemAdded at the top of a long list shows the new url in the first row`() {
+        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.read { it.urlList().firstVisiblePosition() } shouldBe 0
+            scenario.moveToState(Lifecycle.State.CREATED)
+            runBlocking { urlRepository.addURL(testUrl("https://da.gd/newest")) }
+            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 1 }
+            scenario.onActivity { activity ->
+                activity.urlList().firstVisiblePosition() shouldBe 0
+                activity.urlList().shortURLAt(0) shouldBe "https://da.gd/newest"
+            }
+        }
+    }
+
+    @Test
+    fun `NewItemAdded handled after the list committed the url reveals it`() {
+        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        try {
+            awaitMainIdle()
+            controller.get().urlList().scrollToPosition(PRESCROLL_ITEM_COUNT - 1)
+            awaitMainIdle()
+            controller.get().urlList().firstVisiblePosition() shouldNotBe 0
+            controller.pause().stop()
+            runBlocking { urlRepository.addURL(testUrl("https://da.gd/newest")) }
+            awaitUntil { controller.get().viewModelUrlCount() == PRESCROLL_ITEM_COUNT + 1 }
+            controller.recreate()
+            awaitMainIdle()
+            controller.get().urlList().firstVisiblePosition() shouldBe 0
+            controller.get().urlList().shortURLAt(0) shouldBe "https://da.gd/newest"
+        } finally {
+            controller.destroy()
+        }
+    }
+
+    @Test
+    fun `two urls added in a row reveal the newer one`() {
+        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.moveToState(Lifecycle.State.CREATED)
+            runBlocking { urlRepository.addURL(testUrl("https://da.gd/older")) }
+            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
+            runBlocking { urlRepository.addURL(testUrl("https://da.gd/newer")) }
+            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 2 }
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 2 }
+            scenario.onActivity { activity ->
+                activity.urlList().firstVisiblePosition() shouldBe 0
+                activity.urlList().shortURLAt(0) shouldBe "https://da.gd/newer"
+                activity.urlList().shortURLAt(1) shouldBe "https://da.gd/older"
+            }
+        }
+    }
+
+    @Test
+    fun `a new url deleted before the list shows it leaves the scroll position alone`() {
+        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { it.urlList().scrollToPosition(PRESCROLL_ITEM_COUNT - 1) }
+            awaitMainIdle()
+            val scrolledTo = scenario.read { it.urlList().firstVisiblePosition() }
+            scrolledTo shouldNotBe 0
+            scenario.moveToState(Lifecycle.State.CREATED)
+            val deleted = testUrl("https://da.gd/deleted")
+            runBlocking { urlRepository.addURL(deleted) }
+            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
+            runBlocking { urlRepository.deleteURL(deleted) }
+            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT }
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                activity.urlList().adapter?.itemCount shouldBe PRESCROLL_ITEM_COUNT
+                activity.urlList().firstVisiblePosition() shouldBe scrolledTo
+            }
+        }
+    }
+
+    @Test
+    fun `a favorites filter that hides the new url drops its reveal`() {
+        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it", favorite = it < FAVORITE_ITEM_COUNT) }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.moveToState(Lifecycle.State.CREATED)
+            runBlocking { urlRepository.addURL(testUrl("https://da.gd/hidden")) }
+            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
+            scenario.onActivity { it.onOptionsItemSelected(menuItem(R.id.menu_item_only_show_favorites)) }
+            awaitUntil { scenario.read { it.viewModelUrlCount() } == FAVORITE_ITEM_COUNT }
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == FAVORITE_ITEM_COUNT }
+            scenario.onActivity { it.onOptionsItemSelected(menuItem(R.id.menu_item_show_all)) }
+            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 1 }
+            scenario.onActivity { activity ->
+                activity.urlList().firstVisiblePosition() shouldNotBe 0
+                activity.urlList().shortURLAt(0) shouldBe null
+            }
+        }
+    }
+
+    @Test
+    fun `recreate without a new url keeps the scroll position`() {
+        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { it.urlList().scrollToPosition(PRESCROLL_ITEM_COUNT - 1) }
+            awaitMainIdle()
+            val scrolledTo = scenario.read { it.urlList().firstVisiblePosition() }
+            scrolledTo shouldNotBe 0
+            scenario.recreate()
+            awaitMainIdle()
+            scenario.read { it.urlList().firstVisiblePosition() } shouldBe scrolledTo
+        }
+    }
+
     // common-utils' configureCommonUtilsSplashScreen keeps the real splash screen on-screen via a
     // pre-draw block for as long as !isUIReady; ActivityScenario.launch's visible() transition
     // idles the main looper until that resolves, which never happens with an ever-empty flow -
@@ -859,6 +979,36 @@ class MainActivityTest {
 
     private fun MainActivity.firstItemView(): View = findViewById<RecyclerView>(R.id.urlList).findViewHolderForAdapterPosition(0)!!.itemView
 
+    private fun MainActivity.urlList(): RecyclerView = findViewById(R.id.urlList)
+
+    private fun RecyclerView.firstVisiblePosition(): Int = (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+
+    private fun RecyclerView.shortURLAt(position: Int): String? =
+        (findViewHolderForAdapterPosition(position) as URLAdapter.ViewHolder?)?.listItemTitle?.text?.toString()
+
+    private fun MainActivity.viewModelUrlCount(): Int =
+        ViewModelProvider(this)[MainViewModel::class.java]
+            .state.value.urls.size
+
+    private fun <T> ActivityScenario<MainActivity>.read(block: (MainActivity) -> T): T {
+        val result = mutableListOf<T>()
+        onActivity { result += block(it) }
+        return result.single()
+    }
+
+    // AsyncListDiffer diffs on a background executor that idle() does not wait for.
+    private fun awaitUntil(condition: () -> Boolean) {
+        repeat(AWAIT_ATTEMPTS) {
+            awaitMainIdle()
+            if (condition()) {
+                awaitMainIdle()
+                return
+            }
+            Thread.sleep(AWAIT_STEP_MS)
+        }
+        error("condition not met within ${AWAIT_ATTEMPTS * AWAIT_STEP_MS} ms")
+    }
+
     // SelectableLinearLayout overrides View.setSelected to drive its own checkbox/highlight
     // instead of the base isSelected flag (setSelectedAnimate never calls super.setSelected), so
     // the outer layout's own isSelected getter never reflects selection - listview_item.xml uses
@@ -966,6 +1116,9 @@ class MainActivityTest {
 
     private companion object {
         const val PRESCROLL_ITEM_COUNT = 30
+        const val FAVORITE_ITEM_COUNT = 3
+        const val AWAIT_ATTEMPTS = 200
+        const val AWAIT_STEP_MS = 10L
         const val UNMAPPED_NAV_ITEM_ID = 987654321
         const val UNMAPPED_ACTION_ITEM_ID = 987654322
     }

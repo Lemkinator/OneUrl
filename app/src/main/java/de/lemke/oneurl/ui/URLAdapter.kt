@@ -154,12 +154,19 @@ class URLAdapter(
         holder.cancelQrLoad()
     }
 
-    fun submitList(listItems: List<URL>) {
-        asyncListDiffer.submitList(listItems)
+    fun submitList(
+        listItems: List<URL>,
+        commitCallback: Runnable? = null,
+    ) {
+        asyncListDiffer.submitList(listItems, commitCallback)
         updateSelectableIds(listItems.map { it.id })
     }
 
     fun getItemByPosition(position: Int) = currentList[position]
+
+    fun positionOf(shortURL: String): Int = currentList.indexOfFirst { it.shortURL == shortURL }
+
+    fun isCurrentList(urls: List<URL>): Boolean = currentList == urls
 
     // QrEncoder's icon overlay is a fixed dp size regardless of requested QR size; it would swallow
     // a 55dp code, so generate at QrEncoder's default size and downscale instead.
