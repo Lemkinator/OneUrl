@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain.model
 import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
+import com.android.volley.ParseError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
@@ -53,7 +54,6 @@ sealed class VgdIsgd : ShortURLProvider {
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     fun getVgdIsgdCreateRequest(
-        context: Context,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -67,7 +67,7 @@ sealed class VgdIsgd : ShortURLProvider {
             url,
             null,
             { response -> handleResponse(tag, response, successCallback, errorCallback) },
-            { error -> handleError(tag, context, error, errorCallback) },
+            { error -> handleError(tag, error, errorCallback) },
         )
     }
 
@@ -139,7 +139,6 @@ sealed class VgdIsgd : ShortURLProvider {
     @Suppress("TooGenericExceptionCaught")
     private fun handleError(
         tag: String,
-        context: Context,
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
@@ -156,19 +155,16 @@ sealed class VgdIsgd : ShortURLProvider {
                     errorCallback(GenerateURLError.ServiceOffline)
                 }
 
+                error is ParseError -> {
+                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                }
+
                 statusCode == null -> {
                     errorCallback(GenerateURLError.Unknown())
                 }
 
                 data.isNullOrBlank() -> {
                     errorCallback(GenerateURLError.Unknown(statusCode))
-                }
-
-                error.message?.contains("JSONException", true) == true -> {
-                    // https://v.gd/create.php?format=json&url=example.com?test&shorturl=test21 -> Error, database insert failed
-                    // Update: Works fine now?
-                    Log.e(tag, "error.message == ${error.message} (probably error: database insert failed)")
-                    errorCallback(GenerateURLError.Custom(statusCode, context.getString(R.string.error_vgd_isgd)))
                 }
 
                 else -> {
@@ -229,7 +225,7 @@ sealed class VgdIsgd : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getVgdIsgdCreateRequest(context, longURL, alias, successCallback, errorCallback)
+        ): JsonObjectRequest = getVgdIsgdCreateRequest(longURL, alias, successCallback, errorCallback)
     }
 
     object Isgd : VgdIsgd() {
@@ -264,6 +260,6 @@ sealed class VgdIsgd : ShortURLProvider {
             alias: String,
             successCallback: (shortURL: String) -> Unit,
             errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getVgdIsgdCreateRequest(context, longURL, alias, successCallback, errorCallback)
+        ): JsonObjectRequest = getVgdIsgdCreateRequest(longURL, alias, successCallback, errorCallback)
     }
 }

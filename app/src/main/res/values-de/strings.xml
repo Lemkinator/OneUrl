@@ -81,7 +81,6 @@
     <string name="no_internet">Keine Internetverbindung verfügbar…</string>
     <string name="no_internet_text">Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
     <string name="error_url_not_found">URL nicht gefunden</string>
-    <string name="error_vgd_isgd">Es scheint, dass es ein Problem mit v.gd/is.gd gibt. Bitte wähle einen anderen Anbieter.</string>
     <string name="error_empty_url">Keine URL eingegeben.</string>
     <string name="error_url_already_exists">URL bereits gekürzt</string>
     <string name="error_url_already_exists_with_different_alias">Diese URL wurde bereits mit einem anderen Kürzel verkürzt. Versuche, eine andere URL zu verkürzen oder kein Kürzel anzugeben.</string>

@@ -19,8 +19,10 @@ package de.lemke.oneurl.domain.model
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
+import com.android.volley.Response
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.shouldBe
@@ -43,6 +45,14 @@ private fun Request<*>.deliverJsonResponse(response: JSONObject) {
     val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
     method.isAccessible = true
     method.invoke(this, response)
+}
+
+// Request#parseNetworkResponse is protected - tests reach it via reflection to run the request's
+// real parsing on a raw reply body.
+private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
+    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
+    method.isAccessible = true
+    return method.invoke(this, response) as Response<*>
 }
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
@@ -100,6 +110,20 @@ class VgdTest {
         req.deliverError(NoConnectionError())
 
         error shouldBe GenerateURLError.ServiceOffline
+    }
+
+    @Test
+    fun `error ServiceTemporarilyUnavailable when the reply is not JSON`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        val parsed =
+            req.parseResponse(
+                NetworkResponse(200, "Error, database insert failed".toByteArray(), false, 0L, emptyList()),
+            )
+        req.deliverError(parsed.error)
+
+        error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://v.gd")
     }
 
     @Test
