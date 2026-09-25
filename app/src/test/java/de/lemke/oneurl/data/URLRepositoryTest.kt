@@ -46,10 +46,10 @@ class URLRepositoryTest : ShouldSpec(
         val urlDao = mockk<URLDao>()
         val repository = URLRepository(urlDao)
 
-        should("observeURLs maps and reverses the dao's flow") {
+        should("observeURLs maps the dao's flow in the dao's order") {
             val oldest = testUrl("https://short.url/oldest")
             val newest = testUrl("https://short.url/newest")
-            every { urlDao.observeAll() } returns flowOf(listOf(urlToDb(oldest), urlToDb(newest)))
+            every { urlDao.observeAll() } returns flowOf(listOf(urlToDb(newest), urlToDb(oldest)))
 
             val result = repository.observeURLs().toList().single()
 
@@ -69,11 +69,11 @@ class URLRepositoryTest : ShouldSpec(
             repository.getURL("https://short.url/missing") shouldBe null
         }
 
-        should("getURL(provider, longURL) maps and reverses the dao's list") {
+        should("getURL(provider, longURL) maps the dao's list in the dao's order") {
             val provider = ShortURLProviderCompanion.default
             val oldest = testUrl("https://short.url/oldest")
             val newest = testUrl("https://short.url/newest")
-            coEvery { urlDao.getURL(provider.name, "https://example.com") } returns listOf(urlToDb(oldest), urlToDb(newest))
+            coEvery { urlDao.getURL(provider.name, "https://example.com") } returns listOf(urlToDb(newest), urlToDb(oldest))
 
             val result = repository.getURL(provider, "https://example.com")
 

@@ -32,7 +32,7 @@ interface URLDao {
     @Query("SELECT * FROM url WHERE shortURL = :shortURL")
     suspend fun getURL(shortURL: String): URLDb?
 
-    @Query("SELECT * FROM url WHERE shortURLProvider = :shortURLProvider AND longURL = :longURL")
+    @Query("SELECT * FROM url WHERE shortURLProvider = :shortURLProvider AND longURL = :longURL ORDER BY rowid DESC")
     suspend fun getURL(
         shortURLProvider: String,
         longURL: String,
@@ -41,7 +41,7 @@ interface URLDao {
     @Query("SELECT * FROM url;")
     suspend fun getAll(): List<URLDb>
 
-    @Query("SELECT * FROM url")
+    @Query("SELECT * FROM url ORDER BY rowid DESC")
     fun observeAll(): Flow<List<URLDb>>
 
     @Update

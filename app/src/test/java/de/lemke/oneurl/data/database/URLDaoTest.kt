@@ -108,6 +108,17 @@ class URLDaoTest {
         }
 
     @Test
+    fun `getURL by provider and longURL returns the newest row first`() =
+        runTest {
+            dao.insert(url("https://short.url/first", longURL = "https://match.com"))
+            dao.insert(url("https://short.url/second", longURL = "https://match.com"))
+            dao.insert(url("https://short.url/third", longURL = "https://match.com"))
+
+            dao.getURL("da.gd", "https://match.com").map { it.shortURL } shouldBe
+                listOf("https://short.url/third", "https://short.url/second", "https://short.url/first")
+        }
+
+    @Test
     fun `getAll returns every inserted row`() =
         runTest {
             val first = url("https://short.url/a")
@@ -116,6 +127,27 @@ class URLDaoTest {
             dao.insert(second)
 
             dao.getAll() shouldContainExactly listOf(first, second)
+        }
+
+    @Test
+    fun `observeAll emits the newest row first`() =
+        runTest {
+            dao.insert(url("https://short.url/first"))
+            dao.insert(url("https://short.url/second"))
+            dao.insert(url("https://short.url/third"))
+
+            dao.observeAll().first().map { it.shortURL } shouldBe
+                listOf("https://short.url/third", "https://short.url/second", "https://short.url/first")
+        }
+
+    @Test
+    fun `observeAll lists a replaced row as the newest`() =
+        runTest {
+            dao.insert(url("https://short.url/first"))
+            dao.insert(url("https://short.url/second"))
+            dao.insert(url("https://short.url/first", favorite = true))
+
+            dao.observeAll().first().map { it.shortURL } shouldBe listOf("https://short.url/first", "https://short.url/second")
         }
 
     @Test

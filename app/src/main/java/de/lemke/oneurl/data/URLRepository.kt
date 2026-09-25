@@ -28,15 +28,14 @@ import kotlinx.coroutines.flow.map
 class URLRepository @Inject constructor(
     private val urlDao: URLDao,
 ) {
-    // get reversed flow
-    fun observeURLs(): Flow<List<URL>> = urlDao.observeAll().map { it.asReversed().map(::urlFromDb) }
+    fun observeURLs(): Flow<List<URL>> = urlDao.observeAll().map { it.map(::urlFromDb) }
 
     suspend fun getURL(shortURL: String): URL? = urlDao.getURL(shortURL)?.let(::urlFromDb)
 
     suspend fun getURL(
         provider: ShortURLProvider,
         longURL: String,
-    ): List<URL> = urlDao.getURL(provider.name, longURL).asReversed().map { urlFromDb(it) }
+    ): List<URL> = urlDao.getURL(provider.name, longURL).map { urlFromDb(it) }
 
     suspend fun addURL(url: URL) = urlDao.insert(urlToDb(url))
 
