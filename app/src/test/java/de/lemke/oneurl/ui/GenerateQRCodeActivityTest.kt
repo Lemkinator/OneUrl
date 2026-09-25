@@ -50,7 +50,6 @@ import io.mockk.every
 import io.mockk.mockk
 import java.io.File
 import javax.inject.Inject
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -75,13 +74,9 @@ class GenerateQRCodeActivityTest {
 
     @Before
     fun setup() {
-        resetFileProviderCache()
         hiltRule.inject()
         userSettings.qrURL = "https://example.com"
     }
-
-    @After
-    fun tearDown() = resetFileProviderCache()
 
     @Test
     fun `onOptionsItemSelected handles save-as-image and returns true`() {
@@ -160,14 +155,15 @@ class GenerateQRCodeActivityTest {
     @Test
     fun `clicking the qr code image copies it to the clipboard`() {
         withActivity { activity ->
-            activity.registerPngTypeProvider()
-
             activity.findViewById<View>(R.id.qr_code).performClick()
             shadowOf(Looper.getMainLooper()).idle()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
-            val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip
-            clip?.getItemAt(0)?.uri shouldBe activity.qrCodeContentUri("QRCode.png")
+            val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip!!
+            val uri = activity.qrCodeContentUri("QRCode.png")
+            clip.getItemAt(0).uri shouldBe uri
+            clip.description.getMimeType(0) shouldBe "image/png"
+            activity.contentResolver.getType(uri) shouldBe "image/png"
         }
     }
 
