@@ -178,6 +178,98 @@ jobs:
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      # The GMD task can pass when the app crashes before the first test; the report then shows 0 tests or one synthetic failure.
+      - name: Check instrumented test count
+        run: |
+          shopt -s globstar nullglob
+          set -o pipefail
+          dexdumps=("$ANDROID_HOME"/build-tools/*/dexdump)
+          if [ ${#dexdumps[@]} -eq 0 ]; then
+            echo "::error::no dexdump under $ANDROID_HOME/build-tools"
+            exit 1
+          fi
+          dexdump=$(printf '%s\n' "${dexdumps[@]}" | sort -V | tail -n 1)
+          work=$(mktemp -d)
+          trap 'rm -rf "$work"' EXIT
+          header_pattern='<testsuites[^>]*>'
+          tests_pattern='[[:space:]]tests="([0-9]+)"'
+          failures_pattern='[[:space:]]failures="([0-9]+)"'
+          errors_pattern='[[:space:]]errors="([0-9]+)"'
+          status=0
+          for module in app; do
+            results="$module/build/outputs/androidTest-results/managedDevice/debug"
+            reports=("$results"/**/TEST-*.xml)
+            if [ ${#reports[@]} -eq 0 ]; then
+              echo "::error::$module: no TEST-*.xml report under $results"
+              status=1
+              continue
+            fi
+            executed=0
+            failed=0
+            for report in "${reports[@]}"; do
+              header=
+              if [[ $(<"$report") =~ $header_pattern ]]; then
+                header=${BASH_REMATCH[0]}
+              fi
+              if [[ $header =~ $tests_pattern ]]; then
+                executed=$((executed + 10#${BASH_REMATCH[1]}))
+              else
+                echo "::error::$module: no <testsuites tests=\"N\"> in $report"
+                status=1
+              fi
+              if [[ $header =~ $failures_pattern ]]; then
+                failed=$((failed + 10#${BASH_REMATCH[1]}))
+              else
+                echo "::error::$module: no <testsuites failures=\"N\"> in $report"
+                status=1
+              fi
+              if [[ $header =~ $errors_pattern ]]; then
+                failed=$((failed + 10#${BASH_REMATCH[1]}))
+              fi
+            done
+            if [ "$failed" -gt 0 ]; then
+              echo "::error::$module: the managed-device report lists $failed failed or errored instrumented tests"
+              status=1
+            fi
+            if [ "$executed" -eq 0 ]; then
+              echo "::error::$module: the managed device ran 0 instrumented tests"
+              status=1
+            fi
+            apk="$module/build/outputs/apk/androidTest/debug/${module##*/}-debug-androidTest.apk"
+            if [ ! -f "$apk" ]; then
+              echo "::error::$module: no compiled test APK at $apk"
+              status=1
+              continue
+            fi
+            dex_dir="$work/$module"
+            mkdir -p "$dex_dir"
+            if ! unzip -q "$apk" 'classes*.dex' -d "$dex_dir"; then
+              echo "::error::$module: cannot extract classes*.dex from $apk"
+              status=1
+              continue
+            fi
+            dexes=()
+            for dex in "$dex_dir"/classes*.dex; do
+              if grep -qF 'Lorg/junit/Test;' "$dex"; then
+                dexes+=("$dex")
+              fi
+            done
+            expected=0
+            if [ ${#dexes[@]} -gt 0 ] && ! expected=$("$dexdump" -a "${dexes[@]}" | awk '/^  VISIBILITY_RUNTIME Lorg\/junit\/Test;/ { n++ } END { print n + 0 }'); then
+              echo "::error::$module: $dexdump failed on the dex files of $apk"
+              status=1
+              continue
+            fi
+            echo "$module: Executed $executed instrumented tests (expected ≥ $expected from the test APK)"
+            if [ "$expected" -eq 0 ]; then
+              echo "::error::$module: no org.junit.Test methods in $apk"
+              status=1
+            elif [ "$executed" -gt 0 ] && [ "$executed" -lt "$expected" ]; then
+              echo "::error::$module: the managed device ran $executed instrumented tests, expected at least $expected"
+              status=1
+            fi
+          done
+          exit "$status"
       - name: Dump kernel log on failure
         if: failure()
         run: sudo dmesg --ctime | tail -n 200 || true
