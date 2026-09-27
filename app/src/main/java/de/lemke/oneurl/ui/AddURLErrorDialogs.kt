@@ -29,7 +29,7 @@ import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.commonutils.R as commonutilsR
 
 private const val MAX_PROVIDER_TEXT_LENGTH = 150
-private const val MARKUP_AND_LINE_BREAKS = "<{[\r\n"
+private const val MARKUP_AND_LINE_BREAKS = "<{[\r\n\u0085\u2028\u2029"
 private const val MIN_HTTP_STATUS = 100
 private const val MAX_HTTP_STATUS = 599
 private val HTTP_STATUS_RANGE = MIN_HTTP_STATUS..MAX_HTTP_STATUS

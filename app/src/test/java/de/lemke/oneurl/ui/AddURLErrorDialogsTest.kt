@@ -207,6 +207,19 @@ class AddURLErrorDialogsTest {
     }
 
     @Test
+    fun `configureFor Custom shows the status message instead of a text with a Unicode line break`() {
+        val activity = themedActivity()
+        val lineBreaks = mapOf("U+2028" to "\u2028", "U+2029" to "\u2029", "U+0085" to "\u0085")
+
+        lineBreaks.forEach { (name, lineBreak) ->
+            withClue(name) {
+                val dialog = dialogFor(activity, GenerateURLError.Custom(statusCode = 400, customMessage = "Line one${lineBreak}Line two"))
+                dialog.messageText() shouldBe withProviderHint(REJECTED_MESSAGE)
+            }
+        }
+    }
+
+    @Test
     fun `configureFor Custom shows the status message instead of a 200-character text`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 403, customMessage = "a".repeat(200)))
 
