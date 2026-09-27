@@ -19,7 +19,7 @@ package de.lemke.oneurl.domain.generateURL
 sealed class GenerateURLError {
     data class Unknown(val statusCode: Int? = null) : GenerateURLError()
 
-    data class Custom(val statusCode: Int, val customMessage: String, val customTitle: String? = null) : GenerateURLError()
+    data class Custom(val statusCode: Int, val customMessage: String) : GenerateURLError()
 
     data class ServiceTemporarilyUnavailable(val providerBaseURL: String) : GenerateURLError()
 

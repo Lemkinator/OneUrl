@@ -151,17 +151,7 @@ class AddURLErrorDialogsTest {
     }
 
     @Test
-    fun `configureFor Custom with a custom title uses it verbatim`() {
-        val activity = themedActivity()
-        val error = GenerateURLError.Custom(statusCode = 418, customMessage = "teapot", customTitle = "I'm a teapot")
-        val dialog = dialogFor(activity, error)
-
-        dialog.titleText() shouldBe error.customTitle
-        dialog.messageText() shouldBe error.customMessage
-    }
-
-    @Test
-    fun `configureFor Custom without a custom title falls back to the generic error title with the status code`() {
+    fun `configureFor Custom shows the status code in the title`() {
         val activity = themedActivity()
         val error = GenerateURLError.Custom(statusCode = 503, customMessage = "unavailable")
         val dialog = dialogFor(activity, error)

@@ -99,7 +99,7 @@ private fun AlertDialog.Builder.configureServiceUnavailable(error: GenerateURLEr
 }
 
 private fun AlertDialog.Builder.configureCustom(error: GenerateURLError.Custom) {
-    setTitle(error.customTitle ?: this.context.getString(R.string.error_custom_with_status_code, error.statusCode))
+    setTitle(this.context.getString(R.string.error_custom_with_status_code, error.statusCode))
     setMessage(error.customMessage)
 }
 
