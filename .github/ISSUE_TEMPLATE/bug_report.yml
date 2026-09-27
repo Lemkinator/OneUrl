@@ -1,0 +1,78 @@
+name: Bug report
+description: Something in the app doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill in every required field.
+        Steps to reproduce decide whether a bug can be fixed.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you report
+      options:
+        - label: I use the latest version of the app.
+          required: true
+        - label: I searched the existing issues, including closed ones.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown on the app's About screen.
+      placeholder: e.g. 1.7.6
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Install source
+      options:
+        - Google Play
+        - GitHub release APK
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: e.g. Samsung Galaxy S25
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Android and One UI version
+      description: One UI only applies to Samsung devices.
+      placeholder: e.g. Android 16, One UI 8.0
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include the exact error message if the app shows one.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: upload
+    id: files
+    attributes:
+      label: Screenshots, recordings or logs
+    validations:
+      accept: ".png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.webm,.txt,.log,.zip"
