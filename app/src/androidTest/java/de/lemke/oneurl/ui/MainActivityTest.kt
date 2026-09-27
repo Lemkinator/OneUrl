@@ -85,8 +85,7 @@ class MainActivityTest {
                 scenario.waitUntil { viewModelUrlCount() == LONG_LIST_SIZE + 1 }
                 scenario.moveToState(Lifecycle.State.RESUMED)
                 scenario.waitUntil { urlList().adapter?.itemCount == LONG_LIST_SIZE + 1 }
-                Thread.sleep(SETTLE_MS)
-                scenario.waitUntil { urlList().scrollState == RecyclerView.SCROLL_STATE_IDLE }
+                scenario.waitUntil { urlList().isSettled() }
                 scenario.onActivity { activity ->
                     (activity.urlList().layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() shouldBe 0
                     (activity.urlList().findViewHolderForAdapterPosition(0) as URLAdapter.ViewHolder?)
@@ -98,6 +97,9 @@ class MainActivityTest {
     }
 
     private fun MainActivity.urlList(): RecyclerView = findViewById(R.id.urlList)
+
+    private fun RecyclerView.isSettled(): Boolean =
+        layoutManager?.isSmoothScrolling == false && scrollState == RecyclerView.SCROLL_STATE_IDLE
 
     private fun MainActivity.viewModelUrlCount(): Int =
         ViewModelProvider(this)[MainViewModel::class.java]
@@ -129,6 +131,5 @@ class MainActivityTest {
         const val LONG_LIST_SIZE = 30
         const val WAIT_ATTEMPTS = 500
         const val WAIT_STEP_MS = 10L
-        const val SETTLE_MS = 500L
     }
 }
