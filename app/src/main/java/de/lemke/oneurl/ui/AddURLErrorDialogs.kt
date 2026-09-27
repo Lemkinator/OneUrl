@@ -57,6 +57,11 @@ internal fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
             configureProviderError(error.statusCode, providerText = null)
         }
 
+        GenerateURLError.RateLimitExceeded, GenerateURLError.InternalServerError -> {
+            setTitle(commonutilsR.string.commonutils_error)
+            setProviderErrorMessage(this.context.getString(simpleErrorMessageRes(error)))
+        }
+
         else -> {
             setTitle(commonutilsR.string.commonutils_error)
             setMessage(simpleErrorMessageRes(error))
@@ -102,7 +107,7 @@ private fun AlertDialog.Builder.configureBlacklisted(error: GenerateURLError.Bla
 
 private fun AlertDialog.Builder.configureServiceUnavailable(error: GenerateURLError.ServiceTemporarilyUnavailable) {
     setTitle(R.string.error_service_unavailable)
-    setMessage(R.string.error_service_unavailable_text)
+    setProviderErrorMessage(this.context.getString(R.string.error_service_unavailable_text))
     setPositiveButton(commonutilsR.string.commonutils_more_information) { _, _ -> this.context.openURL(error.providerBaseURL) }
 }
 
@@ -117,7 +122,11 @@ private fun AlertDialog.Builder.configureProviderError(
             else -> this.context.getString(R.string.error_with_code, statusCode)
         },
     )
-    setMessage(providerText?.trim()?.takeIf { it.isShortPlainText() } ?: this.context.getString(statusMessageRes(statusCode)))
+    setProviderErrorMessage(providerText?.trim()?.takeIf { it.isShortPlainText() } ?: this.context.getString(statusMessageRes(statusCode)))
+}
+
+private fun AlertDialog.Builder.setProviderErrorMessage(message: String) {
+    setMessage("$message\n${this.context.getString(R.string.error_try_another_provider)}")
 }
 
 private fun String.isShortPlainText(): Boolean = isNotEmpty() && length <= MAX_PROVIDER_TEXT_LENGTH && none { it in MARKUP_AND_LINE_BREAKS }

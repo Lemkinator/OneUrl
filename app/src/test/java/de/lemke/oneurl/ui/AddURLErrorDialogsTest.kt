@@ -72,6 +72,8 @@ class AddURLErrorDialogsTest {
 
     private fun AlertDialog.titleText(): String? = findViewById<TextView>(appcompatR.id.alertTitle)?.text?.toString()
 
+    private fun withProviderHint(message: String): String = "$message\nIf this keeps happening, try another provider."
+
     @Test
     fun `configureFor NoInternet sets title and message and opens wireless settings from the positive button`() {
         val activity = themedActivity()
@@ -144,7 +146,7 @@ class AddURLErrorDialogsTest {
         val dialog = dialogFor(activity, error)
 
         dialog.titleText() shouldBe activity.getString(R.string.error_service_unavailable)
-        dialog.messageText() shouldBe activity.getString(R.string.error_service_unavailable_text)
+        dialog.messageText() shouldBe withProviderHint(UNAVAILABLE_MESSAGE)
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
         idleMainLooper()
@@ -156,14 +158,14 @@ class AddURLErrorDialogsTest {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 400, customMessage = "Alias contains spaces."))
 
         dialog.titleText() shouldBe "Error (HTTP 400)"
-        dialog.messageText() shouldBe "Alias contains spaces."
+        dialog.messageText() shouldBe withProviderHint("Alias contains spaces.")
     }
 
     @Test
     fun `configureFor Custom drops the line break a plain-text body ends with`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 400, customMessage = "Invalid URL.\n"))
 
-        dialog.messageText() shouldBe "Invalid URL."
+        dialog.messageText() shouldBe withProviderHint("Invalid URL.")
     }
 
     @Test
@@ -172,21 +174,21 @@ class AddURLErrorDialogsTest {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 404, customMessage = body))
 
         dialog.titleText() shouldBe "Error (HTTP 404)"
-        dialog.messageText() shouldBe NOT_HANDLED_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(NOT_HANDLED_MESSAGE)
     }
 
     @Test
     fun `configureFor Custom shows the status message instead of a JSON object body`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 400, customMessage = """{"error":"invalid_url"}"""))
 
-        dialog.messageText() shouldBe REJECTED_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(REJECTED_MESSAGE)
     }
 
     @Test
     fun `configureFor Custom shows the status message instead of a JSON array body`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 429, customMessage = """["slow down"]"""))
 
-        dialog.messageText() shouldBe RATE_LIMIT_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(RATE_LIMIT_MESSAGE)
     }
 
     @Test
@@ -194,14 +196,14 @@ class AddURLErrorDialogsTest {
         val body = "Service Unavailable\nThe server is temporarily unable to service your request."
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 503, customMessage = body))
 
-        dialog.messageText() shouldBe UNAVAILABLE_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(UNAVAILABLE_MESSAGE)
     }
 
     @Test
     fun `configureFor Custom shows the status message instead of a 200-character text`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 403, customMessage = "a".repeat(200)))
 
-        dialog.messageText() shouldBe REFUSED_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(REFUSED_MESSAGE)
     }
 
     @Test
@@ -210,15 +212,18 @@ class AddURLErrorDialogsTest {
         val longest = "a".repeat(150)
         val tooLong = "a".repeat(151)
 
-        dialogFor(activity, GenerateURLError.Custom(statusCode = 403, customMessage = longest)).messageText() shouldBe longest
-        dialogFor(activity, GenerateURLError.Custom(statusCode = 403, customMessage = tooLong)).messageText() shouldBe REFUSED_MESSAGE
+        val longestDialog = dialogFor(activity, GenerateURLError.Custom(statusCode = 403, customMessage = longest))
+        val tooLongDialog = dialogFor(activity, GenerateURLError.Custom(statusCode = 403, customMessage = tooLong))
+
+        longestDialog.messageText() shouldBe withProviderHint(longest)
+        tooLongDialog.messageText() shouldBe withProviderHint(REFUSED_MESSAGE)
     }
 
     @Test
     fun `configureFor Custom shows the status message instead of a blank text`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 500, customMessage = " "))
 
-        dialog.messageText() shouldBe UNAVAILABLE_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(UNAVAILABLE_MESSAGE)
     }
 
     @Test
@@ -243,7 +248,7 @@ class AddURLErrorDialogsTest {
             withClue("HTTP $statusCode") {
                 val dialog = dialogFor(activity, GenerateURLError.Unknown(statusCode))
                 dialog.titleText() shouldBe "Error (HTTP $statusCode)"
-                dialog.messageText() shouldBe expectedMessage
+                dialog.messageText() shouldBe withProviderHint(expectedMessage)
             }
         }
     }
@@ -255,9 +260,9 @@ class AddURLErrorDialogsTest {
         val customDialog = dialogFor(activity, GenerateURLError.Custom(statusCode = 5, customMessage = "custom name too long"))
 
         dialog.titleText() shouldBe "Error (code 1100)"
-        dialog.messageText() shouldBe UNKNOWN_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(UNKNOWN_MESSAGE)
         customDialog.titleText() shouldBe "Error (code 5)"
-        customDialog.messageText() shouldBe "custom name too long"
+        customDialog.messageText() shouldBe withProviderHint("custom name too long")
         dialogFor(activity, GenerateURLError.Unknown(statusCode = 99)).titleText() shouldBe "Error (code 99)"
         dialogFor(activity, GenerateURLError.Unknown(statusCode = 600)).titleText() shouldBe "Error (code 600)"
     }
@@ -267,11 +272,19 @@ class AddURLErrorDialogsTest {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Unknown())
 
         dialog.titleText() shouldBe "Error"
-        dialog.messageText() shouldBe UNKNOWN_MESSAGE
+        dialog.messageText() shouldBe withProviderHint(UNKNOWN_MESSAGE)
     }
 
     @Test
-    fun `configureFor falls back to the simple error message for every remaining named error`() {
+    fun `configureFor adds the provider hint to rate limit and internal server errors`() {
+        val activity = themedActivity()
+
+        dialogFor(activity, GenerateURLError.RateLimitExceeded).messageText() shouldBe withProviderHint(RATE_LIMIT_MESSAGE)
+        dialogFor(activity, GenerateURLError.InternalServerError).messageText() shouldBe withProviderHint("Internal server error.")
+    }
+
+    @Test
+    fun `configureFor shows the simple error message without the provider hint for every remaining named error`() {
         val activity = themedActivity()
         val cases =
             mapOf(
@@ -280,9 +293,7 @@ class AddURLErrorDialogsTest {
                 GenerateURLError.InvalidURL to R.string.error_invalid_url,
                 GenerateURLError.InvalidAlias to R.string.error_invalid_alias,
                 GenerateURLError.InvalidURLOrAlias to R.string.error_invalid_url_or_alias,
-                GenerateURLError.InternalServerError to R.string.error_internal_server_error,
                 GenerateURLError.ServiceOffline to R.string.error_service_offline,
-                GenerateURLError.RateLimitExceeded to R.string.error_rate_limit_exceeded,
                 GenerateURLError.DomainNotAllowed to R.string.error_domain_not_allowed,
             )
 
