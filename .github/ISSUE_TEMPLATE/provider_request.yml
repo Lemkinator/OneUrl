@@ -1,0 +1,44 @@
+name: Provider request
+description: Suggest a new shortening provider
+labels: [enhancement, provider]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you suggest
+      options:
+        - label: I searched the existing issues, including closed ones.
+          required: true
+  - type: input
+    id: name
+    attributes:
+      label: Provider name
+      placeholder: e.g. kutt.it
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Provider website
+    validations:
+      required: true
+  - type: input
+    id: api-docs
+    attributes:
+      label: Link to the API documentation
+    validations:
+      required: true
+  - type: dropdown
+    id: api-key
+    attributes:
+      label: Does the API need an account or API key?
+      options:
+        - "Yes"
+        - "No"
+        - Don't know
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else

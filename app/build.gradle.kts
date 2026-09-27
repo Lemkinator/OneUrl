@@ -182,9 +182,6 @@ dependencies {
     implementation(libs.oneui.icons)
     implementation(libs.common.utils)
     implementation(libs.bundler)
-    // Pins kotlinx-coroutines-core for main/androidTest classpath parity - do not remove without
-    // re-checking dependencyInsight on both debugRuntimeClasspath and debugAndroidTestRuntimeClasspath
-    // (see commit 7e1ebd6).
     implementation(libs.coroutines.android)
     implementation(libs.volley)
     implementation(libs.bundles.room)
@@ -234,7 +231,6 @@ ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 spotless {
     kotlin {
         target("src/**/*.kt")
-        targetExclude("**/build/**", "**/generated/**")
         licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.kt"))
         ktlint(libs.versions.ktlint.get())
         trimTrailingWhitespace()
@@ -242,7 +238,6 @@ spotless {
     }
     format("xml") {
         target("src/**/*.xml")
-        targetExclude("**/build/**")
         licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.xml"), "(<[^!?])")
         trimTrailingWhitespace()
         endWithNewline()
@@ -301,6 +296,7 @@ kover {
                     "hilt_aggregated_deps.*",
                     "*_Impl",
                     "*_Impl\$*",
+                    "*ComposableSingletons\$*",
                 )
             }
         }
