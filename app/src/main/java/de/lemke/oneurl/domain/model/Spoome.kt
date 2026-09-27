@@ -188,10 +188,6 @@ sealed class Spoome : ShortURLProvider {
                 errorCallback(GenerateURLError.Unknown())
             }
 
-            data.isNullOrBlank() -> {
-                errorCallback(GenerateURLError.Unknown(statusCode))
-            }
-
             response?.has("UrlError") == true -> {
                 errorCallback(GenerateURLError.InvalidURL)
             }
@@ -206,6 +202,10 @@ sealed class Spoome : ShortURLProvider {
 
             statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
                 errorCallback(GenerateURLError.RateLimitExceeded)
+            }
+
+            data.isNullOrBlank() || response == null -> {
+                errorCallback(GenerateURLError.Unknown(statusCode))
             }
 
             else -> {

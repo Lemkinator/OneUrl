@@ -154,6 +154,28 @@ class ShareaholicTest {
     }
 
     @Test
+    fun `create request with an error body that is not a JSON object maps to Unknown with the status code`() {
+        listOf("""[{"code":"141"}]""", "null", """{"errors":[{"code":"141"}]""").forEach { body ->
+            var error: GenerateURLError? = null
+            val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+            req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+            error shouldBe GenerateURLError.Unknown(400)
+        }
+    }
+
+    @Test
+    fun `create request with a plain-text 429 error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(429, "Too Many Requests".toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(429)
+    }
+
+    @Test
     fun `create request with a json error body but no errors field maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
         val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
