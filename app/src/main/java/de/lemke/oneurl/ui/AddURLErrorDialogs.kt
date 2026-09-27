@@ -122,7 +122,9 @@ private fun AlertDialog.Builder.configureProviderError(
             else -> this.context.getString(R.string.error_with_code, statusCode)
         },
     )
-    setProviderErrorMessage(providerText?.trim()?.takeIf { it.isShortPlainText() } ?: this.context.getString(statusMessageRes(statusCode)))
+    setProviderErrorMessage(
+        providerText?.let { it.trim().takeIf(String::isShortPlainText) } ?: this.context.getString(statusMessageRes(statusCode)),
+    )
 }
 
 private fun AlertDialog.Builder.setProviderErrorMessage(message: String) {
