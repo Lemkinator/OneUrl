@@ -200,6 +200,13 @@ class AddURLErrorDialogsTest {
     }
 
     @Test
+    fun `configureFor Custom shows the status message instead of a text with a carriage return`() {
+        val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 400, customMessage = "Line one\rLine two"))
+
+        dialog.messageText() shouldBe withProviderHint(REJECTED_MESSAGE)
+    }
+
+    @Test
     fun `configureFor Custom shows the status message instead of a 200-character text`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 403, customMessage = "a".repeat(200)))
 
