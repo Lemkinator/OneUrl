@@ -47,7 +47,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import java.io.File
 import javax.inject.Inject
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -75,13 +74,9 @@ class QRBottomSheetTest {
 
     @Before
     fun setup() {
-        resetFileProviderCache()
         hiltRule.inject()
         settings.bypassOobe()
     }
-
-    @After
-    fun tearDown() = resetFileProviderCache()
 
     private fun freshQrBitmap(): Bitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
 
