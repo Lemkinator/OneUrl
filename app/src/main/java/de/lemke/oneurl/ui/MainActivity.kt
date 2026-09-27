@@ -41,6 +41,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView.NO_POSITION
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.di.DefaultDispatcher
@@ -109,6 +110,7 @@ class MainActivity :
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
+    private var pendingReveal: String? = null
     private val urlAdapter: URLAdapter by lazy {
         URLAdapter(
             this,
@@ -205,16 +207,30 @@ class MainActivity :
     private fun collectState() =
         collectState(viewModel.state) { state ->
             if (!state.isUIReady) return@collectState
-            urlAdapter.submitList(state.urls)
+            urlAdapter.submitList(state.urls) { revealPending() }
             updateRecyclerView(state.urls)
         }
 
     private fun collectEvents() =
         collectEvents(viewModel.events) { event ->
             when (event) {
-                is MainEvent.NewItemAdded -> binding.urlList.smoothScrollToPosition(0)
+                is MainEvent.NewItemAdded -> {
+                    pendingReveal = event.shortURL
+                    revealPending()
+                }
             }
         }
+
+    private fun revealPending() {
+        val shortURL = pendingReveal ?: return
+        val position = urlAdapter.positionOf(shortURL)
+        if (position != NO_POSITION) {
+            pendingReveal = null
+            binding.urlList.smoothScrollToPosition(position)
+        } else if (urlAdapter.isCurrentList(viewModel.state.value.urls)) {
+            pendingReveal = null
+        }
+    }
 
     private fun checkIntent() {
         val extraText = intent.getStringExtra(EXTRA_TEXT)

@@ -86,7 +86,22 @@ class MainViewModelTest : ShouldSpec(
 
             viewModel.events.test {
                 urlsFlow.value = listOf(url1, url2)
-                awaitItem() shouldBe MainEvent.NewItemAdded
+                awaitItem() shouldBe MainEvent.NewItemAdded("https://short.url/2")
+            }
+        }
+
+        should("carry the newest added id when one emission adds two ids") {
+            val url1 = testUrl(shortURL = "https://short.url/1")
+            val url2 = testUrl(shortURL = "https://short.url/2")
+            val url3 = testUrl(shortURL = "https://short.url/3")
+            val urlsFlow = MutableStateFlow(listOf(url1))
+            every { observeURLs(any(), any()) } returns urlsFlow
+            viewModel = MainViewModel(observeURLs, deleteURL, updateURL)
+
+            viewModel.events.test {
+                urlsFlow.value = listOf(url3, url2, url1)
+                awaitItem() shouldBe MainEvent.NewItemAdded("https://short.url/3")
+                expectNoEvents()
             }
         }
 
