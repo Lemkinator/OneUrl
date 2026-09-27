@@ -169,53 +169,48 @@ sealed class Spoome : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        try {
-            Log.e(tag, "error: $error")
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            val response = data?.let { JSONObject(it) }
-            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-            when {
-                error is NoConnectionError -> {
-                    errorCallback(GenerateURLError.ServiceOffline)
-                }
-
-                error is ParseError -> {
-                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                }
-
-                statusCode == null -> {
-                    errorCallback(GenerateURLError.Unknown())
-                }
-
-                data.isNullOrBlank() -> {
-                    errorCallback(GenerateURLError.Unknown(statusCode))
-                }
-
-                response?.has("UrlError") == true -> {
-                    errorCallback(GenerateURLError.InvalidURL)
-                }
-
-                response?.has("AliasError") == true -> {
-                    handleAliasError(response.getString("AliasError"), statusCode, errorCallback)
-                }
-
-                response?.has("EmojiError") == true -> {
-                    handleEmojiError(response.getString("EmojiError"), statusCode, errorCallback)
-                }
-
-                statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
-                    errorCallback(GenerateURLError.RateLimitExceeded)
-                }
-
-                else -> {
-                    errorCallback(GenerateURLError.Custom(statusCode, data))
-                }
+        Log.e(tag, "error: $error")
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        val response = data?.let { runCatching { JSONObject(it) }.getOrNull() }
+        Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+        when {
+            error is NoConnectionError -> {
+                errorCallback(GenerateURLError.ServiceOffline)
             }
-        } catch (e: JSONException) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
+
+            error is ParseError -> {
+                errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            }
+
+            statusCode == null -> {
+                errorCallback(GenerateURLError.Unknown())
+            }
+
+            data.isNullOrBlank() -> {
+                errorCallback(GenerateURLError.Unknown(statusCode))
+            }
+
+            response?.has("UrlError") == true -> {
+                errorCallback(GenerateURLError.InvalidURL)
+            }
+
+            response?.has("AliasError") == true -> {
+                handleAliasError(response.optString("AliasError"), statusCode, errorCallback)
+            }
+
+            response?.has("EmojiError") == true -> {
+                handleEmojiError(response.optString("EmojiError"), statusCode, errorCallback)
+            }
+
+            statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
+                errorCallback(GenerateURLError.RateLimitExceeded)
+            }
+
+            else -> {
+                errorCallback(GenerateURLError.Custom(statusCode, data))
+            }
         }
     }
 

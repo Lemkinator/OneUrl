@@ -217,13 +217,44 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `unparseable error body maps to Unknown`() {
+    fun `plain-text 503 error body falls back to Custom with the status code`() {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(400, "not json".toByteArray(), false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(503, "Service Unavailable".toByteArray(), false, 0L, emptyList())))
 
-        error shouldBe GenerateURLError.Unknown()
+        error shouldBe GenerateURLError.Custom(503, "Service Unavailable")
+    }
+
+    @Test
+    fun `HTML 404 error body falls back to Custom with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val body = "<html><body><h1>404 Not Found</h1></body></html>"
+
+        req.deliverError(VolleyError(NetworkResponse(404, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Custom(404, "<html><body><h1>404 Not Found</h1></body></html>")
+    }
+
+    @Test
+    fun `429 status with a plain-text body maps to RateLimitExceeded`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(429, "Too Many Requests".toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.RateLimitExceeded
+    }
+
+    @Test
+    fun `error with an empty body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(400)
     }
 
     @Test
