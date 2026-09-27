@@ -101,7 +101,7 @@
     <string name="error_domain_not_allowed">Diese Domain ist nicht erlaubt.</string>
     <string name="error_internal_server_error">Interner Serverfehler.</string>
     <string name="error_service_offline">Der Dienst dieses Anbieters ist offline. Bitte wähle einen anderen Anbieter.</string>
-    <string name="error_custom_with_status_code">Fehler (HTTP %1$d)</string>
+    <string name="error_with_http_status">Fehler (HTTP %1$d)</string>
     <string name="error_with_code">Fehler (Code %1$d)</string>
     <string name="error_request_rejected">Der Anbieter hat die Anfrage abgelehnt.</string>
     <string name="error_access_refused">Der Anbieter hat den Zugriff verweigert.</string>

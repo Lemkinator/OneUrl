@@ -118,7 +118,7 @@ private fun AlertDialog.Builder.configureProviderError(
     setTitle(
         when (statusCode) {
             null -> this.context.getString(commonutilsR.string.commonutils_error)
-            in HTTP_STATUS_RANGE -> this.context.getString(R.string.error_custom_with_status_code, statusCode)
+            in HTTP_STATUS_RANGE -> this.context.getString(R.string.error_with_http_status, statusCode)
             else -> this.context.getString(R.string.error_with_code, statusCode)
         },
     )
