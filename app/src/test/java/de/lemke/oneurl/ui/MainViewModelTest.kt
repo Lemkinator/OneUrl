@@ -57,7 +57,8 @@ class MainViewModelTest : ShouldSpec(
         val observeURLs = mockk<ObserveURLsUseCase>()
         val deleteURL = mockk<DeleteURLUseCase>()
         val updateURL = mockk<UpdateURLUseCase>()
-        lateinit var viewModel: MainViewModel
+
+        fun newViewModel() = MainViewModel(observeURLs, deleteURL, updateURL)
 
         beforeEach {
             clearMocks(observeURLs, deleteURL, updateURL)
@@ -65,13 +66,12 @@ class MainViewModelTest : ShouldSpec(
             coEvery { updateURL(any<URL>()) } returns Unit
             coEvery { updateURL(any<List<URL>>()) } returns Unit
             coEvery { deleteURL(any<List<URL>>()) } returns Unit
-            viewModel = MainViewModel(observeURLs, deleteURL, updateURL)
         }
 
         should("state.urls and isUIReady reflect what observeURLs emits") {
             val url = testUrl()
             every { observeURLs(any(), any()) } returns MutableStateFlow(listOf(url))
-            viewModel = MainViewModel(observeURLs, deleteURL, updateURL)
+            val viewModel = newViewModel()
 
             viewModel.state.value.urls shouldBe listOf(url)
             viewModel.state.value.isUIReady shouldBe true
@@ -82,7 +82,7 @@ class MainViewModelTest : ShouldSpec(
             val url2 = testUrl(shortURL = "https://short.url/2")
             val urlsFlow = MutableStateFlow(listOf(url1))
             every { observeURLs(any(), any()) } returns urlsFlow
-            viewModel = MainViewModel(observeURLs, deleteURL, updateURL)
+            val viewModel = newViewModel()
 
             viewModel.events.test {
                 urlsFlow.value = listOf(url1, url2)
@@ -96,7 +96,7 @@ class MainViewModelTest : ShouldSpec(
             val url3 = testUrl(shortURL = "https://short.url/3")
             val urlsFlow = MutableStateFlow(listOf(url1))
             every { observeURLs(any(), any()) } returns urlsFlow
-            viewModel = MainViewModel(observeURLs, deleteURL, updateURL)
+            val viewModel = newViewModel()
 
             viewModel.events.test {
                 urlsFlow.value = listOf(url3, url2, url1)
@@ -110,7 +110,7 @@ class MainViewModelTest : ShouldSpec(
             val url2 = testUrl(shortURL = "https://short.url/2")
             val urlsFlow = MutableStateFlow(listOf(url1, url2))
             every { observeURLs(any(), any()) } returns urlsFlow
-            viewModel = MainViewModel(observeURLs, deleteURL, updateURL)
+            val viewModel = newViewModel()
 
             viewModel.events.test {
                 urlsFlow.value = listOf(url2, url1)
@@ -123,7 +123,7 @@ class MainViewModelTest : ShouldSpec(
             val url2 = testUrl(shortURL = "https://short.url/2")
             val urlsFlow = MutableStateFlow(listOf(url1))
             every { observeURLs(any(), any()) } returns urlsFlow
-            viewModel = MainViewModel(observeURLs, deleteURL, updateURL)
+            val viewModel = newViewModel()
 
             viewModel.events.test {
                 viewModel.setSearch("changed")
@@ -133,34 +133,40 @@ class MainViewModelTest : ShouldSpec(
         }
 
         should("setSearch updates search") {
+            val viewModel = newViewModel()
             viewModel.setSearch("query")
             viewModel.search.value shouldBe "query"
         }
 
         should("setFilterFavorite updates filterFavorite") {
+            val viewModel = newViewModel()
             viewModel.setFilterFavorite(true)
             viewModel.filterFavorite.value shouldBe true
         }
 
         should("setFavorite updates the url's favorite flag via updateURL") {
+            val viewModel = newViewModel()
             val url = testUrl(favorite = false)
             viewModel.setFavorite(url, true)
             coVerify { updateURL(url.copy(favorite = true)) }
         }
 
         should("setFavorites updates all urls' favorite flag via updateURL") {
+            val viewModel = newViewModel()
             val urls = listOf(testUrl(shortURL = "https://short.url/1"), testUrl(shortURL = "https://short.url/2"))
             viewModel.setFavorites(urls, true)
             coVerify { updateURL(urls.map { it.copy(favorite = true) }) }
         }
 
         should("delete calls deleteURL with the given urls") {
+            val viewModel = newViewModel()
             val urls = listOf(testUrl(shortURL = "https://short.url/1"), testUrl(shortURL = "https://short.url/2"))
             viewModel.delete(urls)
             coVerify { deleteURL(urls) }
         }
 
         should("setAllSelectorState updates allSelectorState") {
+            val viewModel = newViewModel()
             val state = AllSelectorState(totalSelected = 3, isChecked = true, isEnabled = false)
             viewModel.setAllSelectorState(state)
             viewModel.allSelectorState.value shouldBe state

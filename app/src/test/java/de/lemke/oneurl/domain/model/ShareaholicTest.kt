@@ -123,13 +123,56 @@ class ShareaholicTest {
     }
 
     @Test
-    fun `create request with unparsable error body maps to Unknown`() {
+    fun `create request with a plain-text 503 error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
         val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(500, "not json".toByteArray(), false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(503, "Service Unavailable".toByteArray(), false, 0L, emptyList())))
 
-        error shouldBe GenerateURLError.Unknown()
+        error shouldBe GenerateURLError.Unknown(503)
+    }
+
+    @Test
+    fun `create request with an HTML 404 error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val body = "<html><body><h1>404 Not Found</h1></body></html>"
+
+        req.deliverError(VolleyError(NetworkResponse(404, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(404)
+    }
+
+    @Test
+    fun `create request with an empty error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(400)
+    }
+
+    @Test
+    fun `create request with an error body that is not a JSON object maps to Unknown with the status code`() {
+        listOf("""[{"code":"141"}]""", "null", """{"errors":[{"code":"141"}]""").forEach { body ->
+            var error: GenerateURLError? = null
+            val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+            req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+            error shouldBe GenerateURLError.Unknown(400)
+        }
+    }
+
+    @Test
+    fun `create request with a plain-text 429 error body maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(429, "Too Many Requests".toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(429)
     }
 
     @Test

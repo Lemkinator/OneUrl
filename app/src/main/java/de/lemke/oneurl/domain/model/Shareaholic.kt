@@ -25,7 +25,6 @@ import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import org.json.JSONException
 import org.json.JSONObject
 
 /*
@@ -104,42 +103,37 @@ object Shareaholic : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        try {
-            Log.e(tag, "error: $error")
-            val message = error.message
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            Log.e(tag, "$statusCode: message: $message data: $data")
-            val response = data?.let { JSONObject(it) }
-            when {
-                error is NoConnectionError -> {
-                    errorCallback(GenerateURLError.ServiceOffline)
-                }
-
-                error is ParseError -> {
-                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                }
-
-                statusCode == null -> {
-                    errorCallback(GenerateURLError.Unknown())
-                }
-
-                data.isNullOrBlank() -> {
-                    errorCallback(GenerateURLError.Unknown(statusCode))
-                }
-
-                response?.has("errors") == true -> {
-                    handleApiErrors(tag, response, statusCode, errorCallback)
-                }
-
-                else -> {
-                    errorCallback(GenerateURLError.Unknown(statusCode))
-                }
+        Log.e(tag, "error: $error")
+        val message = error.message
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        Log.e(tag, "$statusCode: message: $message data: $data")
+        val response = data?.let { runCatching { JSONObject(it) }.getOrNull() }
+        when {
+            error is NoConnectionError -> {
+                errorCallback(GenerateURLError.ServiceOffline)
             }
-        } catch (e: JSONException) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
+
+            error is ParseError -> {
+                errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            }
+
+            statusCode == null -> {
+                errorCallback(GenerateURLError.Unknown())
+            }
+
+            data.isNullOrBlank() -> {
+                errorCallback(GenerateURLError.Unknown(statusCode))
+            }
+
+            response?.has("errors") == true -> {
+                handleApiErrors(tag, response, statusCode, errorCallback)
+            }
+
+            else -> {
+                errorCallback(GenerateURLError.Unknown(statusCode))
+            }
         }
     }
 
@@ -184,7 +178,7 @@ object Shareaholic : ShortURLProvider {
             // 429	rate_limit_exceeded
             else -> {
                 if (firstError?.has("detail") == true) {
-                    errorCallback(GenerateURLError.Custom(statusCode, firstError.getString("detail")))
+                    errorCallback(GenerateURLError.Custom(statusCode, firstError.optString("detail")))
                 } else {
                     errorCallback(GenerateURLError.Unknown(statusCode))
                 }
