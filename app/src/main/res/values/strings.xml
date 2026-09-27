@@ -105,8 +105,11 @@
     <string name="error_domain_not_allowed">Domain not allowed.</string>
     <string name="error_internal_server_error">Internal server error.</string>
     <string name="error_service_offline">The service of this provider is offline. Please use another provider.</string>
-    <string name="error_unknown_with_status_code">An unknown error occurred (HTTP %1$d).</string>
     <string name="error_custom_with_status_code">Error (HTTP %1$d)</string>
+    <string name="error_with_code">Error (code %1$d)</string>
+    <string name="error_request_rejected">The provider rejected the request.</string>
+    <string name="error_access_refused">The provider refused access.</string>
+    <string name="error_provider_cannot_handle_requests">This provider can\'t handle requests right now. It may be down or discontinued.</string>
 
     <string name="error_urlhaus_blacklisted">This URL is blacklisted on: %1$s.\n%2$s\nIf you continue trying to shorten blacklisted URLs, you may be blocked from using this App.</string>
     <string name="error_urlhaus_default">It may have been used abusively in the past, or it may link to another URL redirection service.</string>
