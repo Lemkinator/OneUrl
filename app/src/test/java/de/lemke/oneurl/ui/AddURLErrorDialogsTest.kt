@@ -329,9 +329,9 @@ class AddURLErrorDialogsTest {
         const val REFUSED_MESSAGE = "The provider refused access."
         const val NOT_HANDLED_MESSAGE = "This provider can't handle requests right now. It may be down or discontinued."
         const val RATE_LIMIT_MESSAGE =
-            "Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. " +
+            "Rate limit exceeded. Please wait at least 5 minutes before making the next request. " +
                 "Otherwise, you may be blocked from using this service."
-        const val UNAVAILABLE_MESSAGE = "Service currently unavailable. Please try again later or use another provider."
+        const val UNAVAILABLE_MESSAGE = "Service currently unavailable. Please try again later."
         const val UNKNOWN_MESSAGE = "Unknown error"
     }
 }

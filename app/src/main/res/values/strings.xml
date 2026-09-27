@@ -99,9 +99,9 @@
     <string name="error_invalid_alias_allowed_characters">Invalid alias (allowed characters: %1$s).</string>
     <string name="error_invalid_url_or_alias">Invalid URL or alias.</string>
     <string name="error_blacklisted_url">This URL is blacklisted. It may have been used abusively in the past, or it may link to another URL redirection service. If you continue trying to shorten blacklisted URLs, you may be blocked from using this service.</string>
-    <string name="error_rate_limit_exceeded">Rate limit exceeded, use another provider or wait for at least 5 minutes, before making the next request. Otherwise, you may be blocked from using this service.</string>
+    <string name="error_rate_limit_exceeded">Rate limit exceeded. Please wait at least 5 minutes before making the next request. Otherwise, you may be blocked from using this service.</string>
     <string name="error_service_unavailable">Service unavailable</string>
-    <string name="error_service_unavailable_text">Service currently unavailable. Please try again later or use another provider.</string>
+    <string name="error_service_unavailable_text">Service currently unavailable. Please try again later.</string>
     <string name="error_domain_not_allowed">Domain not allowed.</string>
     <string name="error_internal_server_error">Internal server error.</string>
     <string name="error_service_offline">The service of this provider is offline. Please use another provider.</string>
