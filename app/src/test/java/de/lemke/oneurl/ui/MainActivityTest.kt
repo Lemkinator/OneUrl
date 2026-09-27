@@ -600,7 +600,7 @@ class MainActivityTest {
                 layoutManager.findFirstVisibleItemPosition() shouldNotBe 0
             }
             runBlocking { urlRepository.addURL(testUrl("https://da.gd/newest")) }
-            awaitMainIdle()
+            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 1 }
             scenario.onActivity { activity ->
                 val recycler = activity.findViewById<RecyclerView>(R.id.urlList)
                 recycler.adapter?.itemCount shouldBe PRESCROLL_ITEM_COUNT + 1
@@ -611,7 +611,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun `NewItemAdded at the top of a long list shows the new url in the first row`() {
+    fun `NewItemAdded handled before the list commits the url reveals it`() {
         repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
@@ -685,7 +685,7 @@ class MainActivityTest {
             runBlocking { urlRepository.deleteURL(deleted) }
             awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT }
             scenario.moveToState(Lifecycle.State.RESUMED)
-            awaitMainIdle()
+            awaitUntil { scenario.read { it.adapterHoldsViewModelUrlInstances() } }
             scenario.onActivity { activity ->
                 activity.urlList().adapter?.itemCount shouldBe PRESCROLL_ITEM_COUNT
                 activity.urlList().firstVisiblePosition() shouldBe scrolledTo
@@ -989,6 +989,12 @@ class MainActivityTest {
     private fun MainActivity.viewModelUrlCount(): Int =
         ViewModelProvider(this)[MainViewModel::class.java]
             .state.value.urls.size
+
+    private fun MainActivity.adapterHoldsViewModelUrlInstances(): Boolean {
+        val urls = ViewModelProvider(this)[MainViewModel::class.java].state.value.urls
+        val adapter = urlList().adapter as URLAdapter
+        return adapter.itemCount == urls.size && urls.indices.all { adapter.getItemByPosition(it) === urls[it] }
+    }
 
     private fun <T> ActivityScenario<MainActivity>.read(block: (MainActivity) -> T): T {
         val result = mutableListOf<T>()
