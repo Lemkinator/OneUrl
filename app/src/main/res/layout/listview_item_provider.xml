@@ -43,35 +43,35 @@
 
         <ImageView
             android:id="@+id/providerIcon1"
-            android:contentDescription="@null"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIcon2"
-            android:contentDescription="@null"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIcon3"
-            android:contentDescription="@null"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIcon4"
-            android:contentDescription="@null"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIconInfo"

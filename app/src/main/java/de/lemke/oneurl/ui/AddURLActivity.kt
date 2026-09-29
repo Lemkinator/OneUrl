@@ -120,17 +120,16 @@ class AddURLActivity : AppCompatActivity() {
     private fun updateProvider(provider: ShortURLProvider) {
         binding.providerTitle.text = provider.name
         val infoContents = provider.getInfoContents(this)
-        listOf(binding.providerIcon1, binding.providerIcon2, binding.providerIcon3, binding.providerIcon4)
-            .forEachIndexed { index, iconView ->
-                if (index < infoContents.size) {
-                    iconView.setImageResource(infoContents[index].icon)
-                    iconView.contentDescription = infoContents[index].title
-                    iconView.isVisible = true
-                } else {
-                    iconView.isVisible = false
-                }
+        val icons = listOf(binding.providerIcon1, binding.providerIcon2, binding.providerIcon3, binding.providerIcon4)
+        icons.forEachIndexed { index, iconView ->
+            if (index < infoContents.size) {
+                iconView.setImageResource(infoContents[index].icon)
+                iconView.isVisible = true
+            } else {
+                iconView.isVisible = false
             }
-        binding.providerIconLayout.contentDescription = getString(R.string.provider_info_for, provider.name)
+        }
+        binding.providerIconLayout.contentDescription = providerInfoDescription(provider.name, infoContents.take(icons.size))
         binding.providerIconLayout.setOnClickListener { showProviderInfoBottomSheet(provider) }
         binding.textInputLayoutAlias.isVisible = provider.aliasConfig != null
         val tipsCardInfo = provider.getTipsCardTitleAndInfo(this)

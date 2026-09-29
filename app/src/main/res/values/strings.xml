@@ -31,6 +31,7 @@
     <!--Provider info-->
     <string name="provider_info">Provider info</string>
     <string name="provider_info_for">Provider info for %1$s</string>
+    <string name="provider_info_for_features">Provider info for %1$s: %2$s</string>
     <string name="select_provider">Select provider</string>
     <string name="group">Group</string>
     <string name="redirect_hint">Hint before redirecting</string>

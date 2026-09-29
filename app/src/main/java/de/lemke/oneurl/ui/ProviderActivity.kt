@@ -116,17 +116,17 @@ class ProviderActivity : AppCompatActivity() {
             val provider = getItem(position)
             holder.title.text = provider.name
             val infoContents = provider.getInfoContents(this@ProviderActivity)
-            listOf(holder.icon1, holder.icon2, holder.icon3, holder.icon4).forEachIndexed { index, iconView ->
+            val icons = listOf(holder.icon1, holder.icon2, holder.icon3, holder.icon4)
+            icons.forEachIndexed { index, iconView ->
                 if (index < infoContents.size) {
                     iconView.setImageResource(infoContents[index].icon)
-                    iconView.contentDescription = infoContents[index].title
                     iconView.isVisible = true
                 } else {
                     iconView.isVisible = false
                 }
             }
             holder.parentView.setOnClickListener { viewModel.onProviderClick(provider) }
-            holder.iconLayout.contentDescription = getString(R.string.provider_info_for, provider.name)
+            holder.iconLayout.contentDescription = providerInfoDescription(provider.name, infoContents.take(icons.size))
             holder.iconLayout.setOnClickListener { viewModel.onProviderInfoClick(provider) }
             holder.parentView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
         }

@@ -87,21 +87,17 @@ class ProviderActivityTest {
     }
 
     @Test
-    fun `provider row describes the info button and each feature icon`() {
-        assertFirstRowDescriptions(info = "Provider info for da.gd", alias = "Custom alias", analytics = "Analytics")
+    fun `provider info button lists the shown feature titles`() {
+        assertFirstRowInfoDescription("Provider info for da.gd: Custom alias, Analytics")
     }
 
     @Test
     @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "de")
-    fun `provider row descriptions are localized in German`() {
-        assertFirstRowDescriptions(info = "Anbieter-Info zu da.gd", alias = "Benutzerdefiniertes Kürzel", analytics = "Analytics")
+    fun `provider info button description is localized in German`() {
+        assertFirstRowInfoDescription("Anbieter-Info zu da.gd: Benutzerdefiniertes Kürzel, Analytics")
     }
 
-    private fun assertFirstRowDescriptions(
-        info: String,
-        alias: String,
-        analytics: String,
-    ) {
+    private fun assertFirstRowInfoDescription(expected: String) {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 shadowOf(Looper.getMainLooper()).idle()
@@ -111,9 +107,9 @@ class ProviderActivityTest {
                         .findViewHolderForAdapterPosition(0)!!
                         .itemView
                 row.findViewById<TextView>(R.id.providerTitle).text.toString() shouldBe "da.gd"
-                row.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe info
-                row.findViewById<View>(R.id.providerIcon1).contentDescription shouldBe alias
-                row.findViewById<View>(R.id.providerIcon2).contentDescription shouldBe analytics
+                row.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe expected
+                row.findViewById<View>(R.id.providerIcon1).importantForAccessibility shouldBe View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                row.findViewById<View>(R.id.providerIcon2).importantForAccessibility shouldBe View.IMPORTANT_FOR_ACCESSIBILITY_NO
             }
         }
     }
