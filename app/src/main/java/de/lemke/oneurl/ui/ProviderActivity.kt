@@ -26,7 +26,9 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.ui.utils.collectEvents
@@ -61,7 +63,7 @@ class ProviderActivity : AppCompatActivity() {
 
     private fun collectState() =
         collectState(viewModel.state) { state ->
-            providerAdapter.updateProviders(state.providers)
+            providerAdapter.submitList(state.providers)
         }
 
     private fun collectEvents() =
@@ -87,11 +89,19 @@ class ProviderActivity : AppCompatActivity() {
         const val KEY_SELECT_PROVIDER = "key_select_provider"
     }
 
-    inner class ProviderAdapter : RecyclerView.Adapter<ProviderAdapter.ViewHolder>() {
-        private var providers: List<ShortURLProvider> = emptyList()
+    private object ProviderDiffCallback : DiffUtil.ItemCallback<ShortURLProvider>() {
+        override fun areItemsTheSame(
+            oldItem: ShortURLProvider,
+            newItem: ShortURLProvider,
+        ): Boolean = oldItem.name == newItem.name
 
-        override fun getItemCount(): Int = providers.size
+        override fun areContentsTheSame(
+            oldItem: ShortURLProvider,
+            newItem: ShortURLProvider,
+        ): Boolean = oldItem.name == newItem.name
+    }
 
+    inner class ProviderAdapter : ListAdapter<ShortURLProvider, ProviderAdapter.ViewHolder>(ProviderDiffCallback) {
         override fun getItemViewType(position: Int): Int = 0
 
         override fun onCreateViewHolder(
@@ -103,7 +113,7 @@ class ProviderActivity : AppCompatActivity() {
             holder: ViewHolder,
             position: Int,
         ) {
-            val provider = providers[position]
+            val provider = getItem(position)
             holder.title.text = provider.name
             val infoContents = provider.getInfoContents(this@ProviderActivity)
             listOf(holder.icon1, holder.icon2, holder.icon3, holder.icon4).forEachIndexed { index, iconView ->
@@ -117,11 +127,6 @@ class ProviderActivity : AppCompatActivity() {
             holder.parentView.setOnClickListener { viewModel.onProviderClick(provider) }
             holder.iconLayout.setOnClickListener { viewModel.onProviderInfoClick(provider) }
             holder.parentView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
-        }
-
-        fun updateProviders(newProviders: List<ShortURLProvider>) {
-            providers = newProviders
-            notifyDataSetChanged()
         }
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
