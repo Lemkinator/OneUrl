@@ -31,11 +31,9 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GenerateQRCodeViewModelTest : ShouldSpec(
@@ -43,10 +41,12 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
         val generateQRCode = mockk<GenerateQRCodeUseCase>()
         val qrCode = mockk<Bitmap>()
         lateinit var userSettings: UserSettings
+        lateinit var mainScheduler: TestCoroutineScheduler
 
         fun newViewModel() = GenerateQRCodeViewModel(userSettings, generateQRCode)
 
         beforeEach {
+            mainScheduler = UnconfinedTestDispatcher().scheduler
             clearMocks(generateQRCode)
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
             every {
@@ -200,56 +200,48 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
         }
 
         should("setUrl persists the debounced value to userSettings.qrURL once the delay elapses") {
-            val dispatcher = StandardTestDispatcher()
-            Dispatchers.setMain(dispatcher)
             val viewModel = newViewModel()
 
             viewModel.setUrl("https://debounced.example.com")
-            dispatcher.scheduler.advanceUntilIdle()
+            mainScheduler.advanceUntilIdle()
 
             userSettings.qrURL shouldBe "https://debounced.example.com"
         }
 
         should("setUrl cancels the previous debounce job so only the latest value is ever persisted") {
             userSettings.qrURL = "https://initial.example.com"
-            val dispatcher = StandardTestDispatcher()
-            Dispatchers.setMain(dispatcher)
             val viewModel = newViewModel()
 
             viewModel.setUrl("https://first.example.com")
-            dispatcher.scheduler.advanceTimeBy(100.milliseconds)
+            mainScheduler.advanceTimeBy(100.milliseconds)
             viewModel.setUrl("https://second.example.com")
-            dispatcher.scheduler.advanceTimeBy(200.milliseconds)
+            mainScheduler.advanceTimeBy(250.milliseconds)
             userSettings.qrURL shouldBe "https://initial.example.com"
 
-            dispatcher.scheduler.advanceUntilIdle()
+            mainScheduler.advanceUntilIdle()
             userSettings.qrURL shouldBe "https://second.example.com"
         }
 
         should("setSize persists the debounced value to userSettings.qrSize once the delay elapses") {
-            val dispatcher = StandardTestDispatcher()
-            Dispatchers.setMain(dispatcher)
             val viewModel = newViewModel()
 
             viewModel.setSize(900)
-            dispatcher.scheduler.advanceUntilIdle()
+            mainScheduler.advanceUntilIdle()
 
             userSettings.qrSize shouldBe 900
         }
 
         should("setSize cancels the previous debounce job so only the latest value is ever persisted") {
             userSettings.qrSize = 512
-            val dispatcher = StandardTestDispatcher()
-            Dispatchers.setMain(dispatcher)
             val viewModel = newViewModel()
 
             viewModel.setSize(700)
-            dispatcher.scheduler.advanceTimeBy(100.milliseconds)
+            mainScheduler.advanceTimeBy(100.milliseconds)
             viewModel.setSize(900)
-            dispatcher.scheduler.advanceTimeBy(200.milliseconds)
+            mainScheduler.advanceTimeBy(250.milliseconds)
             userSettings.qrSize shouldBe 512
 
-            dispatcher.scheduler.advanceUntilIdle()
+            mainScheduler.advanceUntilIdle()
             userSettings.qrSize shouldBe 900
         }
     },
