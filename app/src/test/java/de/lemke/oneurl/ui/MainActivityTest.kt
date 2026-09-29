@@ -23,28 +23,15 @@ import android.content.Intent.ACTION_SEND
 import android.content.Intent.EXTRA_PROCESS_TEXT
 import android.content.Intent.EXTRA_TEXT
 import android.os.Bundle
-import android.os.Looper
-import android.os.SystemClock
 import android.view.Menu
-import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import androidx.annotation.IdRes
 import androidx.appcompat.view.menu.MenuBuilder
-import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
-import androidx.core.view.descendants
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -54,29 +41,18 @@ import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
 import de.lemke.commonutils.ui.utils.COMMONUTILS_KEY_IS_SEARCH_MODE
-import de.lemke.commonutils.ui.widget.NoEntryView
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.ObserveURLsUseCase
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
-import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.layout.NavDrawerLayout
 import dev.oneuiproject.oneui.navigation.widget.DrawerNavigationView
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
-import java.time.Duration
-import java.time.ZonedDateTime
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.runBlocking
 import leakcanary.AppWatcher
 import org.junit.Before
 import org.junit.Rule
@@ -87,21 +63,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import androidx.appcompat.R as appcompatR
-import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-@Suppress("LargeClass")
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
 class MainActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
-
-    @BindValue
-    @JvmField
-    val observeURLsStub: ObserveURLsUseCase = mockk()
 
     @Inject
     lateinit var settings: SettingsRepository
@@ -113,9 +83,6 @@ class MainActivityTest {
     fun setup() {
         hiltRule.inject()
         settings.bypassOobe()
-        every { observeURLsStub(any(), any()) } answers {
-            ObserveURLsUseCase(urlRepository, Dispatchers.Unconfined).invoke(firstArg(), secondArg())
-        }
         if (!AppWatcher.isInstalled) {
             AppWatcher.manualInstall(ApplicationProvider.getApplicationContext<HiltTestApplication>())
         }
@@ -405,7 +372,7 @@ class MainActivityTest {
     // via action mode's own onEnd, rather than deferring to when search itself ends.
     @Test
     fun `startSearch from action mode ends it and shows the fab immediately`() {
-        seedUrl("https://da.gd/searchend1")
+        urlRepository.seedUrl("https://da.gd/searchend1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
             scenario.onActivity { activity -> activity.longClickFirstItem() }
@@ -521,412 +488,6 @@ class MainActivityTest {
         }
     }
 
-    @Test
-    @Config(sdk = [29])
-    fun `initRecycler below API R skips imm bottom padding`() {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.state shouldBe Lifecycle.State.RESUMED
-            scenario.onActivity { activity ->
-                activity
-                    .findViewById<RecyclerView>(R.id.urlList)
-                    .getTag(designR.id.tag_rv_imm_bottom_padding_listener) shouldBe null
-            }
-        }
-    }
-
-    @Test
-    fun `updateRecyclerView shows no-urls message when the list is empty`() {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                activity.noEntryView().text shouldBe activity.getString(R.string.no_urls)
-            }
-        }
-    }
-
-    @Test
-    fun `updateRecyclerView shows no-results message when searching with no matches`() {
-        seedUrl("https://da.gd/searchnomatch1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.onOptionsItemSelected(menuItem(R.id.menu_item_search)) }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.searchView().setQuery("no-such-query-matches-anything", false) }
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                activity.noEntryView().text shouldBe activity.getString(commonutilsR.string.commonutils_no_results_found)
-            }
-        }
-    }
-
-    @Test
-    fun `updateRecyclerView shows no-favorites message when filtering with no favorites`() {
-        seedUrl("https://da.gd/nofav1", favorite = false)
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.onOptionsItemSelected(menuItem(R.id.menu_item_only_show_favorites)) }
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                activity.noEntryView().text shouldBe activity.getString(R.string.no_favorite_urls)
-            }
-        }
-    }
-
-    @Test
-    fun `updateRecyclerView clears the message and shows the list when non-empty`() {
-        seedUrl("https://da.gd/listed1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                activity.noEntryView().text shouldBe ""
-                activity.findViewById<RecyclerView>(R.id.urlList).adapter?.itemCount shouldBe 1
-            }
-        }
-    }
-
-    @Test
-    fun `collectEvents NewItemAdded scrolls the list back to the top`() {
-        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                val recycler = activity.findViewById<RecyclerView>(R.id.urlList)
-                recycler.scrollToPosition(PRESCROLL_ITEM_COUNT - 1)
-            }
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                val layoutManager = activity.findViewById<RecyclerView>(R.id.urlList).layoutManager as LinearLayoutManager
-                layoutManager.findFirstVisibleItemPosition() shouldNotBe 0
-            }
-            runBlocking { urlRepository.addURL(testUrl("https://da.gd/newest")) }
-            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 1 }
-            scenario.onActivity { activity ->
-                val recycler = activity.findViewById<RecyclerView>(R.id.urlList)
-                recycler.adapter?.itemCount shouldBe PRESCROLL_ITEM_COUNT + 1
-                val layoutManager = recycler.layoutManager as LinearLayoutManager
-                layoutManager.findFirstVisibleItemPosition() shouldBe 0
-            }
-        }
-    }
-
-    @Test
-    fun `NewItemAdded handled before the list commits the url reveals it`() {
-        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.read { it.urlList().firstVisiblePosition() } shouldBe 0
-            scenario.moveToState(Lifecycle.State.CREATED)
-            runBlocking { urlRepository.addURL(testUrl("https://da.gd/newest")) }
-            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
-            scenario.moveToState(Lifecycle.State.RESUMED)
-            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 1 }
-            scenario.onActivity { activity ->
-                activity.urlList().firstVisiblePosition() shouldBe 0
-                activity.urlList().shortURLAt(0) shouldBe "https://da.gd/newest"
-            }
-        }
-    }
-
-    @Test
-    fun `NewItemAdded handled after the list committed the url reveals it`() {
-        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
-        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
-        try {
-            awaitMainIdle()
-            controller.get().urlList().scrollToPosition(PRESCROLL_ITEM_COUNT - 1)
-            awaitMainIdle()
-            controller.get().urlList().firstVisiblePosition() shouldNotBe 0
-            controller.pause().stop()
-            runBlocking { urlRepository.addURL(testUrl("https://da.gd/newest")) }
-            awaitUntil { controller.get().viewModelUrlCount() == PRESCROLL_ITEM_COUNT + 1 }
-            controller.recreate()
-            awaitMainIdle()
-            controller.get().urlList().firstVisiblePosition() shouldBe 0
-            controller.get().urlList().shortURLAt(0) shouldBe "https://da.gd/newest"
-        } finally {
-            controller.destroy()
-        }
-    }
-
-    @Test
-    fun `two urls added in a row reveal the newer one`() {
-        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.moveToState(Lifecycle.State.CREATED)
-            runBlocking { urlRepository.addURL(testUrl("https://da.gd/older")) }
-            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
-            runBlocking { urlRepository.addURL(testUrl("https://da.gd/newer")) }
-            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 2 }
-            scenario.moveToState(Lifecycle.State.RESUMED)
-            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 2 }
-            scenario.onActivity { activity ->
-                activity.urlList().firstVisiblePosition() shouldBe 0
-                activity.urlList().shortURLAt(0) shouldBe "https://da.gd/newer"
-                activity.urlList().shortURLAt(1) shouldBe "https://da.gd/older"
-            }
-        }
-    }
-
-    @Test
-    fun `a new url deleted before the list shows it leaves the scroll position alone`() {
-        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { it.urlList().scrollToPosition(PRESCROLL_ITEM_COUNT - 1) }
-            awaitMainIdle()
-            val scrolledTo = scenario.read { it.urlList().firstVisiblePosition() }
-            scrolledTo shouldNotBe 0
-            scenario.moveToState(Lifecycle.State.CREATED)
-            val deleted = testUrl("https://da.gd/deleted")
-            runBlocking { urlRepository.addURL(deleted) }
-            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
-            runBlocking { urlRepository.deleteURL(deleted) }
-            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT }
-            scenario.moveToState(Lifecycle.State.RESUMED)
-            awaitUntil { scenario.read { it.adapterHoldsViewModelUrlInstances() } }
-            scenario.onActivity { activity ->
-                activity.urlList().adapter?.itemCount shouldBe PRESCROLL_ITEM_COUNT
-                activity.urlList().firstVisiblePosition() shouldBe scrolledTo
-            }
-        }
-    }
-
-    @Test
-    fun `a favorites filter that hides the new url drops its reveal`() {
-        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it", favorite = it < FAVORITE_ITEM_COUNT) }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.moveToState(Lifecycle.State.CREATED)
-            runBlocking { urlRepository.addURL(testUrl("https://da.gd/hidden")) }
-            awaitUntil { scenario.read { it.viewModelUrlCount() } == PRESCROLL_ITEM_COUNT + 1 }
-            scenario.onActivity { it.onOptionsItemSelected(menuItem(R.id.menu_item_only_show_favorites)) }
-            awaitUntil { scenario.read { it.viewModelUrlCount() } == FAVORITE_ITEM_COUNT }
-            scenario.moveToState(Lifecycle.State.RESUMED)
-            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == FAVORITE_ITEM_COUNT }
-            scenario.onActivity { it.onOptionsItemSelected(menuItem(R.id.menu_item_show_all)) }
-            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 1 }
-            scenario.onActivity { activity ->
-                activity.urlList().firstVisiblePosition() shouldNotBe 0
-                activity.urlList().shortURLAt(0) shouldBe null
-            }
-        }
-    }
-
-    @Test
-    fun `recreate without a new url keeps the scroll position`() {
-        repeat(PRESCROLL_ITEM_COUNT) { seedUrl("https://da.gd/bulk$it") }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { it.urlList().scrollToPosition(PRESCROLL_ITEM_COUNT - 1) }
-            awaitMainIdle()
-            val scrolledTo = scenario.read { it.urlList().firstVisiblePosition() }
-            scrolledTo shouldNotBe 0
-            scenario.recreate()
-            awaitMainIdle()
-            scenario.read { it.urlList().firstVisiblePosition() } shouldBe scrolledTo
-        }
-    }
-
-    // common-utils' configureCommonUtilsSplashScreen keeps the real splash screen on-screen via a
-    // pre-draw block for as long as !isUIReady; ActivityScenario.launch's visible() transition
-    // idles the main looper until that resolves, which never happens with an ever-empty flow -
-    // build the activity without a visible() window (no real traversal/splash loop) instead.
-    @Test
-    fun `collectState returns early while the view model is not ui-ready`() {
-        every { observeURLsStub(any(), any()) } returns emptyFlow()
-        val controller =
-            Robolectric
-                .buildActivity(MainActivity::class.java)
-                .create()
-                .start()
-                .resume()
-        try {
-            awaitMainIdle()
-            controller.get().noEntryView().text shouldBe controller.get().getString(commonutilsR.string.commonutils_no_results_found)
-        } finally {
-            controller.pause().stop().destroy()
-        }
-    }
-
-    @Test
-    fun `onClickItem without action mode opens URLActivity for that url`() {
-        val url = seedUrl("https://da.gd/openme1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemView().performClick() }
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                val started = shadowOf(activity).nextStartedActivity
-                started.component?.className shouldBe URLActivity::class.java.name
-                started.getStringExtra(KEY_SHORTURL) shouldBe url.shortURL
-            }
-        }
-    }
-
-    @Test
-    fun `onClickItem and onLongClickItem toggle selection while in action mode`() {
-        seedUrl("https://da.gd/select1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.findViewById<View>(R.id.addFab).isVisible.shouldBeFalse() }
-            scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemView().performClick() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemSelected().shouldBeTrue() }
-            scenario.onActivity { activity -> activity.firstItemView().performClick() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemSelected().shouldBeFalse() }
-        }
-    }
-
-    @Test
-    fun `onClickItemFavorite toggles the favorite flag via the view model`() {
-        val url = seedUrl("https://da.gd/fav1", favorite = false)
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemView().findViewById<View>(R.id.listItemFav).performClick() }
-            awaitMainIdle()
-            runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe true
-        }
-    }
-
-    @Test
-    fun `configureItemSwipeAnimator swipe start adds the item to favorites`() {
-        val url = seedUrl("https://da.gd/swipestart1", favorite = false)
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.swipeFirstItem(ItemTouchHelper.START) }
-            awaitMainIdle()
-            runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe true
-        }
-    }
-
-    @Test
-    fun `configureItemSwipeAnimator swipe end removes the item from favorites`() {
-        val url = seedUrl("https://da.gd/swipeend1", favorite = true)
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.swipeFirstItem(ItemTouchHelper.END) }
-            awaitMainIdle()
-            runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe false
-        }
-    }
-
-    @Test
-    fun `launchActionMode onSelectAll selects and unselects every item`() {
-        seedUrl("https://da.gd/selectall1")
-        seedUrl("https://da.gd/selectall2")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.selectAllView().performClick() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemSelected().shouldBeTrue() }
-            scenario.onActivity { activity -> activity.selectAllView().performClick() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemSelected().shouldBeFalse() }
-        }
-    }
-
-    @Test
-    fun `launchActionMode onEnd while not in search mode leaves the fab shown`() {
-        seedUrl("https://da.gd/endaction1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).endActionMode() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.findViewById<View>(R.id.addFab).isVisible.shouldBeTrue() }
-        }
-    }
-
-    @Test
-    fun `launchActionMode onSelectMenuItem delete removes the selected urls`() {
-        val url = seedUrl("https://da.gd/delete1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.clickActionModeMenuItem(R.id.menu_item_delete) }
-            awaitMainIdle()
-            runBlocking { urlRepository.getURL(url.shortURL) } shouldBe null
-        }
-    }
-
-    @Test
-    fun `launchActionMode onSelectMenuItem add-to-favorites favorites the selected urls`() {
-        val url = seedUrl("https://da.gd/bulkfav1", favorite = false)
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.clickActionModeMenuItem(R.id.menu_item_add_to_favorites) }
-            awaitMainIdle()
-            runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe true
-        }
-    }
-
-    @Test
-    fun `launchActionMode onSelectMenuItem remove-from-favorites unfavorites the selected urls`() {
-        val url = seedUrl("https://da.gd/bulkunfav1", favorite = true)
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.clickActionModeMenuItem(R.id.menu_item_remove_from_favorites) }
-            awaitMainIdle()
-            runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe false
-        }
-    }
-
-    @Test
-    fun `launchActionMode onSelectMenuItem unmapped item is not handled and action mode stays open`() {
-        seedUrl("https://da.gd/unmappedaction1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                val menu =
-                    activity
-                        .findViewById<NavDrawerLayout>(R.id.drawerLayout)
-                        .bottomActionModeBar()
-                        .menu
-                menu.add(Menu.NONE, UNMAPPED_ACTION_ITEM_ID, Menu.NONE, "unmapped")
-                menu.performIdentifierAction(UNMAPPED_ACTION_ITEM_ID, 0)
-            }
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).isActionMode.shouldBeTrue()
-            }
-        }
-    }
-
-    @Test
-    fun `block multi-selection outside action mode starts it via onBlockActionMode`() {
-        seedUrl("https://da.gd/blockselect1")
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                val recycler = activity.findViewById<RecyclerView>(R.id.urlList)
-                val listener = checkNotNull(recycler.seslGetOnMultiSelectedListener())
-                listener.onMultiSelectStart(1, 1)
-                listener.onMultiSelectStop(1, 1)
-            }
-            awaitMainIdle()
-            scenario.onActivity { activity ->
-                activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).isActionMode.shouldBeTrue()
-            }
-        }
-    }
-
     private fun assertNavItemStarts(
         @IdRes navItemId: Int,
         expectedClassName: String,
@@ -944,8 +505,6 @@ class MainActivityTest {
         }
     }
 
-    private fun MainActivity.searchView(): SearchView = (window.decorView as ViewGroup).descendants.filterIsInstance<SearchView>().first()
-
     private fun MainActivity.callInitDrawer() {
         MainActivity::class.java
             .getDeclaredMethod("initDrawer")
@@ -953,112 +512,10 @@ class MainActivityTest {
             .invoke(this)
     }
 
-    // The bottom action-mode menu (a plain, unnamed BottomNavigationView added programmatically to
-    // the footer) is a private field on ToolbarLayout, a superclass of NavDrawerLayout - walk up the
-    // hierarchy since Java reflection's getDeclaredField only searches the exact class it's called on.
-    private fun NavDrawerLayout.bottomActionModeBar(): BottomNavigationView {
-        var cls: Class<*> = javaClass
-        while (true) {
-            try {
-                return cls
-                    .getDeclaredField("bottomActionModeBar")
-                    .apply { isAccessible = true }
-                    .get(this) as BottomNavigationView
-            } catch (e: NoSuchFieldException) {
-                cls = cls.superclass ?: throw e
-            }
-        }
-    }
-
     // NavDrawerLayout wires setSupportActionBar to its own internal Toolbar rather than the
     // window's native action bar, so shadowOf(activity).optionsMenu (which shadows the framework
     // panel-menu path) never populates - read the real Toolbar's own Menu instead.
     private fun MainActivity.mainToolbarMenu(): Menu = findViewById<Toolbar>(designR.id.toolbarlayout_main_toolbar).menu
-
-    private fun MainActivity.noEntryView(): NoEntryView = findViewById(R.id.noEntryView)
-
-    private fun MainActivity.firstItemView(): View = findViewById<RecyclerView>(R.id.urlList).findViewHolderForAdapterPosition(0)!!.itemView
-
-    private fun MainActivity.urlList(): RecyclerView = findViewById(R.id.urlList)
-
-    private fun RecyclerView.firstVisiblePosition(): Int = (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-
-    private fun RecyclerView.shortURLAt(position: Int): String? =
-        (findViewHolderForAdapterPosition(position) as URLAdapter.ViewHolder?)?.listItemTitle?.text?.toString()
-
-    private fun MainActivity.viewModelUrlCount(): Int =
-        ViewModelProvider(this)[MainViewModel::class.java]
-            .state.value.urls.size
-
-    private fun MainActivity.adapterHoldsViewModelUrlInstances(): Boolean {
-        val urls = ViewModelProvider(this)[MainViewModel::class.java].state.value.urls
-        val adapter = urlList().adapter as URLAdapter
-        return adapter.itemCount == urls.size && urls.indices.all { adapter.getItemByPosition(it) === urls[it] }
-    }
-
-    private fun <T> ActivityScenario<MainActivity>.read(block: (MainActivity) -> T): T {
-        val result = mutableListOf<T>()
-        onActivity { result += block(it) }
-        return result.single()
-    }
-
-    // AsyncListDiffer diffs on a background executor that idle() does not wait for.
-    private fun awaitUntil(condition: () -> Boolean) {
-        repeat(AWAIT_ATTEMPTS) {
-            awaitMainIdle()
-            if (condition()) {
-                awaitMainIdle()
-                return
-            }
-            Thread.sleep(AWAIT_STEP_MS)
-        }
-        error("condition not met within ${AWAIT_ATTEMPTS * AWAIT_STEP_MS} ms")
-    }
-
-    // SelectableLinearLayout overrides View.setSelected to drive its own checkbox/highlight
-    // instead of the base isSelected flag (setSelectedAnimate never calls super.setSelected), so
-    // the outer layout's own isSelected getter never reflects selection - listview_item.xml uses
-    // checkMode="overlayCircle" with targetImage=listItemImg, so that ImageView's own (real,
-    // non-overridden) isSelected is what setSelectedAnimate actually flips.
-    private fun MainActivity.firstItemSelected(): Boolean = firstItemView().findViewById<View>(R.id.listItemImg).isSelected
-
-    private fun MainActivity.selectAllView(): View = findViewById(designR.id.toolbarlayout_selectall)
-
-    // seslStartLongPressMultiSelection (invoked from onLongClickItem) needs
-    // RecyclerView.mPenDragSelectedItemArray, which SESL only lazily initializes from a real
-    // dispatchTouchEvent(ACTION_DOWN) - a bare performLongClick() skips that and NPEs.
-    private fun MainActivity.longClickFirstItem() {
-        val recycler = findViewById<RecyclerView>(R.id.urlList)
-        val downTime = SystemClock.uptimeMillis()
-        recycler.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, 1f, 1f, 0))
-        recycler.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_UP, 1f, 1f, 0))
-        firstItemView().performLongClick()
-    }
-
-    private fun MainActivity.selectFirstItemInActionMode() {
-        longClickFirstItem()
-        shadowOf(Looper.getMainLooper()).idle()
-        firstItemView().performClick()
-        shadowOf(Looper.getMainLooper()).idle()
-    }
-
-    private fun MainActivity.clickActionModeMenuItem(
-        @IdRes itemId: Int,
-    ) {
-        val bottomBarItem =
-            (window.decorView as ViewGroup).descendants.firstOrNull { it.id == itemId }
-                ?: error("Action mode menu item $itemId not found - ensure at least one item is selected first")
-        bottomBarItem.performClick()
-    }
-
-    private fun MainActivity.swipeFirstItem(direction: Int) {
-        val recycler = findViewById<RecyclerView>(R.id.urlList)
-        val viewHolder = recycler.findViewHolderForAdapterPosition(0)!!
-        val callback = recycler.itemTouchCallback()
-        callback.getMovementFlags(recycler, viewHolder)
-        callback.onSelectedChanged(viewHolder, ItemTouchHelper.ACTION_STATE_SWIPE)
-        callback.onSwiped(viewHolder, direction)
-    }
 
     // DrawerNavigationView only exposes lookups (findMenuItem) and setNavigationItemSelectedListener,
     // not the backing Menu itself - reflection is the only seam to drive item selection by id.
@@ -1068,64 +525,7 @@ class MainActivityTest {
             .apply { isAccessible = true }
             .get(this) as MenuBuilder
 
-    // SESL's ItemTouchHelper.attachToRecyclerView registers a private anonymous
-    // OnItemTouchListener field (not `this`), so RecyclerView.mOnItemTouchListeners never holds an
-    // ItemTouchHelper instance directly - reach the owning helper through the listener's synthetic
-    // outer-class reference instead.
-    private fun RecyclerView.itemTouchCallback(): ItemTouchHelper.Callback {
-        val listeners =
-            RecyclerView::class.java
-                .getDeclaredField("mOnItemTouchListeners")
-                .apply { isAccessible = true }
-                .get(this) as List<*>
-        val listener = checkNotNull(listeners.firstOrNull())
-        val helper =
-            listener.javaClass
-                .getDeclaredField("this\$0")
-                .apply { isAccessible = true }
-                .get(listener) as ItemTouchHelper
-        return ItemTouchHelper::class.java
-            .getDeclaredField("mCallback")
-            .apply { isAccessible = true }
-            .get(helper) as ItemTouchHelper.Callback
-    }
-
-    private fun advanceClockPastDebounce() {
-        // onNavigationSingleClick debounces clicks within 600ms of each other; move the clock
-        // past that window so the very first click in a test isn't silently swallowed.
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
-    }
-
-    private fun awaitMainIdle() {
-        shadowOf(Looper.getMainLooper()).idle()
-    }
-
-    private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
-
-    private fun seedUrl(
-        shortURL: String,
-        favorite: Boolean = false,
-    ): URL = testUrl(shortURL, favorite = favorite).also { runBlocking { urlRepository.addURL(it) } }
-
-    private fun testUrl(
-        shortURL: String,
-        favorite: Boolean = false,
-    ) = URL(
-        shortURL = shortURL,
-        longURL = "https://example.com/${shortURL.substringAfterLast('/')}",
-        shortURLProvider = ShortURLProviderCompanion.default,
-        favorite = favorite,
-        title = "title",
-        description = "description",
-        added = ZonedDateTime.parse("2024-01-15T10:30:00Z"),
-    )
-
     private companion object {
-        const val PRESCROLL_ITEM_COUNT = 30
-        const val FAVORITE_ITEM_COUNT = 3
-        const val AWAIT_ATTEMPTS = 200
-        const val AWAIT_STEP_MS = 10L
         const val UNMAPPED_NAV_ITEM_ID = 987654321
-        const val UNMAPPED_ACTION_ITEM_ID = 987654322
     }
 }
