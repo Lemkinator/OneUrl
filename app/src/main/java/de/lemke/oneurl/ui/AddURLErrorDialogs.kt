@@ -25,7 +25,15 @@ import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.commonutils.R as commonutilsR
+
+private const val MAX_PROVIDER_TEXT_LENGTH = 150
+private const val MARKUP_AND_LINE_BREAKS = "<{[\r\n\u0085\u2028\u2029"
+private const val MIN_HTTP_STATUS = 100
+private const val MAX_HTTP_STATUS = 599
+private val HTTP_STATUS_RANGE = MIN_HTTP_STATUS..MAX_HTTP_STATUS
+private val SERVER_ERROR_RANGE = HttpStatusCode.INTERNAL_SERVER_ERROR..MAX_HTTP_STATUS
 
 internal fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
     when (error) {
@@ -42,11 +50,16 @@ internal fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
         }
 
         is GenerateURLError.Custom -> {
-            configureCustom(error)
+            configureProviderError(error.statusCode, error.customMessage)
         }
 
         is GenerateURLError.Unknown -> {
-            configureUnknown(error)
+            configureProviderError(error.statusCode, providerText = null)
+        }
+
+        GenerateURLError.RateLimitExceeded, GenerateURLError.InternalServerError -> {
+            setTitle(commonutilsR.string.commonutils_error)
+            setProviderErrorMessage(this.context.getString(simpleErrorMessageRes(error)))
         }
 
         else -> {
@@ -94,22 +107,38 @@ private fun AlertDialog.Builder.configureBlacklisted(error: GenerateURLError.Bla
 
 private fun AlertDialog.Builder.configureServiceUnavailable(error: GenerateURLError.ServiceTemporarilyUnavailable) {
     setTitle(R.string.error_service_unavailable)
-    setMessage(R.string.error_service_unavailable_text)
+    setProviderErrorMessage(this.context.getString(R.string.error_service_unavailable_text))
     setPositiveButton(commonutilsR.string.commonutils_more_information) { _, _ -> this.context.openURL(error.providerBaseURL) }
 }
 
-private fun AlertDialog.Builder.configureCustom(error: GenerateURLError.Custom) {
-    setTitle(error.customTitle ?: this.context.getString(R.string.error_custom_with_status_code, error.statusCode))
-    setMessage(error.customMessage)
-}
-
-private fun AlertDialog.Builder.configureUnknown(error: GenerateURLError.Unknown) {
-    setTitle(commonutilsR.string.commonutils_error)
-    setMessage(
-        if (error.statusCode != null) {
-            this.context.getString(R.string.error_unknown_with_status_code, error.statusCode)
-        } else {
-            this.context.getString(commonutilsR.string.commonutils_error_unknown)
+private fun AlertDialog.Builder.configureProviderError(
+    statusCode: Int?,
+    providerText: String?,
+) {
+    setTitle(
+        when (statusCode) {
+            null -> this.context.getString(commonutilsR.string.commonutils_error)
+            in HTTP_STATUS_RANGE -> this.context.getString(R.string.error_with_http_status, statusCode)
+            else -> this.context.getString(R.string.error_with_code, statusCode)
         },
     )
+    setProviderErrorMessage(
+        providerText?.let { it.trim().takeIf(String::isShortPlainText) } ?: this.context.getString(statusMessageRes(statusCode)),
+    )
 }
+
+private fun AlertDialog.Builder.setProviderErrorMessage(message: String) {
+    setMessage("$message\n${this.context.getString(R.string.error_try_another_provider)}")
+}
+
+private fun String.isShortPlainText(): Boolean = isNotEmpty() && length <= MAX_PROVIDER_TEXT_LENGTH && none { it in MARKUP_AND_LINE_BREAKS }
+
+private fun statusMessageRes(statusCode: Int?): Int =
+    when (statusCode) {
+        HttpStatusCode.BAD_REQUEST -> R.string.error_request_rejected
+        HttpStatusCode.UNAUTHORIZED, HttpStatusCode.FORBIDDEN -> R.string.error_access_refused
+        HttpStatusCode.NOT_FOUND -> R.string.error_provider_cannot_handle_requests
+        HttpStatusCode.TOO_MANY_REQUESTS -> R.string.error_rate_limit_exceeded
+        in SERVER_ERROR_RANGE -> R.string.error_service_unavailable_text
+        else -> commonutilsR.string.commonutils_error_unknown
+    }
