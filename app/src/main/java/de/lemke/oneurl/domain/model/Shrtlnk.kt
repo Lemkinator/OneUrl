@@ -79,13 +79,10 @@ object Shrtlnk : ShortURLProvider {
         ) {
             override fun getParams() = mutableMapOf("url" to longURL)
 
-            // Each branch pairs a distinct callback with a distinct Response; merging them into
-            // one return would need a mutable intermediate that's harder to follow than the
-            // try/if-else/catch shape here.
-            @Suppress("TooGenericExceptionCaught", "ReturnCount")
-            override fun parseNetworkResponse(response: NetworkResponse?): Response<String> {
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
+            // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+            // escaping exception here would crash the whole app.
+            @Suppress("TooGenericExceptionCaught")
+            override fun parseNetworkResponse(response: NetworkResponse?): Response<String> =
                 try {
                     val headers = response?.headers
                     Log.d(tag, "response headers: $headers")
@@ -95,18 +92,17 @@ object Shrtlnk : ShortURLProvider {
                         val shortURL = "$baseURL/$key"
                         Log.d(tag, "shortURL: $shortURL")
                         successCallback(shortURL)
-                        return Response.success(shortURL, null)
+                        Response.success(shortURL, null)
                     } else {
                         Log.e(tag, "error: redirect key not found")
                         errorCallback(GenerateURLError.Unknown())
-                        return Response.error(VolleyError("redirect key not found"))
+                        Response.error(VolleyError("redirect key not found"))
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error parsing network response", e)
                     errorCallback(GenerateURLError.Unknown())
-                    return Response.error(VolleyError(e))
+                    Response.error(VolleyError(e))
                 }
-            }
 
             override fun parseNetworkError(volleyError: VolleyError?): VolleyError {
                 if (volleyError is NoConnectionError) {
