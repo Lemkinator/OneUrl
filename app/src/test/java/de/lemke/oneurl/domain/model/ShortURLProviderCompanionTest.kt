@@ -21,6 +21,7 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import java.util.Locale
 
 class ShortURLProviderCompanionTest : ShouldSpec(
     {
@@ -31,6 +32,21 @@ class ShortURLProviderCompanionTest : ShouldSpec(
 
         should("all contains at least one disabled provider (fixture assumption for other tests)") {
             ShortURLProviderCompanion.all.any { !it.enabled }.shouldBeTrue()
+        }
+
+        should("all contains the Kurzelinks providers only while the default locale is German") {
+            val original = Locale.getDefault()
+            try {
+                Locale.setDefault(Locale.GERMANY)
+                ShortURLProviderCompanion.all.filterIsInstance<Kurzelinks>() shouldBe
+                    listOf(Kurzelinks.Kurzelinksde, Kurzelinks.Ocn, Kurzelinks.T1p, Kurzelinks.Ogy)
+
+                Locale.setDefault(Locale.US)
+                ShortURLProviderCompanion.all.filterIsInstance<Kurzelinks>() shouldBe emptyList()
+                ShortURLProviderCompanion.default shouldBe Dagd
+            } finally {
+                Locale.setDefault(original)
+            }
         }
 
         should("default is the first enabled provider") {
