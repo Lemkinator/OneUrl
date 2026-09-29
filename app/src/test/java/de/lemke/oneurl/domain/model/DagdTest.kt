@@ -174,7 +174,6 @@ class DagdTest {
         req.isCanceled shouldBe true
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `alias coshorten check callback that throws once is caught and reported as unknown`() {
         var error: GenerateURLError? = null
@@ -182,7 +181,7 @@ class DagdTest {
         val req =
             Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))
@@ -240,7 +239,6 @@ class DagdTest {
         error shouldBe GenerateURLError.Unknown(500)
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `create error callback that throws once is caught and reported as unknown`() {
         var error: GenerateURLError? = null
@@ -248,7 +246,7 @@ class DagdTest {
         val req =
             Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))

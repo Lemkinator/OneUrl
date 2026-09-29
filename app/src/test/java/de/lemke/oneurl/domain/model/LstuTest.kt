@@ -268,7 +268,6 @@ class LstuTest {
         error shouldBe GenerateURLError.Unknown(500)
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `error callback that throws once is caught and reported as unknown`() {
         var error: GenerateURLError? = null
@@ -276,7 +275,7 @@ class LstuTest {
         val req =
             Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
 
         req.deliverError(NoConnectionError())

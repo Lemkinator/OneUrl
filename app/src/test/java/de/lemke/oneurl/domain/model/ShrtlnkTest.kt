@@ -146,11 +146,10 @@ class ShrtlnkTest {
         req.paramsViaReflection() shouldBe mapOf("url" to longURL)
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `parseNetworkResponse fails with Unknown when the success callback throws`() {
         var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { throw RuntimeException("boom") }, { error = it })
+        val req = Shrtlnk.getCreateRequest(context, longURL, "", { throw IllegalStateException("boom") }, { error = it })
         val networkResponse =
             NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
 
