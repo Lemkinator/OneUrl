@@ -124,11 +124,13 @@ class AddURLActivity : AppCompatActivity() {
             .forEachIndexed { index, iconView ->
                 if (index < infoContents.size) {
                     iconView.setImageResource(infoContents[index].icon)
+                    iconView.contentDescription = infoContents[index].title
                     iconView.isVisible = true
                 } else {
                     iconView.isVisible = false
                 }
             }
+        binding.providerIconLayout.contentDescription = getString(R.string.provider_info_for, provider.name)
         binding.providerIconLayout.setOnClickListener { showProviderInfoBottomSheet(provider) }
         binding.textInputLayoutAlias.isVisible = provider.aliasConfig != null
         val tipsCardInfo = provider.getTipsCardTitleAndInfo(this)

@@ -18,6 +18,8 @@ package de.lemke.oneurl.ui
 
 import android.content.Intent
 import android.os.Looper
+import android.view.View
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -26,6 +28,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.R
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.junit.Before
 import org.junit.Rule
@@ -79,6 +82,38 @@ class ProviderActivityTest {
                     .performClick()
                 shadowOf(Looper.getMainLooper()).idle()
                 activity.supportFragmentManager.findFragmentByTag(ProviderInfoBottomSheet::class.java.simpleName) shouldNotBe null
+            }
+        }
+    }
+
+    @Test
+    fun `provider row describes the info button and each feature icon`() {
+        assertFirstRowDescriptions(info = "Provider info for da.gd", alias = "Custom alias", analytics = "Analytics")
+    }
+
+    @Test
+    @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "de")
+    fun `provider row descriptions are localized in German`() {
+        assertFirstRowDescriptions(info = "Anbieter-Info zu da.gd", alias = "Benutzerdefiniertes Kürzel", analytics = "Analytics")
+    }
+
+    private fun assertFirstRowDescriptions(
+        info: String,
+        alias: String,
+        analytics: String,
+    ) {
+        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                shadowOf(Looper.getMainLooper()).idle()
+                val row =
+                    activity
+                        .findViewById<RecyclerView>(R.id.provider_list)
+                        .findViewHolderForAdapterPosition(0)!!
+                        .itemView
+                row.findViewById<TextView>(R.id.providerTitle).text.toString() shouldBe "da.gd"
+                row.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe info
+                row.findViewById<View>(R.id.providerIcon1).contentDescription shouldBe alias
+                row.findViewById<View>(R.id.providerIcon2).contentDescription shouldBe analytics
             }
         }
     }

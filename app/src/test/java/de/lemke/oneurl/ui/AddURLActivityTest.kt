@@ -203,6 +203,16 @@ class AddURLActivityTest {
     }
 
     @Test
+    fun `provider row describes the info button and each feature icon`() {
+        withAddURLActivity { activity, _, _, _ ->
+            activity.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe "Provider info for v.gd"
+            activity.findViewById<View>(R.id.providerIcon1).contentDescription shouldBe "Hint before redirecting"
+            activity.findViewById<View>(R.id.providerIcon2).contentDescription shouldBe "Custom alias"
+            activity.findViewById<View>(R.id.providerIcon3).contentDescription shouldBe "Analytics"
+        }
+    }
+
+    @Test
     fun `clicking provider selection opens ProviderActivity for selection`() {
         withAddURLActivity { activity, _, _, _ ->
             activity.findViewById<View>(R.id.providerSelection).performClick()
