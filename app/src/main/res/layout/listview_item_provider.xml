@@ -15,7 +15,6 @@
     limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:animateLayoutChanges="true"
@@ -37,6 +36,7 @@
         android:id="@+id/providerIconLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:contentDescription="@string/provider_info"
         android:orientation="horizontal"
         android:paddingVertical="16dp"
         android:paddingStart="4dp"
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
             android:visibility="gone"
-            tools:ignore="ContentDescription" />
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIcon2"
@@ -56,7 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
             android:visibility="gone"
-            tools:ignore="ContentDescription" />
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIcon3"
@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
             android:visibility="gone"
-            tools:ignore="ContentDescription" />
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIcon4"
@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
             android:visibility="gone"
-            tools:ignore="ContentDescription" />
+            android:importantForAccessibility="no" />
 
         <ImageView
             android:id="@+id/providerIconInfo"
@@ -80,7 +80,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="2dp"
             android:src="@drawable/ic_oui_info_outline"
-            tools:ignore="ContentDescription" />
+            android:importantForAccessibility="no" />
 
     </LinearLayout>
 
