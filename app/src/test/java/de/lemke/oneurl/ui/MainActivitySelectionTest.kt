@@ -39,7 +39,6 @@ import dev.oneuiproject.oneui.layout.NavDrawerLayout
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
-import io.mockk.every
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
