@@ -99,9 +99,12 @@ object ShortURLProviderCompanion {
 
     // Follows the locale at process start; a locale change applies on the next app restart only.
     @SuppressLint("ConstantLocale")
-    val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
+    val all = providersFor(Locale.getDefault())
 
     val enabled = all.filter { it.enabled }
+
+    internal fun providersFor(locale: Locale): List<ShortURLProvider> =
+        if (locale.language == "de") provider else provider.filter { it !is Kurzelinks }
 
     val default: ShortURLProvider = enabled.first()
 

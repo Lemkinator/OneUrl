@@ -54,6 +54,21 @@ class ShortURLProviderCompanionTest : ShouldSpec(
             }
         }
 
+        should("providersFor a German locale includes the four Kurzelinks providers") {
+            val providers = ShortURLProviderCompanion.providersFor(Locale.GERMANY)
+
+            providers.filterIsInstance<Kurzelinks>().map { it.name } shouldBe listOf("kurzelinks.de", "0cn.de", "t1p.de", "ogy.de")
+            providers.size shouldBe 33
+        }
+
+        should("providersFor an English locale excludes every Kurzelinks provider") {
+            val providers = ShortURLProviderCompanion.providersFor(Locale.US)
+
+            providers.filterIsInstance<Kurzelinks>() shouldBe emptyList()
+            providers.size shouldBe 29
+            providers.take(4) shouldBe listOf(Dagd, VgdIsgd.Isgd, VgdIsgd.Vgd, Lstu)
+        }
+
         should("default is the first enabled provider") {
             ShortURLProviderCompanion.default shouldBe ShortURLProviderCompanion.enabled.first()
             ShortURLProviderCompanion.default.enabled.shouldBeTrue()
