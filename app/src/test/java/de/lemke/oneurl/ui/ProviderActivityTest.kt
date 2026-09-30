@@ -104,7 +104,7 @@ class ProviderActivityTest {
     }
 
     @Test
-    fun `submitting a provider list diffs rows by provider name`() {
+    fun `submitting the list without is gd removes its row and changes no other row`() {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 shadowOf(Looper.getMainLooper()).idle()
