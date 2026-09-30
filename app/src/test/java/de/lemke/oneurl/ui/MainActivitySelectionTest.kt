@@ -146,10 +146,10 @@ class MainActivitySelectionTest {
             awaitMainIdle()
             scenario.onActivity { activity -> activity.selectAllView().performClick() }
             awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemSelected().shouldBeTrue() }
+            scenario.onActivity { activity -> activity.itemsSelected() shouldBe listOf(true, true) }
             scenario.onActivity { activity -> activity.selectAllView().performClick() }
             awaitMainIdle()
-            scenario.onActivity { activity -> activity.firstItemSelected().shouldBeFalse() }
+            scenario.onActivity { activity -> activity.itemsSelected() shouldBe listOf(false, false) }
         }
     }
 
@@ -269,6 +269,17 @@ class MainActivitySelectionTest {
     // checkMode="overlayCircle" with targetImage=listItemImg, so that ImageView's own (real,
     // non-overridden) isSelected is what setSelectedAnimate actually flips.
     private fun MainActivity.firstItemSelected(): Boolean = firstItemView().findViewById<View>(R.id.listItemImg).isSelected
+
+    private fun MainActivity.itemsSelected(): List<Boolean> {
+        val recycler = findViewById<RecyclerView>(R.id.urlList)
+        return List(recycler.adapter!!.itemCount) { position ->
+            recycler
+                .findViewHolderForAdapterPosition(position)!!
+                .itemView
+                .findViewById<View>(R.id.listItemImg)
+                .isSelected
+        }
+    }
 
     private fun MainActivity.selectAllView(): View = findViewById(designR.id.toolbarlayout_selectall)
 
