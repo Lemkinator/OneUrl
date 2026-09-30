@@ -27,9 +27,15 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.R
+import de.lemke.oneurl.domain.model.Dagd
+import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.Spoome
+import de.lemke.oneurl.domain.model.VgdIsgd
+import de.lemke.oneurl.domain.model.Zwsim
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import java.util.concurrent.TimeUnit
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -95,6 +101,61 @@ class ProviderActivityTest {
     @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "de")
     fun `provider info button description is localized in German`() {
         assertFirstRowInfoDescription("Anbieter-Info zu da.gd: Benutzerdefiniertes Kürzel, Analytics")
+    }
+
+    @Test
+    fun `submitting a provider list diffs rows by provider name`() {
+        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                shadowOf(Looper.getMainLooper()).idle()
+                val recycler = activity.findViewById<RecyclerView>(R.id.provider_list)
+                val adapter = recycler.adapter as ProviderActivity.ProviderAdapter
+                val events = mutableListOf<String>()
+                adapter.registerAdapterDataObserver(
+                    object : RecyclerView.AdapterDataObserver() {
+                        override fun onItemRangeChanged(
+                            positionStart: Int,
+                            itemCount: Int,
+                            payload: Any?,
+                        ) {
+                            events += "changed $positionStart $itemCount"
+                        }
+
+                        override fun onItemRangeRemoved(
+                            positionStart: Int,
+                            itemCount: Int,
+                        ) {
+                            events += "removed $positionStart $itemCount"
+                        }
+                    },
+                )
+                val updated = listOf(Dagd, VgdIsgd.Vgd, Zwsim, Spoome.Default, Spoome.Emoji)
+
+                adapter.submitList(updated)
+                awaitCurrentList(adapter, updated)
+                shadowOf(Looper.getMainLooper()).idle()
+
+                events shouldBe listOf("removed 1 1")
+                recycler
+                    .findViewHolderForAdapterPosition(1)!!
+                    .itemView
+                    .findViewById<TextView>(R.id.providerTitle)
+                    .text
+                    .toString() shouldBe
+                    "v.gd"
+            }
+        }
+    }
+
+    private fun awaitCurrentList(
+        adapter: ProviderActivity.ProviderAdapter,
+        expected: List<ShortURLProvider>,
+    ) {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (adapter.currentList != expected && System.nanoTime() < deadline) {
+            Thread.sleep(10)
+            shadowOf(Looper.getMainLooper()).idle()
+        }
     }
 
     private fun assertFirstRowInfoDescription(expected: String) {
