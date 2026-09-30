@@ -21,6 +21,7 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import java.util.Locale
 
 class ShortURLProviderCompanionTest : ShouldSpec(
@@ -34,16 +35,20 @@ class ShortURLProviderCompanionTest : ShouldSpec(
             ShortURLProviderCompanion.all.any { !it.enabled }.shouldBeTrue()
         }
 
-        should("all contains the Kurzelinks providers only while the default locale is German") {
+        should("provider lists keep their first computed value when the default locale changes") {
+            val all = ShortURLProviderCompanion.all
+            val enabled = ShortURLProviderCompanion.enabled
+            val kurzelinks = ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de")
             val original = Locale.getDefault()
             try {
-                Locale.setDefault(Locale.GERMANY)
-                ShortURLProviderCompanion.all.filterIsInstance<Kurzelinks>() shouldBe
-                    listOf(Kurzelinks.Kurzelinksde, Kurzelinks.Ocn, Kurzelinks.T1p, Kurzelinks.Ogy)
+                listOf(Locale.GERMANY, Locale.US).forEach { locale ->
+                    Locale.setDefault(locale)
 
-                Locale.setDefault(Locale.US)
-                ShortURLProviderCompanion.all.filterIsInstance<Kurzelinks>() shouldBe emptyList()
-                ShortURLProviderCompanion.default shouldBe Dagd
+                    ShortURLProviderCompanion.all shouldBeSameInstanceAs all
+                    ShortURLProviderCompanion.enabled shouldBeSameInstanceAs enabled
+                    ShortURLProviderCompanion.default shouldBe Dagd
+                    ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de") shouldBe kurzelinks
+                }
             } finally {
                 Locale.setDefault(original)
             }
@@ -99,19 +104,6 @@ class ShortURLProviderCompanionTest : ShouldSpec(
 
         should("fromStringOrDefault returns default for a disabled provider name") {
             ShortURLProviderCompanion.fromStringOrDefault("ulvis.net") shouldBe Dagd
-        }
-
-        should("fromStringOrDefault returns a Kurzelinks provider only while the default locale is German") {
-            val original = Locale.getDefault()
-            try {
-                Locale.setDefault(Locale.GERMANY)
-                ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de") shouldBe Kurzelinks.Kurzelinksde
-
-                Locale.setDefault(Locale.US)
-                ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de") shouldBe Dagd
-            } finally {
-                Locale.setDefault(original)
-            }
         }
     },
 )

@@ -16,6 +16,7 @@
 
 package de.lemke.oneurl.domain.model
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import com.android.volley.NetworkResponse
@@ -96,14 +97,13 @@ object ShortURLProviderCompanion {
             Owovc.Gay, // disabled
         )
 
-    val all: List<ShortURLProvider>
-        get() = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
+    // Follows the locale at process start; a locale change applies on the next app restart only.
+    @SuppressLint("ConstantLocale")
+    val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
 
-    val enabled: List<ShortURLProvider>
-        get() = all.filter { it.enabled }
+    val enabled = all.filter { it.enabled }
 
-    val default: ShortURLProvider
-        get() = enabled.first()
+    val default: ShortURLProvider = enabled.first()
 
     fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
         if (shortURLProvider in enabled) shortURLProvider ?: default else default
