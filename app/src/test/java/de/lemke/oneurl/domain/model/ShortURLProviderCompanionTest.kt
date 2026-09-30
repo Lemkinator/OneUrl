@@ -96,5 +96,22 @@ class ShortURLProviderCompanionTest : ShouldSpec(
         should("fromStringOrDefault returns default for a null name") {
             ShortURLProviderCompanion.fromStringOrDefault(null) shouldBe ShortURLProviderCompanion.default
         }
+
+        should("fromStringOrDefault returns default for a disabled provider name") {
+            ShortURLProviderCompanion.fromStringOrDefault("ulvis.net") shouldBe Dagd
+        }
+
+        should("fromStringOrDefault returns a Kurzelinks provider only while the default locale is German") {
+            val original = Locale.getDefault()
+            try {
+                Locale.setDefault(Locale.GERMANY)
+                ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de") shouldBe Kurzelinks.Kurzelinksde
+
+                Locale.setDefault(Locale.US)
+                ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de") shouldBe Dagd
+            } finally {
+                Locale.setDefault(original)
+            }
+        }
     },
 )

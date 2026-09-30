@@ -112,7 +112,7 @@ object ShortURLProviderCompanion {
 
     fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
 
-    fun fromStringOrDefault(name: String?): ShortURLProvider = fromStringOrNull(name) ?: default
+    fun fromStringOrDefault(name: String?): ShortURLProvider = getIfEnabledOrDefault(fromStringOrNull(name))
 }
 
 class Unknown : ShortURLProvider {
