@@ -187,7 +187,6 @@ class MurlTest {
         error shouldBe GenerateURLError.Custom(400, "server exploded")
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `create error callback that throws once is caught and reported as unknown`() {
         var error: GenerateURLError? = null
@@ -195,7 +194,7 @@ class MurlTest {
         val req =
             Murl.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
 
         req.deliverError(NoConnectionError())
@@ -242,7 +241,6 @@ class MurlTest {
         clicks shouldBe null
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `getURLClickCount callback that throws once is caught and resolves to null`() {
         val innerReq = slot<StringRequest>()
@@ -253,7 +251,7 @@ class MurlTest {
 
         Murl.getURLClickCount(context, url) {
             callbackCount++
-            if (callbackCount == 1) throw RuntimeException("boom") else clicks = it
+            if (callbackCount == 1) throw IllegalStateException("boom") else clicks = it
         }
         innerReq.captured.deliverStringResponse("""<span class="mu-mc count-480357" title="Views">7</span>""")
 

@@ -39,6 +39,7 @@ import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.GenerateURLResult
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
 import de.lemke.oneurl.domain.model.Murl
+import de.lemke.oneurl.domain.model.Shareaholic
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.model.VgdIsgd
@@ -199,6 +200,23 @@ class AddURLActivityTest {
             shadowOf(Looper.getMainLooper()).idle()
 
             aliasField.text.toString() shouldBe "user-typed-alias"
+        }
+    }
+
+    @Test
+    fun `provider info button lists the shown feature titles`() {
+        withAddURLActivity { activity, _, _, _ ->
+            activity.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe
+                "Provider info for v.gd: Hint before redirecting, Custom alias, Analytics"
+            activity.findViewById<View>(R.id.providerIcon1).importantForAccessibility shouldBe View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+    }
+
+    @Test
+    fun `provider info button names only the provider when it has no features`() {
+        userSettings.selectedShortURLProvider = Shareaholic
+        withAddURLActivity { activity, _, _, _ ->
+            activity.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe "Provider info for go.shr.lc"
         }
     }
 

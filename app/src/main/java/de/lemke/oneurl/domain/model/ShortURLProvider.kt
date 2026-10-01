@@ -97,16 +97,14 @@ object ShortURLProviderCompanion {
             Owovc.Gay, // disabled
         )
 
-    /*
-    provide kurzelinks.de for German users only
-    Assigning Locale.getDefault() to a final static field (suspicious)
-    intended behavior: if the user changes locale while the app is running,
-    the app will not update the list of available providers until restart
-     */
+    // Follows the locale at process start; a locale change applies on the next app restart only.
     @SuppressLint("ConstantLocale")
-    val all = if (Locale.getDefault().language == "de") provider else provider.filter { it !is Kurzelinks }
+    val all = providersFor(Locale.getDefault())
 
     val enabled = all.filter { it.enabled }
+
+    internal fun providersFor(locale: Locale): List<ShortURLProvider> =
+        if (locale.language == "de") provider else provider.filter { it !is Kurzelinks }
 
     val default: ShortURLProvider = enabled.first()
 
@@ -117,7 +115,7 @@ object ShortURLProviderCompanion {
 
     fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
 
-    fun fromStringOrDefault(name: String?): ShortURLProvider = fromStringOrNull(name) ?: default
+    fun fromStringOrDefault(name: String?): ShortURLProvider = getIfEnabledOrDefault(fromStringOrNull(name))
 }
 
 class Unknown : ShortURLProvider {

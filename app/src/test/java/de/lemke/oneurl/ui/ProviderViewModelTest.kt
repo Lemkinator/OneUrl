@@ -20,8 +20,10 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.domain.model.Dagd
+import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
-import de.lemke.oneurl.domain.model.Tinyurl
+import de.lemke.oneurl.domain.model.VgdIsgd
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -35,8 +37,10 @@ class ProviderViewModelTest : ShouldSpec(
     {
         lateinit var userSettings: UserSettings
 
-        fun newViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()) =
-            ProviderViewModel(savedStateHandle, userSettings, ShortURLProviderCompanion.enabled)
+        fun newViewModel(
+            savedStateHandle: SavedStateHandle = SavedStateHandle(),
+            providers: List<ShortURLProvider> = ShortURLProviderCompanion.enabled,
+        ) = ProviderViewModel(savedStateHandle, userSettings, providers)
 
         beforeEach {
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
@@ -73,9 +77,9 @@ class ProviderViewModelTest : ShouldSpec(
         }
 
         should("init does not emit ScrollToSelected when the selected provider is not in the enabled list") {
-            userSettings.selectedShortURLProvider = Tinyurl
+            userSettings.selectedShortURLProvider = Dagd
 
-            val viewModel = newViewModel()
+            val viewModel = newViewModel(providers = listOf(VgdIsgd.Isgd, VgdIsgd.Vgd))
 
             viewModel.events.test {
                 expectNoEvents()

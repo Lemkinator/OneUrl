@@ -26,6 +26,8 @@
 
     <!--Provider info-->
     <string name="provider_info">Anbieter-Info</string>
+    <string name="provider_info_for">Anbieter-Info zu %1$s</string>
+    <string name="provider_info_for_features">Anbieter-Info zu %1$s: %2$s</string>
     <string name="select_provider">Anbieter auswählen</string>
     <string name="group">Gruppe</string>
     <string name="redirect_hint">Hinweis vor Weiterleitung</string>

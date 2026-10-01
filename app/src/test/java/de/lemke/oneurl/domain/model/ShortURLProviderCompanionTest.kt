@@ -21,6 +21,8 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeSameInstanceAs
+import java.util.Locale
 
 class ShortURLProviderCompanionTest : ShouldSpec(
     {
@@ -31,6 +33,40 @@ class ShortURLProviderCompanionTest : ShouldSpec(
 
         should("all contains at least one disabled provider (fixture assumption for other tests)") {
             ShortURLProviderCompanion.all.any { !it.enabled }.shouldBeTrue()
+        }
+
+        should("provider lists keep their first computed value when the default locale changes") {
+            val all = ShortURLProviderCompanion.all
+            val enabled = ShortURLProviderCompanion.enabled
+            val kurzelinks = ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de")
+            val original = Locale.getDefault()
+            try {
+                listOf(Locale.GERMANY, Locale.US).forEach { locale ->
+                    Locale.setDefault(locale)
+
+                    ShortURLProviderCompanion.all shouldBeSameInstanceAs all
+                    ShortURLProviderCompanion.enabled shouldBeSameInstanceAs enabled
+                    ShortURLProviderCompanion.default shouldBe Dagd
+                    ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de") shouldBe kurzelinks
+                }
+            } finally {
+                Locale.setDefault(original)
+            }
+        }
+
+        should("providersFor a German locale includes the four Kurzelinks providers") {
+            val providers = ShortURLProviderCompanion.providersFor(Locale.GERMANY)
+
+            providers.filterIsInstance<Kurzelinks>().map { it.name } shouldBe listOf("kurzelinks.de", "0cn.de", "t1p.de", "ogy.de")
+            providers.size shouldBe 33
+        }
+
+        should("providersFor an English locale excludes every Kurzelinks provider") {
+            val providers = ShortURLProviderCompanion.providersFor(Locale.US)
+
+            providers.filterIsInstance<Kurzelinks>() shouldBe emptyList()
+            providers.size shouldBe 29
+            providers.take(4) shouldBe listOf(Dagd, VgdIsgd.Isgd, VgdIsgd.Vgd, Lstu)
         }
 
         should("default is the first enabled provider") {
@@ -79,6 +115,10 @@ class ShortURLProviderCompanionTest : ShouldSpec(
 
         should("fromStringOrDefault returns default for a null name") {
             ShortURLProviderCompanion.fromStringOrDefault(null) shouldBe ShortURLProviderCompanion.default
+        }
+
+        should("fromStringOrDefault returns default for a disabled provider name") {
+            ShortURLProviderCompanion.fromStringOrDefault("ulvis.net") shouldBe Dagd
         }
     },
 )

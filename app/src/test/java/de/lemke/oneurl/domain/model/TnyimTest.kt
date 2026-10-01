@@ -277,7 +277,6 @@ class TnyimTest {
         clicks shouldBe null
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `getURLClickCount callback that throws once is caught and resolves to null`() {
         val slot = slot<JsonObjectRequest>()
@@ -288,14 +287,13 @@ class TnyimTest {
 
         Tnyim.getURLClickCount(context, url) {
             callbackCount++
-            if (callbackCount == 1) throw RuntimeException("boom") else clicks = it
+            if (callbackCount == 1) throw IllegalStateException("boom") else clicks = it
         }
         slot.captured.deliverJsonResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
 
         clicks shouldBe null
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `create error callback that throws once is caught and reported as unknown`() {
         var error: GenerateURLError? = null
@@ -303,7 +301,7 @@ class TnyimTest {
         val req =
             Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))

@@ -209,7 +209,6 @@ class ZwsimTest {
         error shouldBe GenerateURLError.Custom(500, body)
     }
 
-    @Suppress("TooGenericExceptionThrown")
     @Test
     fun `create error callback that throws once is caught and reported as unknown`() {
         var error: GenerateURLError? = null
@@ -217,7 +216,7 @@ class ZwsimTest {
         val req =
             Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw RuntimeException("boom") else error = it
+                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
 
         req.deliverError(NoConnectionError())

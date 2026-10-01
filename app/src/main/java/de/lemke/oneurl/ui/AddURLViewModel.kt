@@ -62,7 +62,7 @@ class AddURLViewModel @Inject constructor(
     init {
         state.update {
             it.copy(
-                selectedProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(userSettings.selectedShortURLProvider),
+                selectedProvider = userSettings.selectedShortURLProvider,
                 initialURL = intentUrl ?: userSettings.lastURL,
                 initialAlias = userSettings.lastAlias,
                 initialDescription = userSettings.lastDescription,
@@ -72,9 +72,8 @@ class AddURLViewModel @Inject constructor(
         if (intentUrl != null) userSettings.lastURL = intentUrl
         viewModelScope.launch {
             userSettings.flow.selectedShortURLProvider.collectLatest { provider ->
-                val newProvider = ShortURLProviderCompanion.getIfEnabledOrDefault(provider)
-                if (newProvider != state.value.selectedProvider) {
-                    state.update { it.copy(selectedProvider = newProvider) }
+                if (provider != state.value.selectedProvider) {
+                    state.update { it.copy(selectedProvider = provider) }
                 }
             }
         }
