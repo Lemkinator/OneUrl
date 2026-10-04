@@ -74,14 +74,13 @@ checks URL against URLhaus → delegates to the selected provider's `getCreateRe
 for all HTTP calls.
 
 **`ui/`** — Activities, adapters, and ViewModels. Activities interact with use cases through ViewModels (MainViewModel, AddURLViewModel,
-URLViewModel, GenerateQRCodeViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather than calling use cases
-directly.
+URLViewModel, GenerateQRCodeViewModel, QRBottomSheetViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
+than calling use cases directly.
 
-**Tap-driven async work runs in the Activity, through the launch latch.** QR code save, copy and share run in
-`singleLaunchSuspending` (helpers in `ui/QRCodeImageActions.kt`), which drops every other tap until the first one's `then`
-returns. The document picker result write runs outside it, in `lifecycleScope` under `NonCancellable`, because
-`singleLaunchSuspending` drops inputs while the activity is not RESUMED. The IO dispatcher comes in by field injection
-(`@Inject @IoDispatcher lateinit var ioDispatcher`).
+**QR code export** — `GenerateQRCodeViewModel`, `URLViewModel` and `QRBottomSheetViewModel` each compose a `QRCodeExportStateHolder`
+(`ui/QRCodeExport.kt`), which runs save, copy, share and the document-picker write through the `data/QRCodeExporter` source and
+exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` is the one screen-side reaction to a result.
+`GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss.
 
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
 `ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers marked `//disabled` are instantiated but filtered out of
@@ -109,9 +108,9 @@ Three tools run as part of `./gradlew build`:
   (`data` may depend on `domain.model`'s shared value types, never on use cases). Runs as part of `./gradlew test`.
   `CodingConventionsTest.kt` also enforces the common-utils launch latch through `assertLaunchLatchConventions()` from the
   common-utils testFixtures: it bans raw activity launches and result registration by name, and a `show`/`showNow` call whose
-  receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or a `*Fab`. Launch through `singleLaunchActivity`,
+  receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or `AddFab`. Launch through `singleLaunchActivity`,
   `transformToActivity` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
-  `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunchSuspending`); show dialogs with `showOnce(tag)`.
+  `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunch`); show dialogs with `showOnce(tag)`.
 
 **Pre-commit hook** — blocks commits with formatting violations. Opt in once per clone:
 
