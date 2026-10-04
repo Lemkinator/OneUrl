@@ -26,12 +26,12 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
@@ -58,23 +58,25 @@ class ProviderActivity : AppCompatActivity() {
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
         initRecycler()
-        collectState()
-        collectEvents()
+        collectState(viewModel.state) { render(it) }
+        collectState(viewModel.navigation, minActiveState = RESUMED) { if (it is ProviderNavigation.Request) navigate(it) }
     }
 
-    private fun collectState() =
-        collectState(viewModel.state) { state ->
-            providerAdapter.submitList(state.providers)
+    private fun render(state: ProviderUiState) {
+        providerAdapter.submitList(state.providers)
+        state.scrollToPosition?.let {
+            binding.providerList.scrollToPosition(it)
+            viewModel.onScrolledToSelected()
         }
+    }
 
-    private fun collectEvents() =
-        collectEvents(viewModel.events) { event ->
-            when (event) {
-                is ProviderEvent.Finish -> finishAfterTransition()
-                is ProviderEvent.ShowInfo -> showProviderInfoBottomSheet(event.provider)
-                is ProviderEvent.ScrollToSelected -> binding.providerList.scrollToPosition(event.position)
-            }
+    private fun navigate(request: ProviderNavigation.Request) {
+        when (request) {
+            is ProviderNavigation.ShowInfo -> showProviderInfoBottomSheet(request.provider)
+            ProviderNavigation.Finish -> finishAfterTransition()
         }
+        viewModel.onNavigationHandled(request)
+    }
 
     private fun initRecycler() {
         binding.providerList.apply {

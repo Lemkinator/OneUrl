@@ -20,6 +20,8 @@ import android.content.Intent
 import android.os.Looper
 import android.view.View
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -27,15 +29,18 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.VgdIsgd
 import de.lemke.oneurl.domain.model.Zwsim
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -51,6 +56,9 @@ import org.robolectric.annotation.Config
 class ProviderActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @Inject
+    lateinit var userSettings: UserSettings
 
     @Before
     fun setup() {
@@ -108,6 +116,42 @@ class ProviderActivityTest {
             shadowOf(Looper.getMainLooper()).idle()
             scenario.onActivity { activity ->
                 activity.supportFragmentManager.fragments.count { it is ProviderInfoBottomSheet } shouldBe 1
+            }
+        }
+    }
+
+    @Test
+    fun `a provider info request shows one bottom sheet that a recreation does not show again`() {
+        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                activity
+                    .findViewById<RecyclerView>(R.id.provider_list)
+                    .findViewHolderForAdapterPosition(0)!!
+                    .itemView
+                    .performClick()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.recreate()
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                activity.supportFragmentManager.fragments.count { it is ProviderInfoBottomSheet } shouldBe 1
+                ViewModelProvider(activity)[ProviderViewModel::class.java].navigation.value shouldBe ProviderNavigation.None
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w360dp-h240dp")
+    fun `the list scrolls to the selected provider and reports the scroll done`() {
+        userSettings.selectedShortURLProvider = Spoome.Emoji
+        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                val layoutManager = activity.findViewById<RecyclerView>(R.id.provider_list).layoutManager as LinearLayoutManager
+                layoutManager.findFirstVisibleItemPosition() shouldBeGreaterThan 0
+                layoutManager.findLastVisibleItemPosition() shouldBe 5
+                ViewModelProvider(activity)[ProviderViewModel::class.java].state.value.scrollToPosition shouldBe null
             }
         }
     }
