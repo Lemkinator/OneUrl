@@ -101,7 +101,6 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     private fun collectState() =
         collectState(viewModel.state) { state ->
-            if (state.isLoading) return@collectState
             binding.qrCode.setImageBitmap(state.qrCode)
             binding.colorButtonForeground.bindColorSwatch(state.foregroundColor)
             binding.colorButtonBackground.bindColorSwatch(state.backgroundColor)

@@ -142,8 +142,8 @@ class GenerateQRCodeViewModel @Inject constructor(
         val size = userSettings.qrSize
         val recentForegroundColors = userSettings.qrRecentForegroundColors
         val recentBackgroundColors = userSettings.qrRecentBackgroundColors
-        val foregroundColor = recentForegroundColors.firstOrNull() ?: Color.BLACK
-        val backgroundColor = recentBackgroundColors.firstOrNull() ?: Color.WHITE
+        val foregroundColor = recentForegroundColors.first()
+        val backgroundColor = recentBackgroundColors.first()
         val tintAnchor = userSettings.qrTintAnchor
         val tintBorder = userSettings.qrTintBorder
         val icon = userSettings.qrIcon
@@ -160,7 +160,6 @@ class GenerateQRCodeViewModel @Inject constructor(
             roundedFrame = roundedFrame,
             recentForegroundColors = recentForegroundColors,
             recentBackgroundColors = recentBackgroundColors,
-            isLoading = false,
         )
     }
 
@@ -186,5 +185,4 @@ data class QrUiState(
     val roundedFrame: Boolean = true,
     val recentForegroundColors: List<Int> = listOf(Color.BLACK),
     val recentBackgroundColors: List<Int> = listOf(Color.WHITE),
-    val isLoading: Boolean = true,
 )
