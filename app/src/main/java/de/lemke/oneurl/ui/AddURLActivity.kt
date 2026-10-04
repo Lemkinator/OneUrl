@@ -30,9 +30,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationBetween
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
+import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.R
@@ -109,8 +112,8 @@ class AddURLActivity : AppCompatActivity() {
         binding.editTextURL.addTextChangedListener { text -> viewModel.onLongURLChanged(text.toString()) }
         binding.editTextAlias.addTextChangedListener { text -> viewModel.onAliasChanged(text.toString()) }
         binding.editTextDescription.addTextChangedListener { text -> viewModel.onDescriptionChanged(text.toString()) }
-        binding.providerSelection.setOnClickListener {
-            startActivity(
+        binding.providerSelection.onSingleLaunchClick {
+            singleLaunchActivity(
                 Intent(this, ProviderActivity::class.java).putExtra(KEY_SELECT_PROVIDER, true),
                 ActivityOptions.makeSceneTransitionAnimation(this, Pair.create(binding.providerSelection, "provider_selection")).toBundle(),
             )
@@ -130,7 +133,7 @@ class AddURLActivity : AppCompatActivity() {
             }
         }
         binding.providerIconLayout.contentDescription = providerInfoDescription(provider.name, infoContents.take(icons.size))
-        binding.providerIconLayout.setOnClickListener { showProviderInfoBottomSheet(provider) }
+        binding.providerIconLayout.onSingleLaunchClick { showProviderInfoBottomSheet(provider) }
         binding.textInputLayoutAlias.isVisible = provider.aliasConfig != null
         val tipsCardInfo = provider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {
@@ -214,7 +217,7 @@ class AddURLActivity : AppCompatActivity() {
                     Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL),
                     transitionName = "alreadyShortenedUrlTransition",
                 )
-            }.show()
+            }.showOnce(ALREADY_SHORTENED_DIALOG_TAG)
     }
 
     private fun showErrorDialog(error: GenerateURLError) {
@@ -222,10 +225,12 @@ class AddURLActivity : AppCompatActivity() {
             .Builder(this)
             .setNeutralButton(commonutilsR.string.commonutils_ok, null)
             .apply { configureFor(error) }
-            .show()
+            .showOnce(ERROR_DIALOG_TAG)
     }
 
     companion object {
         private const val COMPACT_SCREEN_WIDTH_DP = 360
+        private const val ALREADY_SHORTENED_DIALOG_TAG = "alreadyShortenedDialog"
+        private const val ERROR_DIALOG_TAG = "errorDialog"
     }
 }

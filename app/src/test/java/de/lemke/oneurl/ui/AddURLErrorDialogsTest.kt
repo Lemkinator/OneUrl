@@ -22,6 +22,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
 import android.widget.TextView
@@ -63,7 +64,10 @@ class AddURLErrorDialogsTest {
         }
 
     private class ThrowingStartActivityContext(base: Context) : ContextWrapper(base) {
-        override fun startActivity(intent: Intent): Unit = throw ActivityNotFoundException("no settings app")
+        override fun startActivity(
+            intent: Intent,
+            options: Bundle?,
+        ): Unit = throw ActivityNotFoundException("no settings app")
     }
 
     private fun idleMainLooper() = shadowOf(Looper.getMainLooper()).idle()

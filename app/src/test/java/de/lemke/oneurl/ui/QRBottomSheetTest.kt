@@ -24,6 +24,7 @@ import android.content.pm.PackageInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Environment
 import android.os.Looper
 import android.view.View
 import android.widget.ImageView
@@ -43,8 +44,10 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldMatch
 import java.io.File
 import javax.inject.Inject
 import org.junit.Before
@@ -169,12 +172,49 @@ class QRBottomSheetTest {
     fun `share button click starts the share chooser`() {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.shareButton).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.action shouldBe Intent.ACTION_CHOOSER
             val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
-            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) shouldBe activity.qrCodeContentUri("QRCode.png")
+            val stream = shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)!!
+            stream.toString() shouldMatch activity.qrCodeContentUriPattern("share", "QRCode.png")
+            activity.cacheFile(stream).length() shouldBeGreaterThan 0L
             (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
+        }
+    }
+
+    @Test
+    fun `double tap on the share button opens one chooser`() {
+        withQrBottomSheet { activity, sheet ->
+            val shareButton = sheet.requireView().findViewById<View>(R.id.shareButton)
+
+            shareButton.performClick()
+            shareButton.performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
+            shadowActivity.nextStartedActivity shouldBe null
+        }
+    }
+
+    @Test
+    fun `double tap on the quick share button sends the qr code once without a chooser`() {
+        withQrBottomSheet { activity, sheet ->
+            val quickShareButton = sheet.requireView().findViewById<View>(R.id.quickShareButton)
+
+            quickShareButton.performClick()
+            quickShareButton.performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val shadowActivity = shadowOf(activity)
+            val sendIntent = shadowActivity.nextStartedActivity
+            sendIntent.action shouldBe Intent.ACTION_SEND
+            sendIntent.type shouldBe "image/png"
+            sendIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java).toString() shouldMatch
+                activity.qrCodeContentUriPattern("share", "QRCode.png")
+            shadowActivity.nextStartedActivity shouldBe null
         }
     }
 
@@ -185,6 +225,21 @@ class QRBottomSheetTest {
 
             val startedForResult = shadowOf(activity).peekNextStartedActivityForResult()
             startedForResult shouldNotBe null
+        }
+    }
+
+    @Test
+    fun `double tap on save with a fixed location writes one file and shows one toast`() {
+        withQrBottomSheet(saveLocation = SaveLocation.DOWNLOADS) { _, sheet ->
+            val saveButton = sheet.requireView().findViewById<View>(R.id.saveButton)
+
+            saveButton.performClick()
+            saveButton.performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles()?.size shouldBe 1
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Image saved: Downloads"
         }
     }
 
@@ -203,8 +258,10 @@ class QRBottomSheetTest {
                 RESULT_OK,
                 Intent().apply { data = Uri.fromFile(exportFile) },
             )
+            shadowOf(Looper.getMainLooper()).idle()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
+            exportFile.length() shouldBeGreaterThan 0L
         }
     }
 

@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.oneurl.R
@@ -125,9 +126,9 @@ class ProviderActivity : AppCompatActivity() {
                     iconView.isVisible = false
                 }
             }
-            holder.parentView.setOnClickListener { viewModel.onProviderClick(provider) }
+            holder.parentView.onSingleLaunchClick { viewModel.onProviderClick(provider) }
             holder.iconLayout.contentDescription = providerInfoDescription(provider.name, infoContents.take(icons.size))
-            holder.iconLayout.setOnClickListener { viewModel.onProviderInfoClick(provider) }
+            holder.iconLayout.onSingleLaunchClick { viewModel.onProviderInfoClick(provider) }
             holder.parentView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
         }
 

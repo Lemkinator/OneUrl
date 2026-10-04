@@ -23,6 +23,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
@@ -46,13 +47,16 @@ import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldMatch
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
+import java.io.File
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -132,7 +136,7 @@ class URLActivityTest {
 
     @Test
     fun `onOptionsItemSelected opens the mapped scan URL for every remaining toolbar item`() {
-        withUrlActivity { activity ->
+        withUrlScenario { scenario ->
             val encoded = seededUrl.longURL.urlEncode()
             val expectedByItemId =
                 mapOf(
@@ -144,12 +148,27 @@ class URLActivityTest {
                     R.id.url_toolbar_kaspersky to "https://opentip.kaspersky.com/$encoded/?tab=lookup",
                 )
             expectedByItemId.forEach { (itemId, expectedURL) ->
-                val handled = activity.onOptionsItemSelected(menuItem(itemId))
-                handled.shouldBeTrue()
-                val startedIntent = shadowOf(activity).nextStartedActivity
-                startedIntent.action shouldBe Intent.ACTION_VIEW
-                startedIntent.data shouldBe expectedURL.toUri()
+                scenario.onActivity { activity ->
+                    activity.onOptionsItemSelected(menuItem(itemId)).shouldBeTrue()
+                    val startedIntent = shadowOf(activity).nextStartedActivity
+                    startedIntent.action shouldBe Intent.ACTION_VIEW
+                    startedIntent.data shouldBe expectedURL.toUri()
+                }
+                scenario.returnFromLaunchedScreen()
             }
+        }
+    }
+
+    @Test
+    fun `double tap on a scan menu item opens the scan URL once`() {
+        withUrlActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.url_toolbar_urlhaus)).shouldBeTrue()
+            activity.onOptionsItemSelected(menuItem(R.id.url_toolbar_urlhaus)).shouldBeTrue()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivity.data shouldBe
+                "https://urlhaus.abuse.ch/browse.php?search=${seededUrl.longURL.urlEncode()}".toUri()
+            shadowActivity.nextStartedActivity shouldBe null
         }
     }
 
@@ -177,14 +196,29 @@ class URLActivityTest {
     }
 
     @Test
+    fun `double tap on the qr imageview shows one qr bottom sheet`() {
+        withUrlActivity { activity ->
+            val qrImageView = activity.findViewById<android.view.View>(R.id.url_qr_imageview)
+
+            qrImageView.performClick()
+            qrImageView.performClick()
+            activity.supportFragmentManager.executePendingTransactions()
+
+            activity.supportFragmentManager.fragments
+                .count { it is QRBottomSheet } shouldBe 1
+        }
+    }
+
+    @Test
     fun `long-clicking the qr imageview copies it to the clipboard`() {
         withUrlActivity { activity ->
-            activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick()
+            activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick().shouldBeTrue()
+            awaitMainIdle()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
             val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip!!
-            val uri = activity.qrCodeContentUri("QRCode.png")
-            clip.getItemAt(0).uri shouldBe uri
+            val uri = clip.getItemAt(0).uri
+            uri.toString() shouldMatch activity.qrCodeContentUriPattern("clipboard", "QRCode.png")
             clip.description.getMimeType(0) shouldBe "image/png"
             activity.contentResolver.getType(uri) shouldBe "image/png"
         }
@@ -207,13 +241,17 @@ class URLActivityTest {
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
+            val exportFile = File(activity.cacheDir, "export.png").also { it.createNewFile() }
+
             shadowActivity.receiveResult(
                 startedForResult.intent,
                 RESULT_OK,
-                Intent().apply { data = "content://de.lemke.oneurl.debug.fileprovider/export.png".toUri() },
+                Intent().apply { data = Uri.fromFile(exportFile) },
             )
+            awaitMainIdle()
 
-            ShadowToast.getLatestToast() shouldNotBe null
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
+            exportFile.length() shouldBeGreaterThan 0L
         }
     }
 
@@ -250,6 +288,20 @@ class URLActivityTest {
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.action shouldBe Intent.ACTION_VIEW
             startedIntent.data shouldBe seededUrl.shortURL.toUri()
+        }
+    }
+
+    @Test
+    fun `double tap on the short url button opens the short url once`() {
+        withUrlActivity { activity ->
+            val shortButton = activity.findViewById<android.view.View>(R.id.url_short_button)
+
+            shortButton.performClick()
+            shortButton.performClick()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivity.data shouldBe seededUrl.shortURL.toUri()
+            shadowActivity.nextStartedActivity shouldBe null
         }
     }
 
@@ -537,17 +589,24 @@ class URLActivityTest {
         }
     }
 
-    private fun withUrlActivity(
+    private fun withUrlScenario(
         shortURL: String = seededUrl.shortURL,
-        block: (URLActivity) -> Unit,
+        block: (ActivityScenario<URLActivity>) -> Unit,
     ) {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
                 .putExtra(KEY_SHORTURL, shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
             awaitMainIdle()
-            scenario.onActivity(block)
+            block(scenario)
         }
+    }
+
+    private fun withUrlActivity(
+        shortURL: String = seededUrl.shortURL,
+        block: (URLActivity) -> Unit,
+    ) {
+        withUrlScenario(shortURL) { scenario -> scenario.onActivity(block) }
     }
 
     private fun awaitMainIdle() {

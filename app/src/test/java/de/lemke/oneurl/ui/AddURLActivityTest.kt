@@ -231,6 +231,20 @@ class AddURLActivityTest {
         }
     }
 
+    @Test
+    fun `double tap on provider selection opens one ProviderActivity`() {
+        withAddURLActivity { activity, _, _, _ ->
+            val providerSelection = activity.findViewById<View>(R.id.providerSelection)
+
+            providerSelection.performClick()
+            providerSelection.performClick()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivity.component?.className shouldBe ProviderActivity::class.java.name
+            shadowActivity.nextStartedActivity shouldBe null
+        }
+    }
+
     @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "w320dp")
     @Test
     fun `initFooterButton uses match_parent width on a compact screen`() {
@@ -340,6 +354,23 @@ class AddURLActivityTest {
                 .findViewById<TextView>(androidx.appcompat.R.id.alertTitle)
                 ?.text
                 .toString() shouldBe activity.getString(R.string.no_internet)
+        }
+    }
+
+    @Test
+    fun `a second error while the error dialog shows adds no second dialog`() {
+        coEvery { generateURL(any(), any(), any(), any()) } returns GenerateURLResult.Failure(GenerateURLError.NoInternet)
+
+        withAddURLActivity { _, urlField, aliasField, submit ->
+            urlField.setText("https://example.com")
+            aliasField.setText("")
+            submit()
+            shadowOf(Looper.getMainLooper()).idle()
+            submit()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            ShadowDialog.getShownDialogs().size shouldBe 1
+            ShadowDialog.getLatestDialog().isShowing.shouldBeTrue()
         }
     }
 

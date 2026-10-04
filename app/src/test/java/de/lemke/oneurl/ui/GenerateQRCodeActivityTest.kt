@@ -44,8 +44,10 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldMatch
 import io.mockk.every
 import io.mockk.mockk
 import java.io.File
@@ -89,12 +91,42 @@ class GenerateQRCodeActivityTest {
     fun `onOptionsItemSelected handles share and starts the chooser with the qr code uri`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.action shouldBe Intent.ACTION_CHOOSER
             val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
-            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) shouldBe activity.qrCodeContentUri("QRCode.png")
+            val stream = shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)!!
+            stream.toString() shouldMatch activity.qrCodeContentUriPattern("share", "QRCode.png")
+            activity.cacheFile(stream).length() shouldBeGreaterThan 0L
             (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
+        }
+    }
+
+    @Test
+    fun `double tap on share opens one chooser for one written file`() {
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
+            shadowActivity.nextStartedActivity shouldBe null
+            File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
+        }
+    }
+
+    @Test
+    fun `double tap on save-as-image launches one document picker`() {
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
+            shadowActivity.nextStartedActivityForResult shouldBe null
         }
     }
 
@@ -120,6 +152,7 @@ class GenerateQRCodeActivityTest {
                 RESULT_OK,
                 Intent().apply { data = Uri.fromFile(exportFile) },
             )
+            shadowOf(Looper.getMainLooper()).idle()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
             BitmapFactory.decodeFile(exportFile.path) shouldNotBe null
@@ -160,10 +193,28 @@ class GenerateQRCodeActivityTest {
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
             val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip!!
-            val uri = activity.qrCodeContentUri("QRCode.png")
-            clip.getItemAt(0).uri shouldBe uri
+            val uri = clip.getItemAt(0).uri
+            uri.toString() shouldMatch activity.qrCodeContentUriPattern("clipboard", "QRCode.png")
+            clip.description.label shouldBe "QR Code"
             clip.description.getMimeType(0) shouldBe "image/png"
             activity.contentResolver.getType(uri) shouldBe "image/png"
+        }
+    }
+
+    @Test
+    fun `double tap on the qr code image copies one clip with one toast`() {
+        withActivity { activity ->
+            var clipChanges = 0
+            activity.getSystemService(ClipboardManager::class.java).addPrimaryClipChangedListener { clipChanges++ }
+            val qrCode = activity.findViewById<View>(R.id.qr_code)
+
+            qrCode.performClick()
+            qrCode.performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            clipChanges shouldBe 1
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
         }
     }
 
@@ -310,6 +361,19 @@ class GenerateQRCodeActivityTest {
             shadowOf(Looper.getMainLooper()).idle()
 
             userSettings.qrRecentForegroundColors.first() shouldBe 0x998877
+        }
+    }
+
+    @Test
+    fun `double tap on a color button shows one color picker`() {
+        withActivity { activity ->
+            val backgroundButton = activity.findViewById<View>(R.id.color_button_background)
+
+            backgroundButton.performClick()
+            backgroundButton.performClick()
+
+            ShadowDialog.getShownDialogs().size shouldBe 1
+            ShadowDialog.getLatestDialog().isShowing.shouldBeTrue()
         }
     }
 

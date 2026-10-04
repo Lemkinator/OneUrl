@@ -190,14 +190,14 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
             scenario.onActivity { activity -> activity.onOptionsItemSelected(menuItem(R.id.menu_item_only_show_favorites)).shouldBeTrue() }
-            advanceClockPastDebounce()
+            awaitMainIdle()
             scenario.onActivity { activity ->
                 val menu = activity.mainToolbarMenu()
                 menu.findItem(R.id.menu_item_show_all).isVisible.shouldBeTrue()
                 menu.findItem(R.id.menu_item_only_show_favorites).isVisible.shouldBeFalse()
             }
             scenario.onActivity { activity -> activity.onOptionsItemSelected(menuItem(R.id.menu_item_show_all)).shouldBeTrue() }
-            advanceClockPastDebounce()
+            awaitMainIdle()
             scenario.onActivity { activity ->
                 val menu = activity.mainToolbarMenu()
                 menu.findItem(R.id.menu_item_show_all).isVisible.shouldBeFalse()
@@ -376,7 +376,7 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
             scenario.onActivity { activity -> activity.longClickFirstItem() }
-            advanceClockPastDebounce()
+            awaitMainIdle()
             scenario.onActivity { activity ->
                 val drawerLayout = activity.findViewById<NavDrawerLayout>(R.id.drawerLayout)
                 drawerLayout.isActionMode.shouldBeTrue()
@@ -384,7 +384,7 @@ class MainActivityTest {
 
                 activity.onOptionsItemSelected(menuItem(R.id.menu_item_search))
             }
-            advanceClockPastDebounce()
+            awaitMainIdle()
             scenario.onActivity { activity ->
                 val drawerLayout = activity.findViewById<NavDrawerLayout>(R.id.drawerLayout)
                 drawerLayout.isActionMode.shouldBeFalse()
@@ -419,7 +419,7 @@ class MainActivityTest {
                 activity.callInitDrawer()
                 navigationView.findMenuItem(R.id.leaks_dest).shouldBeNull()
             }
-            advanceClockPastDebounce()
+            awaitMainIdle()
             scenario.onActivity { activity ->
                 activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.qr_code_dest, 0)
             }
@@ -457,7 +457,6 @@ class MainActivityTest {
     fun `navigation item leaks_dest opens leak canary`() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
-            advanceClockPastDebounce()
             scenario.onActivity { activity ->
                 activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.leaks_dest, 0)
             }
@@ -477,7 +476,6 @@ class MainActivityTest {
     fun `navigation item unmapped id is not handled and starts nothing`() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
-            advanceClockPastDebounce()
             scenario.onActivity { activity ->
                 val menu = activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu()
                 menu.add(Menu.NONE, UNMAPPED_NAV_ITEM_ID, Menu.NONE, "unmapped")
@@ -488,13 +486,68 @@ class MainActivityTest {
         }
     }
 
+    @Test
+    fun `double tap on a navigation item opens its screen once`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val menu = activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu()
+                menu.performIdentifierAction(R.id.help_dest, 0)
+                menu.performIdentifierAction(R.id.help_dest, 0)
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val shadowActivity = shadowOf(activity)
+                shadowActivity.nextStartedActivity.component?.className shouldBe HelpActivity::class.java.name
+                shadowActivity.nextStartedActivity shouldBe null
+            }
+        }
+    }
+
+    @Test
+    fun `a navigation item opens its screen again after the user returns`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.help_dest, 0)
+            }
+            scenario.returnFromLaunchedScreen()
+            scenario.onActivity { activity ->
+                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.help_dest, 0)
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val shadowActivity = shadowOf(activity)
+                shadowActivity.nextStartedActivity.component?.className shouldBe HelpActivity::class.java.name
+                shadowActivity.nextStartedActivity.component?.className shouldBe HelpActivity::class.java.name
+            }
+        }
+    }
+
+    @Test
+    fun `double tap on the add fab opens one AddURLActivity`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val addFab = activity.findViewById<View>(R.id.addFab)
+                addFab.performClick()
+                addFab.performClick()
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val shadowActivity = shadowOf(activity)
+                shadowActivity.nextStartedActivity.component?.className shouldBe AddURLActivity::class.java.name
+                shadowActivity.nextStartedActivity shouldBe null
+            }
+        }
+    }
+
     private fun assertNavItemStarts(
         @IdRes navItemId: Int,
         expectedClassName: String,
     ) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
-            advanceClockPastDebounce()
             scenario.onActivity { activity ->
                 activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(navItemId, 0)
             }

@@ -22,6 +22,7 @@ import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -116,11 +117,42 @@ class ProviderInfoBottomSheetTest {
 
     @Test
     fun `clicking an info button opens its link`() {
-        withActivityAndBottomSheet(VgdIsgd.Vgd) { activity, fragment ->
-            val expected = VgdIsgd.Vgd.getInfoButtons(fragment.requireContext())
+        withScenarioAndBottomSheet(VgdIsgd.Vgd) { scenario ->
+            val expected = VgdIsgd.Vgd.getInfoButtons(ApplicationProvider.getApplicationContext())
             expected.forEachIndexed { index, info ->
-                infoButtonButtonOf(fragment, index).performClick()
-                shadowOf(activity).nextStartedActivity.data.toString() shouldBe info.linkOrDescription
+                scenario.onActivity { activity ->
+                    infoButtonButtonOf(activity.providerInfoBottomSheet(), index).performClick()
+                    shadowOf(activity).nextStartedActivity.data.toString() shouldBe info.linkOrDescription
+                }
+                scenario.returnFromLaunchedScreen()
+            }
+        }
+    }
+
+    @Test
+    fun `double tap on an info button opens its link once`() {
+        withActivityAndBottomSheet(VgdIsgd.Vgd) { activity, fragment ->
+            val button = infoButtonButtonOf(fragment, 0)
+
+            button.performClick()
+            button.performClick()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivity.data.toString() shouldBe VgdIsgd.Vgd.getInfoButtons(activity)[0].linkOrDescription
+            shadowActivity.nextStartedActivity shouldBe null
+        }
+    }
+
+    @Test
+    fun `showing the bottom sheet twice before it is added adds one sheet`() {
+        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.showProviderInfoBottomSheet(Dagd).shouldBeTrue()
+                activity.showProviderInfoBottomSheet(Tinyurl).shouldBeFalse()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                activity.providerInfoBottomSheet().requireArguments().getString(ProviderInfoBottomSheet.KEY_PROVIDER) shouldBe Dagd.name
             }
         }
     }
@@ -187,22 +219,30 @@ class ProviderInfoBottomSheetTest {
         withActivityAndBottomSheet(provider) { _, fragment -> block(fragment) }
     }
 
-    private fun withActivityAndBottomSheet(
+    private fun withScenarioAndBottomSheet(
         provider: ShortURLProvider,
-        block: (ProviderActivity, ProviderInfoBottomSheet) -> Unit,
+        block: (ActivityScenario<ProviderActivity>) -> Unit,
     ) {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.showProviderInfoBottomSheet(provider) }
             shadowOf(Looper.getMainLooper()).idle()
-            scenario.onActivity { activity ->
-                val fragment =
-                    activity.supportFragmentManager.fragments
-                        .filterIsInstance<ProviderInfoBottomSheet>()
-                        .single()
-                block(activity, fragment)
-            }
+            block(scenario)
         }
     }
+
+    private fun withActivityAndBottomSheet(
+        provider: ShortURLProvider,
+        block: (ProviderActivity, ProviderInfoBottomSheet) -> Unit,
+    ) {
+        withScenarioAndBottomSheet(provider) { scenario ->
+            scenario.onActivity { activity -> block(activity, activity.providerInfoBottomSheet()) }
+        }
+    }
+
+    private fun ProviderActivity.providerInfoBottomSheet(): ProviderInfoBottomSheet =
+        supportFragmentManager.fragments
+            .filterIsInstance<ProviderInfoBottomSheet>()
+            .single()
 
     private fun titleOf(fragment: ProviderInfoBottomSheet): TextView = viewOf(fragment, R.id.providerBottomSheetTitle)
 

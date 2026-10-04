@@ -22,6 +22,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import de.lemke.commonutils.ui.utils.openURL
+import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.GenerateURLError
@@ -88,7 +89,7 @@ private fun AlertDialog.Builder.configureNoInternet() {
     setMessage(R.string.no_internet_text)
     setPositiveButton(commonutilsR.string.commonutils_settings) { _, _ ->
         try {
-            this.context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+            this.context.singleLaunchActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
         } catch (e: ActivityNotFoundException) {
             Log.e("AddURLErrorDialogs", "could not open wireless settings", e)
             this.context.toast(commonutilsR.string.commonutils_error)

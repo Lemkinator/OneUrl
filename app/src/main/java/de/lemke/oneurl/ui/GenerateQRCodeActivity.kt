@@ -28,15 +28,16 @@ import androidx.core.widget.addTextChangedListener
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.di.IoDispatcher
 import de.lemke.commonutils.ui.utils.bindColorSwatch
 import de.lemke.commonutils.ui.utils.collectState
-import de.lemke.commonutils.ui.utils.copyToClipboard
-import de.lemke.commonutils.ui.utils.exportBitmap
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
-import de.lemke.commonutils.ui.utils.saveBitmapToUri
+import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.commonutils.ui.utils.setWindowTransparent
-import de.lemke.commonutils.ui.utils.share
+import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.singleLaunchMenuItem
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityGenerateQrCodeBinding
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
@@ -44,6 +45,7 @@ import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import java.util.Locale
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 
 private const val MIN_SIZE = 512
 private const val MAX_SIZE = 1024
@@ -53,15 +55,16 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     @Inject
     lateinit var settings: SettingsRepository
 
+    @Inject
+    @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private val viewModel: GenerateQRCodeViewModel by viewModels()
     private var isInitialized = false
     private val exportQRCodeResultLauncher =
-        registerForActivityResult(StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val state = viewModel.state.value
-                saveBitmapToUri(result.data?.data, state.qrCode)
-            }
+        registerForSingleLaunchResult(StartActivityForResult()) { result ->
+            writePickedQRCode(this, result, viewModel.state.value.qrCode, ioDispatcher)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,15 +83,14 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val state = viewModel.state.value
+        val qrCode = state.qrCode ?: return super.onOptionsItemSelected(item)
         return when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                state.qrCode?.let { exportBitmap(settings.imageSaveLocation, it, state.url, exportQRCodeResultLauncher) }
-                true
+                singleLaunchMenuItem { saveQRCode(qrCode, state.url, settings.imageSaveLocation, ioDispatcher, exportQRCodeResultLauncher) }
             }
 
             R.id.menu_item_qr_share -> {
-                state.qrCode?.share(this, "QRCode.png")
-                true
+                singleLaunchMenuItem { shareQRCode(qrCode, ioDispatcher) }
             }
 
             else -> {
@@ -101,7 +103,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         collectState(viewModel.state) { state ->
             if (state.isLoading) return@collectState
             state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
-            binding.qrCode.setOnClickListener { state.qrCode?.copyToClipboard(this@GenerateQRCodeActivity, "QR Code", "QRCode.png") }
+            binding.qrCode.setOnClickListener { state.qrCode?.let { copyQRCode(it, ioDispatcher) } }
             binding.colorButtonForeground.bindColorSwatch(state.foregroundColor)
             binding.colorButtonBackground.bindColorSwatch(state.backgroundColor)
             if (!isInitialized) {
@@ -183,31 +185,29 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     }
 
     private fun initColorButtons() {
-        binding.colorButtonBackground.setOnClickListener {
+        binding.colorButtonBackground.onSingleLaunchClick {
             val state = viewModel.state.value
-            SeslColorPickerDialog(
-                this,
-                { color: Int -> viewModel.setBackgroundColor(color) },
-                state.backgroundColor,
-                state.recentBackgroundColors.toIntArray(),
-                true,
-            ).apply {
-                setTransparencyControlEnabled(true)
-                show()
-            }
+            showColorPicker(BACKGROUND_COLOR_PICKER_TAG, state.backgroundColor, state.recentBackgroundColors, viewModel::setBackgroundColor)
         }
-        binding.colorButtonForeground.setOnClickListener {
+        binding.colorButtonForeground.onSingleLaunchClick {
             val state = viewModel.state.value
-            SeslColorPickerDialog(
-                this,
-                { color: Int -> viewModel.setForegroundColor(color) },
-                state.foregroundColor,
-                state.recentForegroundColors.toIntArray(),
-                true,
-            ).apply {
-                setTransparencyControlEnabled(true)
-                show()
-            }
+            showColorPicker(FOREGROUND_COLOR_PICKER_TAG, state.foregroundColor, state.recentForegroundColors, viewModel::setForegroundColor)
         }
+    }
+
+    private fun showColorPicker(
+        tag: String,
+        currentColor: Int,
+        recentColors: List<Int>,
+        onColorPicked: (Int) -> Unit,
+    ) {
+        SeslColorPickerDialog(this, onColorPicked, currentColor, recentColors.toIntArray(), true)
+            .apply { setTransparencyControlEnabled(true) }
+            .showOnce(tag)
+    }
+
+    companion object {
+        private const val BACKGROUND_COLOR_PICKER_TAG = "backgroundColorPicker"
+        private const val FOREGROUND_COLOR_PICKER_TAG = "foregroundColorPicker"
     }
 }

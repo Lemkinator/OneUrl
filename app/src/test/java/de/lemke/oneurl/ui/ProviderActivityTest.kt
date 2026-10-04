@@ -93,6 +93,26 @@ class ProviderActivityTest {
     }
 
     @Test
+    fun `double tap on a provider item outside select mode shows one provider info bottom sheet`() {
+        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                val itemView =
+                    activity
+                        .findViewById<RecyclerView>(R.id.provider_list)
+                        .findViewHolderForAdapterPosition(0)!!
+                        .itemView
+                itemView.performClick()
+                itemView.performClick()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                activity.supportFragmentManager.fragments.count { it is ProviderInfoBottomSheet } shouldBe 1
+            }
+        }
+    }
+
+    @Test
     fun `provider info button lists the shown feature titles`() {
         assertFirstRowInfoDescription("Provider info for da.gd: Custom alias, Analytics")
     }

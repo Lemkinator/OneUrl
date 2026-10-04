@@ -85,6 +85,24 @@ class MainActivitySelectionTest {
     }
 
     @Test
+    fun `double tap on a row opens one URLActivity`() {
+        urlRepository.seedUrl("https://da.gd/opentwice1")
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                activity.firstItemView().performClick()
+                activity.firstItemView().performClick()
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                val shadowActivity = shadowOf(activity)
+                shadowActivity.nextStartedActivity.component?.className shouldBe URLActivity::class.java.name
+                shadowActivity.nextStartedActivity shouldBe null
+            }
+        }
+    }
+
+    @Test
     fun `onClickItem and onLongClickItem toggle selection while in action mode`() {
         urlRepository.seedUrl("https://da.gd/select1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->

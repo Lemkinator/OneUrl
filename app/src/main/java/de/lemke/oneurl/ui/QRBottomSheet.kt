@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import android.app.Activity.RESULT_OK
 import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
@@ -34,23 +33,25 @@ import com.skydoves.bundler.bundleValue
 import com.skydoves.bundler.intentOf
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SaveLocation
-import de.lemke.commonutils.ui.utils.exportBitmap
+import de.lemke.commonutils.di.IoDispatcher
 import de.lemke.commonutils.ui.utils.isSamsungQuickShareAvailable
-import de.lemke.commonutils.ui.utils.quickShareBitmap
-import de.lemke.commonutils.ui.utils.saveBitmapToUri
-import de.lemke.commonutils.ui.utils.shareBitmap
+import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
 import de.lemke.oneurl.databinding.ViewQrBottomsheetBinding
 import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 import java.io.ByteArrayOutputStream
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 
 @AndroidEntryPoint
 class QRBottomSheet : SemBottomSheetDialogFragment() {
+    @Inject
+    @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
     private lateinit var binding: ViewQrBottomsheetBinding
     private var qr: Bitmap? = null
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(StartActivityForResult()) {
-            if (it.resultCode == RESULT_OK) requireContext().saveBitmapToUri(it.data?.data, qr)
-        }
+        registerForSingleLaunchResult(StartActivityForResult()) { writePickedQRCode(requireContext(), it, qr, ioDispatcher) }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
@@ -78,9 +79,9 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
         binding.title.text = shortURL
         qr?.let { qrCode ->
             binding.qrCode.setImageBitmap(qrCode)
-            binding.quickShareButton.setOnClickListener { quickShareBitmap(qrCode, "QRCode.png") }
-            binding.shareButton.setOnClickListener { shareBitmap(qrCode, "QRCode.png") }
-            binding.saveButton.setOnClickListener { exportBitmap(saveLocation, qrCode, shortURL, exportQRCodeResultLauncher) }
+            binding.quickShareButton.setOnClickListener { quickShareQRCode(qrCode, ioDispatcher) }
+            binding.shareButton.setOnClickListener { shareQRCode(qrCode, ioDispatcher) }
+            binding.saveButton.setOnClickListener { saveQRCode(qrCode, shortURL, saveLocation, ioDispatcher, exportQRCodeResultLauncher) }
         }
     }
 

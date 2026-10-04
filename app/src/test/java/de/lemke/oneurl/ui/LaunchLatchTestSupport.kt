@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl
+package de.lemke.oneurl.ui
 
-import android.content.Context
-import de.lemke.commonutils.ui.utils.singleLaunchActivity
-import leakcanary.LeakCanary
+import android.app.Activity
+import androidx.lifecycle.Lifecycle.State.RESUMED
+import androidx.lifecycle.Lifecycle.State.STARTED
+import androidx.test.core.app.ActivityScenario
 
-fun openLeakCanary(context: Context) {
-    context.singleLaunchActivity(LeakCanary.newLeakDisplayActivityIntent())
+/**
+ * Pauses and resumes the activity, as the user does by returning from the screen that its last launch opened, so the
+ * launch latch admits the next launch.
+ */
+internal fun <A : Activity> ActivityScenario<A>.returnFromLaunchedScreen() {
+    moveToState(STARTED)
+    moveToState(RESUMED)
 }

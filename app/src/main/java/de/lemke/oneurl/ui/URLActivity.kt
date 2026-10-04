@@ -35,18 +35,20 @@ import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.di.DefaultDispatcher
+import de.lemke.commonutils.di.IoDispatcher
 import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
-import de.lemke.commonutils.ui.utils.exportBitmap
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
-import de.lemke.commonutils.ui.utils.saveBitmapToUri
+import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.commonutils.ui.utils.setWindowTransparent
-import de.lemke.commonutils.ui.utils.shareBitmap
 import de.lemke.commonutils.ui.utils.shareText
 import de.lemke.commonutils.ui.utils.showInAppReviewOrFinish
+import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.singleLaunchMenuItem
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.commonutils.ui.utils.withHttps
@@ -82,6 +84,10 @@ class URLActivity : AppCompatActivity() {
     @DefaultDispatcher
     lateinit var defaultDispatcher: CoroutineDispatcher
 
+    @Inject
+    @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
     private lateinit var searchHighlighter: SearchHighlighter
@@ -89,11 +95,7 @@ class URLActivity : AppCompatActivity() {
     private var lastBoundQr: Bitmap? = null
     private var qrLoadJob: Job? = null
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                lastBoundQr?.let { saveBitmapToUri(result.data?.data, it) }
-            }
-        }
+        registerForSingleLaunchResult(StartActivityForResult()) { result -> writePickedQRCode(this, result, lastBoundQr, ioDispatcher) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
@@ -123,8 +125,7 @@ class URLActivity : AppCompatActivity() {
             }
 
             else -> {
-                openURL(urlScanTemplate(longURL.urlEncode()))
-                true
+                singleLaunchMenuItem { openURL(urlScanTemplate(longURL.urlEncode())) }
             }
         }
     }
@@ -167,16 +168,16 @@ class URLActivity : AppCompatActivity() {
             searchHighlighter(url.shortURL, highlightText).apply {
                 setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
             }
-        binding.urlShortButton.setOnClickListener { openURL(url.shortURL.withHttps()) }
+        binding.urlShortButton.onSingleLaunchClick { openURL(url.shortURL.withHttps()) }
         binding.urlShortButton.setOnLongClickListener { copyToClipboard(url.shortURL, "Short URL") }
-        binding.urlShortShareButton.setOnClickListener { shareText(url.shortURL) }
+        binding.urlShortShareButton.onSingleLaunchClick { shareText(url.shortURL) }
         binding.urlLongButton.text =
             searchHighlighter(url.longURL, highlightText).apply {
                 setSpan(UnderlineSpan(), 0, url.longURL.length, 0)
             }
-        binding.urlLongButton.setOnClickListener { openURL(url.longURL.withHttps()) }
+        binding.urlLongButton.onSingleLaunchClick { openURL(url.longURL.withHttps()) }
         binding.urlLongButton.setOnLongClickListener { copyToClipboard(url.longURL, "Long URL") }
-        binding.urlLongShareButton.setOnClickListener { shareText(url.longURL) }
+        binding.urlLongShareButton.onSingleLaunchClick { shareText(url.longURL) }
         binding.urlTitleLayout.isVisible = url.title.isNotBlank()
         binding.urlTitleDivider.isVisible = url.title.isNotBlank()
         if (url.title.isNotBlank()) binding.urlTitleTextview.text = searchHighlighter(url.title, highlightText)
@@ -224,26 +225,14 @@ class URLActivity : AppCompatActivity() {
         binding.urlQrImageview.setImageBitmap(qr)
         binding.urlQrSaveButton.isEnabled = true
         binding.urlQrShareButton.isEnabled = true
-        binding.urlQrImageview.setOnClickListener {
-            createQRBottomSheet(url.shortURL, qr, settings.imageSaveLocation).show(supportFragmentManager, null)
+        binding.urlQrImageview.onSingleLaunchClick {
+            createQRBottomSheet(url.shortURL, qr, settings.imageSaveLocation).showOnce(supportFragmentManager, QR_BOTTOM_SHEET_TAG)
         }
-        binding.urlQrImageview.setOnLongClickListener {
-            qr
-                .copyToClipboard(
-                    this@URLActivity,
-                    "QR Code",
-                    "QRCode.png",
-                ).let { true }
-        }
+        binding.urlQrImageview.setOnLongClickListener { copyQRCode(qr, ioDispatcher).let { true } }
         binding.urlQrSaveButton.setOnClickListener {
-            exportBitmap(
-                settings.imageSaveLocation,
-                qr,
-                url.shortURL,
-                exportQRCodeResultLauncher,
-            )
+            saveQRCode(qr, url.shortURL, settings.imageSaveLocation, ioDispatcher, exportQRCodeResultLauncher)
         }
-        binding.urlQrShareButton.setOnClickListener { shareBitmap(qr, "QRCode.png") }
+        binding.urlQrShareButton.setOnClickListener { shareQRCode(qr, ioDispatcher) }
     }
 
     private fun handleBnvItemSelected(
@@ -253,12 +242,11 @@ class URLActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.url_bnv_analytics -> {
                 val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return false
-                openURL(analyticsURL)
-                true
+                singleLaunchMenuItem { openURL(analyticsURL) }
             }
 
             R.id.url_bnv_provider_info -> {
-                showProviderInfoBottomSheet(url.shortURLProvider).let { true }
+                singleLaunchMenuItem { showProviderInfoBottomSheet(url.shortURLProvider) }
             }
 
             R.id.url_bnv_add_to_fav -> {
@@ -270,14 +258,15 @@ class URLActivity : AppCompatActivity() {
             }
 
             R.id.url_bnv_delete -> {
-                AlertDialog
-                    .Builder(this@URLActivity)
-                    .setTitle(commonutilsR.string.commonutils_delete)
-                    .setMessage(R.string.delete_url_message)
-                    .setPositiveButton(commonutilsR.string.commonutils_delete) { _, _ -> viewModel.delete() }
-                    .setNegativeButton(designR.string.oui_des_common_cancel, null)
-                    .show()
-                true
+                singleLaunchMenuItem {
+                    AlertDialog
+                        .Builder(this@URLActivity)
+                        .setTitle(commonutilsR.string.commonutils_delete)
+                        .setMessage(R.string.delete_url_message)
+                        .setPositiveButton(commonutilsR.string.commonutils_delete) { _, _ -> viewModel.delete() }
+                        .setNegativeButton(designR.string.oui_des_common_cancel, null)
+                        .showOnce(DELETE_DIALOG_TAG)
+                }
             }
 
             else -> {
@@ -334,6 +323,8 @@ class URLActivity : AppCompatActivity() {
     companion object {
         const val KEY_SHORTURL = "key_shorturl"
         const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
+        private const val QR_BOTTOM_SHEET_TAG = "qrBottomSheet"
+        private const val DELETE_DIALOG_TAG = "deleteDialog"
         private const val REFRESH_SPIN_DEGREES = 1080f
         private const val REFRESH_SPIN_DURATION_MS = 2500L
         private const val DISABLED_ALPHA = 0.5f

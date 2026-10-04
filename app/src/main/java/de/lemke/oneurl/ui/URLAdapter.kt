@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import de.lemke.commonutils.di.DefaultDispatcher
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
@@ -112,7 +113,7 @@ class URLAdapter(
         ViewHolder(
             LayoutInflater.from(parent.context).inflate(R.layout.listview_item, parent, false),
         ).apply {
-            itemView.setOnClickListener {
+            itemView.onSingleLaunchClick {
                 bindingAdapterPosition.let { onClickItem?.invoke(it, currentList[it], this@apply) }
             }
             itemView.setOnLongClickListener {

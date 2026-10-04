@@ -21,7 +21,7 @@ import android.content.pm.PackageManager.GET_PROVIDERS
 import android.content.pm.PackageManager.PackageInfoFlags
 import android.net.Uri
 import androidx.core.content.FileProvider
-import androidx.core.net.toUri
+import java.io.File
 
 private fun Context.fileProviderAuthority(): String =
     packageManager
@@ -31,4 +31,9 @@ private fun Context.fileProviderAuthority(): String =
         .single { it.name == FileProvider::class.java.name }
         .authority
 
-internal fun Context.qrCodeContentUri(fileName: String): Uri = "content://${fileProviderAuthority()}/qrCodes/$fileName".toUri()
+internal fun Context.qrCodeContentUriPattern(
+    directory: String,
+    fileName: String,
+): Regex = Regex(Regex.escape("content://${fileProviderAuthority()}/qrCodes/$directory/commonutils-") + """\d+/""" + Regex.escape(fileName))
+
+internal fun Context.cacheFile(qrCodeContentUri: Uri): File = File(cacheDir, qrCodeContentUri.pathSegments.drop(1).joinToString("/"))
