@@ -32,6 +32,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -71,6 +72,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
@@ -760,6 +762,39 @@ class URLActivityTest {
         }
     }
 
+    // ActivityScenario.recreate() resumes the old activity before recreating it, so a pending exit reaches it.
+    // ActivityController.recreate() keeps the old activity stopped and walks only the new one through RESUMED.
+    @Test
+    fun `a deleted exit set while stopped survives a recreation and finishes only the recreated activity`() {
+        val intent =
+            Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
+                .putExtra(KEY_SHORTURL, seededUrl.shortURL)
+        val controller = Robolectric.buildActivity(URLActivity::class.java, intent).setup()
+        try {
+            awaitMainIdle()
+            val stopped = controller.get()
+            stopped.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_delete
+            controller.pause().stop()
+            (ShadowDialog.getLatestDialog() as AlertDialog).getButton(DialogInterface.BUTTON_POSITIVE).performClick()
+            awaitMainIdle()
+            runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
+            stopped.isFinishing.shouldBeFalse()
+            stopped.exitState() shouldBe UrlDetailExit.Deleted
+
+            controller.recreate()
+            awaitMainIdle()
+
+            val recreated = controller.get()
+            recreated shouldNotBe stopped
+            stopped.isFinishing.shouldBeFalse()
+            recreated.isFinishing.shouldBeTrue()
+            recreated.exitState() shouldBe UrlDetailExit.None
+            ShadowToast.shownToastCount() shouldBe 0
+        } finally {
+            controller.destroy()
+        }
+    }
+
     @Test
     fun `loading a missing url shows one not-found toast and finishes the activity`() {
         withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
@@ -792,6 +827,8 @@ class URLActivityTest {
     private fun awaitMainIdle() {
         shadowOf(Looper.getMainLooper()).idle()
     }
+
+    private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
 
     private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
 }
