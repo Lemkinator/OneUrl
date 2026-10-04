@@ -17,6 +17,7 @@
 package de.lemke.oneurl.ui
 
 import android.app.Activity.RESULT_CANCELED
+import android.app.Activity.RESULT_FIRST_USER
 import android.app.Activity.RESULT_OK
 import android.content.ClipboardManager
 import android.content.DialogInterface
@@ -33,15 +34,21 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.CompoundButton
 import android.widget.EditText
+import android.widget.PopupMenu
 import androidx.appcompat.widget.SeslSeekBar
+import androidx.lifecycle.ViewModelProvider
 import androidx.picker3.app.SeslColorPickerDialog
 import androidx.test.core.app.ActivityScenario
+import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.di.QRCodeExporterModule
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.longs.shouldBeGreaterThan
@@ -52,6 +59,7 @@ import io.mockk.every
 import io.mockk.mockk
 import java.io.File
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -67,9 +75,16 @@ import de.lemke.commonutils.R as commonutilsR
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
+@UninstallModules(QRCodeExporterModule::class)
 class GenerateQRCodeActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
+
+    @BindValue
+    @JvmField
+    val qrCodeExporter: QRCodeExporter = qrCodeExporterOn(ioDispatcher)
 
     @Inject
     lateinit var userSettings: UserSettings
@@ -141,6 +156,7 @@ class GenerateQRCodeActivityTest {
     fun `export result OK with a qr code saves the bitmap`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
             // A fake content:// uri has no registered provider under Robolectric, so openOutputStream
@@ -163,11 +179,14 @@ class GenerateQRCodeActivityTest {
     fun `export result OK without a destination uri shows the creating-file error toast`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+            shadowOf(Looper.getMainLooper()).idle()
 
+            ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
         }
     }
@@ -176,12 +195,98 @@ class GenerateQRCodeActivityTest {
     fun `export result other than OK does not save`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
+            shadowOf(Looper.getMainLooper()).idle()
 
             ShadowToast.getLatestToast() shouldBe null
+        }
+    }
+
+    @Test
+    fun `export result with an unknown code and a uri writes nothing and shows no toast`() {
+        val document = createPickedDocument()
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            activity.receiveDocumentPickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            document.length() shouldBe 0L
+            ShadowToast.shownToastCount() shouldBe 0
+        }
+    }
+
+    @Test
+    fun `export write that the document provider refuses deletes the document and shows the creating-file error toast`() {
+        val provider = readOnlyDocumentProvider()
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(provider.uri))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            provider.document.exists().shouldBeFalse()
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Error creating file"
+        }
+    }
+
+    @Test
+    fun `export write that runs during a rotation finishes and toasts once in the recreated activity`() {
+        val document = createPickedDocument()
+        ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            ioDispatcher.pause()
+            scenario.onActivity { activity ->
+                activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            document.length() shouldBe 0L
+
+            scenario.recreate()
+            ioDispatcher.resume()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            document.readBytes().take(PNG_SIGNATURE.size) shouldBe PNG_SIGNATURE
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Image saved"
+        }
+    }
+
+    @Test
+    fun `export controls are disabled while a share writes and the size seekbar stays usable`() {
+        ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
+            ioDispatcher.pause()
+            scenario.onActivity { activity ->
+                activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                activity.findViewById<View>(R.id.qr_code).isClickable.shouldBeFalse()
+                activity.preparedExportMenuItemsEnabled() shouldBe listOf(false, false)
+
+                activity.findViewById<SeslSeekBar>(R.id.size_seekbar).progress = 800
+
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].state.value.size shouldBe 800
+            }
+
+            ioDispatcher.resume()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            scenario.onActivity { activity ->
+                activity.findViewById<View>(R.id.qr_code).isClickable.shouldBeTrue()
+                activity.preparedExportMenuItemsEnabled() shouldBe listOf(true, true)
+                shadowOf(activity).nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
+            }
         }
     }
 
@@ -457,4 +562,11 @@ class GenerateQRCodeActivityTest {
     }
 
     private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
+
+    private fun GenerateQRCodeActivity.preparedExportMenuItemsEnabled(): List<Boolean> {
+        val menu = PopupMenu(this, findViewById(R.id.qr_code)).menu
+        menuInflater.inflate(R.menu.menu_qr, menu)
+        onPrepareOptionsMenu(menu)
+        return listOf(R.id.menu_item_qr_save_as_image, R.id.menu_item_qr_share).map { menu.findItem(it).isEnabled }
+    }
 }

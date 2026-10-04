@@ -25,10 +25,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SeslSeekBar
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.commonutils.di.IoDispatcher
 import de.lemke.commonutils.ui.utils.bindColorSwatch
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
@@ -45,7 +45,6 @@ import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import java.util.Locale
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineDispatcher
 
 private const val MIN_SIZE = 512
 private const val MAX_SIZE = 1024
@@ -55,17 +54,11 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     @Inject
     lateinit var settings: SettingsRepository
 
-    @Inject
-    @IoDispatcher
-    lateinit var ioDispatcher: CoroutineDispatcher
-
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private val viewModel: GenerateQRCodeViewModel by viewModels()
     private var isInitialized = false
     private val exportQRCodeResultLauncher =
-        registerForSingleLaunchResult(StartActivityForResult()) { result ->
-            writePickedQRCode(this, result, viewModel.state.value.qrCode, ioDispatcher)
-        }
+        registerForSingleLaunchResult(StartActivityForResult()) { viewModel.onDocumentPicked(it.toDocumentPick()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
@@ -73,7 +66,10 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         binding = ActivityGenerateQrCodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setWindowTransparent(true)
+        binding.qrCode.onSingleLaunchClick { viewModel.onCopy() }
         collectState()
+        collectState(viewModel.export) { renderExportControls(it) }
+        collectState(viewModel.export, minActiveState = RESUMED) { onExport(it) }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -81,16 +77,22 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val enabled = viewModel.export.value != QRCodeExport.Running
+        menu.findItem(R.id.menu_item_qr_save_as_image).isEnabled = enabled
+        menu.findItem(R.id.menu_item_qr_share).isEnabled = enabled
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val state = viewModel.state.value
-        val qrCode = state.qrCode ?: return super.onOptionsItemSelected(item)
+        if (viewModel.state.value.qrCode == null) return super.onOptionsItemSelected(item)
         return when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
-                singleLaunchMenuItem { saveQRCode(qrCode, state.url, settings.imageSaveLocation, ioDispatcher, exportQRCodeResultLauncher) }
+                singleLaunchMenuItem { viewModel.onSave() }
             }
 
             R.id.menu_item_qr_share -> {
-                singleLaunchMenuItem { shareQRCode(qrCode, ioDispatcher) }
+                singleLaunchMenuItem { viewModel.onShare() }
             }
 
             else -> {
@@ -103,7 +105,6 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         collectState(viewModel.state) { state ->
             if (state.isLoading) return@collectState
             state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
-            binding.qrCode.setOnClickListener { state.qrCode?.let { copyQRCode(it, ioDispatcher) } }
             binding.colorButtonForeground.bindColorSwatch(state.foregroundColor)
             binding.colorButtonBackground.bindColorSwatch(state.backgroundColor)
             if (!isInitialized) {
@@ -113,6 +114,15 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
             }
         }
+
+    private fun onExport(export: QRCodeExport) {
+        if (export is QRCodeExport.Result && launchQRCodeExport(export, exportQRCodeResultLauncher)) viewModel.onExportHandled(export)
+    }
+
+    private fun renderExportControls(export: QRCodeExport) {
+        binding.qrCode.isClickable = export != QRCodeExport.Running
+        invalidateOptionsMenu()
+    }
 
     private fun initControls(initialState: QrUiState) {
         initUrlField(initialState)

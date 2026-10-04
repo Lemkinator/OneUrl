@@ -21,6 +21,7 @@ import android.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import javax.inject.Inject
@@ -36,9 +37,12 @@ import kotlinx.coroutines.launch
 class GenerateQRCodeViewModel @Inject constructor(
     private val userSettings: UserSettings,
     private val generateQRCode: GenerateQRCodeUseCase,
+    exporter: QRCodeExporter,
 ) : ViewModel() {
+    private val qrCodeExport = QRCodeExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<QrUiState>
         field = MutableStateFlow(QrUiState())
+    val export: StateFlow<QRCodeExport> = qrCodeExport.state
     private var urlSaveJob: Job? = null
     private var sizeSaveJob: Job? = null
 
@@ -129,6 +133,30 @@ class GenerateQRCodeViewModel @Inject constructor(
         state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
         userSettings.qrRecentBackgroundColors = recentColors
         regenerate()
+    }
+
+    fun onSave() {
+        val current = state.value
+        val qrCode = current.qrCode ?: return
+        qrCodeExport.save(qrCode, current.url, userSettings.imageSaveLocation)
+    }
+
+    fun onDocumentPicked(pick: DocumentPick) {
+        qrCodeExport.onDocumentPicked(pick) { state.value.qrCode }
+    }
+
+    fun onCopy() {
+        val qrCode = state.value.qrCode ?: return
+        qrCodeExport.copy(qrCode)
+    }
+
+    fun onShare() {
+        val qrCode = state.value.qrCode ?: return
+        qrCodeExport.share(qrCode, ShareTarget.SHARE_SHEET)
+    }
+
+    fun onExportHandled(result: QRCodeExport.Result) {
+        qrCodeExport.onHandled(result)
     }
 
     // Runs synchronously on the calling (Main) dispatcher. QR encoding + canvas drawing is only a
