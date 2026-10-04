@@ -144,7 +144,7 @@ android {
 
             all { test ->
                 test.useJUnitPlatform()
-                // MockK ≥ 1.14 on JDK 21 needs this:
+                test.maxHeapSize = "4096m"
                 test.jvmArgs(
                     "-XX:+EnableDynamicAgentLoading",
                     "--add-opens=java.base/java.lang=ALL-UNNAMED",
