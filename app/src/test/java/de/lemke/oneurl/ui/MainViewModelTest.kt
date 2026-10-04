@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import app.cash.turbine.test
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.ObserveURLsUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
@@ -77,20 +76,20 @@ class MainViewModelTest : ShouldSpec(
             viewModel.state.value.isUIReady shouldBe true
         }
 
-        should("emit NewItemAdded when a second emission adds an id under the same search/filterFavorite") {
+        should("state.reveal holds the added short URL when a second emission adds one under the same search/filterFavorite") {
             val url1 = testUrl(shortURL = "https://short.url/1")
             val url2 = testUrl(shortURL = "https://short.url/2")
             val urlsFlow = MutableStateFlow(listOf(url1))
             every { observeURLs(any(), any()) } returns urlsFlow
             val viewModel = newViewModel()
 
-            viewModel.events.test {
-                urlsFlow.value = listOf(url1, url2)
-                awaitItem() shouldBe MainEvent.NewItemAdded("https://short.url/2")
-            }
+            viewModel.state.value.reveal shouldBe null
+            urlsFlow.value = listOf(url1, url2)
+
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url1, url2), isUIReady = true, reveal = "https://short.url/2")
         }
 
-        should("carry the newest added id when one emission adds two ids") {
+        should("state.reveal holds the newest added short URL when one emission adds two") {
             val url1 = testUrl(shortURL = "https://short.url/1")
             val url2 = testUrl(shortURL = "https://short.url/2")
             val url3 = testUrl(shortURL = "https://short.url/3")
@@ -98,38 +97,76 @@ class MainViewModelTest : ShouldSpec(
             every { observeURLs(any(), any()) } returns urlsFlow
             val viewModel = newViewModel()
 
-            viewModel.events.test {
-                urlsFlow.value = listOf(url3, url2, url1)
-                awaitItem() shouldBe MainEvent.NewItemAdded("https://short.url/3")
-                expectNoEvents()
-            }
+            urlsFlow.value = listOf(url3, url2, url1)
+
+            viewModel.state.value.reveal shouldBe "https://short.url/3"
         }
 
-        should("emit no event when a second emission only reorders/removes ids") {
+        should("state.reveal stays null when a second emission only reorders or removes ids") {
             val url1 = testUrl(shortURL = "https://short.url/1")
             val url2 = testUrl(shortURL = "https://short.url/2")
             val urlsFlow = MutableStateFlow(listOf(url1, url2))
             every { observeURLs(any(), any()) } returns urlsFlow
             val viewModel = newViewModel()
 
-            viewModel.events.test {
-                urlsFlow.value = listOf(url2, url1)
-                expectNoEvents()
-            }
+            urlsFlow.value = listOf(url2, url1)
+            urlsFlow.value = listOf(url2)
+
+            viewModel.state.value.reveal shouldBe null
         }
 
-        should("emit no NewItemAdded when search/filterFavorite changed even though ids grew") {
+        should("state.reveal stays null when search/filterFavorite changed even though ids grew") {
             val url1 = testUrl(shortURL = "https://short.url/1")
             val url2 = testUrl(shortURL = "https://short.url/2")
             val urlsFlow = MutableStateFlow(listOf(url1))
             every { observeURLs(any(), any()) } returns urlsFlow
             val viewModel = newViewModel()
 
-            viewModel.events.test {
-                viewModel.setSearch("changed")
-                urlsFlow.value = listOf(url1, url2)
-                expectNoEvents()
-            }
+            viewModel.setSearch("changed")
+            urlsFlow.value = listOf(url1, url2)
+
+            viewModel.state.value.reveal shouldBe null
+        }
+
+        should("an unhandled reveal survives a later emission that adds nothing") {
+            val url1 = testUrl(shortURL = "https://short.url/1")
+            val url2 = testUrl(shortURL = "https://short.url/2")
+            val urlsFlow = MutableStateFlow(listOf(url1))
+            every { observeURLs(any(), any()) } returns urlsFlow
+            val viewModel = newViewModel()
+
+            urlsFlow.value = listOf(url1, url2)
+            urlsFlow.value = listOf(url2, url1)
+
+            viewModel.state.value.reveal shouldBe "https://short.url/2"
+        }
+
+        should("onRevealHandled clears the handled reveal") {
+            val url1 = testUrl(shortURL = "https://short.url/1")
+            val url2 = testUrl(shortURL = "https://short.url/2")
+            val urlsFlow = MutableStateFlow(listOf(url1))
+            every { observeURLs(any(), any()) } returns urlsFlow
+            val viewModel = newViewModel()
+            urlsFlow.value = listOf(url1, url2)
+
+            viewModel.onRevealHandled("https://short.url/2")
+
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url1, url2), isUIReady = true, reveal = null)
+        }
+
+        should("onRevealHandled keeps a newer reveal") {
+            val url1 = testUrl(shortURL = "https://short.url/1")
+            val url2 = testUrl(shortURL = "https://short.url/2")
+            val url3 = testUrl(shortURL = "https://short.url/3")
+            val urlsFlow = MutableStateFlow(listOf(url1))
+            every { observeURLs(any(), any()) } returns urlsFlow
+            val viewModel = newViewModel()
+            urlsFlow.value = listOf(url1, url2)
+            urlsFlow.value = listOf(url3, url1, url2)
+
+            viewModel.onRevealHandled("https://short.url/2")
+
+            viewModel.state.value.reveal shouldBe "https://short.url/3"
         }
 
         should("setSearch updates search") {

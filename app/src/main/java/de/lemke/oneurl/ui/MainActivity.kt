@@ -48,7 +48,6 @@ import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
-import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.configureCommonUtilsSplashScreen
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
@@ -110,7 +109,6 @@ class MainActivity :
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
-    private var pendingReveal: String? = null
     private val urlAdapter: URLAdapter by lazy {
         URLAdapter(
             this,
@@ -200,7 +198,6 @@ class MainActivity :
         binding.addFab.hideOnScroll(binding.urlList)
         binding.addFab.onSingleLaunchClick { it.transformToActivity(AddURLActivity::class.java, "AddURLTransition") }
         collectState()
-        collectEvents()
         checkIntent()
     }
 
@@ -211,24 +208,14 @@ class MainActivity :
             updateRecyclerView(state.urls)
         }
 
-    private fun collectEvents() =
-        collectEvents(viewModel.events) { event ->
-            when (event) {
-                is MainEvent.NewItemAdded -> {
-                    pendingReveal = event.shortURL
-                    revealPending()
-                }
-            }
-        }
-
     private fun revealPending() {
-        val shortURL = pendingReveal ?: return
+        val shortURL = viewModel.state.value.reveal ?: return
         val position = urlAdapter.positionOf(shortURL)
         if (position != NO_POSITION) {
-            pendingReveal = null
             binding.urlList.smoothScrollToPosition(position)
+            viewModel.onRevealHandled(shortURL)
         } else if (urlAdapter.isCurrentList(viewModel.state.value.urls)) {
-            pendingReveal = null
+            viewModel.onRevealHandled(shortURL)
         }
     }
 
