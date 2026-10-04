@@ -33,6 +33,7 @@ internal class FakeQRCodeExporter : QRCodeExporter {
 
     var gate: CompletableDeferred<Unit>? = null
     val calls = mutableListOf<Call>()
+    val deletedDocuments = mutableListOf<Uri>()
 
     override suspend fun saveToDirectory(
         location: SaveLocation,
@@ -43,7 +44,12 @@ internal class FakeQRCodeExporter : QRCodeExporter {
     override suspend fun saveToCreatedDocument(
         uri: Uri,
         qrCode: Bitmap?,
-    ): BitmapSaveResult.UriResult = record(Call.SaveToCreatedDocument(uri, qrCode)) { documentResult }
+    ): BitmapSaveResult.UriResult =
+        record(Call.SaveToCreatedDocument(uri, qrCode)) {
+            val result = if (qrCode == null) BitmapSaveResult.WriteFailed else documentResult
+            if (result !is BitmapSaveResult.Saved) deletedDocuments += uri
+            result
+        }
 
     override suspend fun createClip(qrCode: Bitmap): ClipData? = record(Call.CreateClip(qrCode)) { clip }
 

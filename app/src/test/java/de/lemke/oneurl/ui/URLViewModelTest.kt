@@ -311,7 +311,7 @@ class URLViewModelTest : ShouldSpec(
             viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
         }
 
-        should("onDocumentPicked during the QR code load waits for the QR code and then writes it") {
+        should("onDocumentPicked during the QR code load deletes the created document and holds WriteFailed") {
             val url = testUrl()
             coEvery { getURL(url.shortURL) } returns url
             val gate = CompletableDeferred<Unit>()
@@ -323,12 +323,11 @@ class URLViewModelTest : ShouldSpec(
             val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to url.shortURL)))
 
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
-
-            exporter.calls shouldBe emptyList()
-            viewModel.export.value shouldBe QRCodeExport.Running
             gate.complete(Unit)
-            exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
+
+            exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
+            exporter.deletedDocuments shouldBe listOf(uri)
+            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
         }
 
         should("onExportHandled returns the export to Idle") {

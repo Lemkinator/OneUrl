@@ -138,7 +138,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
         }
 
-        should("onDocumentPicked during the QR code load waits for the QR code and then writes it") {
+        should("onDocumentPicked during the QR code load deletes the created document and holds WriteFailed") {
             val gate = CompletableDeferred<Unit>()
             coEvery { getQRCode(shortURL) } coAnswers {
                 gate.await()
@@ -148,21 +148,21 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             val viewModel = newViewModel()
 
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
-
-            exporter.calls shouldBe emptyList()
             gate.complete(Unit)
-            exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
+
+            exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
+            exporter.deletedDocuments shouldBe listOf(uri)
+            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
         }
 
-        should("onDocumentPicked without a short URL hands a missing QR code to the write") {
-            exporter.documentResult = BitmapSaveResult.WriteFailed
+        should("onDocumentPicked without a short URL deletes the created document and holds WriteFailed") {
             val uri = mockk<Uri>()
             val viewModel = newViewModel(SavedStateHandle())
 
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
+            exporter.deletedDocuments shouldBe listOf(uri)
             viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
         }
 

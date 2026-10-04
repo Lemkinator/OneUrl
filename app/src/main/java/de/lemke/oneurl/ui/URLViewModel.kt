@@ -37,8 +37,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -118,7 +116,7 @@ class URLViewModel @Inject constructor(
     }
 
     fun onDocumentPicked(pick: DocumentPick) {
-        qrCodeExport.onDocumentPicked(pick) { state.mapNotNull { it.qrCode }.first() }
+        qrCodeExport.onDocumentPicked(pick, state.value.qrCode)
     }
 
     fun onCopyQRCode() {

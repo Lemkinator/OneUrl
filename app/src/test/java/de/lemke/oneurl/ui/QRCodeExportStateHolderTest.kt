@@ -190,20 +190,20 @@ class QRCodeExportStateHolderTest : ShouldSpec(
             val uri = mockk<Uri>()
             val holder = newHolder()
 
-            holder.onDocumentPicked(DocumentPick.Created(uri)) { qrCode }
+            holder.onDocumentPicked(DocumentPick.Created(uri), qrCode)
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
             holder.state.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
         }
 
-        should("onDocumentPicked hands a missing QR code to the write, which reports WriteFailed") {
-            exporter.documentResult = BitmapSaveResult.WriteFailed
+        should("onDocumentPicked without a QR code deletes the created document and holds WriteFailed") {
             val uri = mockk<Uri>()
             val holder = newHolder()
 
-            holder.onDocumentPicked(DocumentPick.Created(uri)) { null }
+            holder.onDocumentPicked(DocumentPick.Created(uri), null)
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
+            exporter.deletedDocuments shouldBe listOf(uri)
             holder.state.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
         }
 
@@ -211,7 +211,7 @@ class QRCodeExportStateHolderTest : ShouldSpec(
             exporter.documentResult = BitmapSaveResult.Canceled
             val holder = newHolder()
 
-            holder.onDocumentPicked(DocumentPick.Created(mockk<Uri>())) { qrCode }
+            holder.onDocumentPicked(DocumentPick.Created(mockk<Uri>()), qrCode)
 
             holder.state.value shouldBe QRCodeExport.Idle
         }
@@ -219,7 +219,7 @@ class QRCodeExportStateHolderTest : ShouldSpec(
         should("onDocumentPicked holds WriteFailed for a result without a URI") {
             val holder = newHolder()
 
-            holder.onDocumentPicked(DocumentPick.MissingUri) { qrCode }
+            holder.onDocumentPicked(DocumentPick.MissingUri, qrCode)
 
             exporter.calls shouldBe emptyList()
             holder.state.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
@@ -228,7 +228,7 @@ class QRCodeExportStateHolderTest : ShouldSpec(
         should("onDocumentPicked stays silent for a canceled picker") {
             val holder = newHolder()
 
-            holder.onDocumentPicked(DocumentPick.Canceled) { qrCode }
+            holder.onDocumentPicked(DocumentPick.Canceled, qrCode)
 
             exporter.calls shouldBe emptyList()
             holder.state.value shouldBe QRCodeExport.Idle

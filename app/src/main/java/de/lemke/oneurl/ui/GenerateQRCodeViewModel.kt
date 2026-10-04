@@ -142,7 +142,7 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun onDocumentPicked(pick: DocumentPick) {
-        qrCodeExport.onDocumentPicked(pick) { state.value.qrCode }
+        qrCodeExport.onDocumentPicked(pick, state.value.qrCode)
     }
 
     fun onCopy() {

@@ -95,15 +95,15 @@ class QRCodeExportStateHolder(
         }
     }
 
-    /** Writes the QR code that [qrCode] returns, which may wait for a QR code still loading, into a created document. */
+    /** Writes [qrCode] into a created document; without a [qrCode] the document is deleted and the save fails. */
     fun onDocumentPicked(
         pick: DocumentPick,
-        qrCode: suspend () -> Bitmap?,
+        qrCode: Bitmap?,
     ) {
         when (pick) {
             DocumentPick.Canceled -> Unit
             DocumentPick.MissingUri -> state.value = QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
-            is DocumentPick.Created -> launch { exporter.saveToCreatedDocument(pick.uri, qrCode()).toExport() }
+            is DocumentPick.Created -> launch { exporter.saveToCreatedDocument(pick.uri, qrCode).toExport() }
         }
     }
 

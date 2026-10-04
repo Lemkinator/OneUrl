@@ -28,8 +28,6 @@ import de.lemke.oneurl.ui.QRBottomSheet.Companion.KEY_SHORT_URL
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -67,9 +65,7 @@ class QRBottomSheetViewModel @Inject constructor(
     }
 
     fun onDocumentPicked(pick: DocumentPick) {
-        qrCodeExport.onDocumentPicked(pick) {
-            if (state.value.shortURL.isEmpty()) null else state.mapNotNull { it.qrCode }.first()
-        }
+        qrCodeExport.onDocumentPicked(pick, state.value.qrCode)
     }
 
     fun onShare() {
