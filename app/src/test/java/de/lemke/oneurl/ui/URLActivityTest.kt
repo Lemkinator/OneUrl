@@ -262,7 +262,8 @@ class URLActivityTest {
         withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
             val qrImageView = activity.findViewById<android.view.View>(R.id.url_qr_imageview)
 
-            qrImageView.performClick()
+            qrImageView.performClick().shouldBeTrue()
+            qrImageView.hasOnLongClickListeners().shouldBeTrue()
             qrImageView.performLongClick().shouldBeFalse()
             activity.supportFragmentManager.executePendingTransactions()
             awaitMainIdle()
