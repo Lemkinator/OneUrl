@@ -34,7 +34,6 @@ import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
@@ -86,7 +85,7 @@ class URLActivity : AppCompatActivity() {
         collectState()
         collectState(viewModel.export) { renderQrControls() }
         collectState(viewModel.export, minActiveState = RESUMED) { onExport(it) }
-        collectEvents()
+        collectState(viewModel.exit, minActiveState = RESUMED) { if (it is UrlDetailExit.Reason) onExit(it) }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.url_toolbar, menu).let { true }
@@ -286,19 +285,19 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-    private fun collectEvents() =
-        collectEvents(viewModel.events) { event: UrlDetailEvent ->
-            when (event) {
-                is UrlDetailEvent.NotFound -> {
-                    toast(R.string.error_url_not_found)
-                    finishAfterTransition()
-                }
+    private fun onExit(reason: UrlDetailExit.Reason) {
+        when (reason) {
+            UrlDetailExit.NotFound -> {
+                toast(R.string.error_url_not_found)
+                finishAfterTransition()
+            }
 
-                is UrlDetailEvent.Deleted -> {
-                    showInAppReviewOrFinish(settings)
-                }
+            UrlDetailExit.Deleted -> {
+                showInAppReviewOrFinish(settings)
             }
         }
+        viewModel.onExitHandled(reason)
+    }
 
     companion object {
         const val KEY_SHORTURL = "key_shorturl"

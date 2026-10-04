@@ -31,6 +31,7 @@ import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -741,8 +742,28 @@ class URLActivityTest {
     }
 
     @Test
-    fun `loading a missing url toasts not-found and finishes the activity`() {
+    fun `bnv delete that completes while the activity is paused finishes it only once resumed`() {
+        withUrlScenario { scenario ->
+            scenario.onActivity { activity ->
+                activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_delete
+            }
+            scenario.moveToState(Lifecycle.State.STARTED)
+            (ShadowDialog.getLatestDialog() as AlertDialog).getButton(DialogInterface.BUTTON_POSITIVE).performClick()
+            awaitMainIdle()
+            runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
+            scenario.onActivity { it.isFinishing.shouldBeFalse() }
+
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            awaitMainIdle()
+
+            scenario.onActivity { it.isFinishing.shouldBeTrue() }
+        }
+    }
+
+    @Test
+    fun `loading a missing url shows one not-found toast and finishes the activity`() {
         withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
+            ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(R.string.error_url_not_found)
             activity.isFinishing.shouldBeTrue()
         }

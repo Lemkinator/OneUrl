@@ -21,7 +21,6 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
-import app.cash.turbine.test
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
@@ -108,13 +107,35 @@ class URLViewModelTest : ShouldSpec(
             coVerify(exactly = 1) { getVisitCount(url) }
         }
 
-        should("init emits NotFound and leaves url null when the URL does not exist") {
+        should("init holds the NotFound exit and leaves url null when the URL does not exist") {
             val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to "https://short.url/missing")))
 
-            viewModel.events.test {
-                awaitItem() shouldBe UrlDetailEvent.NotFound
-            }
+            viewModel.exit.value shouldBe UrlDetailExit.NotFound
             viewModel.state.value.url shouldBe null
+        }
+
+        should("init holds no exit when the URL exists") {
+            val url = testUrl()
+            coEvery { getURL(url.shortURL) } returns url
+            val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to url.shortURL)))
+
+            viewModel.exit.value shouldBe UrlDetailExit.None
+        }
+
+        should("onExitHandled returns the exit to None") {
+            val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to "https://short.url/missing")))
+
+            viewModel.onExitHandled(UrlDetailExit.NotFound)
+
+            viewModel.exit.value shouldBe UrlDetailExit.None
+        }
+
+        should("onExitHandled keeps a different exit") {
+            val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to "https://short.url/missing")))
+
+            viewModel.onExitHandled(UrlDetailExit.Deleted)
+
+            viewModel.exit.value shouldBe UrlDetailExit.NotFound
         }
 
         should("init falls back to an empty shortURL when no saved-state key is present") {
@@ -161,7 +182,7 @@ class URLViewModelTest : ShouldSpec(
             coVerify(atLeast = 2) { getVisitCount(url) }
         }
 
-        should("refreshVisitCount catches a plain exception without crashing or emitting an event") {
+        should("refreshVisitCount catches a plain exception without crashing or exiting") {
             // The catch branch logs via android.util.Log, which throws "not mocked" on the plain JVM
             // unless stubbed.
             mockkStatic(Log::class)
@@ -172,9 +193,7 @@ class URLViewModelTest : ShouldSpec(
                 coEvery { getVisitCount(url) } throws RuntimeException("boom")
                 val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to url.shortURL)))
 
-                viewModel.events.test {
-                    expectNoEvents()
-                }
+                viewModel.exit.value shouldBe UrlDetailExit.None
                 viewModel.state.value.isRefreshingVisits
                     .shouldBeFalse()
             } finally {
@@ -197,27 +216,24 @@ class URLViewModelTest : ShouldSpec(
             coVerify(exactly = 1) { getVisitCount(url) }
         }
 
-        should("delete removes the loaded url and emits Deleted") {
+        should("delete removes the loaded url and holds the Deleted exit") {
             val url = testUrl()
             coEvery { getURL(url.shortURL) } returns url
             val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to url.shortURL)))
 
-            viewModel.events.test {
-                viewModel.delete()
-                awaitItem() shouldBe UrlDetailEvent.Deleted
-            }
+            viewModel.delete()
+
+            viewModel.exit.value shouldBe UrlDetailExit.Deleted
             coVerify(exactly = 1) { deleteURL(url) }
         }
 
         should("delete is a no-op when no url is loaded") {
-            // No events.test wrapper here: init already sent a buffered NotFound event, which a
-            // fresh collector would immediately receive and make expectNoEvents() fail. Absence
-            // of a further event is implied by no deleteURL call.
             val viewModel = newViewModel()
 
             viewModel.delete()
 
             coVerify(exactly = 0) { deleteURL(any<URL>()) }
+            viewModel.exit.value shouldBe UrlDetailExit.NotFound
         }
 
         should("init loads the QR code for the short URL once the URL is loaded") {
