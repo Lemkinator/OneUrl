@@ -26,13 +26,16 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationBetween
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
+import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.R
@@ -64,7 +67,7 @@ class AddURLActivity : AppCompatActivity() {
         }
         initFooterButton()
         collectState()
-        collectEvents()
+        collectState(viewModel.outcome, minActiveState = RESUMED) { if (it is AddUrlOutcome.Result) onOutcome(it) }
     }
 
     private fun collectState() =
@@ -77,28 +80,28 @@ class AddURLActivity : AppCompatActivity() {
             renderLoadingState(state)
         }
 
-    private fun collectEvents() =
-        collectEvents(viewModel.events) { event ->
-            when (event) {
-                is AddUrlEvent.AlreadyShortened -> {
-                    showAlreadyShortenedDialog(event.shortURL)
-                }
+    private fun onOutcome(result: AddUrlOutcome.Result) {
+        when (result) {
+            is AddUrlOutcome.AlreadyShortened -> {
+                showAlreadyShortenedDialog(result.shortURL)
+            }
 
-                is AddUrlEvent.Error -> {
-                    showErrorDialog(event.error)
-                }
+            is AddUrlOutcome.Failed -> {
+                showErrorDialog(result.error)
+            }
 
-                is AddUrlEvent.CopyAndFinish -> {
-                    copyToClipboard(event.shortURL, event.title)
-                    finishAfterTransition()
-                }
+            is AddUrlOutcome.Copy -> {
+                copyToClipboard(result.shortURL, result.title)
+                finishAfterTransition()
+            }
 
-                AddUrlEvent.Saved -> {
-                    toast(R.string.url_added)
-                    finishAfterTransition()
-                }
+            AddUrlOutcome.Saved -> {
+                toast(R.string.url_added)
+                finishAfterTransition()
             }
         }
+        viewModel.onOutcomeHandled(result)
+    }
 
     private fun initViews(state: AddUrlUiState) {
         binding.editTextURL.setText(state.initialURL)
@@ -109,8 +112,8 @@ class AddURLActivity : AppCompatActivity() {
         binding.editTextURL.addTextChangedListener { text -> viewModel.onLongURLChanged(text.toString()) }
         binding.editTextAlias.addTextChangedListener { text -> viewModel.onAliasChanged(text.toString()) }
         binding.editTextDescription.addTextChangedListener { text -> viewModel.onDescriptionChanged(text.toString()) }
-        binding.providerSelection.setOnClickListener {
-            startActivity(
+        binding.providerSelection.onSingleLaunchClick {
+            singleLaunchActivity(
                 Intent(this, ProviderActivity::class.java).putExtra(KEY_SELECT_PROVIDER, true),
                 ActivityOptions.makeSceneTransitionAnimation(this, Pair.create(binding.providerSelection, "provider_selection")).toBundle(),
             )
@@ -130,7 +133,7 @@ class AddURLActivity : AppCompatActivity() {
             }
         }
         binding.providerIconLayout.contentDescription = providerInfoDescription(provider.name, infoContents.take(icons.size))
-        binding.providerIconLayout.setOnClickListener { showProviderInfoBottomSheet(provider) }
+        binding.providerIconLayout.onSingleLaunchClick { showProviderInfoBottomSheet(provider) }
         binding.textInputLayoutAlias.isVisible = provider.aliasConfig != null
         val tipsCardInfo = provider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {
@@ -214,7 +217,7 @@ class AddURLActivity : AppCompatActivity() {
                     Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL),
                     transitionName = "alreadyShortenedUrlTransition",
                 )
-            }.show()
+            }.showOnce(ALREADY_SHORTENED_DIALOG_TAG)
     }
 
     private fun showErrorDialog(error: GenerateURLError) {
@@ -222,10 +225,12 @@ class AddURLActivity : AppCompatActivity() {
             .Builder(this)
             .setNeutralButton(commonutilsR.string.commonutils_ok, null)
             .apply { configureFor(error) }
-            .show()
+            .showOnce(ERROR_DIALOG_TAG)
     }
 
     companion object {
         private const val COMPACT_SCREEN_WIDTH_DP = 360
+        private const val ALREADY_SHORTENED_DIALOG_TAG = "alreadyShortenedDialog"
+        private const val ERROR_DIALOG_TAG = "errorDialog"
     }
 }

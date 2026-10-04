@@ -140,7 +140,7 @@ class MainActivityUrlListTest {
     }
 
     @Test
-    fun `collectEvents NewItemAdded scrolls the list back to the top`() {
+    fun `a new url scrolls the list back to the top`() {
         repeat(PRESCROLL_ITEM_COUNT) { urlRepository.seedUrl("https://da.gd/bulk$it") }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
@@ -165,7 +165,7 @@ class MainActivityUrlListTest {
     }
 
     @Test
-    fun `NewItemAdded handled before the list commits the url reveals it`() {
+    fun `a reveal that arrives before the list commits the url reveals it`() {
         repeat(PRESCROLL_ITEM_COUNT) { urlRepository.seedUrl("https://da.gd/bulk$it") }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
@@ -183,7 +183,7 @@ class MainActivityUrlListTest {
     }
 
     @Test
-    fun `NewItemAdded handled after the list committed the url reveals it`() {
+    fun `a reveal that arrives after the list committed the url reveals it`() {
         repeat(PRESCROLL_ITEM_COUNT) { urlRepository.seedUrl("https://da.gd/bulk$it") }
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         try {
@@ -269,6 +269,26 @@ class MainActivityUrlListTest {
     }
 
     @Test
+    fun `a handled reveal does not scroll again after a recreation`() {
+        repeat(PRESCROLL_ITEM_COUNT) { urlRepository.seedUrl("https://da.gd/bulk$it") }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            awaitMainIdle()
+            runBlocking { urlRepository.addURL(urlFixture("https://da.gd/newest")) }
+            awaitUntil { scenario.read { it.urlList().adapter?.itemCount } == PRESCROLL_ITEM_COUNT + 1 }
+            scenario.read { it.viewModelReveal() } shouldBe null
+            scenario.onActivity { it.urlList().scrollToPosition(PRESCROLL_ITEM_COUNT) }
+            awaitMainIdle()
+            val scrolledTo = scenario.read { it.urlList().firstVisiblePosition() }
+            scrolledTo shouldNotBe 0
+
+            scenario.recreate()
+            awaitMainIdle()
+
+            scenario.read { it.urlList().firstVisiblePosition() } shouldBe scrolledTo
+        }
+    }
+
+    @Test
     fun `recreate without a new url keeps the scroll position`() {
         repeat(PRESCROLL_ITEM_COUNT) { urlRepository.seedUrl("https://da.gd/bulk$it") }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -316,6 +336,10 @@ class MainActivityUrlListTest {
     private fun MainActivity.viewModelUrlCount(): Int =
         ViewModelProvider(this)[MainViewModel::class.java]
             .state.value.urls.size
+
+    private fun MainActivity.viewModelReveal(): String? =
+        ViewModelProvider(this)[MainViewModel::class.java]
+            .state.value.reveal
 
     private fun MainActivity.adapterHoldsViewModelUrlInstances(): Boolean {
         val urls = ViewModelProvider(this)[MainViewModel::class.java].state.value.urls

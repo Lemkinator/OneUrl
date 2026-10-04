@@ -30,7 +30,9 @@ import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
+import de.lemke.commonutils.ui.utils.showOnce
 import de.lemke.oneurl.databinding.ViewProviderInfoBottomsheetBinding
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
@@ -110,7 +112,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
             infoButtonAt(index)?.apply {
                 text = info.title
                 setIcon(info.icon)
-                setOnClickListener { openURL(info.linkOrDescription) }
+                onSingleLaunchClick { openURL(info.linkOrDescription) }
                 isVisible = true
             }
         }
@@ -123,7 +125,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
         fun showProviderInfoBottomSheet(
             fragmentManager: FragmentManager,
             provider: ShortURLProvider,
-        ) = newInstance(provider).show(fragmentManager, ProviderInfoBottomSheet::class.java.simpleName)
+        ) = newInstance(provider).showOnce(fragmentManager, ProviderInfoBottomSheet::class.java.simpleName)
 
         private fun newInstance(provider: ShortURLProvider): ProviderInfoBottomSheet =
             ProviderInfoBottomSheet().apply {

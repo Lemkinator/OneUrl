@@ -25,12 +25,9 @@ import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.model.URL
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import javax.inject.Inject
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -42,9 +39,6 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
     val state: StateFlow<MainUiState>
         field = MutableStateFlow(MainUiState())
-
-    private val _events = Channel<MainEvent>(Channel.BUFFERED)
-    val events: Flow<MainEvent> = _events.receiveAsFlow()
 
     val search: StateFlow<String?>
         field = MutableStateFlow<String?>(null)
@@ -60,13 +54,16 @@ class MainViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             observeURLs(search, filterFavorite).collectLatest { urls ->
-                state.update { it.copy(urls = urls, isUIReady = true) }
                 val snapshot = ScrollSnapshot(urls.mapTo(mutableSetOf()) { it.shortURL }, search.value, filterFavorite.value)
                 val previous = previousSnapshot
-                if (previous != null && previous.search == snapshot.search && previous.filterFavorite == snapshot.filterFavorite) {
-                    urls.firstOrNull { it.shortURL !in previous.ids }?.let { _events.send(MainEvent.NewItemAdded(it.shortURL)) }
-                }
+                val added =
+                    if (previous != null && previous.search == snapshot.search && previous.filterFavorite == snapshot.filterFavorite) {
+                        urls.firstOrNull { it.shortURL !in previous.ids }?.shortURL
+                    } else {
+                        null
+                    }
                 previousSnapshot = snapshot
+                state.update { it.copy(urls = urls, isUIReady = true, reveal = added ?: it.reveal) }
             }
         }
     }
@@ -100,11 +97,17 @@ class MainViewModel @Inject constructor(
     fun setAllSelectorState(state: AllSelectorState) {
         allSelectorState.value = state
     }
+
+    fun onRevealHandled(shortURL: String) {
+        state.update { if (it.reveal == shortURL) it.copy(reveal = null) else it }
+    }
 }
 
+/** [reveal] is the short URL of the newest added URL, which the list scrolls to and then reports handled. */
 data class MainUiState(
     val urls: List<URL> = emptyList(),
     val isUIReady: Boolean = false,
+    val reveal: String? = null,
 )
 
 private data class ScrollSnapshot(
@@ -112,9 +115,3 @@ private data class ScrollSnapshot(
     val search: String?,
     val filterFavorite: Boolean,
 )
-
-sealed class MainEvent {
-    data class NewItemAdded(
-        val shortURL: String,
-    ) : MainEvent()
-}

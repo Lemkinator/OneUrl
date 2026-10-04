@@ -17,6 +17,7 @@
 package de.lemke.oneurl.ui
 
 import android.app.Activity.RESULT_CANCELED
+import android.app.Activity.RESULT_FIRST_USER
 import android.app.Activity.RESULT_OK
 import android.content.ClipboardManager
 import android.content.DialogInterface
@@ -33,23 +34,32 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.CompoundButton
 import android.widget.EditText
+import android.widget.PopupMenu
 import androidx.appcompat.widget.SeslSeekBar
+import androidx.lifecycle.ViewModelProvider
 import androidx.picker3.app.SeslColorPickerDialog
 import androidx.test.core.app.ActivityScenario
+import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.di.QRCodeExporterModule
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldMatch
 import io.mockk.every
 import io.mockk.mockk
 import java.io.File
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -65,9 +75,16 @@ import de.lemke.commonutils.R as commonutilsR
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
+@UninstallModules(QRCodeExporterModule::class)
 class GenerateQRCodeActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
+
+    @BindValue
+    @JvmField
+    val qrCodeExporter: QRCodeExporter = qrCodeExporterOn(ioDispatcher)
 
     @Inject
     lateinit var userSettings: UserSettings
@@ -89,12 +106,58 @@ class GenerateQRCodeActivityTest {
     fun `onOptionsItemSelected handles share and starts the chooser with the qr code uri`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.action shouldBe Intent.ACTION_CHOOSER
             val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
-            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) shouldBe activity.qrCodeContentUri("QRCode.png")
+            val stream = shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)!!
+            stream.toString() shouldMatch activity.qrCodeContentUriPattern("share", "QRCode.png")
+            activity.cacheFile(stream).length() shouldBeGreaterThan 0L
             (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
+        }
+    }
+
+    @Test
+    fun `share that no app can receive shows the share error toast and stays unhandled`() {
+        withActivity { activity ->
+            shadowOf(activity.application).checkActivities(true)
+
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            shadowOf(activity).nextStartedActivity shouldBe null
+            ShadowToast.getTextOfLatestToast() shouldBe
+                activity.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
+            val export = ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value
+            (export is QRCodeExport.Share).shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `double tap on share opens one chooser for one written file`() {
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
+            shadowActivity.nextStartedActivity shouldBe null
+            File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
+        }
+    }
+
+    @Test
+    fun `double tap on save-as-image launches one document picker`() {
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val shadowActivity = shadowOf(activity)
+            shadowActivity.nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
+            shadowActivity.nextStartedActivityForResult shouldBe null
         }
     }
 
@@ -109,6 +172,7 @@ class GenerateQRCodeActivityTest {
     fun `export result OK with a qr code saves the bitmap`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
             // A fake content:// uri has no registered provider under Robolectric, so openOutputStream
@@ -120,6 +184,7 @@ class GenerateQRCodeActivityTest {
                 RESULT_OK,
                 Intent().apply { data = Uri.fromFile(exportFile) },
             )
+            shadowOf(Looper.getMainLooper()).idle()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
             BitmapFactory.decodeFile(exportFile.path) shouldNotBe null
@@ -130,11 +195,14 @@ class GenerateQRCodeActivityTest {
     fun `export result OK without a destination uri shows the creating-file error toast`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+            shadowOf(Looper.getMainLooper()).idle()
 
+            ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
         }
     }
@@ -143,12 +211,98 @@ class GenerateQRCodeActivityTest {
     fun `export result other than OK does not save`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
+            shadowOf(Looper.getMainLooper()).idle()
 
             ShadowToast.getLatestToast() shouldBe null
+        }
+    }
+
+    @Test
+    fun `export result with an unknown code and a uri writes nothing and shows no toast`() {
+        val document = createPickedDocument()
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            activity.receiveDocumentPickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            document.length() shouldBe 0L
+            ShadowToast.shownToastCount() shouldBe 0
+        }
+    }
+
+    @Test
+    fun `export write that the document provider refuses deletes the document and shows the creating-file error toast`() {
+        val provider = readOnlyDocumentProvider()
+        withActivity { activity ->
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(provider.uri))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            provider.document.exists().shouldBeFalse()
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Error creating file"
+        }
+    }
+
+    @Test
+    fun `export write that runs during a recreation finishes and toasts once in the recreated activity`() {
+        val document = createPickedDocument()
+        ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            ioDispatcher.pause()
+            scenario.onActivity { activity ->
+                activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            document.length() shouldBe 0L
+
+            scenario.recreate()
+            ioDispatcher.resume()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            document.readBytes().take(PNG_SIGNATURE.size) shouldBe PNG_SIGNATURE
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Image saved"
+        }
+    }
+
+    @Test
+    fun `export controls are disabled while a share writes and the size seekbar stays usable`() {
+        ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
+            ioDispatcher.pause()
+            scenario.onActivity { activity ->
+                activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                activity.findViewById<View>(R.id.qr_code).isClickable.shouldBeFalse()
+                activity.preparedExportMenuItemsEnabled() shouldBe listOf(false, false)
+
+                activity.findViewById<SeslSeekBar>(R.id.size_seekbar).progress = 800
+
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].state.value.size shouldBe 800
+            }
+
+            ioDispatcher.resume()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            scenario.onActivity { activity ->
+                activity.findViewById<View>(R.id.qr_code).isClickable.shouldBeTrue()
+                activity.preparedExportMenuItemsEnabled() shouldBe listOf(true, true)
+                shadowOf(activity).nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
+            }
         }
     }
 
@@ -160,10 +314,28 @@ class GenerateQRCodeActivityTest {
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
             val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip!!
-            val uri = activity.qrCodeContentUri("QRCode.png")
-            clip.getItemAt(0).uri shouldBe uri
+            val uri = clip.getItemAt(0).uri
+            uri.toString() shouldMatch activity.qrCodeContentUriPattern("clipboard", "QRCode.png")
+            clip.description.label shouldBe "QR Code"
             clip.description.getMimeType(0) shouldBe "image/png"
             activity.contentResolver.getType(uri) shouldBe "image/png"
+        }
+    }
+
+    @Test
+    fun `double tap on the qr code image copies one clip with one toast`() {
+        withActivity { activity ->
+            var clipChanges = 0
+            activity.getSystemService(ClipboardManager::class.java).addPrimaryClipChangedListener { clipChanges++ }
+            val qrCode = activity.findViewById<View>(R.id.qr_code)
+
+            qrCode.performClick()
+            qrCode.performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            clipChanges shouldBe 1
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
         }
     }
 
@@ -314,6 +486,19 @@ class GenerateQRCodeActivityTest {
     }
 
     @Test
+    fun `double tap on a color button shows one color picker`() {
+        withActivity { activity ->
+            val backgroundButton = activity.findViewById<View>(R.id.color_button_background)
+
+            backgroundButton.performClick()
+            backgroundButton.performClick()
+
+            ShadowDialog.getShownDialogs().size shouldBe 1
+            ShadowDialog.getLatestDialog().isShowing.shouldBeTrue()
+        }
+    }
+
+    @Test
     fun `color buttons show the default white background and black foreground swatches`() {
         withActivity { activity ->
             val backgroundButton = activity.findViewById<Button>(R.id.color_button_background)
@@ -393,4 +578,11 @@ class GenerateQRCodeActivityTest {
     }
 
     private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
+
+    private fun GenerateQRCodeActivity.preparedExportMenuItemsEnabled(): List<Boolean> {
+        val menu = PopupMenu(this, findViewById(R.id.qr_code)).menu
+        menuInflater.inflate(R.menu.menu_qr, menu)
+        onPrepareOptionsMenu(menu)
+        return listOf(R.id.menu_item_qr_save_as_image, R.id.menu_item_qr_share).map { menu.findItem(it).isEnabled }
+    }
 }

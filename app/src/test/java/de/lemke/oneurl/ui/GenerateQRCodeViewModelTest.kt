@@ -16,11 +16,16 @@
 
 package de.lemke.oneurl.ui
 
+import android.content.ClipData
 import android.graphics.Bitmap
-import android.graphics.Color
+import android.net.Uri
 import de.lemke.commonutils.data.FakeSharedPreferences
+import de.lemke.commonutils.data.SaveLocation
+import de.lemke.commonutils.ui.utils.BitmapSaveResult
+import de.lemke.commonutils.ui.utils.BitmapShareFile
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
+import de.lemke.oneurl.ui.FakeQRCodeExporter.Call
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -42,13 +47,15 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
         val qrCode = mockk<Bitmap>()
         lateinit var userSettings: UserSettings
         lateinit var mainScheduler: TestCoroutineScheduler
+        lateinit var exporter: FakeQRCodeExporter
 
-        fun newViewModel() = GenerateQRCodeViewModel(userSettings, generateQRCode)
+        fun newViewModel() = GenerateQRCodeViewModel(userSettings, generateQRCode, exporter)
 
         beforeEach {
             mainScheduler = UnconfinedTestDispatcher().scheduler
             clearMocks(generateQRCode)
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            exporter = FakeQRCodeExporter()
             every {
                 generateQRCode(any(), any(), any(), any(), any(), any(), any(), any())
             } returns qrCode
@@ -77,22 +84,10 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             state.roundedFrame.shouldBeFalse()
             state.recentForegroundColors shouldBe listOf(0x111111, 0x222222)
             state.recentBackgroundColors shouldBe listOf(0x333333, 0x444444)
-            state.isLoading.shouldBeFalse()
             state.qrCode shouldBe qrCode
             verify(exactly = 1) {
                 generateQRCode("https://example.com", 256, 0x111111, 0x333333, true, true, false, false)
             }
-        }
-
-        should("init falls back to default colors when no recent colors are persisted") {
-            userSettings.qrRecentForegroundColors = emptyList()
-            userSettings.qrRecentBackgroundColors = emptyList()
-
-            val viewModel = newViewModel()
-            val state = viewModel.state.value
-
-            state.foregroundColor shouldBe Color.BLACK
-            state.backgroundColor shouldBe Color.WHITE
         }
 
         should("setUrl updates state.url immediately and regenerates the QR code") {
@@ -243,6 +238,67 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
 
             mainScheduler.advanceUntilIdle()
             userSettings.qrSize shouldBe 900
+        }
+
+        should("onSave writes the current QR code under its URL to the image save location") {
+            userSettings.qrURL = "https://example.com"
+            val viewModel = newViewModel()
+
+            viewModel.onSave()
+
+            exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, "https://example.com"))
+            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS))
+        }
+
+        should("onSave holds OpenPicker with the URL as file name when the location needs the picker") {
+            userSettings.qrURL = "https://example.com"
+            exporter.directoryResult = BitmapSaveResult.NeedsPicker
+            val viewModel = newViewModel()
+
+            viewModel.onSave()
+
+            viewModel.export.value shouldBe QRCodeExport.OpenPicker("https://example.com")
+        }
+
+        should("onCopy holds the clip of the current QR code") {
+            val clip = mockk<ClipData>()
+            exporter.clip = clip
+            val viewModel = newViewModel()
+
+            viewModel.onCopy()
+
+            exporter.calls shouldBe listOf(Call.CreateClip(qrCode))
+            viewModel.export.value shouldBe QRCodeExport.Copy(clip)
+        }
+
+        should("onShare holds the share file of the current QR code for the share sheet") {
+            val file = BitmapShareFile.Written(mockk<Uri>())
+            exporter.shareFile = file
+            val viewModel = newViewModel()
+
+            viewModel.onShare()
+
+            exporter.calls shouldBe listOf(Call.CreateShareFile(qrCode))
+            viewModel.export.value shouldBe QRCodeExport.Share(file, ShareTarget.SHARE_SHEET)
+        }
+
+        should("onDocumentPicked writes the current QR code into the created document") {
+            val uri = mockk<Uri>()
+            val viewModel = newViewModel()
+
+            viewModel.onDocumentPicked(DocumentPick.Created(uri))
+
+            exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
+            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
+        }
+
+        should("onExportHandled returns the export to Idle") {
+            val viewModel = newViewModel()
+            viewModel.onSave()
+
+            viewModel.onExportHandled(QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS)))
+
+            viewModel.export.value shouldBe QRCodeExport.Idle
         }
     },
 )

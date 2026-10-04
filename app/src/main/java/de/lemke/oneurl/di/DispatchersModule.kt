@@ -21,6 +21,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import de.lemke.commonutils.di.DefaultDispatcher
+import de.lemke.commonutils.di.IoDispatcher
 import javax.inject.Qualifier
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -38,6 +39,10 @@ object DispatchersModule {
     @Provides
     @DefaultDispatcher
     fun provideDefault(): CoroutineDispatcher = Dispatchers.Default
+
+    @Provides
+    @IoDispatcher
+    fun provideIo(): CoroutineDispatcher = Dispatchers.IO
 
     @Provides
     @Singleton

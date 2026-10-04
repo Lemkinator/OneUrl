@@ -66,7 +66,7 @@ don't store history.
 
 Clean Architecture with three layers:
 
-**`data/`** — Repositories wrapping Room (`URLRepository`) and DataStore (`UserSettingsRepository`). All DB entities live in
+**`data/`** — `URLRepository` wraps Room; `UserSettings` wraps SharedPreferences, bound as `SettingsRepository`. All DB entities live in
 `data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
 
 **`domain/`** — Use cases (`*UseCase.kt`), each doing one thing, injected by Hilt. `GenerateURLUseCase` is the core flow: checks internet →
@@ -74,14 +74,22 @@ checks URL against URLhaus → delegates to the selected provider's `getCreateRe
 for all HTTP calls.
 
 **`ui/`** — Activities, adapters, and ViewModels. Activities interact with use cases through ViewModels (MainViewModel, AddURLViewModel,
-URLViewModel, GenerateQRCodeViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather than calling use cases
-directly.
+URLViewModel, GenerateQRCodeViewModel, QRBottomSheetViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
+than calling use cases directly.
+
+**QR code export** — `GenerateQRCodeViewModel`, `URLViewModel` and `QRBottomSheetViewModel` each compose a `QRCodeExportStateHolder`
+(`ui/QRCodeExport.kt`), which runs save, copy, share and the document-picker write through the `data/QRCodeExporter` source and
+exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` is the one screen-side reaction to a result.
+`GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss.
 
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
 `ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers marked `//disabled` are instantiated but filtered out of
 `enabled`.
 
-**DI** — Single Hilt module (`PersistenceModule`) provides Room DB, URLDao, and DataStore.
+**DI** — `di/` holds the `SingletonComponent` Hilt modules: `PersistenceModule` (Room DB, `URLDao`), `SettingsModule.kt`
+(`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (`@DefaultDispatcher`, `@IoDispatcher`, `@ApplicationScope`),
+`ProviderModule` (`@EnabledProviders`) and `QRCodeExporterModule` (binds `DefaultQRCodeExporter`; screen tests uninstall it to
+bind an exporter on a pausable IO dispatcher).
 
 ## Adding a New URL Provider
 
@@ -101,6 +109,11 @@ Three tools run as part of `./gradlew build`:
 - **Detekt** — static analysis; config at `config/detekt/detekt.yml`. `autoCorrect = false` — fixes are manual.
 - **Konsist** — architecture rules in `app/src/test/java/de/lemke/oneurl/ArchitectureTest.kt`. Enforces `data/domain/ui` layering
   (`data` may depend on `domain.model`'s shared value types, never on use cases). Runs as part of `./gradlew test`.
+  `CodingConventionsTest.kt` also enforces the common-utils launch latch through `assertLaunchLatchConventions()` from the
+  common-utils testFixtures: it bans raw activity launches and result registration by name, and a `show`/`showNow` call whose
+  receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or `AddFab`. Launch through `singleLaunchActivity`,
+  `transformToActivity` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
+  `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunch`); show dialogs with `showOnce(tag)`.
 
 **Pre-commit hook** — blocks commits with formatting violations. Opt in once per clone:
 

@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl
+package de.lemke.oneurl.di
 
-import android.content.Context
-import de.lemke.commonutils.ui.utils.singleLaunchActivity
-import leakcanary.LeakCanary
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import de.lemke.oneurl.data.DefaultQRCodeExporter
+import de.lemke.oneurl.data.QRCodeExporter
 
-fun openLeakCanary(context: Context) {
-    context.singleLaunchActivity(LeakCanary.newLeakDisplayActivityIntent())
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class QRCodeExporterModule {
+    @Binds
+    abstract fun bindQRCodeExporter(exporter: DefaultQRCodeExporter): QRCodeExporter
 }

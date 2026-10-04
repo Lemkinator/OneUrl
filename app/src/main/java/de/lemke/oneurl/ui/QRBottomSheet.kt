@@ -16,11 +16,8 @@
 
 package de.lemke.oneurl.ui
 
-import android.app.Activity.RESULT_OK
 import android.app.Dialog
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory.decodeByteArray
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,29 +25,24 @@ import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.core.view.isVisible
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.skydoves.bundler.bundleValue
-import com.skydoves.bundler.intentOf
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.data.SaveLocation
-import de.lemke.commonutils.ui.utils.exportBitmap
+import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.isSamsungQuickShareAvailable
-import de.lemke.commonutils.ui.utils.quickShareBitmap
-import de.lemke.commonutils.ui.utils.saveBitmapToUri
-import de.lemke.commonutils.ui.utils.shareBitmap
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
+import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
 import de.lemke.oneurl.databinding.ViewQrBottomsheetBinding
 import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
-import java.io.ByteArrayOutputStream
 
 @AndroidEntryPoint
 class QRBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewQrBottomsheetBinding
-    private var qr: Bitmap? = null
+    private val viewModel: QRBottomSheetViewModel by viewModels()
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(StartActivityForResult()) {
-            if (it.resultCode == RESULT_OK) requireContext().saveBitmapToUri(it.data?.data, qr)
-        }
+        registerForSingleLaunchResult(StartActivityForResult()) { viewModel.onDocumentPicked(it.toDocumentPick()) }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
@@ -72,46 +64,40 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
         if (requireContext().isSamsungQuickShareAvailable()) {
             binding.quickShareButton.isVisible = true
         }
-        val shortURL: String = bundleValue(KEY_TITLE, "")
-        val saveLocation: SaveLocation = SaveLocation.fromStringOrDefault(bundleValue(KEY_SAVE_LOCATION, ""))
-        qr = bundleValue<ByteArray>(KEY_QR)?.toBitmap()
-        binding.title.text = shortURL
-        qr?.let { qrCode ->
-            binding.qrCode.setImageBitmap(qrCode)
-            binding.quickShareButton.setOnClickListener { quickShareBitmap(qrCode, "QRCode.png") }
-            binding.shareButton.setOnClickListener { shareBitmap(qrCode, "QRCode.png") }
-            binding.saveButton.setOnClickListener { exportBitmap(saveLocation, qrCode, shortURL, exportQRCodeResultLauncher) }
+        binding.quickShareButton.onSingleLaunchClick { viewModel.onQuickShare() }
+        binding.shareButton.onSingleLaunchClick { viewModel.onShare() }
+        binding.saveButton.onSingleLaunchClick { viewModel.onSave() }
+        collectState(viewModel.state) { render(it) }
+        collectState(viewModel.export) { renderExportControls() }
+        collectState(viewModel.export, minActiveState = RESUMED) { onExport(it) }
+    }
+
+    private fun render(state: QRBottomSheetUiState) {
+        binding.title.text = state.shortURL
+        binding.qrCode.setImageBitmap(state.qrCode)
+        renderExportControls()
+    }
+
+    private fun renderExportControls() {
+        val enabled = viewModel.state.value.qrCode != null && viewModel.export.value != QRCodeExport.Running
+        binding.quickShareButton.isEnabled = enabled
+        binding.shareButton.isEnabled = enabled
+        binding.saveButton.isEnabled = enabled
+    }
+
+    private fun onExport(export: QRCodeExport) {
+        if (export is QRCodeExport.Result && requireContext().launchQRCodeExport(export, exportQRCodeResultLauncher)) {
+            viewModel.onExportHandled(export)
         }
     }
 
     companion object {
-        const val KEY_TITLE = "key_title"
-        const val KEY_QR = "key_qr"
-        const val KEY_SAVE_LOCATION = "key_save_location"
+        const val KEY_SHORT_URL = "key_short_url"
 
-        fun createQRBottomSheet(
-            title: String,
-            qrCode: Bitmap,
-            saveLocation: SaveLocation,
-        ): QRBottomSheet =
+        fun createQRBottomSheet(shortURL: String): QRBottomSheet =
             QRBottomSheet().apply {
                 arguments =
-                    intentOf {
-                        +(KEY_TITLE to title)
-                        +(KEY_QR to qrCode.toByteArray())
-                        +(KEY_SAVE_LOCATION to saveLocation.toString())
-                    }.extras
+                    Bundle().apply { putString(KEY_SHORT_URL, shortURL) }
             }
     }
 }
-
-private const val BITMAP_COMPRESS_QUALITY = 100
-
-// java.lang.RuntimeException: Could not copy bitmap to parcel blob. ???????
-private fun Bitmap.toByteArray(): ByteArray =
-    ByteArrayOutputStream().use { stream ->
-        compress(Bitmap.CompressFormat.PNG, BITMAP_COMPRESS_QUALITY, stream)
-        stream.toByteArray()
-    }
-
-private fun ByteArray.toBitmap(): Bitmap = decodeByteArray(this, 0, size)

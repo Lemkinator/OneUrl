@@ -16,12 +16,16 @@
 
 package de.lemke.oneurl.ui
 
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.oneurl.data.QRCodeExporter
+import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.DeleteURLUseCase
+import de.lemke.oneurl.domain.GetQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetVisitCountUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
@@ -29,11 +33,8 @@ import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -44,23 +45,30 @@ class URLViewModel @Inject constructor(
     private val updateURL: UpdateURLUseCase,
     private val deleteURL: DeleteURLUseCase,
     private val getVisitCount: GetVisitCountUseCase,
+    private val getQRCode: GetQRCodeUseCase,
+    private val userSettings: UserSettings,
+    exporter: QRCodeExporter,
 ) : ViewModel() {
+    private val qrCodeExport = QRCodeExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<UrlDetailUiState>
         field = MutableStateFlow(UrlDetailUiState())
+    val export: StateFlow<QRCodeExport> = qrCodeExport.state
 
-    private val _events = Channel<UrlDetailEvent>(Channel.BUFFERED)
-    val events: Flow<UrlDetailEvent> = _events.receiveAsFlow()
+    val exit: StateFlow<UrlDetailExit>
+        field = MutableStateFlow<UrlDetailExit>(UrlDetailExit.None)
 
     init {
         val shortURL = savedStateHandle.get<String>(KEY_SHORTURL) ?: ""
         viewModelScope.launch {
             val url = getURL(shortURL)
             if (url == null) {
-                _events.send(UrlDetailEvent.NotFound)
+                exit.value = UrlDetailExit.NotFound
                 return@launch
             }
             state.update { it.copy(url = url, isLoading = false) }
             refreshVisitCount()
+            val qrCode = getQRCode(url.shortURL)
+            state.update { it.copy(qrCode = qrCode) }
         }
     }
 
@@ -93,8 +101,37 @@ class URLViewModel @Inject constructor(
         val url = state.value.url ?: return
         viewModelScope.launch {
             deleteURL(url)
-            _events.send(UrlDetailEvent.Deleted)
+            exit.value = UrlDetailExit.Deleted
         }
+    }
+
+    fun onSaveQRCode() {
+        val current = state.value
+        val url = current.url ?: return
+        val qrCode = current.qrCode ?: return
+        qrCodeExport.save(qrCode, url.shortURL, userSettings.imageSaveLocation)
+    }
+
+    fun onDocumentPicked(pick: DocumentPick) {
+        qrCodeExport.onDocumentPicked(pick, state.value.qrCode)
+    }
+
+    fun onCopyQRCode() {
+        val qrCode = state.value.qrCode ?: return
+        qrCodeExport.copy(qrCode)
+    }
+
+    fun onShareQRCode() {
+        val qrCode = state.value.qrCode ?: return
+        qrCodeExport.share(qrCode, ShareTarget.SHARE_SHEET)
+    }
+
+    fun onExportHandled(result: QRCodeExport.Result) {
+        qrCodeExport.onHandled(result)
+    }
+
+    fun onExitHandled(reason: UrlDetailExit.Reason) {
+        exit.update { if (it == reason) UrlDetailExit.None else it }
     }
 
     companion object {
@@ -107,10 +144,16 @@ data class UrlDetailUiState(
     val isLoading: Boolean = true,
     val visitCount: Int? = null,
     val isRefreshingVisits: Boolean = false,
+    val qrCode: Bitmap? = null,
 )
 
-sealed class UrlDetailEvent {
-    data object NotFound : UrlDetailEvent()
+/** Why the URL screen closes. The activity acts on a [Reason] and then reports it handled. */
+sealed interface UrlDetailExit {
+    sealed interface Reason : UrlDetailExit
 
-    data object Deleted : UrlDetailEvent()
+    data object None : UrlDetailExit
+
+    data object NotFound : Reason
+
+    data object Deleted : Reason
 }

@@ -109,6 +109,14 @@ class UserSettingsTest {
     }
 
     @Test
+    fun `empty stored colors read as the defaults`() {
+        settings.qrRecentForegroundColors = emptyList()
+        settings.qrRecentBackgroundColors = emptyList()
+        reload().qrRecentForegroundColors shouldBe listOf(DEFAULT_QR_FOREGROUND_COLOR)
+        reload().qrRecentBackgroundColors shouldBe listOf(DEFAULT_QR_BACKGROUND_COLOR)
+    }
+
+    @Test
     fun `qrSize round-trips`() {
         settings.qrSize = 256
         reload().qrSize shouldBe 256

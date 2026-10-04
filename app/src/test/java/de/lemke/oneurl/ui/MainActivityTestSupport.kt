@@ -31,19 +31,12 @@ import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import io.mockk.every
 import io.mockk.mockk
-import java.time.Duration
 import java.time.ZonedDateTime
 import kotlinx.coroutines.runBlocking
 import org.robolectric.Shadows.shadowOf
 
 internal fun awaitMainIdle() {
     shadowOf(Looper.getMainLooper()).idle()
-}
-
-internal fun advanceClockPastDebounce() {
-    // onNavigationSingleClick debounces clicks within 600ms of each other; move the clock
-    // past that window so the very first click in a test isn't silently swallowed.
-    shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(1))
 }
 
 internal fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }

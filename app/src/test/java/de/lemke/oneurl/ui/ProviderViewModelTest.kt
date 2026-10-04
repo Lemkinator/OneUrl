@@ -17,7 +17,6 @@
 package de.lemke.oneurl.ui
 
 import androidx.lifecycle.SavedStateHandle
-import app.cash.turbine.test
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.model.Dagd
@@ -64,62 +63,84 @@ class ProviderViewModelTest : ShouldSpec(
                 .shouldBeTrue()
         }
 
-        should("init emits ScrollToSelected with the selected provider's real index in the enabled list") {
+        should("init holds the selected provider's real index in the enabled list as the scroll target") {
             val provider = ShortURLProviderCompanion.enabled.last()
             userSettings.selectedShortURLProvider = provider
             val expectedIndex = ShortURLProviderCompanion.enabled.indexOf(provider)
 
             val viewModel = newViewModel()
 
-            viewModel.events.test {
-                awaitItem() shouldBe ProviderEvent.ScrollToSelected(expectedIndex)
-            }
+            viewModel.state.value.scrollToPosition shouldBe expectedIndex
         }
 
-        should("init does not emit ScrollToSelected when the selected provider is not in the enabled list") {
+        should("init holds no scroll target when the selected provider is not in the enabled list") {
             userSettings.selectedShortURLProvider = Dagd
 
             val viewModel = newViewModel(providers = listOf(VgdIsgd.Isgd, VgdIsgd.Vgd))
 
-            viewModel.events.test {
-                expectNoEvents()
-            }
+            viewModel.state.value.scrollToPosition shouldBe null
         }
 
-        should("onProviderClick in select mode selects the provider and emits Finish") {
+        should("onScrolledToSelected clears the scroll target") {
+            val viewModel = newViewModel()
+
+            viewModel.onScrolledToSelected()
+
+            viewModel.state.value.scrollToPosition shouldBe null
+        }
+
+        should("navigation starts as None") {
+            newViewModel().navigation.value shouldBe ProviderNavigation.None
+        }
+
+        should("onProviderClick in select mode selects the provider and holds Finish") {
             val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
             val viewModel = newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)))
 
-            viewModel.events.test {
-                awaitItem() // initial ScrollToSelected from init
-                viewModel.onProviderClick(provider)
-                awaitItem() shouldBe ProviderEvent.Finish
-            }
+            viewModel.onProviderClick(provider)
+
+            viewModel.navigation.value shouldBe ProviderNavigation.Finish
             userSettings.selectedShortURLProvider shouldBe provider
         }
 
-        should("onProviderClick outside select mode leaves selection unchanged and emits ShowInfo") {
+        should("onProviderClick outside select mode leaves selection unchanged and holds ShowInfo") {
             val previouslySelected = ShortURLProviderCompanion.default
             val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
             val viewModel = newViewModel()
 
-            viewModel.events.test {
-                awaitItem() // initial ScrollToSelected from init
-                viewModel.onProviderClick(provider)
-                awaitItem() shouldBe ProviderEvent.ShowInfo(provider)
-            }
+            viewModel.onProviderClick(provider)
+
+            viewModel.navigation.value shouldBe ProviderNavigation.ShowInfo(provider)
             userSettings.selectedShortURLProvider shouldBe previouslySelected
         }
 
-        should("onProviderInfoClick always emits ShowInfo regardless of select mode") {
+        should("onProviderInfoClick always holds ShowInfo regardless of select mode") {
             val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
             val viewModel = newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)))
 
-            viewModel.events.test {
-                awaitItem() // initial ScrollToSelected from init
-                viewModel.onProviderInfoClick(provider)
-                awaitItem() shouldBe ProviderEvent.ShowInfo(provider)
-            }
+            viewModel.onProviderInfoClick(provider)
+
+            viewModel.navigation.value shouldBe ProviderNavigation.ShowInfo(provider)
+        }
+
+        should("onNavigationHandled returns to None") {
+            val provider = ShortURLProviderCompanion.enabled.first()
+            val viewModel = newViewModel()
+            viewModel.onProviderInfoClick(provider)
+
+            viewModel.onNavigationHandled(ProviderNavigation.ShowInfo(provider))
+
+            viewModel.navigation.value shouldBe ProviderNavigation.None
+        }
+
+        should("onNavigationHandled keeps a request other than the handled one") {
+            val provider = ShortURLProviderCompanion.enabled.first()
+            val viewModel = newViewModel()
+            viewModel.onProviderInfoClick(provider)
+
+            viewModel.onNavigationHandled(ProviderNavigation.Finish)
+
+            viewModel.navigation.value shouldBe ProviderNavigation.ShowInfo(provider)
         }
     },
 )

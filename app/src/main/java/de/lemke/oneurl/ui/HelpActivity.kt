@@ -19,6 +19,7 @@ package de.lemke.oneurl.ui
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationBetween
 import de.lemke.commonutils.ui.utils.sendEmailHelp
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
@@ -26,7 +27,6 @@ import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityHelpBinding
-import dev.oneuiproject.oneui.ktx.onSingleClick
 
 @AndroidEntryPoint
 class HelpActivity : AppCompatActivity() {
@@ -38,7 +38,7 @@ class HelpActivity : AppCompatActivity() {
         binding = ActivityHelpBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
-        binding.providerInfoButton.apply { onSingleClick { transformToActivity(ProviderActivity::class.java, "ProviderTransformation") } }
-        binding.contactMeButton.setOnClickListener { sendEmailHelp(getString(R.string.commonutils_email), BuildConfig.APP_NAME) }
+        binding.providerInfoButton.onSingleLaunchClick { it.transformToActivity(ProviderActivity::class.java, "ProviderTransformation") }
+        binding.contactMeButton.onSingleLaunchClick { sendEmailHelp(getString(R.string.commonutils_email), BuildConfig.APP_NAME) }
     }
 }

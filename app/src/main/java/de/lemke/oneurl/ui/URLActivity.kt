@@ -30,40 +30,34 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.commonutils.di.DefaultDispatcher
-import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
-import de.lemke.commonutils.ui.utils.exportBitmap
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
-import de.lemke.commonutils.ui.utils.saveBitmapToUri
+import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.commonutils.ui.utils.setWindowTransparent
-import de.lemke.commonutils.ui.utils.shareBitmap
 import de.lemke.commonutils.ui.utils.shareText
 import de.lemke.commonutils.ui.utils.showInAppReviewOrFinish
+import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.singleLaunch
+import de.lemke.commonutils.ui.utils.singleLaunchMenuItem
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
-import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.databinding.ActivityUrlBinding
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import dev.oneuiproject.oneui.utils.SearchHighlighter
 import java.text.NumberFormat
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -72,28 +66,13 @@ class URLActivity : AppCompatActivity() {
     @Inject
     lateinit var settings: SettingsRepository
 
-    @Inject
-    lateinit var qrCodeCache: QRCodeCache
-
-    @Inject
-    lateinit var generateQRCode: GenerateQRCodeUseCase
-
-    @Inject
-    @DefaultDispatcher
-    lateinit var defaultDispatcher: CoroutineDispatcher
-
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
     private lateinit var searchHighlighter: SearchHighlighter
     private var lastBoundShortURL: String? = null
-    private var lastBoundQr: Bitmap? = null
-    private var qrLoadJob: Job? = null
+    private var lastBoundQrCode: Bitmap? = null
     private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                lastBoundQr?.let { saveBitmapToUri(result.data?.data, it) }
-            }
-        }
+        registerForSingleLaunchResult(StartActivityForResult()) { viewModel.onDocumentPicked(it.toDocumentPick()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
@@ -102,8 +81,11 @@ class URLActivity : AppCompatActivity() {
         setContentView(binding.root)
         setWindowTransparent(true)
         searchHighlighter = SearchHighlighter(this)
+        initQrControls()
         collectState()
-        collectEvents()
+        collectState(viewModel.export) { renderQrControls() }
+        collectState(viewModel.export, minActiveState = RESUMED) { onExport(it) }
+        collectState(viewModel.exit, minActiveState = RESUMED) { if (it is UrlDetailExit.Reason) onExit(it) }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.url_toolbar, menu).let { true }
@@ -123,8 +105,7 @@ class URLActivity : AppCompatActivity() {
             }
 
             else -> {
-                openURL(urlScanTemplate(longURL.urlEncode()))
-                true
+                singleLaunchMenuItem { openURL(urlScanTemplate(longURL.urlEncode())) }
             }
         }
     }
@@ -157,26 +138,26 @@ class URLActivity : AppCompatActivity() {
                 bindURL(url)
             }
             updateFavoriteAndVisitViews(state, url)
+            bindQrCode(state.qrCode)
         }
 
     private fun bindURL(url: URL) {
         val highlightText: String = bundleValue(KEY_HIGHLIGHT_TEXT, "")
-        bindQrCode(url)
         binding.root.setTitle(url.shortURL)
         binding.urlShortButton.text =
             searchHighlighter(url.shortURL, highlightText).apply {
                 setSpan(UnderlineSpan(), 0, url.shortURL.length, 0)
             }
-        binding.urlShortButton.setOnClickListener { openURL(url.shortURL.withHttps()) }
+        binding.urlShortButton.onSingleLaunchClick { openURL(url.shortURL.withHttps()) }
         binding.urlShortButton.setOnLongClickListener { copyToClipboard(url.shortURL, "Short URL") }
-        binding.urlShortShareButton.setOnClickListener { shareText(url.shortURL) }
+        binding.urlShortShareButton.onSingleLaunchClick { shareText(url.shortURL) }
         binding.urlLongButton.text =
             searchHighlighter(url.longURL, highlightText).apply {
                 setSpan(UnderlineSpan(), 0, url.longURL.length, 0)
             }
-        binding.urlLongButton.setOnClickListener { openURL(url.longURL.withHttps()) }
+        binding.urlLongButton.onSingleLaunchClick { openURL(url.longURL.withHttps()) }
         binding.urlLongButton.setOnLongClickListener { copyToClipboard(url.longURL, "Long URL") }
-        binding.urlLongShareButton.setOnClickListener { shareText(url.longURL) }
+        binding.urlLongShareButton.onSingleLaunchClick { shareText(url.longURL) }
         binding.urlTitleLayout.isVisible = url.title.isNotBlank()
         binding.urlTitleDivider.isVisible = url.title.isNotBlank()
         if (url.title.isNotBlank()) binding.urlTitleTextview.text = searchHighlighter(url.title, highlightText)
@@ -193,57 +174,42 @@ class URLActivity : AppCompatActivity() {
         setCustomBackAnimation(binding.root, inAppReview = settings)
     }
 
-    // Cache hit sets the bitmap immediately - no coroutine, no flash. On miss the ImageView is
-    // blanked and generation moves off main; the result is only applied if this activity still
-    // shows the same shortURL (guards against a fast rebind mid-generation).
-    private fun bindQrCode(url: URL) {
-        qrLoadJob?.cancel()
-        val cached = qrCodeCache[url.shortURL]
-        if (cached != null) {
-            bindQrViews(url, cached)
-            return
-        }
-        binding.urlQrImageview.isEnabled = false
-        binding.urlQrImageview.setImageBitmap(null)
-        binding.urlQrSaveButton.isEnabled = false
-        binding.urlQrShareButton.isEnabled = false
-        qrLoadJob =
-            lifecycleScope.launch {
-                val qr = withContext(defaultDispatcher) { generateQRCode(url.shortURL) }
-                qrCodeCache[url.shortURL] = qr
-                if (url.shortURL == lastBoundShortURL) bindQrViews(url, qr)
-            }
+    private fun initQrControls() {
+        binding.urlQrImageview.onSingleLaunchClick { showQRBottomSheet() }
+        binding.urlQrImageview.setOnLongClickListener { copyQRCode() }
+        binding.urlQrSaveButton.onSingleLaunchClick { viewModel.onSaveQRCode() }
+        binding.urlQrShareButton.onSingleLaunchClick { viewModel.onShareQRCode() }
     }
 
-    private fun bindQrViews(
-        url: URL,
-        qr: Bitmap,
-    ) {
-        lastBoundQr = qr
-        binding.urlQrImageview.isEnabled = true
-        binding.urlQrImageview.setImageBitmap(qr)
-        binding.urlQrSaveButton.isEnabled = true
-        binding.urlQrShareButton.isEnabled = true
-        binding.urlQrImageview.setOnClickListener {
-            createQRBottomSheet(url.shortURL, qr, settings.imageSaveLocation).show(supportFragmentManager, null)
-        }
-        binding.urlQrImageview.setOnLongClickListener {
-            qr
-                .copyToClipboard(
-                    this@URLActivity,
-                    "QR Code",
-                    "QRCode.png",
-                ).let { true }
-        }
-        binding.urlQrSaveButton.setOnClickListener {
-            exportBitmap(
-                settings.imageSaveLocation,
-                qr,
-                url.shortURL,
-                exportQRCodeResultLauncher,
-            )
-        }
-        binding.urlQrShareButton.setOnClickListener { shareBitmap(qr, "QRCode.png") }
+    private fun bindQrCode(qrCode: Bitmap?) {
+        if (qrCode === lastBoundQrCode) return
+        lastBoundQrCode = qrCode
+        binding.urlQrImageview.setImageBitmap(qrCode)
+        renderQrControls()
+    }
+
+    private fun renderQrControls() {
+        val hasQrCode = viewModel.state.value.qrCode != null
+        val exportIdle = viewModel.export.value != QRCodeExport.Running
+        binding.urlQrImageview.isEnabled = hasQrCode
+        binding.urlQrImageview.isLongClickable = exportIdle
+        binding.urlQrSaveButton.isEnabled = hasQrCode && exportIdle
+        binding.urlQrShareButton.isEnabled = hasQrCode && exportIdle
+    }
+
+    private fun showQRBottomSheet() {
+        val url = viewModel.state.value.url ?: return
+        createQRBottomSheet(url.shortURL).showOnce(supportFragmentManager, QR_BOTTOM_SHEET_TAG)
+    }
+
+    private fun copyQRCode(): Boolean {
+        if (viewModel.state.value.qrCode == null) return false
+        singleLaunch { viewModel.onCopyQRCode() }
+        return true
+    }
+
+    private fun onExport(export: QRCodeExport) {
+        if (export is QRCodeExport.Result && launchQRCodeExport(export, exportQRCodeResultLauncher)) viewModel.onExportHandled(export)
     }
 
     private fun handleBnvItemSelected(
@@ -253,12 +219,11 @@ class URLActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.url_bnv_analytics -> {
                 val analyticsURL = url.shortURLProvider.getAnalyticsURL(url.alias) ?: return false
-                openURL(analyticsURL)
-                true
+                singleLaunchMenuItem { openURL(analyticsURL) }
             }
 
             R.id.url_bnv_provider_info -> {
-                showProviderInfoBottomSheet(url.shortURLProvider).let { true }
+                singleLaunchMenuItem { showProviderInfoBottomSheet(url.shortURLProvider) }
             }
 
             R.id.url_bnv_add_to_fav -> {
@@ -270,14 +235,15 @@ class URLActivity : AppCompatActivity() {
             }
 
             R.id.url_bnv_delete -> {
-                AlertDialog
-                    .Builder(this@URLActivity)
-                    .setTitle(commonutilsR.string.commonutils_delete)
-                    .setMessage(R.string.delete_url_message)
-                    .setPositiveButton(commonutilsR.string.commonutils_delete) { _, _ -> viewModel.delete() }
-                    .setNegativeButton(designR.string.oui_des_common_cancel, null)
-                    .show()
-                true
+                singleLaunchMenuItem {
+                    AlertDialog
+                        .Builder(this@URLActivity)
+                        .setTitle(commonutilsR.string.commonutils_delete)
+                        .setMessage(R.string.delete_url_message)
+                        .setPositiveButton(commonutilsR.string.commonutils_delete) { _, _ -> viewModel.delete() }
+                        .setNegativeButton(designR.string.oui_des_common_cancel, null)
+                        .showOnce(DELETE_DIALOG_TAG)
+                }
             }
 
             else -> {
@@ -317,23 +283,25 @@ class URLActivity : AppCompatActivity() {
         }
     }
 
-    private fun collectEvents() =
-        collectEvents(viewModel.events) { event: UrlDetailEvent ->
-            when (event) {
-                is UrlDetailEvent.NotFound -> {
-                    toast(R.string.error_url_not_found)
-                    finishAfterTransition()
-                }
+    private fun onExit(reason: UrlDetailExit.Reason) {
+        when (reason) {
+            UrlDetailExit.NotFound -> {
+                toast(R.string.error_url_not_found)
+                finishAfterTransition()
+            }
 
-                is UrlDetailEvent.Deleted -> {
-                    showInAppReviewOrFinish(settings)
-                }
+            UrlDetailExit.Deleted -> {
+                showInAppReviewOrFinish(settings)
             }
         }
+        viewModel.onExitHandled(reason)
+    }
 
     companion object {
         const val KEY_SHORTURL = "key_shorturl"
         const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
+        private const val QR_BOTTOM_SHEET_TAG = "qrBottomSheet"
+        private const val DELETE_DIALOG_TAG = "deleteDialog"
         private const val REFRESH_SPIN_DEGREES = 1080f
         private const val REFRESH_SPIN_DURATION_MS = 2500L
         private const val DISABLED_ALPHA = 0.5f

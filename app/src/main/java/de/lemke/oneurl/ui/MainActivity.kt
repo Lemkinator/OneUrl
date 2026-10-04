@@ -48,10 +48,10 @@ import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
-import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.configureCommonUtilsSplashScreen
-import de.lemke.commonutils.ui.utils.onNavigationSingleClick
+import de.lemke.commonutils.ui.utils.onSingleLaunchClick
+import de.lemke.commonutils.ui.utils.onSingleLaunchItemSelected
 import de.lemke.commonutils.ui.utils.onboardIfNeeded
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationFrom
 import de.lemke.commonutils.ui.utils.restoreSearchAndActionMode
@@ -73,7 +73,6 @@ import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.dpToPx
 import dev.oneuiproject.oneui.ktx.hideSoftInput
-import dev.oneuiproject.oneui.ktx.onSingleClick
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchModeOnBackBehavior.DISMISS
 import dev.oneuiproject.oneui.layout.ToolbarLayout.SearchOnActionMode
 import dev.oneuiproject.oneui.layout.startActionMode
@@ -110,7 +109,6 @@ class MainActivity :
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
-    private var pendingReveal: String? = null
     private val urlAdapter: URLAdapter by lazy {
         URLAdapter(
             this,
@@ -198,9 +196,8 @@ class MainActivity :
         initRecycler()
         savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })
         binding.addFab.hideOnScroll(binding.urlList)
-        binding.addFab.onSingleClick { binding.addFab.transformToActivity(AddURLActivity::class.java, "AddURLTransition") }
+        binding.addFab.onSingleLaunchClick { it.transformToActivity(AddURLActivity::class.java, "AddURLTransition") }
         collectState()
-        collectEvents()
         checkIntent()
     }
 
@@ -211,24 +208,14 @@ class MainActivity :
             updateRecyclerView(state.urls)
         }
 
-    private fun collectEvents() =
-        collectEvents(viewModel.events) { event ->
-            when (event) {
-                is MainEvent.NewItemAdded -> {
-                    pendingReveal = event.shortURL
-                    revealPending()
-                }
-            }
-        }
-
     private fun revealPending() {
-        val shortURL = pendingReveal ?: return
+        val shortURL = viewModel.state.value.reveal ?: return
         val position = urlAdapter.positionOf(shortURL)
         if (position != NO_POSITION) {
-            pendingReveal = null
             binding.urlList.smoothScrollToPosition(position)
+            viewModel.onRevealHandled(shortURL)
         } else if (urlAdapter.isCurrentList(viewModel.state.value.urls)) {
-            pendingReveal = null
+            viewModel.onRevealHandled(shortURL)
         }
     }
 
@@ -277,7 +264,7 @@ class MainActivity :
     @SuppressLint("RestrictedApi")
     private fun initDrawer() {
         binding.navigationView.findMenuItem(R.id.leaks_dest)?.isVisible = BuildConfig.DEBUG
-        binding.navigationView.onNavigationSingleClick { item ->
+        binding.navigationView.onSingleLaunchItemSelected { item ->
             when (item.itemId) {
                 R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
                 R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToActivity(ProviderActivity::class.java)
@@ -286,7 +273,7 @@ class MainActivity :
                 R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(CommonUtilsAboutMeActivity::class.java)
                 R.id.leaks_dest -> openLeakCanary(this)
                 R.id.settings_dest -> findViewById<View>(R.id.settings_dest).transformToActivity(CommonUtilsSettingsActivity::class.java)
-                else -> return@onNavigationSingleClick false
+                else -> return@onSingleLaunchItemSelected false
             }
             true
         }
