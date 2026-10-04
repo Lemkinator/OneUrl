@@ -77,6 +77,12 @@ for all HTTP calls.
 URLViewModel, GenerateQRCodeViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather than calling use cases
 directly.
 
+**Tap-driven async work runs in the Activity, through the launch latch.** QR code save, copy and share run in
+`singleLaunchSuspending` (helpers in `ui/QRCodeImageActions.kt`), which drops every other tap until the first one's `then`
+returns. The document picker result write runs outside it, in `lifecycleScope` under `NonCancellable`, because
+`singleLaunchSuspending` drops inputs while the activity is not RESUMED. The IO dispatcher comes in by field injection
+(`@Inject @IoDispatcher lateinit var ioDispatcher`).
+
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
 `ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers marked `//disabled` are instantiated but filtered out of
 `enabled`.
@@ -101,6 +107,11 @@ Three tools run as part of `./gradlew build`:
 - **Detekt** — static analysis; config at `config/detekt/detekt.yml`. `autoCorrect = false` — fixes are manual.
 - **Konsist** — architecture rules in `app/src/test/java/de/lemke/oneurl/ArchitectureTest.kt`. Enforces `data/domain/ui` layering
   (`data` may depend on `domain.model`'s shared value types, never on use cases). Runs as part of `./gradlew test`.
+  `CodingConventionsTest.kt` also enforces the common-utils launch latch through `assertLaunchLatchConventions()` from the
+  common-utils testFixtures: it bans raw activity launches and result registration by name, and a `show`/`showNow` call whose
+  receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or a `*Fab`. Launch through `singleLaunchActivity`,
+  `transformToActivity` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
+  `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunchSuspending`); show dialogs with `showOnce(tag)`.
 
 **Pre-commit hook** — blocks commits with formatting violations. Opt in once per clone:
 
