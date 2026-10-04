@@ -100,6 +100,8 @@ class QRBottomSheetTest {
 
     private fun freshQrBitmap(): Bitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
 
+    private fun MainActivity.qrBottomSheet(): QRBottomSheet = supportFragmentManager.findFragmentByTag("qr") as QRBottomSheet
+
     private fun withQrBottomSheet(
         shortURL: String = "https://short.url/qr",
         qrCode: Bitmap = freshQrBitmap(),
@@ -335,6 +337,41 @@ class QRBottomSheetTest {
             provider.document.exists().shouldBeFalse()
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Error creating file"
+        }
+    }
+
+    @Test
+    fun `export write that runs during a recreation finishes and toasts once in the recreated sheet`() {
+        val document = createPickedDocument()
+        qrCodeCache["https://short.url/qr"] = freshQrBitmap()
+        settings.imageSaveLocation = SaveLocation.CUSTOM
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                createQRBottomSheet("https://short.url/qr").show(activity.supportFragmentManager, "qr")
+                activity.supportFragmentManager.executePendingTransactions()
+                shadowOf(Looper.getMainLooper()).idle()
+                activity
+                    .qrBottomSheet()
+                    .requireView()
+                    .findViewById<View>(R.id.saveButton)
+                    .performClick()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            ioDispatcher.pause()
+            scenario.onActivity { activity ->
+                activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            document.length() shouldBe 0L
+
+            scenario.recreate()
+            ioDispatcher.resume()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            document.readBytes().take(PNG_SIGNATURE.size) shouldBe PNG_SIGNATURE
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Image saved"
+            scenario.onActivity { activity -> activity.qrBottomSheet().isAdded.shouldBeTrue() }
         }
     }
 
