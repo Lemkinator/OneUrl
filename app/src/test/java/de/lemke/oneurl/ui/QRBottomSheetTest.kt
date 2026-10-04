@@ -31,6 +31,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.isVisible
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -207,6 +208,22 @@ class QRBottomSheetTest {
             stream.toString() shouldMatch activity.qrCodeContentUriPattern("share", "QRCode.png")
             activity.cacheFile(stream).length() shouldBeGreaterThan 0L
             (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
+        }
+    }
+
+    @Test
+    fun `share that no app can receive shows the share error toast and stays unhandled`() {
+        withQrBottomSheet { activity, sheet ->
+            shadowOf(activity.application).checkActivities(true)
+
+            sheet.requireView().findViewById<View>(R.id.shareButton).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            shadowOf(activity).nextStartedActivity shouldBe null
+            ShadowToast.getTextOfLatestToast() shouldBe
+                activity.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
+            val export = ViewModelProvider(sheet)[QRBottomSheetViewModel::class.java].export.value
+            (export is QRCodeExport.Share).shouldBeTrue()
         }
     }
 

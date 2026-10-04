@@ -258,6 +258,39 @@ class URLActivityTest {
     }
 
     @Test
+    fun `qr imageview click and long-click do nothing when no url is loaded`() {
+        withUrlActivity(shortURL = "https://da.gd/missing") { activity ->
+            val qrImageView = activity.findViewById<android.view.View>(R.id.url_qr_imageview)
+
+            qrImageView.performClick()
+            qrImageView.performLongClick().shouldBeFalse()
+            activity.supportFragmentManager.executePendingTransactions()
+            awaitMainIdle()
+
+            activity.supportFragmentManager.fragments
+                .none { it is QRBottomSheet }
+                .shouldBeTrue()
+            activity.getSystemService(ClipboardManager::class.java).primaryClip shouldBe null
+            activity.exportState() shouldBe QRCodeExport.Idle
+        }
+    }
+
+    @Test
+    fun `qr share that no app can receive shows the share error toast and stays unhandled`() {
+        withUrlActivity { activity ->
+            shadowOf(activity.application).checkActivities(true)
+
+            activity.findViewById<android.view.View>(R.id.url_qr_share_button).performClick()
+            awaitMainIdle()
+
+            shadowOf(activity).nextStartedActivity shouldBe null
+            ShadowToast.getTextOfLatestToast() shouldBe
+                activity.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
+            (activity.exportState() is QRCodeExport.Share).shouldBeTrue()
+        }
+    }
+
+    @Test
     fun `double tap on the qr share button opens one chooser for one written file`() {
         withUrlActivity { activity ->
             val shareButton = activity.findViewById<android.view.View>(R.id.url_qr_share_button)
@@ -829,6 +862,8 @@ class URLActivityTest {
     }
 
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
+
+    private fun URLActivity.exportState(): QRCodeExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
 
     private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
 }

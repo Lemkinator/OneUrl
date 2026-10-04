@@ -278,6 +278,15 @@ class URLViewModelTest : ShouldSpec(
             viewModel.export.value shouldBe QRCodeExport.Idle
         }
 
+        should("onSaveQRCode exports nothing when the URL does not exist") {
+            val viewModel = newViewModel(SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to "https://short.url/missing")))
+
+            viewModel.onSaveQRCode()
+
+            exporter.calls shouldBe emptyList()
+            viewModel.export.value shouldBe QRCodeExport.Idle
+        }
+
         should("onSaveQRCode writes the QR code under the short URL to the image save location") {
             val url = testUrl()
             coEvery { getURL(url.shortURL) } returns url

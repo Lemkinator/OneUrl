@@ -119,6 +119,22 @@ class GenerateQRCodeActivityTest {
     }
 
     @Test
+    fun `share that no app can receive shows the share error toast and stays unhandled`() {
+        withActivity { activity ->
+            shadowOf(activity.application).checkActivities(true)
+
+            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            shadowOf(activity).nextStartedActivity shouldBe null
+            ShadowToast.getTextOfLatestToast() shouldBe
+                activity.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
+            val export = ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value
+            (export is QRCodeExport.Share).shouldBeTrue()
+        }
+    }
+
+    @Test
     fun `double tap on share opens one chooser for one written file`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
