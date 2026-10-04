@@ -86,7 +86,10 @@ exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` 
 `ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers marked `//disabled` are instantiated but filtered out of
 `enabled`.
 
-**DI** — Single Hilt module (`PersistenceModule`) provides Room DB, URLDao, and DataStore.
+**DI** — `di/` holds the `SingletonComponent` Hilt modules: `PersistenceModule` (Room DB, `URLDao`), `SettingsModule.kt`
+(`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (`@DefaultDispatcher`, `@IoDispatcher`, `@ApplicationScope`),
+`ProviderModule` (`@EnabledProviders`) and `QRCodeExporterModule` (binds `DefaultQRCodeExporter`; screen tests uninstall it to
+bind an exporter on a pausable IO dispatcher).
 
 ## Adding a New URL Provider
 
