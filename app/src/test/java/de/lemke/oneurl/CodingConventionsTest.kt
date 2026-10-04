@@ -33,7 +33,7 @@ class CodingConventionsTest : ShouldSpec() {
 
     init {
         should("launch activities and show dialogs only through the launch latch") {
-            codeScope.assertLaunchLatchConventions(extraShowReceivers = setOf("Fab"))
+            codeScope.assertLaunchLatchConventions(extraShowReceivers = setOf("AddFab"))
         }
         should("properties declared before functions in class body") {
             codeScope
