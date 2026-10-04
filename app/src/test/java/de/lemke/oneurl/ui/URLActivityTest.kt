@@ -401,7 +401,7 @@ class URLActivityTest {
     }
 
     @Test
-    fun `export write that runs during a rotation finishes and toasts once in the recreated activity`() {
+    fun `export write that runs during a recreation finishes and toasts once in the recreated activity`() {
         val document = createPickedDocument()
         withUrlScenario { scenario ->
             scenario.onActivity { activity ->

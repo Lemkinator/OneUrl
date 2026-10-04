@@ -238,7 +238,7 @@ class GenerateQRCodeActivityTest {
     }
 
     @Test
-    fun `export write that runs during a rotation finishes and toasts once in the recreated activity`() {
+    fun `export write that runs during a recreation finishes and toasts once in the recreated activity`() {
         val document = createPickedDocument()
         ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
