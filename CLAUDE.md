@@ -66,7 +66,7 @@ don't store history.
 
 Clean Architecture with three layers:
 
-**`data/`** — Repositories wrapping Room (`URLRepository`) and DataStore (`UserSettingsRepository`). All DB entities live in
+**`data/`** — `URLRepository` wraps Room; `UserSettings` wraps SharedPreferences, bound as `SettingsRepository`. All DB entities live in
 `data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
 
 **`domain/`** — Use cases (`*UseCase.kt`), each doing one thing, injected by Hilt. `GenerateURLUseCase` is the core flow: checks internet →
