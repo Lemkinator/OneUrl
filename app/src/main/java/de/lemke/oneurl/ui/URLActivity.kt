@@ -198,10 +198,8 @@ class URLActivity : AppCompatActivity() {
     }
 
     private fun showQRBottomSheet() {
-        val shortURL =
-            viewModel.state.value.url
-                ?.shortURL ?: return
-        createQRBottomSheet(shortURL).showOnce(supportFragmentManager, QR_BOTTOM_SHEET_TAG)
+        val url = viewModel.state.value.url ?: return
+        createQRBottomSheet(url.shortURL).showOnce(supportFragmentManager, QR_BOTTOM_SHEET_TAG)
     }
 
     private fun copyQRCode(): Boolean {

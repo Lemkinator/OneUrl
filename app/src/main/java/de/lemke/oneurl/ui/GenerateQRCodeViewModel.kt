@@ -41,29 +41,10 @@ class GenerateQRCodeViewModel @Inject constructor(
 ) : ViewModel() {
     private val qrCodeExport = QRCodeExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<QrUiState>
-        field = MutableStateFlow(QrUiState())
+        field = MutableStateFlow(initialState())
     val export: StateFlow<QRCodeExport> = qrCodeExport.state
     private var urlSaveJob: Job? = null
     private var sizeSaveJob: Job? = null
-
-    init {
-        state.update {
-            it.copy(
-                url = userSettings.qrURL,
-                size = userSettings.qrSize,
-                foregroundColor = userSettings.qrRecentForegroundColors.firstOrNull() ?: Color.BLACK,
-                backgroundColor = userSettings.qrRecentBackgroundColors.firstOrNull() ?: Color.WHITE,
-                tintAnchor = userSettings.qrTintAnchor,
-                tintBorder = userSettings.qrTintBorder,
-                icon = userSettings.qrIcon,
-                roundedFrame = userSettings.qrFrame,
-                recentForegroundColors = userSettings.qrRecentForegroundColors,
-                recentBackgroundColors = userSettings.qrRecentBackgroundColors,
-                isLoading = false,
-            )
-        }
-        regenerate()
-    }
 
     fun setUrl(url: String) {
         state.update { it.copy(url = url) }
@@ -137,8 +118,7 @@ class GenerateQRCodeViewModel @Inject constructor(
 
     fun onSave() {
         val current = state.value
-        val qrCode = current.qrCode ?: return
-        qrCodeExport.save(qrCode, current.url, userSettings.imageSaveLocation)
+        qrCodeExport.save(current.qrCode, current.url, userSettings.imageSaveLocation)
     }
 
     fun onDocumentPicked(pick: DocumentPick) {
@@ -146,17 +126,42 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun onCopy() {
-        val qrCode = state.value.qrCode ?: return
-        qrCodeExport.copy(qrCode)
+        qrCodeExport.copy(state.value.qrCode)
     }
 
     fun onShare() {
-        val qrCode = state.value.qrCode ?: return
-        qrCodeExport.share(qrCode, ShareTarget.SHARE_SHEET)
+        qrCodeExport.share(state.value.qrCode, ShareTarget.SHARE_SHEET)
     }
 
     fun onExportHandled(result: QRCodeExport.Result) {
         qrCodeExport.onHandled(result)
+    }
+
+    private fun initialState(): QrUiState {
+        val url = userSettings.qrURL
+        val size = userSettings.qrSize
+        val recentForegroundColors = userSettings.qrRecentForegroundColors
+        val recentBackgroundColors = userSettings.qrRecentBackgroundColors
+        val foregroundColor = recentForegroundColors.firstOrNull() ?: Color.BLACK
+        val backgroundColor = recentBackgroundColors.firstOrNull() ?: Color.WHITE
+        val tintAnchor = userSettings.qrTintAnchor
+        val tintBorder = userSettings.qrTintBorder
+        val icon = userSettings.qrIcon
+        val roundedFrame = userSettings.qrFrame
+        return QrUiState(
+            url = url,
+            qrCode = generateQRCode(url, size, foregroundColor, backgroundColor, tintAnchor, tintBorder, icon, roundedFrame),
+            size = size,
+            foregroundColor = foregroundColor,
+            backgroundColor = backgroundColor,
+            tintAnchor = tintAnchor,
+            tintBorder = tintBorder,
+            icon = icon,
+            roundedFrame = roundedFrame,
+            recentForegroundColors = recentForegroundColors,
+            recentBackgroundColors = recentBackgroundColors,
+            isLoading = false,
+        )
     }
 
     // Runs synchronously on the calling (Main) dispatcher. QR encoding + canvas drawing is only a
@@ -171,7 +176,7 @@ class GenerateQRCodeViewModel @Inject constructor(
 
 data class QrUiState(
     val url: String = "",
-    val qrCode: Bitmap? = null,
+    val qrCode: Bitmap,
     val size: Int = 512,
     val foregroundColor: Int = Color.BLACK,
     val backgroundColor: Int = Color.WHITE,

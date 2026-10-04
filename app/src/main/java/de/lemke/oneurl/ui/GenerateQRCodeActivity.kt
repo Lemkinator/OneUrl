@@ -84,9 +84,8 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         return super.onPrepareOptionsMenu(menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (viewModel.state.value.qrCode == null) return super.onOptionsItemSelected(item)
-        return when (item.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
             R.id.menu_item_qr_save_as_image -> {
                 singleLaunchMenuItem { viewModel.onSave() }
             }
@@ -99,12 +98,11 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
                 super.onOptionsItemSelected(item)
             }
         }
-    }
 
     private fun collectState() =
         collectState(viewModel.state) { state ->
             if (state.isLoading) return@collectState
-            state.qrCode?.let { binding.qrCode.setImageBitmap(it) }
+            binding.qrCode.setImageBitmap(state.qrCode)
             binding.colorButtonForeground.bindColorSwatch(state.foregroundColor)
             binding.colorButtonBackground.bindColorSwatch(state.backgroundColor)
             if (!isInitialized) {
