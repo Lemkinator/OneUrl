@@ -92,6 +92,8 @@ jobs:
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: Strip zero-instruction lines from coverage report
+        run: python3 .github/scripts/strip-zero-instruction-lines.py app/build/reports/kover/reportDebug.xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
