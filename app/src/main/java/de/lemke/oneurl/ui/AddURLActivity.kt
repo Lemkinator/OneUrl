@@ -26,8 +26,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.ui.utils.collectEvents
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
@@ -67,7 +67,7 @@ class AddURLActivity : AppCompatActivity() {
         }
         initFooterButton()
         collectState()
-        collectEvents()
+        collectState(viewModel.outcome, minActiveState = RESUMED) { if (it is AddUrlOutcome.Result) onOutcome(it) }
     }
 
     private fun collectState() =
@@ -80,28 +80,28 @@ class AddURLActivity : AppCompatActivity() {
             renderLoadingState(state)
         }
 
-    private fun collectEvents() =
-        collectEvents(viewModel.events) { event ->
-            when (event) {
-                is AddUrlEvent.AlreadyShortened -> {
-                    showAlreadyShortenedDialog(event.shortURL)
-                }
+    private fun onOutcome(result: AddUrlOutcome.Result) {
+        when (result) {
+            is AddUrlOutcome.AlreadyShortened -> {
+                showAlreadyShortenedDialog(result.shortURL)
+            }
 
-                is AddUrlEvent.Error -> {
-                    showErrorDialog(event.error)
-                }
+            is AddUrlOutcome.Failed -> {
+                showErrorDialog(result.error)
+            }
 
-                is AddUrlEvent.CopyAndFinish -> {
-                    copyToClipboard(event.shortURL, event.title)
-                    finishAfterTransition()
-                }
+            is AddUrlOutcome.Copy -> {
+                copyToClipboard(result.shortURL, result.title)
+                finishAfterTransition()
+            }
 
-                AddUrlEvent.Saved -> {
-                    toast(R.string.url_added)
-                    finishAfterTransition()
-                }
+            AddUrlOutcome.Saved -> {
+                toast(R.string.url_added)
+                finishAfterTransition()
             }
         }
+        viewModel.onOutcomeHandled(result)
+    }
 
     private fun initViews(state: AddUrlUiState) {
         binding.editTextURL.setText(state.initialURL)

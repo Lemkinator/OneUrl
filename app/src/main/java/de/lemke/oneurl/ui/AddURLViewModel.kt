@@ -33,12 +33,9 @@ import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
 import javax.inject.Inject
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -54,8 +51,8 @@ class AddURLViewModel @Inject constructor(
     val state: StateFlow<AddUrlUiState>
         field = MutableStateFlow(AddUrlUiState())
 
-    private val _events = Channel<AddUrlEvent>(Channel.BUFFERED)
-    val events: Flow<AddUrlEvent> = _events.receiveAsFlow()
+    val outcome: StateFlow<AddUrlOutcome>
+        field = MutableStateFlow<AddUrlOutcome>(AddUrlOutcome.None)
 
     private val intentUrl: String? = savedStateHandle.get<String>("url")
 
@@ -105,14 +102,12 @@ class AddURLViewModel @Inject constructor(
             val existingURLs = getURL(provider, longURL)
             if (existingURLs.isNotEmpty()) {
                 if (alias.isBlank()) {
-                    state.update { it.copy(isLoading = false) }
-                    _events.send(AddUrlEvent.AlreadyShortened(existingURLs.first().shortURL))
+                    complete(AddUrlOutcome.AlreadyShortened(existingURLs.first().shortURL))
                     return@launch
                 }
                 val exactMatch = existingURLs.find { it.shortURL == "${provider.baseURL}/$alias" }
                 if (exactMatch != null) {
-                    state.update { it.copy(isLoading = false) }
-                    _events.send(AddUrlEvent.AlreadyShortened(exactMatch.shortURL))
+                    complete(AddUrlOutcome.AlreadyShortened(exactMatch.shortURL))
                     return@launch
                 }
             }
@@ -127,8 +122,7 @@ class AddURLViewModel @Inject constructor(
 
             when (result) {
                 is GenerateURLResult.Failure -> {
-                    state.update { it.copy(isLoading = false) }
-                    _events.send(AddUrlEvent.Error(result.error))
+                    complete(AddUrlOutcome.Failed(result.error))
                 }
 
                 is GenerateURLResult.Success -> {
@@ -143,15 +137,19 @@ class AddURLViewModel @Inject constructor(
                             added = ZonedDateTime.now(),
                         ),
                     )
-                    state.update { it.copy(isLoading = false) }
-                    if (userSettings.autoCopyOnCreate) {
-                        _events.send(AddUrlEvent.CopyAndFinish(result.shortURL, title))
-                    } else {
-                        _events.send(AddUrlEvent.Saved)
-                    }
+                    complete(if (userSettings.autoCopyOnCreate) AddUrlOutcome.Copy(result.shortURL, title) else AddUrlOutcome.Saved)
                 }
             }
         }
+    }
+
+    fun onOutcomeHandled(result: AddUrlOutcome.Result) {
+        outcome.update { if (it == result) AddUrlOutcome.None else it }
+    }
+
+    private fun complete(result: AddUrlOutcome.Result) {
+        outcome.value = result
+        state.update { it.copy(isLoading = false) }
     }
 }
 
@@ -164,19 +162,17 @@ data class AddUrlUiState(
     val loadingMessageRes: Int = 0,
 )
 
-sealed class AddUrlEvent {
-    data class AlreadyShortened(
-        val shortURL: String,
-    ) : AddUrlEvent()
+/** The outcome of a [AddURLViewModel.submit]. The activity acts on a [Result] and then reports it handled. */
+sealed interface AddUrlOutcome {
+    sealed interface Result : AddUrlOutcome
 
-    data class Error(
-        val error: GenerateURLError,
-    ) : AddUrlEvent()
+    data object None : AddUrlOutcome
 
-    data class CopyAndFinish(
-        val shortURL: String,
-        val title: String,
-    ) : AddUrlEvent()
+    data class AlreadyShortened(val shortURL: String) : Result
 
-    data object Saved : AddUrlEvent()
+    data class Failed(val error: GenerateURLError) : Result
+
+    data class Copy(val shortURL: String, val title: String) : Result
+
+    data object Saved : Result
 }
