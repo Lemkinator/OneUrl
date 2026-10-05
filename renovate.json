@@ -46,6 +46,14 @@
       ]
     },
     {
+      "groupName": "junit5",
+      "matchPackageNames": [
+        "org.junit.jupiter:**",
+        "org.junit.platform:**",
+        "org.junit.vintage:**"
+      ]
+    },
+    {
       "groupName": "screenshot-testing",
       "matchPackageNames": [
         "io.github.takahirom.roborazzi**",
