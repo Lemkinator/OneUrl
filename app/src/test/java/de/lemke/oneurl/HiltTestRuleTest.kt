@@ -25,6 +25,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import io.mockk.verify
 import javax.inject.Inject
 import org.junit.Rule
 import org.junit.Test
@@ -79,6 +82,19 @@ class HiltTestRuleTest {
         val closeFailure = IllegalStateException("close failed")
         HiltTestRule.closeAfterTest(mockk { every { close() } throws closeFailure })
         outcome.verify = { failure -> failure shouldBeSameInstanceAs closeFailure }
+    }
+
+    @Test
+    fun `builds no database to close when the test never injects`() {
+        mockkObject(TestPersistenceModule)
+        outcome.verify = { failure ->
+            try {
+                failure.shouldBeNull()
+                verify(exactly = 0) { TestPersistenceModule.provideTestAppDatabase(any()) }
+            } finally {
+                unmockkObject(TestPersistenceModule)
+            }
+        }
     }
 
     class OutcomeRule : TestRule {

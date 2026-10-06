@@ -78,7 +78,7 @@ import de.lemke.commonutils.R as commonutilsR
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
 @UninstallModules(QRCodeExporterModule::class)
 class QRBottomSheetTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
 
     private val ioDispatcher = PausableDispatcher(Dispatchers.Main)

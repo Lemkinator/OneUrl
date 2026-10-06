@@ -24,11 +24,7 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
-/**
- * The only rule a `@HiltAndroidTest` declares. Runs [HiltAndroidRule] for [testInstance] and, inside it, closes every
- * [AppDatabase] that [TestPersistenceModule] built during the test. A close failure never replaces a test failure:
- * it is added to the test failure as suppressed.
- */
+/** Hilt discards the per-test component without closing the in-memory [AppDatabase] it holds. */
 class HiltTestRule(
     testInstance: Any,
 ) : TestRule {
@@ -44,7 +40,6 @@ class HiltTestRule(
     companion object {
         private val openDatabases = ConcurrentLinkedQueue<AppDatabase>()
 
-        /** Registers [database] to be closed when the running test finishes. */
         fun closeAfterTest(database: AppDatabase): AppDatabase = database.also(openDatabases::add)
 
         private fun closeDatabasesAfter(base: Statement): Statement =

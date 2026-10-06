@@ -70,7 +70,7 @@ import dev.oneuiproject.oneui.design.R as designR
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
 class MainActivityTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
 
     @Inject

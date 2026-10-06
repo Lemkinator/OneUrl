@@ -66,7 +66,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
 class URLAdapterTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
 
     @Inject

@@ -77,7 +77,7 @@ import org.robolectric.shadows.ShadowToast
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
 class AddURLActivityTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
 
     @Inject

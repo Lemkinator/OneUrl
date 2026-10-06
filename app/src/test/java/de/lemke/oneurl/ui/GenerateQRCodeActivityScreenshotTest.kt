@@ -39,7 +39,7 @@ import org.robolectric.annotation.GraphicsMode
 @Config(application = HiltTestApplication::class, sdk = [36])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class GenerateQRCodeActivityScreenshotTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
 
     @Inject
