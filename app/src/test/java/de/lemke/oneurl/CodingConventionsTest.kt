@@ -56,25 +56,27 @@ class CodingConventionsTest : ShouldSpec() {
                     additionalMessage =
                         "Declare `@get:Rule(order = 0) val hiltRule = $ruleName(this)` ($ruleQualifiedName) as the only " +
                             "Hilt rule, ordered before every other rule. A RuleChain-wrapped, aliased or raw HiltAndroidRule " +
-                            "is not allowed.",
+                            "and a @Rule function are not allowed.",
                     testName = this.testCase.name.toString(),
                 ) { koClass ->
                     val file = koClass.containingFile
                     val resolvesToFixture =
-                        file.packagee?.name == rulePackage || file.hasImport { it.name == ruleQualifiedName }
+                        file.packagee?.name == rulePackage ||
+                            file.hasImport { it.name == ruleQualifiedName || (it.isWildcard && it.name.removeSuffix(".*") == rulePackage) }
                     val properties = koClass.properties(includeNested = false)
+                    val constructsFixture = { property: KoPropertyDeclaration ->
+                        val initializer = property.value?.trim()
+                        initializer != null &&
+                            directConstruction.matches(initializer) &&
+                            (initializer.startsWith(ruleQualifiedName) || resolvesToFixture)
+                    }
                     val hiltRule =
                         properties
                             .filter { property ->
                                 val typeText = property.type?.text
-                                val initializer = property.value?.trim()
-                                val byType = typeText == ruleQualifiedName || (typeText == ruleName && resolvesToFixture)
-                                val byInitializer =
-                                    initializer != null &&
-                                        directConstruction.matches(initializer) &&
-                                        (initializer.startsWith(ruleQualifiedName) || resolvesToFixture)
-                                byType || byInitializer
+                                typeText == ruleQualifiedName || (typeText == ruleName && resolvesToFixture) || constructsFixture(property)
                             }.singleOrNull()
+                            ?.takeIf(constructsFixture)
                     val hiltOrder = hiltRule?.explicitRuleOrder()
                     val otherRuleOrders = properties.filter { it != hiltRule }.mapNotNull { it.ruleOrder() }
                     val outermost =
@@ -85,6 +87,7 @@ class CodingConventionsTest : ShouldSpec() {
                             else -> otherRuleOrders.all { hiltOrder < it }
                         }
                     outermost &&
+                        koClass.functions(includeNested = false).none { function -> function.hasAnnotation { it.name == "Rule" } } &&
                         !file.hasImport { it.name == HiltAndroidRule::class.qualifiedName } &&
                         properties.none { property ->
                             listOfNotNull(property.type?.text, property.value).any { text ->
