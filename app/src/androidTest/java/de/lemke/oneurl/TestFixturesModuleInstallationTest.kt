@@ -19,7 +19,6 @@ package de.lemke.oneurl
 import androidx.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.data.database.AppDatabase
@@ -42,11 +41,8 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class TestFixturesModuleInstallationTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule(order = 1)
-    val testDatabase = TestDatabaseRule()
+    @get:Rule
+    val hiltRule = HiltTestRule(this)
 
     @Inject
     lateinit var settings: UserSettings

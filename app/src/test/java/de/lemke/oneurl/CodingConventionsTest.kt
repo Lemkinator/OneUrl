@@ -37,19 +37,39 @@ class CodingConventionsTest : ShouldSpec() {
         should("launch activities and show dialogs only through the launch latch") {
             codeScope.assertLaunchLatchConventions(extraShowReceivers = setOf("AddFab"))
         }
-        should("hilt tests close the test database inside the hilt rule") {
+        should("hilt tests declare exactly one HiltTestRule and no raw HiltAndroidRule") {
+            val ruleName = HiltTestRule::class.simpleName!!
+            val rulePackage = HiltTestRule::class.java.packageName
+            val ruleQualifiedName = "$rulePackage.$ruleName"
+            val directConstruction = Regex("""^(${Regex.escape("$rulePackage.")})?${Regex.escape(ruleName)}\(this\)$""")
             Konsist
                 .scopeFromTest()
                 .classes()
                 .withAnnotationOf(HiltAndroidTest::class)
-                .assertTrue(testName = this.testCase.name.toString()) { koClass ->
-                    koClass.hasProperty { property ->
-                        property.value == "${TestDatabaseRule::class.simpleName}()" &&
-                            property.hasAnnotation { annotation ->
-                                annotation.name == "Rule" &&
-                                    annotation.hasArgument { it.name == "order" && it.value == "1" }
-                            }
-                    }
+                .assertTrue(
+                    additionalMessage =
+                        "Declare `@get:Rule val hiltRule = $ruleName(this)` ($ruleQualifiedName) as the only Hilt rule. " +
+                            "A RuleChain-wrapped, aliased or raw HiltAndroidRule is not allowed.",
+                    testName = this.testCase.name.toString(),
+                ) { koClass ->
+                    val file = koClass.containingFile
+                    val resolvesToFixture =
+                        file.packagee?.name == rulePackage || file.hasImport { it.name == ruleQualifiedName }
+                    val ruleProperties =
+                        koClass.properties(includeNested = false).filter { property ->
+                            val typeText = property.type?.text
+                            val initializer = property.value?.trim()
+                            val byType = typeText == ruleQualifiedName || (typeText == ruleName && resolvesToFixture)
+                            val byInitializer =
+                                initializer != null &&
+                                    directConstruction.matches(initializer) &&
+                                    (initializer.startsWith(ruleQualifiedName) || resolvesToFixture)
+                            byType || byInitializer
+                        }
+                    ruleProperties.size == 1 &&
+                        ruleProperties.single().hasAnnotation { it.name == "Rule" } &&
+                        !file.hasImport { it.name == "dagger.hilt.android.testing.HiltAndroidRule" } &&
+                        "HiltAndroidRule" !in koClass.text
                 }
         }
         should("properties declared before functions in class body") {

@@ -114,8 +114,9 @@ Three tools run as part of `./gradlew build`:
   receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or `AddFab`. Launch through `singleLaunchActivity`,
   `transformToActivity` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
   `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunch`); show dialogs with `showOnce(tag)`.
-  It also requires every `@HiltAndroidTest` to declare `@get:Rule(order = 1) val testDatabase = TestDatabaseRule()`
-  (testFixtures), which closes the test's in-memory `AppDatabase` before `HiltAndroidRule` discards the component.
+  It also requires every `@HiltAndroidTest` to declare exactly one `@get:Rule val hiltRule = HiltTestRule(this)`
+  (testFixtures) and no raw `HiltAndroidRule`. `HiltTestRule` runs `HiltAndroidRule`, exposes `inject()`, and closes
+  each in-memory `AppDatabase` the test built.
 
 **Pre-commit hook** — blocks commits with formatting violations. Opt in once per clone:
 

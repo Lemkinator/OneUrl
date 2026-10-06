@@ -22,14 +22,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.BindValue
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.ui.widget.NoEntryView
+import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
-import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.ObserveURLsUseCase
 import io.kotest.matchers.shouldBe
@@ -54,11 +53,8 @@ import dev.oneuiproject.oneui.design.R as designR
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
 class MainActivityUrlListTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule(order = 1)
-    val testDatabase = TestDatabaseRule()
+    @get:Rule
+    val hiltRule = HiltTestRule(this)
 
     @BindValue
     @JvmField

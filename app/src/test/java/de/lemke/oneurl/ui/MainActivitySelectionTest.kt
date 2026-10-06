@@ -27,13 +27,12 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
-import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.layout.NavDrawerLayout
@@ -55,11 +54,8 @@ import dev.oneuiproject.oneui.design.R as designR
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
 class MainActivitySelectionTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule(order = 1)
-    val testDatabase = TestDatabaseRule()
+    @get:Rule
+    val hiltRule = HiltTestRule(this)
 
     @Inject
     lateinit var settings: SettingsRepository

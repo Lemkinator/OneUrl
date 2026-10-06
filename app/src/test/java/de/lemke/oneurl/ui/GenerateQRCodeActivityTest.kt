@@ -40,13 +40,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.picker3.app.SeslColorPickerDialog
 import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.BindValue
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
-import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.di.QRCodeExporterModule
@@ -78,11 +77,8 @@ import de.lemke.commonutils.R as commonutilsR
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
 @UninstallModules(QRCodeExporterModule::class)
 class GenerateQRCodeActivityTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule(order = 1)
-    val testDatabase = TestDatabaseRule()
+    @get:Rule
+    val hiltRule = HiltTestRule(this)
 
     private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
 
