@@ -36,7 +36,6 @@ import androidx.test.core.app.ActivityScenario
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.testing.BindValue
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
@@ -44,6 +43,7 @@ import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.QRCodeExporter
@@ -79,7 +79,7 @@ import de.lemke.commonutils.R as commonutilsR
 @UninstallModules(QRCodeExporterModule::class)
 class QRBottomSheetTest {
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    val hiltRule = HiltTestRule(this)
 
     private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
 

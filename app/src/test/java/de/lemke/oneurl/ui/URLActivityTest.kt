@@ -37,12 +37,12 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.testing.BindValue
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.ui.utils.urlEncode
+import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.QRCodeExporter
@@ -91,7 +91,7 @@ import de.lemke.commonutils.R as commonutilsR
 @UninstallModules(QRCodeExporterModule::class)
 class URLActivityTest {
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    val hiltRule = HiltTestRule(this)
 
     private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
 

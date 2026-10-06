@@ -19,9 +19,9 @@ package de.lemke.oneurl.ui
 import android.content.Intent
 import android.view.View
 import androidx.test.core.app.ActivityScenario
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import io.kotest.matchers.shouldBe
 import org.junit.Before
@@ -38,7 +38,7 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class, sdk = [36])
 class HelpActivityTest {
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    val hiltRule = HiltTestRule(this)
 
     @Before
     fun setup() {

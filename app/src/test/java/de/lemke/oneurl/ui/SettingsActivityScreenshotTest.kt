@@ -20,11 +20,11 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
-import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
 import de.lemke.commonutils.ui.utils.setupCommonUtilsSettingsActivity
+import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import org.junit.Before
 import org.junit.Rule
@@ -42,7 +42,7 @@ import de.lemke.commonutils.R as commonutilsR
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class SettingsActivityScreenshotTest {
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    val hiltRule = HiltTestRule(this)
 
     @Before
     fun setup() {
