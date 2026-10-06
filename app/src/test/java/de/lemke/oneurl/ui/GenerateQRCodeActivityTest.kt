@@ -46,6 +46,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.di.QRCodeExporterModule
@@ -79,6 +80,9 @@ import de.lemke.commonutils.R as commonutilsR
 class GenerateQRCodeActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
 

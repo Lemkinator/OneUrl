@@ -24,7 +24,9 @@ import com.lemonappdev.konsist.api.declaration.KoInitBlockDeclaration
 import com.lemonappdev.konsist.api.declaration.KoInterfaceDeclaration
 import com.lemonappdev.konsist.api.declaration.KoObjectDeclaration
 import com.lemonappdev.konsist.api.declaration.KoPropertyDeclaration
+import com.lemonappdev.konsist.api.ext.list.withAnnotationOf
 import com.lemonappdev.konsist.api.verify.assertTrue
+import dagger.hilt.android.testing.HiltAndroidTest
 import de.lemke.commonutils.assertLaunchLatchConventions
 import io.kotest.core.spec.style.ShouldSpec
 
@@ -34,6 +36,21 @@ class CodingConventionsTest : ShouldSpec() {
     init {
         should("launch activities and show dialogs only through the launch latch") {
             codeScope.assertLaunchLatchConventions(extraShowReceivers = setOf("AddFab"))
+        }
+        should("hilt tests close the test database inside the hilt rule") {
+            Konsist
+                .scopeFromTest()
+                .classes()
+                .withAnnotationOf(HiltAndroidTest::class)
+                .assertTrue(testName = this.testCase.name.toString()) { koClass ->
+                    koClass.hasProperty { property ->
+                        property.value == "${TestDatabaseRule::class.simpleName}()" &&
+                            property.hasAnnotation { annotation ->
+                                annotation.name == "Rule" &&
+                                    annotation.hasArgument { it.name == "order" && it.value == "1" }
+                            }
+                    }
+                }
         }
         should("properties declared before functions in class body") {
             codeScope

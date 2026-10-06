@@ -29,6 +29,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
@@ -59,6 +60,9 @@ import org.robolectric.annotation.GraphicsMode
 class URLActivityScreenshotTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     @Inject
     lateinit var urlRepository: URLRepository

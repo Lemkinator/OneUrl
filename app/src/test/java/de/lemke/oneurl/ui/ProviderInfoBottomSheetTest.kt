@@ -27,6 +27,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Shareaholic
 import de.lemke.oneurl.domain.model.ShortURLProvider
@@ -52,6 +53,9 @@ import org.robolectric.annotation.Config
 class ProviderInfoBottomSheetTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     @Before
     fun setup() {

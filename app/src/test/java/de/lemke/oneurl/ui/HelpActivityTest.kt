@@ -23,6 +23,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import io.kotest.matchers.shouldBe
 import org.junit.Before
 import org.junit.Rule
@@ -39,6 +40,9 @@ import org.robolectric.annotation.Config
 class HelpActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     @Before
     fun setup() {

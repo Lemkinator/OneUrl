@@ -29,6 +29,7 @@ import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.ui.widget.NoEntryView
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.ObserveURLsUseCase
 import io.kotest.matchers.shouldBe
@@ -55,6 +56,9 @@ import dev.oneuiproject.oneui.design.R as designR
 class MainActivityUrlListTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     @BindValue
     @JvmField

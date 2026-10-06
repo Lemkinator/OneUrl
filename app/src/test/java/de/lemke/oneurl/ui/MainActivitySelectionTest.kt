@@ -33,6 +33,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.layout.NavDrawerLayout
@@ -56,6 +57,9 @@ import dev.oneuiproject.oneui.design.R as designR
 class MainActivitySelectionTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     @Inject
     lateinit var settings: SettingsRepository

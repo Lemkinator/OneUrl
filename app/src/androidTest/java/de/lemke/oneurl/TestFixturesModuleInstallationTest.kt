@@ -45,6 +45,9 @@ class TestFixturesModuleInstallationTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
+
     @Inject
     lateinit var settings: UserSettings
 

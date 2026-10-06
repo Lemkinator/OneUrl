@@ -23,6 +23,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.oneurl.TestDatabaseRule
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -39,6 +40,9 @@ import org.robolectric.annotation.GraphicsMode
 class HelpActivityScreenshotTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     @Before
     fun setup() {

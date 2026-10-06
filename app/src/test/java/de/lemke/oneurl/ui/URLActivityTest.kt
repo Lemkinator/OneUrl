@@ -44,6 +44,7 @@ import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.URLRepository
@@ -92,6 +93,9 @@ import de.lemke.commonutils.R as commonutilsR
 class URLActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
 

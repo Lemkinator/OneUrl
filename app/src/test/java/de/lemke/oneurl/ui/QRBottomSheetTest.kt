@@ -45,6 +45,7 @@ import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.oneurl.R
+import de.lemke.oneurl.TestDatabaseRule
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.di.QRCodeExporterModule
@@ -80,6 +81,9 @@ import de.lemke.commonutils.R as commonutilsR
 class QRBottomSheetTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     private val ioDispatcher = PausableDispatcher(Dispatchers.Main)
 

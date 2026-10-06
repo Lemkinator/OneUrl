@@ -24,6 +24,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import de.lemke.oneurl.TestDatabaseRule
 import io.kotest.matchers.shouldBe
 import org.junit.Before
 import org.junit.Rule
@@ -38,6 +39,9 @@ import org.junit.runner.RunWith
 class GenerateQRCodeActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testDatabase = TestDatabaseRule()
 
     @Before
     fun setUp() {
