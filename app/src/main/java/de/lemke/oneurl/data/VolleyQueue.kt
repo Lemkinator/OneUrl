@@ -17,6 +17,7 @@
 package de.lemke.oneurl.data
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.BasicNetwork
@@ -39,9 +40,12 @@ interface VolleyQueue {
 class DefaultVolleyQueue @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) : VolleyQueue {
-    private val queue: RequestQueue by lazy {
-        RequestQueue(DiskBasedCache { File(context.cacheDir, CACHE_DIRECTORY) }, BasicNetwork(HurlStack())).apply { start() }
-    }
+    private val lazyQueue =
+        lazy {
+            val cacheDirectory = lazy { File(context.cacheDir, CACHE_DIRECTORY) }
+            RequestQueue(DiskBasedCache { cacheDirectory.value }, BasicNetwork(HurlStack())).apply { start() }
+        }
+    private val queue: RequestQueue by lazyQueue
 
     override fun add(request: Request<*>) {
         queue.add(request)
@@ -52,8 +56,9 @@ class DefaultVolleyQueue @Inject constructor(
     }
 
     /** Stops the queue's cache and network dispatcher threads. */
-    fun stop() {
-        queue.stop()
+    @VisibleForTesting
+    internal fun stop() {
+        if (lazyQueue.isInitialized()) queue.stop()
     }
 
     private companion object {
