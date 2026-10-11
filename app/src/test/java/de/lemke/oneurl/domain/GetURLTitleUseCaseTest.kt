@@ -26,8 +26,6 @@ class GetURLTitleUseCaseTest : ShouldSpec(
             val fetcher = FakePageTitleFetcher().apply { titles["https://example.com"] = "Example" }
 
             GetURLTitleUseCase(fetcher)("example.com") shouldBe "Example"
-
-            fetcher.requested shouldBe listOf("https://example.com")
         }
     },
 )

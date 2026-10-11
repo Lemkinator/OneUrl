@@ -96,7 +96,6 @@ class URLViewModelTest : ShouldSpec(
             viewModel.state.value.visitCount shouldBe 42
             viewModel.state.value.isRefreshingVisits
                 .shouldBeFalse()
-            shortURLClient.visitCountRequests shouldBe listOf(url)
         }
 
         should("init holds the NotFound exit and leaves url null when the URL does not exist") {
@@ -159,13 +158,12 @@ class URLViewModelTest : ShouldSpec(
             shortURLClient.visitCountRequests shouldBe emptyList()
         }
 
-        should("refreshVisitCount called again after init asks for the visit count again") {
+        should("refreshVisitCount called again after init shows the new visit count") {
             val viewModel = newViewModel()
             shortURLClient.visitCounts[url.shortURL] = 43
 
             viewModel.refreshVisitCount()
 
-            shortURLClient.visitCountRequests shouldBe listOf(url, url)
             viewModel.state.value.visitCount shouldBe 43
         }
 

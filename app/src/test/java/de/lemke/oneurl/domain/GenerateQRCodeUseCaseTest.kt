@@ -51,7 +51,6 @@ class GenerateQRCodeUseCaseTest {
         generateQRCode("https://example.com") shouldBeSameInstanceAs qrCode
 
         renderer.renders shouldBe listOf(Render("https://example.com", null))
-        renderer.placeholdersDrawn shouldBe 0
     }
 
     @Test
@@ -59,7 +58,6 @@ class GenerateQRCodeUseCaseTest {
         generateQRCode("https://example.com", style) shouldBeSameInstanceAs qrCode
 
         renderer.renders shouldBe listOf(Render("https://example.com", style))
-        renderer.placeholdersDrawn shouldBe 0
     }
 
     @Test

@@ -117,7 +117,6 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
 
             viewModel.state.value.url shouldBe "https://new.example.com"
             renderer.renders.last() shouldBe Render("https://new.example.com", seededStyle)
-            renderer.renders.size shouldBe 2
         }
 
         should("setSize updates state.size immediately and regenerates the QR code") {

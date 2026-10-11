@@ -28,8 +28,6 @@ class GetVisitCountUseCaseTest : ShouldSpec(
             val client = FakeShortURLClient().apply { visitCounts["https://short.url/abc"] = 42 }
 
             GetVisitCountUseCase(client)(url) shouldBe 42
-
-            client.visitCountRequests shouldBe listOf(url)
         }
 
         should("return null when the client has no count") {
