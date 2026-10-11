@@ -24,7 +24,6 @@ import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import io.kotest.matchers.shouldBe
 import org.json.JSONObject
 import org.junit.Assert.fail

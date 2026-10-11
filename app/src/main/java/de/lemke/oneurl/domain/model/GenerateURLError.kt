@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl.domain.generateURL
+package de.lemke.oneurl.domain.model
 
 sealed class GenerateURLError {
     data class Unknown(val statusCode: Int? = null) : GenerateURLError()

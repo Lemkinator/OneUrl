@@ -22,7 +22,6 @@ import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.shouldBe
 import io.mockk.every

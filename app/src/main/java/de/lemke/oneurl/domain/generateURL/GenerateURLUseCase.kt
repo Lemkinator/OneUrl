@@ -26,7 +26,10 @@ import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
+import de.lemke.oneurl.domain.model.GenerateURLError
+import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.UrlhausResult
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
@@ -59,7 +62,7 @@ class GenerateURLUseCase @Inject constructor(
         onProgress(R.string.checking_url)
         val normalizedURL = longURL.withHttps()
         val safetyResult = checkURLSafety(normalizedURL)
-        if (safetyResult is CheckURLSafetyUseCase.UrlhausResult.Blacklisted) {
+        if (safetyResult is UrlhausResult.Blacklisted) {
             return GenerateURLResult.Failure(
                 GenerateURLError.BlacklistedURL(safetyResult.message, safetyResult.urlhausLink, safetyResult.virustotalLink),
             )

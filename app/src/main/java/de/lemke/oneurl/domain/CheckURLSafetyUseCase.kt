@@ -23,6 +23,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.domain.model.UrlhausResult
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -130,10 +131,4 @@ class CheckURLSafetyUseCase @Inject constructor(
             "abused_redirector" -> context.getString(R.string.error_urlhaus_abused_redirector)
             else -> context.getString(R.string.error_urlhaus_default)
         }
-
-    sealed class UrlhausResult {
-        data object Ok : UrlhausResult()
-
-        data class Blacklisted(val message: String, val urlhausLink: String?, val virustotalLink: String?) : UrlhausResult()
-    }
 }

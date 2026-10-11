@@ -23,8 +23,6 @@ import com.android.volley.ParseError
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 

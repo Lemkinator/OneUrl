@@ -18,7 +18,6 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import com.android.volley.Request
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull

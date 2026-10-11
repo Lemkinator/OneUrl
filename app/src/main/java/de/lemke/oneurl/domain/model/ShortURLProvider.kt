@@ -22,7 +22,6 @@ import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.Response
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import java.util.Locale
 import de.lemke.commonutils.R as commonutilsR
 

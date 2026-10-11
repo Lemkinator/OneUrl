@@ -29,7 +29,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.domain.model.GenerateURLError
 import io.kotest.assertions.withClue
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.shouldBe

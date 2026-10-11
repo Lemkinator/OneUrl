@@ -19,7 +19,6 @@ package de.lemke.oneurl.domain.model
 import android.app.Application
 import android.content.Context
 import com.android.volley.Request
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk

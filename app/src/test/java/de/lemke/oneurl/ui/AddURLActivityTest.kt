@@ -36,9 +36,9 @@ import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.AddURLUseCase
 import de.lemke.oneurl.domain.GetURLTitleUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.GenerateURLResult
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
+import de.lemke.oneurl.domain.model.GenerateURLError
+import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.Murl
 import de.lemke.oneurl.domain.model.Shareaholic
 import de.lemke.oneurl.domain.model.ShortURLProvider

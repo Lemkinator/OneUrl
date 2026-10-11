@@ -26,6 +26,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.domain.model.UrlhausResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.Runs
@@ -100,7 +101,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"no_results"}""")
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -108,7 +109,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok"}""")
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -116,7 +117,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("not json")
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -126,7 +127,7 @@ class CheckURLSafetyUseCaseTest {
                 firstArg<StringRequest>().deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
             }
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -145,7 +146,7 @@ class CheckURLSafetyUseCaseTest {
 
             val result = checkURLSafety("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe "https://urlhaus.abuse.ch/url/123/"
             result.virustotalLink shouldBe "https://virustotal.com/report/1"
             result.message shouldBe
@@ -163,7 +164,7 @@ class CheckURLSafetyUseCaseTest {
 
             val result = checkURLSafety("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe null
             result.virustotalLink shouldBe null
             result.message shouldBe
@@ -195,7 +196,7 @@ class CheckURLSafetyUseCaseTest {
 
                 val result = checkURLSafety("example.com")
 
-                result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+                result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
                 result.message shouldBe
                     context.getString(R.string.error_urlhaus_blacklisted, "URLhaus, Spamhaus", context.getString(expectedStringRes))
             }
@@ -224,7 +225,7 @@ class CheckURLSafetyUseCaseTest {
                 request.deliverStringResponse("""{"query_status":"ok"}""")
             }
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -237,7 +238,7 @@ class CheckURLSafetyUseCaseTest {
                 request.deliverError(error)
             }
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test

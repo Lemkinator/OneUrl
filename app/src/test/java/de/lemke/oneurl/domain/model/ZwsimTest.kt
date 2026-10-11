@@ -25,8 +25,6 @@ import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import org.json.JSONObject

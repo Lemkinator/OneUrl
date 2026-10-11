@@ -25,7 +25,6 @@ import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue

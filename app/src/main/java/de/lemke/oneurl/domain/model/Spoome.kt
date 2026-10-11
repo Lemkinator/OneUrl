@@ -26,8 +26,6 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
 import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
 import org.json.JSONException
 import org.json.JSONObject

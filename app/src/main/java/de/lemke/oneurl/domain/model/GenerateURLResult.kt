@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl.domain.generateURL
+package de.lemke.oneurl.domain.model
 
 sealed class GenerateURLResult {
     data class Success(val shortURL: String) : GenerateURLResult()

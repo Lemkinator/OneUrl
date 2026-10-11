@@ -25,7 +25,10 @@ import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import com.android.volley.Request
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
+import de.lemke.oneurl.domain.model.GenerateURLError
+import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.UrlhausResult
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -103,7 +106,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
         should("fail with BlacklistedURL when the safety check reports a blacklisted url") {
             every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
             coEvery { checkURLSafety(any()) } returns
-                CheckURLSafetyUseCase.UrlhausResult.Blacklisted("blacklisted", "urlhaus-link", "vt-link")
+                UrlhausResult.Blacklisted("blacklisted", "urlhaus-link", "vt-link")
 
             val result = generateURL(mockk<ShortURLProvider>(), "https://example.com", "alias") {}
 
@@ -113,7 +116,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
 
         should("delegate to the provider and return Success when the safety check passes") {
             every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
-            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
                     every { getCreateRequest(context, "https://example.com", "alias", any(), any()) } answers {
@@ -136,7 +139,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
 
         should("return the provider's Failure when it reports an error") {
             every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
-            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
                     every { getCreateRequest(context, any(), any(), any(), any()) } answers {
@@ -152,7 +155,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
 
         should("ignore a second success callback delivered after the continuation already resumed") {
             every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
-            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
                     every { getCreateRequest(context, any(), any(), any(), any()) } answers {
@@ -169,7 +172,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
 
         should("ignore a second failure callback delivered after the continuation already resumed") {
             every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
-            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
                     every { getCreateRequest(context, any(), any(), any(), any()) } answers {
@@ -186,7 +189,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
 
         should("cancel the provider's request when the coroutine is cancelled") {
             every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
-            coEvery { checkURLSafety(any()) } returns CheckURLSafetyUseCase.UrlhausResult.Ok
+            coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val createdRequest = mockk<Request<Any>>(relaxed = true)
             val provider =
                 mockk<ShortURLProvider> {
