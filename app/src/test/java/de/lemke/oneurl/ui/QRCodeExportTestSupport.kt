@@ -26,8 +26,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import androidx.test.core.app.ApplicationProvider
-import de.lemke.oneurl.data.DefaultQRCodeExporter
-import de.lemke.oneurl.data.QRCodeExporter
+import de.lemke.commonutils.ui.utils.BitmapExporter
+import de.lemke.commonutils.ui.utils.DefaultBitmapExporter
 import java.io.File
 import java.io.FileNotFoundException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,8 +37,8 @@ import org.robolectric.Shadows.shadowOf
 internal val PNG_SIGNATURE = listOf<Byte>(-119, 80, 78, 71, 13, 10, 26, 10)
 
 /** The app's QR code exporter with its IO work on [ioDispatcher]. */
-internal fun qrCodeExporterOn(ioDispatcher: CoroutineDispatcher): QRCodeExporter =
-    DefaultQRCodeExporter(ApplicationProvider.getApplicationContext(), ioDispatcher)
+internal fun bitmapExporterOn(ioDispatcher: CoroutineDispatcher): BitmapExporter =
+    DefaultBitmapExporter(ApplicationProvider.getApplicationContext(), ioDispatcher, clipLabel = "QR Code", cacheFileName = "QRCode.png")
 
 /** An empty file, as the document picker creates it; a file:// URI of it is writable under Robolectric. */
 internal fun createPickedDocument(): File =

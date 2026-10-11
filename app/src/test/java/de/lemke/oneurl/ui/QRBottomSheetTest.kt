@@ -44,12 +44,12 @@ import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
-import de.lemke.oneurl.data.QRCodeExporter
-import de.lemke.oneurl.di.QRCodeExporterModule
+import de.lemke.oneurl.di.BitmapExporterModule
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.createQRBottomSheet
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -78,7 +78,7 @@ import de.lemke.commonutils.R as commonutilsR
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
-@UninstallModules(QRCodeExporterModule::class)
+@UninstallModules(BitmapExporterModule::class)
 class QRBottomSheetTest {
     @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
@@ -87,7 +87,7 @@ class QRBottomSheetTest {
 
     @BindValue
     @JvmField
-    val qrCodeExporter: QRCodeExporter = qrCodeExporterOn(ioDispatcher)
+    val bitmapExporter: BitmapExporter = bitmapExporterOn(ioDispatcher)
 
     @Inject
     lateinit var settings: SettingsRepository

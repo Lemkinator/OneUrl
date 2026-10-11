@@ -21,8 +21,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.DocumentPick
-import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GetQRCodeUseCase
 import de.lemke.oneurl.ui.QRBottomSheet.Companion.KEY_SHORT_URL
@@ -42,7 +42,7 @@ class QRBottomSheetViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     getQRCode: GetQRCodeUseCase,
     private val userSettings: UserSettings,
-    exporter: QRCodeExporter,
+    exporter: BitmapExporter,
 ) : ViewModel() {
     private val qrCodeExport = QRCodeExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<QRBottomSheetUiState>

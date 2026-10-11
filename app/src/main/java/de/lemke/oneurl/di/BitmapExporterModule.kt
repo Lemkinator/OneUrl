@@ -16,16 +16,23 @@
 
 package de.lemke.oneurl.di
 
-import dagger.Binds
+import android.content.Context
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import de.lemke.oneurl.data.DefaultQRCodeExporter
-import de.lemke.oneurl.data.QRCodeExporter
+import de.lemke.commonutils.di.IoDispatcher
+import de.lemke.commonutils.ui.utils.BitmapExporter
+import de.lemke.commonutils.ui.utils.DefaultBitmapExporter
+import kotlinx.coroutines.CoroutineDispatcher
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class QRCodeExporterModule {
-    @Binds
-    abstract fun bindQRCodeExporter(exporter: DefaultQRCodeExporter): QRCodeExporter
+object BitmapExporterModule {
+    @Provides
+    fun provideBitmapExporter(
+        @ApplicationContext context: Context,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ): BitmapExporter = DefaultBitmapExporter(context, ioDispatcher, clipLabel = "QR Code", cacheFileName = "QRCode.png")
 }

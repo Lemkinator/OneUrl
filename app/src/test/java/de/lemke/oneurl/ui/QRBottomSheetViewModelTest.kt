@@ -24,13 +24,14 @@ import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
 import de.lemke.commonutils.ui.utils.DocumentPick
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter.Call
 import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetQRCodeUseCase
-import de.lemke.oneurl.ui.FakeQRCodeExporter.Call
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -48,7 +49,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         val shortURL = "https://short.url/x"
         lateinit var userSettings: UserSettings
         lateinit var renderer: FakeQRCodeRenderer
-        lateinit var exporter: FakeQRCodeExporter
+        lateinit var exporter: FakeBitmapExporter
 
         fun newViewModel(
             savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf(QRBottomSheet.KEY_SHORT_URL to shortURL)),
@@ -63,7 +64,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         beforeEach {
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
             renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
-            exporter = FakeQRCodeExporter()
+            exporter = FakeBitmapExporter()
         }
 
         should("init takes the short URL from the saved state and loads its QR code") {
@@ -98,21 +99,12 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             viewModel.export.value shouldBe QRCodeExport.Idle
         }
 
-        should("onSave writes the QR code under the short URL to the image save location") {
+        should("onSave writes the QR code under the short URL to the image save location and holds OpenPicker") {
             val viewModel = newViewModel()
 
             viewModel.onSave()
 
             exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, shortURL))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS))
-        }
-
-        should("onSave holds OpenPicker with the short URL as file name when the location needs the picker") {
-            exporter.directoryResult = BitmapSaveResult.NeedsPicker
-            val viewModel = newViewModel()
-
-            viewModel.onSave()
-
             viewModel.export.value shouldBe QRCodeExport.OpenPicker(shortURL)
         }
 

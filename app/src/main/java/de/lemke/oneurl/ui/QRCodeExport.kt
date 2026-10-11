@@ -21,6 +21,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import de.lemke.commonutils.data.SaveLocation
+import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
 import de.lemke.commonutils.ui.utils.DocumentPick
@@ -31,7 +32,6 @@ import de.lemke.commonutils.ui.utils.exportBitmap
 import de.lemke.commonutils.ui.utils.quickShareBitmap
 import de.lemke.commonutils.ui.utils.shareBitmap
 import de.lemke.commonutils.ui.utils.toast
-import de.lemke.oneurl.data.QRCodeExporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,7 +68,7 @@ enum class ShareTarget {
 /** Runs the QR code exports of a ViewModel in [scope], one at a time, and holds the state of the latest one. */
 class QRCodeExportStateHolder(
     private val scope: CoroutineScope,
-    private val exporter: QRCodeExporter,
+    private val exporter: BitmapExporter,
 ) {
     val state: StateFlow<QRCodeExport>
         field = MutableStateFlow<QRCodeExport>(QRCodeExport.Idle)

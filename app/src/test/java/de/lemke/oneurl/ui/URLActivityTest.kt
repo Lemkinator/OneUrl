@@ -40,14 +40,14 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.QRCodeCache
-import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.di.QRCodeExporterModule
+import de.lemke.oneurl.di.BitmapExporterModule
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Gg
 import de.lemke.oneurl.domain.model.URL
@@ -79,7 +79,7 @@ import de.lemke.commonutils.R as commonutilsR
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
-@UninstallModules(QRCodeExporterModule::class)
+@UninstallModules(BitmapExporterModule::class)
 class URLActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
@@ -88,7 +88,7 @@ class URLActivityTest {
 
     @BindValue
     @JvmField
-    val qrCodeExporter: QRCodeExporter = qrCodeExporterOn(ioDispatcher)
+    val bitmapExporter: BitmapExporter = bitmapExporterOn(ioDispatcher)
 
     @Inject
     lateinit var urlRepository: URLRepository

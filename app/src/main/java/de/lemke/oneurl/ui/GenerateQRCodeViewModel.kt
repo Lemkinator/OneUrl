@@ -20,8 +20,8 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.DocumentPick
-import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.QRCodeStyle
@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 class GenerateQRCodeViewModel @Inject constructor(
     private val userSettings: UserSettings,
     private val generateQRCode: GenerateQRCodeUseCase,
-    exporter: QRCodeExporter,
+    exporter: BitmapExporter,
 ) : ViewModel() {
     private val qrCodeExport = QRCodeExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<QrUiState>

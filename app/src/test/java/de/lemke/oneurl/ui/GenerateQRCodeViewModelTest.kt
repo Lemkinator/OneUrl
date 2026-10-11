@@ -24,12 +24,13 @@ import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
 import de.lemke.commonutils.ui.utils.DocumentPick
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter.Call
 import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.QRCodeStyle
-import de.lemke.oneurl.ui.FakeQRCodeExporter.Call
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -48,7 +49,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
         lateinit var userSettings: UserSettings
         lateinit var mainScheduler: TestCoroutineScheduler
         lateinit var renderer: FakeQRCodeRenderer
-        lateinit var exporter: FakeQRCodeExporter
+        lateinit var exporter: FakeBitmapExporter
 
         fun newViewModel() = GenerateQRCodeViewModel(userSettings, GenerateQRCodeUseCase(renderer), exporter)
 
@@ -75,7 +76,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             userSettings.qrIcon = true
             userSettings.qrFrame = true
             renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
-            exporter = FakeQRCodeExporter()
+            exporter = FakeBitmapExporter()
         }
 
         should("init state is seeded from userSettings and a QR code is generated") {
@@ -263,23 +264,13 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             userSettings.qrSize shouldBe 900
         }
 
-        should("onSave writes the current QR code under its URL to the image save location") {
+        should("onSave writes the current QR code under its URL to the image save location and holds OpenPicker") {
             userSettings.qrURL = "https://example.com"
             val viewModel = newViewModel()
 
             viewModel.onSave()
 
             exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, "https://example.com"))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS))
-        }
-
-        should("onSave holds OpenPicker with the URL as file name when the location needs the picker") {
-            userSettings.qrURL = "https://example.com"
-            exporter.directoryResult = BitmapSaveResult.NeedsPicker
-            val viewModel = newViewModel()
-
-            viewModel.onSave()
-
             viewModel.export.value shouldBe QRCodeExport.OpenPicker("https://example.com")
         }
 
@@ -316,10 +307,11 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
         }
 
         should("onExportHandled returns the export to Idle") {
+            userSettings.qrURL = "https://example.com"
             val viewModel = newViewModel()
             viewModel.onSave()
 
-            viewModel.onExportHandled(QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS)))
+            viewModel.onExportHandled(QRCodeExport.OpenPicker("https://example.com"))
 
             viewModel.export.value shouldBe QRCodeExport.Idle
         }

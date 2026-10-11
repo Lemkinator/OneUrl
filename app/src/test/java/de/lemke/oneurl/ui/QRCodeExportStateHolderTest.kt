@@ -24,7 +24,8 @@ import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
 import de.lemke.commonutils.ui.utils.DocumentPick
-import de.lemke.oneurl.ui.FakeQRCodeExporter.Call
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter.Call
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -36,33 +37,24 @@ class QRCodeExportStateHolderTest : ShouldSpec(
     {
         val qrCode = mockk<Bitmap>()
         val fileName = "https://short.url/x"
-        lateinit var exporter: FakeQRCodeExporter
+        lateinit var exporter: FakeBitmapExporter
 
         fun newHolder() = QRCodeExportStateHolder(CoroutineScope(Dispatchers.Main), exporter)
 
         beforeEach {
-            exporter = FakeQRCodeExporter()
+            exporter = FakeBitmapExporter()
         }
 
         should("start Idle") {
             newHolder().state.value shouldBe QRCodeExport.Idle
         }
 
-        should("save writes the QR code to the location and holds the finished result") {
+        should("save to a location that needs the picker records the call and holds OpenPicker with the file name") {
             val holder = newHolder()
 
             holder.save(qrCode, fileName, SaveLocation.PICTURES)
 
             exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.PICTURES, qrCode, fileName))
-            holder.state.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS))
-        }
-
-        should("save holds OpenPicker with the file name when the location needs the picker") {
-            exporter.directoryResult = BitmapSaveResult.NeedsPicker
-            val holder = newHolder()
-
-            holder.save(qrCode, fileName, SaveLocation.CUSTOM)
-
             holder.state.value shouldBe QRCodeExport.OpenPicker(fileName)
         }
 
@@ -80,7 +72,7 @@ class QRCodeExportStateHolderTest : ShouldSpec(
                 holder.share(qrCode, ShareTarget.SHARE_SHEET)
                 exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.PICTURES, qrCode, fileName))
                 gate.complete(Unit)
-                awaitItem() shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS))
+                awaitItem() shouldBe QRCodeExport.OpenPicker(fileName)
             }
         }
 
@@ -98,7 +90,7 @@ class QRCodeExportStateHolderTest : ShouldSpec(
             val holder = newHolder()
 
             holder.save(qrCode, fileName, SaveLocation.PICTURES)
-            holder.onHandled(QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS)))
+            holder.onHandled(QRCodeExport.OpenPicker(fileName))
             holder.state.value shouldBe QRCodeExport.Idle
             holder.share(qrCode, ShareTarget.SHARE_SHEET)
 
@@ -110,7 +102,6 @@ class QRCodeExportStateHolderTest : ShouldSpec(
         }
 
         should("onHandled keeps a result other than the handled one") {
-            exporter.directoryResult = BitmapSaveResult.NeedsPicker
             val holder = newHolder()
 
             holder.save(qrCode, fileName, SaveLocation.CUSTOM)
@@ -120,7 +111,6 @@ class QRCodeExportStateHolderTest : ShouldSpec(
         }
 
         should("a tap while a result waits replaces that result") {
-            exporter.directoryResult = BitmapSaveResult.NeedsPicker
             val holder = newHolder()
 
             holder.save(qrCode, fileName, SaveLocation.CUSTOM)

@@ -44,12 +44,12 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
-import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
-import de.lemke.oneurl.di.QRCodeExporterModule
+import de.lemke.oneurl.di.BitmapExporterModule
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.longs.shouldBeGreaterThan
@@ -74,7 +74,7 @@ import de.lemke.commonutils.R as commonutilsR
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
-@UninstallModules(QRCodeExporterModule::class)
+@UninstallModules(BitmapExporterModule::class)
 class GenerateQRCodeActivityTest {
     @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
@@ -83,7 +83,7 @@ class GenerateQRCodeActivityTest {
 
     @BindValue
     @JvmField
-    val qrCodeExporter: QRCodeExporter = qrCodeExporterOn(ioDispatcher)
+    val bitmapExporter: BitmapExporter = bitmapExporterOn(ioDispatcher)
 
     @Inject
     lateinit var userSettings: UserSettings
