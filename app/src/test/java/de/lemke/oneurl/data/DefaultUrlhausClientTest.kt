@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl.domain
+package de.lemke.oneurl.data
 
 import android.app.Application
 import android.content.Context
@@ -23,10 +23,6 @@ import com.android.volley.NetworkResponse
 import com.android.volley.VolleyError
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
-import de.lemke.oneurl.data.FakeVolleyQueue
-import de.lemke.oneurl.data.deliverResponse
-import de.lemke.oneurl.data.headers
-import de.lemke.oneurl.data.params
 import de.lemke.oneurl.domain.model.UrlhausResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -44,10 +40,10 @@ import org.robolectric.annotation.Config
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
-class CheckURLSafetyUseCaseTest {
+class DefaultUrlhausClientTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val queue = FakeVolleyQueue()
-    private val checkURLSafety = CheckURLSafetyUseCase(context, queue)
+    private val urlhausClient = DefaultUrlhausClient(context, queue)
 
     private fun respond(json: String) {
         queue.onAdd = {
@@ -60,7 +56,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"no_results"}""")
 
-            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -68,7 +64,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok"}""")
 
-            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -76,7 +72,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("not json")
 
-            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -86,7 +82,7 @@ class CheckURLSafetyUseCaseTest {
                 it.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
             }
 
-            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -103,7 +99,7 @@ class CheckURLSafetyUseCaseTest {
                 """.trimIndent(),
             )
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
             result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe "https://urlhaus.abuse.ch/url/123/"
@@ -121,7 +117,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"}}""")
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
             result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe null
@@ -153,7 +149,7 @@ class CheckURLSafetyUseCaseTest {
             statusToStringRes.forEach { (status, expectedStringRes) ->
                 respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"$status"}}""")
 
-                val result = checkURLSafety("example.com")
+                val result = urlhausClient.check("example.com")
 
                 result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
                 result.message shouldBe
@@ -168,7 +164,7 @@ class CheckURLSafetyUseCaseTest {
                 it.deliverResponse("""{"query_status":"ok"}""")
             }
 
-            checkURLSafety("example.com")
+            urlhausClient.check("example.com")
 
             queue.added.single().params() shouldBe mapOf("url" to "example.com")
             queue.added.single().headers() shouldBe mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
@@ -182,7 +178,7 @@ class CheckURLSafetyUseCaseTest {
                 request.deliverResponse("""{"query_status":"ok"}""")
             }
 
-            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -194,13 +190,13 @@ class CheckURLSafetyUseCaseTest {
                 request.deliverError(error)
             }
 
-            checkURLSafety("example.com") shouldBe UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
     fun `cancelling the coroutine cancels the underlying request`() =
         runTest {
-            val job = launch { checkURLSafety("example.com") }
+            val job = launch { urlhausClient.check("example.com") }
             runCurrent()
             job.cancel()
             runCurrent()
