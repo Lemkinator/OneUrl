@@ -32,6 +32,7 @@ class GenerateQRCodeUseCase @Inject constructor(
         style: QRCodeStyle,
     ): Bitmap = renderOrPlaceholder(url, style)
 
+    // QrEncoder, a OneUI call behind the renderer, documents no exception contract.
     @Suppress("TooGenericExceptionCaught")
     private fun renderOrPlaceholder(
         url: String,
