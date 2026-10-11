@@ -22,10 +22,12 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import de.lemke.oneurl.data.DefaultNetworkMonitor
 import de.lemke.oneurl.data.DefaultPageTitleFetcher
+import de.lemke.oneurl.data.DefaultShortURLClient
 import de.lemke.oneurl.data.DefaultUrlhausClient
 import de.lemke.oneurl.data.DefaultVolleyQueue
 import de.lemke.oneurl.data.NetworkMonitor
 import de.lemke.oneurl.data.PageTitleFetcher
+import de.lemke.oneurl.data.ShortURLClient
 import de.lemke.oneurl.data.UrlhausClient
 import de.lemke.oneurl.data.VolleyQueue
 
@@ -43,4 +45,7 @@ abstract class NetworkModule {
 
     @Binds
     abstract fun bindPageTitleFetcher(fetcher: DefaultPageTitleFetcher): PageTitleFetcher
+
+    @Binds
+    abstract fun bindShortURLClient(client: DefaultShortURLClient): ShortURLClient
 }

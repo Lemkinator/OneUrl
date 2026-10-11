@@ -20,22 +20,20 @@ import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.NetworkMonitor
-import de.lemke.oneurl.data.VolleyQueue
+import de.lemke.oneurl.data.ShortURLClient
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.UrlhausResult
 import javax.inject.Inject
-import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 class GenerateURLUseCase @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val checkURLSafety: CheckURLSafetyUseCase,
-    private val queue: VolleyQueue,
+    private val shortURLClient: ShortURLClient,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
     // Guard clauses are interleaved with onProgress() calls that must fire in order; collapsing
@@ -60,28 +58,6 @@ class GenerateURLUseCase @Inject constructor(
             )
         }
         onProgress(R.string.generating_url)
-        return provider.createShortURL(queue, normalizedURL, alias)
+        return shortURLClient.create(provider, normalizedURL, alias)
     }
 }
-
-private suspend fun ShortURLProvider.createShortURL(
-    queue: VolleyQueue,
-    longURL: String,
-    alias: String,
-): GenerateURLResult =
-    suspendCancellableCoroutine { cont ->
-        val req =
-            getCreateRequest(
-                queue,
-                longURL,
-                alias,
-                successCallback = { shortURL ->
-                    if (cont.isActive) cont.resume(GenerateURLResult.Success(shortURL))
-                },
-                errorCallback = { error ->
-                    if (cont.isActive) cont.resume(GenerateURLResult.Failure(error))
-                },
-            )
-        queue.add(req)
-        cont.invokeOnCancellation { req.cancel() }
-    }
