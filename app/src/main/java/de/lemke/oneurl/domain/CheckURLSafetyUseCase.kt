@@ -71,7 +71,7 @@ class CheckURLSafetyUseCase @Inject constructor(
             val responseJson = JSONObject(response)
             val blacklists = responseJson.optJSONObject("blacklists")
             when {
-                responseJson.optString("query_status") != "ok" -> {
+                responseJson.optStringOrNull("query_status") != "ok" -> {
                     Log.d(tag, "Urlhaus Check returned no results for $url")
                     UrlhausResult.Ok
                 }
@@ -94,8 +94,9 @@ class CheckURLSafetyUseCase @Inject constructor(
         responseJson: JSONObject,
         blacklists: JSONObject,
     ): UrlhausResult.Blacklisted {
-        val surblListed = blacklists.optString("surbl", "not listed") != "not listed"
-        val spamhausStatus = blacklists.optString("spamhaus_dbl", "not listed")
+        val surblStatus = blacklists.optStringOrNull("surbl") ?: "not listed"
+        val spamhausStatus = blacklists.optStringOrNull("spamhaus_dbl") ?: "not listed"
+        val surblListed = surblStatus != "not listed"
         val spamhausListed = spamhausStatus != "not listed"
         val listedOn =
             buildString {
@@ -103,14 +104,13 @@ class CheckURLSafetyUseCase @Inject constructor(
                 if (surblListed) append(", SURBL")
                 if (spamhausListed) append(", Spamhaus")
             }
-        val urlhausLink = responseJson.optString("urlhaus_reference").ifBlank { null }
+        val urlhausLink = responseJson.optStringOrNull("urlhaus_reference")
         val virustotalLink =
             responseJson
                 .optJSONArray("payloads")
                 ?.optJSONObject(0)
                 ?.optJSONObject("virustotal")
-                ?.optString("link")
-                ?.ifBlank { null }
+                ?.optStringOrNull("link")
         return UrlhausResult.Blacklisted(
             context.getString(R.string.error_urlhaus_blacklisted, listedOn, reasonFor(spamhausStatus)),
             urlhausLink,
@@ -137,3 +137,6 @@ class CheckURLSafetyUseCase @Inject constructor(
         data class Blacklisted(val message: String, val urlhausLink: String?, val virustotalLink: String?) : UrlhausResult()
     }
 }
+
+// Android's optString returns the text "null" for a JSON null value.
+private fun JSONObject.optStringOrNull(name: String): String? = if (isNull(name)) null else optString(name).ifBlank { null }
