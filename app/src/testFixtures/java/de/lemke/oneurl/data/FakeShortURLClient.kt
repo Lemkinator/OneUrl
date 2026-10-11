@@ -23,7 +23,7 @@ import kotlinx.coroutines.CompletableDeferred
 
 /**
  * Answers [create] with the result set in [results] for the provider and [visitCount] with the count set in [visitCounts]
- * for the short URL, or throws [visitCountFailure] once set. Each create waits for [gate] while one is set; every call is recorded.
+ * for the short URL, or throws [visitCountFailure] once set. Each call waits for [gate] while one is set and is recorded.
  */
 class FakeShortURLClient : ShortURLClient {
     val results = mutableMapOf<ShortURLProvider, GenerateURLResult>()
@@ -45,6 +45,7 @@ class FakeShortURLClient : ShortURLClient {
 
     override suspend fun visitCount(url: URL): Int? {
         visitCountRequests += url
+        gate?.await()
         visitCountFailure?.let { throw it }
         return visitCounts[url.shortURL]
     }
