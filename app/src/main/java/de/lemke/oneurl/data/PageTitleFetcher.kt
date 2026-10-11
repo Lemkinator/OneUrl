@@ -44,9 +44,7 @@ class DefaultPageTitleFetcher @Inject constructor(
                             val title =
                                 Regex("<title[^>]*>(.*?)</title>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
                                     .find(response)
-                                    ?.groupValues
-                                    ?.get(1)
-                                    ?.trim()
+                                    ?.let { it.groupValues[1].trim() }
                             Log.d("DefaultPageTitleFetcher", "title: $title")
                             cont.resume(title)
                         } catch (e: Exception) {

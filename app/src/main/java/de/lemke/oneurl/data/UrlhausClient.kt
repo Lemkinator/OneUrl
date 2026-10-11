@@ -115,8 +115,7 @@ class DefaultUrlhausClient @Inject constructor(
                 .optJSONArray("payloads")
                 ?.optJSONObject(0)
                 ?.optJSONObject("virustotal")
-                ?.optString("link")
-                ?.ifBlank { null }
+                ?.let { it.optString("link").ifBlank { null } }
         return UrlhausResult.Blacklisted(
             context.getString(R.string.error_urlhaus_blacklisted, listedOn, reasonFor(spamhausStatus)),
             urlhausLink,
