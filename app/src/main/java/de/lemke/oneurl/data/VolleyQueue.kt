@@ -40,7 +40,7 @@ class DefaultVolleyQueue @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) : VolleyQueue {
     private val queue: RequestQueue by lazy {
-        RequestQueue(DiskBasedCache(File(context.cacheDir, CACHE_DIRECTORY)), BasicNetwork(HurlStack())).apply { start() }
+        RequestQueue(DiskBasedCache { File(context.cacheDir, CACHE_DIRECTORY) }, BasicNetwork(HurlStack())).apply { start() }
     }
 
     override fun add(request: Request<*>) {
