@@ -10,7 +10,7 @@ jvmTarget = "21"
 
 aboutlibraries = "15.2.0"
 agp = "9.4.1"
-androidx-collection = "1.6.0"
+androidx-collection = "1.7.0"
 apache-httpcore = "4.4.16"
 androidx-test-core = "1.7.0"
 androidx-test-espresso = "3.7.0"
