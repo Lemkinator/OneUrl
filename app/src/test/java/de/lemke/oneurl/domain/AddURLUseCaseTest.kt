@@ -16,11 +16,9 @@
 
 package de.lemke.oneurl.domain
 
-import de.lemke.oneurl.data.URLRepository
+import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
@@ -30,21 +28,19 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddURLUseCaseTest : ShouldSpec(
     {
-        val urlRepository = mockk<URLRepository>()
-        val dispatcher = StandardTestDispatcher()
-        val addURL = AddURLUseCase(urlRepository, dispatcher)
-
-        should("invoke suspends on the injected dispatcher before delegating to urlRepository.addURL") {
+        should("invoke stores the url once the injected dispatcher runs") {
+            val repository = FakeURLRepository()
+            val dispatcher = StandardTestDispatcher()
+            val addURL = AddURLUseCase(repository, dispatcher)
             val url = testUrl(shortURL = "https://short.url/abc")
-            coEvery { urlRepository.addURL(url) } returns Unit
 
             coroutineScope {
                 launch(Dispatchers.Unconfined) { addURL(url) }
-                coVerify(exactly = 0) { urlRepository.addURL(url) }
+                repository.urls shouldBe emptyList()
 
                 dispatcher.scheduler.advanceUntilIdle()
 
-                coVerify(exactly = 1) { urlRepository.addURL(url) }
+                repository.urls shouldBe listOf(url)
             }
         }
     },

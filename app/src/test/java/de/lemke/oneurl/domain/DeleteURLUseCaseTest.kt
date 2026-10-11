@@ -16,11 +16,9 @@
 
 package de.lemke.oneurl.domain
 
-import de.lemke.oneurl.data.URLRepository
+import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
@@ -30,35 +28,37 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeleteURLUseCaseTest : ShouldSpec(
     {
-        val urlRepository = mockk<URLRepository>()
-        val dispatcher = StandardTestDispatcher()
-        val deleteURL = DeleteURLUseCase(urlRepository, dispatcher)
+        val a = testUrl(shortURL = "https://short.url/a")
+        val b = testUrl(shortURL = "https://short.url/b")
+        val c = testUrl(shortURL = "https://short.url/c")
 
-        should("invoke(url) suspends on the injected dispatcher before delegating to urlRepository.deleteURL") {
-            val url = testUrl(shortURL = "https://short.url/abc")
-            coEvery { urlRepository.deleteURL(url) } returns Unit
+        should("invoke(url) deletes the url once the injected dispatcher runs") {
+            val repository = FakeURLRepository(listOf(a, b))
+            val dispatcher = StandardTestDispatcher()
+            val deleteURL = DeleteURLUseCase(repository, dispatcher)
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { deleteURL(url) }
-                coVerify(exactly = 0) { urlRepository.deleteURL(url) }
+                launch(Dispatchers.Unconfined) { deleteURL(a) }
+                repository.urls shouldBe listOf(a, b)
 
                 dispatcher.scheduler.advanceUntilIdle()
 
-                coVerify(exactly = 1) { urlRepository.deleteURL(url) }
+                repository.urls shouldBe listOf(b)
             }
         }
 
-        should("invoke(urls) suspends on the injected dispatcher before delegating to urlRepository.deleteURLs") {
-            val urls = listOf(testUrl(shortURL = "https://short.url/a"), testUrl(shortURL = "https://short.url/b"))
-            coEvery { urlRepository.deleteURLs(urls) } returns Unit
+        should("invoke(urls) deletes every url once the injected dispatcher runs") {
+            val repository = FakeURLRepository(listOf(a, b, c))
+            val dispatcher = StandardTestDispatcher()
+            val deleteURL = DeleteURLUseCase(repository, dispatcher)
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { deleteURL(urls) }
-                coVerify(exactly = 0) { urlRepository.deleteURLs(urls) }
+                launch(Dispatchers.Unconfined) { deleteURL(listOf(a, c)) }
+                repository.urls shouldBe listOf(a, b, c)
 
                 dispatcher.scheduler.advanceUntilIdle()
 
-                coVerify(exactly = 1) { urlRepository.deleteURLs(urls) }
+                repository.urls shouldBe listOf(b)
             }
         }
     },

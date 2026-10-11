@@ -16,11 +16,9 @@
 
 package de.lemke.oneurl.domain
 
-import de.lemke.oneurl.data.URLRepository
+import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
@@ -30,35 +28,38 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 @OptIn(ExperimentalCoroutinesApi::class)
 class UpdateURLUseCaseTest : ShouldSpec(
     {
-        val urlRepository = mockk<URLRepository>()
-        val dispatcher = StandardTestDispatcher()
-        val updateURL = UpdateURLUseCase(urlRepository, dispatcher)
+        val a = testUrl(shortURL = "https://short.url/a")
+        val b = testUrl(shortURL = "https://short.url/b")
 
-        should("invoke(url) suspends on the injected dispatcher before delegating to urlRepository.updateURL") {
-            val url = testUrl(shortURL = "https://short.url/abc")
-            coEvery { urlRepository.updateURL(url) } returns Unit
+        should("invoke(url) updates the stored url once the injected dispatcher runs") {
+            val repository = FakeURLRepository(listOf(a, b))
+            val dispatcher = StandardTestDispatcher()
+            val updateURL = UpdateURLUseCase(repository, dispatcher)
+            val favorite = a.copy(favorite = true)
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { updateURL(url) }
-                coVerify(exactly = 0) { urlRepository.updateURL(url) }
+                launch(Dispatchers.Unconfined) { updateURL(favorite) }
+                repository.urls shouldBe listOf(a, b)
 
                 dispatcher.scheduler.advanceUntilIdle()
 
-                coVerify(exactly = 1) { urlRepository.updateURL(url) }
+                repository.urls shouldBe listOf(favorite, b)
             }
         }
 
-        should("invoke(urls) suspends on the injected dispatcher before delegating to urlRepository.updateURLs") {
-            val urls = listOf(testUrl(shortURL = "https://short.url/a"), testUrl(shortURL = "https://short.url/b"))
-            coEvery { urlRepository.updateURLs(urls) } returns Unit
+        should("invoke(urls) updates every stored url once the injected dispatcher runs") {
+            val repository = FakeURLRepository(listOf(a, b))
+            val dispatcher = StandardTestDispatcher()
+            val updateURL = UpdateURLUseCase(repository, dispatcher)
+            val renamed = listOf(a.copy(title = "a"), b.copy(title = "b"))
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { updateURL(urls) }
-                coVerify(exactly = 0) { urlRepository.updateURLs(urls) }
+                launch(Dispatchers.Unconfined) { updateURL(renamed) }
+                repository.urls shouldBe listOf(a, b)
 
                 dispatcher.scheduler.advanceUntilIdle()
 
-                coVerify(exactly = 1) { urlRepository.updateURLs(urls) }
+                repository.urls shouldBe renamed
             }
         }
     },
