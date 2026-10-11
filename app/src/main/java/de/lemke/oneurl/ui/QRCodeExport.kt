@@ -16,16 +16,14 @@
 
 package de.lemke.oneurl.ui
 
-import android.app.Activity
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
-import androidx.activity.result.ActivityResult
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
+import de.lemke.commonutils.ui.utils.DocumentPick
 import de.lemke.commonutils.ui.utils.LaunchOutcome
 import de.lemke.commonutils.ui.utils.SingleLaunchResultLauncher
 import de.lemke.commonutils.ui.utils.copyToClipboard
@@ -65,14 +63,6 @@ sealed interface QRCodeExport {
 enum class ShareTarget {
     SHARE_SHEET,
     QUICK_SHARE,
-}
-
-sealed interface DocumentPick {
-    data class Created(val uri: Uri) : DocumentPick
-
-    data object MissingUri : DocumentPick
-
-    data object Canceled : DocumentPick
 }
 
 /** Runs the QR code exports of a ViewModel in [scope], one at a time, and holds the state of the latest one. */
@@ -144,15 +134,6 @@ class QRCodeExportStateHolder(
             is BitmapSaveResult.Finished -> QRCodeExport.SaveFinished(this)
             BitmapSaveResult.Canceled -> null
         }
-}
-
-internal fun ActivityResult.toDocumentPick(): DocumentPick {
-    val uri = data?.data
-    return when {
-        resultCode != Activity.RESULT_OK -> DocumentPick.Canceled
-        uri == null -> DocumentPick.MissingUri
-        else -> DocumentPick.Created(uri)
-    }
 }
 
 /**

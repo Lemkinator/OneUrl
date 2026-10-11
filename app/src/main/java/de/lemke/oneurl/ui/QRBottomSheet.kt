@@ -34,6 +34,7 @@ import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.isSamsungQuickShareAvailable
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
+import de.lemke.commonutils.ui.utils.toDocumentPick
 import de.lemke.oneurl.databinding.ViewQrBottomsheetBinding
 import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 
