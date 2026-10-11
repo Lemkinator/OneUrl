@@ -19,6 +19,7 @@ package de.lemke.oneurl
 import dagger.hilt.android.testing.HiltAndroidRule
 import de.lemke.oneurl.data.database.AppDatabase
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -33,20 +34,27 @@ class HiltTestRule(
     override fun apply(
         base: Statement,
         description: Description,
-    ): Statement = RuleChain.outerRule(hiltRule).around { statement, _ -> closeDatabasesAfter(statement) }.apply(base, description)
+    ): Statement = RuleChain.outerRule(hiltRule).around { statement, _ -> closeResourcesAfter(statement) }.apply(base, description)
 
     fun inject() = hiltRule.inject()
 
     companion object {
-        private val openDatabases = ConcurrentLinkedQueue<AppDatabase>()
+        private val openResources = ConcurrentLinkedQueue<AutoCloseable>()
+        private val registeredResources = AtomicInteger()
 
-        fun closeAfterTest(database: AppDatabase): AppDatabase = database.also(openDatabases::add)
+        /** How many resources were registered with [closeAfterTest] since the process started. */
+        val registrations: Int get() = registeredResources.get()
 
-        private fun closeDatabasesAfter(base: Statement): Statement =
+        fun closeAfterTest(resource: AutoCloseable) {
+            openResources.add(resource)
+            registeredResources.incrementAndGet()
+        }
+
+        private fun closeResourcesAfter(base: Statement): Statement =
             object : Statement() {
                 override fun evaluate() {
                     val testFailure = runCatching { base.evaluate() }.exceptionOrNull()
-                    val closeFailure = closeOpenDatabases()
+                    val closeFailure = closeOpenResources()
                     if (testFailure != null) {
                         closeFailure?.let(testFailure::addSuppressed)
                         throw testFailure
@@ -55,11 +63,11 @@ class HiltTestRule(
                 }
             }
 
-        private fun closeOpenDatabases(): Throwable? {
+        private fun closeOpenResources(): Throwable? {
             var failure: Throwable? = null
             while (true) {
-                val database = openDatabases.poll() ?: break
-                runCatching { database.close() }.onFailure { error ->
+                val resource = openResources.poll() ?: break
+                runCatching { resource.close() }.onFailure { error ->
                     failure?.addSuppressed(error) ?: run { failure = error }
                 }
             }
