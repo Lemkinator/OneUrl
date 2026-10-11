@@ -46,12 +46,6 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
-// The seeded URL uses Dagd directly (rather than ShortURLProviderCompanion.default) since Dagd
-// does not override ShortURLProvider.getURLClickCount() — the interface default synchronously
-// calls callback(null) with no Volley/network I/O. refreshVisitCount() (fired from
-// URLViewModel.init) therefore resolves immediately instead of hitting the network Robolectric
-// has no access to.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
