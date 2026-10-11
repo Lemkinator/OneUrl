@@ -91,8 +91,6 @@ class AddURLActivityTest {
     @Inject
     lateinit var shortURLClient: FakeShortURLClient
 
-    private val aliasConfig = checkNotNull(VgdIsgd.Vgd.aliasConfig)
-
     @Before
     fun setup() {
         hiltRule.inject()
@@ -103,37 +101,31 @@ class AddURLActivityTest {
 
     @Test
     fun `submit sets too-short error`() {
-        withAddURLActivity { activity, urlField, aliasField, submit ->
+        withAddURLActivity { _, urlField, aliasField, submit ->
             urlField.setText("https://example.com")
             aliasField.setText("ab")
             submit()
-            aliasField.error shouldBe
-                activity.resources.getQuantityString(
-                    R.plurals.error_alias_too_short,
-                    aliasConfig.minAliasLength,
-                    aliasConfig.minAliasLength,
-                )
+            aliasField.error shouldBe "Alias too short (min. 5 characters)."
         }
     }
 
     @Test
     fun `submit sets too-long error`() {
-        withAddURLActivity { activity, urlField, aliasField, submit ->
+        withAddURLActivity { _, urlField, aliasField, submit ->
             urlField.setText("https://example.com")
             aliasField.setText("a".repeat(31))
             submit()
-            aliasField.error shouldBe activity.getString(R.string.error_alias_too_long, aliasConfig.maxAliasLength)
+            aliasField.error shouldBe "Alias exceeds the 30-character limit."
         }
     }
 
     @Test
     fun `submit sets invalid-characters error`() {
-        withAddURLActivity { activity, urlField, aliasField, submit ->
+        withAddURLActivity { _, urlField, aliasField, submit ->
             urlField.setText("https://example.com")
             aliasField.setText("not valid!")
             submit()
-            aliasField.error shouldBe
-                activity.getString(R.string.error_invalid_alias_allowed_characters, aliasConfig.allowedAliasCharacters)
+            aliasField.error shouldBe "Invalid alias (allowed characters: a-z, A-Z, 0-9, _)."
         }
     }
 
@@ -271,10 +263,10 @@ class AddURLActivityTest {
 
     @Test
     fun `submit sets empty-url error for a blank url`() {
-        withAddURLActivity { activity, urlField, _, submit ->
+        withAddURLActivity { _, urlField, _, submit ->
             urlField.setText("")
             submit()
-            urlField.error shouldBe activity.getString(R.string.error_empty_url)
+            urlField.error shouldBe "Empty URL."
         }
     }
 
@@ -292,8 +284,7 @@ class AddURLActivityTest {
 
             activity.findViewById<View>(R.id.addUrlFooterProgress).isVisible.shouldBeTrue()
             activity.findViewById<View>(R.id.addUrlFooterButton).isVisible.shouldBeFalse()
-            activity.findViewById<TextView>(R.id.addUrlFooterProgressText).text.toString() shouldBe
-                activity.getString(R.string.generating_url)
+            activity.findViewById<TextView>(R.id.addUrlFooterProgressText).text.toString() shouldBe "Generating URL…"
             urlField.isEnabled.shouldBeFalse()
             aliasField.isEnabled.shouldBeFalse()
             activity.findViewById<View>(R.id.providerSelection).isEnabled.shouldBeFalse()
@@ -334,7 +325,7 @@ class AddURLActivityTest {
     fun `submit shows an error dialog wired through configureFor on generateURL failure`() {
         networkMonitor.online = false
 
-        withAddURLActivity { activity, urlField, aliasField, submit ->
+        withAddURLActivity { _, urlField, aliasField, submit ->
             urlField.setText("https://example.com")
             aliasField.setText("")
             submit()
@@ -345,7 +336,7 @@ class AddURLActivityTest {
             dialog!!
                 .findViewById<TextView>(androidx.appcompat.R.id.alertTitle)
                 ?.text
-                .toString() shouldBe activity.getString(R.string.no_internet)
+                .toString() shouldBe "No internet connection available…"
         }
     }
 
@@ -395,7 +386,7 @@ class AddURLActivityTest {
             submit()
             shadowOf(Looper.getMainLooper()).idle()
 
-            ShadowToast.getTextOfLatestToast() shouldBe activity.getString(R.string.url_added)
+            ShadowToast.getTextOfLatestToast() shouldBe "URL added"
             activity.isFinishing.shouldBeTrue()
         }
     }

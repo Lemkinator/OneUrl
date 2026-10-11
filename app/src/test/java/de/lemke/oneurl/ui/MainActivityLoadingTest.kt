@@ -40,7 +40,6 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import de.lemke.commonutils.R as commonutilsR
 
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -81,7 +80,7 @@ class MainActivityLoadingTest {
         try {
             awaitMainIdle()
             val noEntryView = controller.get().findViewById<NoEntryView>(R.id.noEntryView)
-            noEntryView.text shouldBe controller.get().getString(commonutilsR.string.commonutils_no_results_found)
+            noEntryView.text shouldBe "No results found"
         } finally {
             controller.pause().stop().destroy()
         }
