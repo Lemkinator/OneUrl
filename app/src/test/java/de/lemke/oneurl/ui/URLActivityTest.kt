@@ -582,13 +582,18 @@ class URLActivityTest {
     }
 
     @Test
-    fun `urlVisitsRefreshButton click re-invokes refreshVisitCount`() {
+    fun `urlVisitsRefreshButton click shows the refreshed visit count`() {
         shortURLClient.visitCounts[seededUrl.shortURL] = 1
         withUrlActivity { activity ->
             awaitMainIdle()
+            val visits = activity.findViewById<android.widget.TextView>(R.id.url_visits_textview)
+            visits.text.toString() shouldBe "1"
+            shortURLClient.visitCounts[seededUrl.shortURL] = 7
+
             activity.findViewById<android.view.View>(R.id.url_visits_refresh_button).performClick()
             awaitMainIdle()
-            shortURLClient.visitCountRequests shouldBe listOf(seededUrl, seededUrl)
+
+            visits.text.toString() shouldBe "7"
             val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
             button.isEnabled.shouldBeTrue()
             button.alpha shouldBe 1f
