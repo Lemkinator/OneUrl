@@ -292,7 +292,8 @@ class GenerateQRCodeActivityTest {
 
                 activity.findViewById<SeslSeekBar>(R.id.size_seekbar).progress = 800
 
-                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].state.value.size shouldBe 800
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java]
+                    .state.value.style.size shouldBe 800
             }
 
             ioDispatcher.resume()

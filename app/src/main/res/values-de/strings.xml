@@ -126,5 +126,6 @@
     <string name="scan_qr">Scanne diesen QR-Code auf einem anderen Gerät, um die URL anzuzeigen.</string>
     <string name="delete_url_message">Möchtest du diese URL wirklich löschen?</string>
     <string name="content_description_qr_code">QR-Code</string>
+    <string name="qr_code_not_supported">QR-Codes werden\nvon diesem Anbieter\nnicht unterstützt</string>
 
 </resources>

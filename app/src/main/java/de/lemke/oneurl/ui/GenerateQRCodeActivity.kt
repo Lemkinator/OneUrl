@@ -102,8 +102,8 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     private fun collectState() =
         collectState(viewModel.state) { state ->
             binding.qrCode.setImageBitmap(state.qrCode)
-            binding.colorButtonForeground.bindColorSwatch(state.foregroundColor)
-            binding.colorButtonBackground.bindColorSwatch(state.backgroundColor)
+            binding.colorButtonForeground.bindColorSwatch(state.style.foregroundColor)
+            binding.colorButtonBackground.bindColorSwatch(state.style.backgroundColor)
             if (!isInitialized) {
                 isInitialized = true
                 initControls(state)
@@ -136,7 +136,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     }
 
     private fun initSizeControls(initialState: QrUiState) {
-        binding.sizeEdittext.setText(String.format(Locale.ROOT, "%d", initialState.size))
+        binding.sizeEdittext.setText(String.format(Locale.ROOT, "%d", initialState.style.size))
         binding.sizeEdittext.setOnEditorActionListener { textView, _, _ ->
             val newSize = textView.text.toString().toIntOrNull()
             if (newSize != null) {
@@ -150,7 +150,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         }
         binding.sizeSeekbar.max = MAX_SIZE
         binding.sizeSeekbar.min = MIN_SIZE
-        binding.sizeSeekbar.progress = initialState.size
+        binding.sizeSeekbar.progress = initialState.style.size
         binding.sizeSeekbar.setOnSeekBarChangeListener(
             object : SeslSeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
@@ -174,18 +174,18 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     }
 
     private fun initToggles(initialState: QrUiState) {
-        binding.frameCheckbox.isChecked = initialState.roundedFrame
+        binding.frameCheckbox.isChecked = initialState.style.roundedFrame
         binding.frameCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setRoundedFrame(isChecked) }
 
-        binding.iconCheckbox.isChecked = initialState.icon
+        binding.iconCheckbox.isChecked = initialState.style.icon
         binding.iconCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean -> viewModel.setIcon(isChecked) }
 
-        binding.tintBorderCheckbox.isChecked = initialState.tintBorder
+        binding.tintBorderCheckbox.isChecked = initialState.style.tintBorder
         binding.tintBorderCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
             viewModel.setTintBorder(isChecked)
         }
 
-        binding.tintAnchorCheckbox.isChecked = initialState.tintAnchor
+        binding.tintAnchorCheckbox.isChecked = initialState.style.tintAnchor
         binding.tintAnchorCheckbox.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
             viewModel.setTintAnchor(isChecked)
         }
@@ -194,11 +194,21 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     private fun initColorButtons() {
         binding.colorButtonBackground.onSingleLaunchClick {
             val state = viewModel.state.value
-            showColorPicker(BACKGROUND_COLOR_PICKER_TAG, state.backgroundColor, state.recentBackgroundColors, viewModel::setBackgroundColor)
+            showColorPicker(
+                BACKGROUND_COLOR_PICKER_TAG,
+                state.style.backgroundColor,
+                state.recentBackgroundColors,
+                viewModel::setBackgroundColor,
+            )
         }
         binding.colorButtonForeground.onSingleLaunchClick {
             val state = viewModel.state.value
-            showColorPicker(FOREGROUND_COLOR_PICKER_TAG, state.foregroundColor, state.recentForegroundColors, viewModel::setForegroundColor)
+            showColorPicker(
+                FOREGROUND_COLOR_PICKER_TAG,
+                state.style.foregroundColor,
+                state.recentForegroundColors,
+                viewModel::setForegroundColor,
+            )
         }
     }
 
