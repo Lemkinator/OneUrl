@@ -175,6 +175,84 @@ class CheckURLSafetyUseCaseTest {
         }
 
     @Test
+    fun `returns null links when the links are json null`() =
+        runTest {
+            respond(
+                """
+                {
+                  "query_status":"ok",
+                  "urlhaus_reference":null,
+                  "blacklists":{"spamhaus_dbl":"spammer_domain"},
+                  "payloads":[{"virustotal":{"link":null}}]
+                }
+                """.trimIndent(),
+            )
+
+            val result = checkURLSafety("example.com")
+
+            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.urlhausLink shouldBe null
+            result.virustotalLink shouldBe null
+        }
+
+    @Test
+    fun `returns null links when the link keys are missing`() =
+        runTest {
+            respond(
+                """{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"},"payloads":[{"virustotal":{}}]}""",
+            )
+
+            val result = checkURLSafety("example.com")
+
+            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.urlhausLink shouldBe null
+            result.virustotalLink shouldBe null
+        }
+
+    @Test
+    fun `returns null links when the links are blank`() =
+        runTest {
+            respond(
+                """
+                {
+                  "query_status":"ok",
+                  "urlhaus_reference":"  ",
+                  "blacklists":{"spamhaus_dbl":"spammer_domain"},
+                  "payloads":[{"virustotal":{"link":""}}]
+                }
+                """.trimIndent(),
+            )
+
+            val result = checkURLSafety("example.com")
+
+            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.urlhausLink shouldBe null
+            result.virustotalLink shouldBe null
+        }
+
+    @Test
+    fun `treats json null blacklist entries as not listed`() =
+        runTest {
+            respond("""{"query_status":"ok","blacklists":{"surbl":null,"spamhaus_dbl":null}}""")
+
+            val result = checkURLSafety("example.com")
+
+            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.message shouldBe
+                "This URL is blacklisted on: URLhaus.\n" +
+                "It may have been used abusively in the past, or it may link to another URL redirection service.\n" +
+                "If you continue trying to shorten blacklisted URLs, you may be blocked from using this App."
+        }
+
+    @Test
+    fun `returns Ok when query_status is json null`() =
+        runTest {
+            respond("""{"query_status":null,"blacklists":{"surbl":"listed"}}""")
+
+            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+        }
+
+    @Test
     fun `maps every known spamhaus status and falls back to the default reason otherwise`() =
         runTest {
             val statusToStringRes =
