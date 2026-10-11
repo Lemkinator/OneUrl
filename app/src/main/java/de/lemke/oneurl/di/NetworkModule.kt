@@ -21,9 +21,11 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import de.lemke.oneurl.data.DefaultNetworkMonitor
+import de.lemke.oneurl.data.DefaultPageTitleFetcher
 import de.lemke.oneurl.data.DefaultUrlhausClient
 import de.lemke.oneurl.data.DefaultVolleyQueue
 import de.lemke.oneurl.data.NetworkMonitor
+import de.lemke.oneurl.data.PageTitleFetcher
 import de.lemke.oneurl.data.UrlhausClient
 import de.lemke.oneurl.data.VolleyQueue
 
@@ -38,4 +40,7 @@ abstract class NetworkModule {
 
     @Binds
     abstract fun bindUrlhausClient(client: DefaultUrlhausClient): UrlhausClient
+
+    @Binds
+    abstract fun bindPageTitleFetcher(fetcher: DefaultPageTitleFetcher): PageTitleFetcher
 }

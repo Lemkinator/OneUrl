@@ -16,48 +16,12 @@
 
 package de.lemke.oneurl.domain
 
-import android.util.Log
-import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.withHttps
-import de.lemke.oneurl.data.VolleyQueue
+import de.lemke.oneurl.data.PageTitleFetcher
 import javax.inject.Inject
-import kotlin.coroutines.resume
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 class GetURLTitleUseCase @Inject constructor(
-    private val queue: VolleyQueue,
+    private val pageTitleFetcher: PageTitleFetcher,
 ) {
-    @Suppress("TooGenericExceptionCaught")
-    suspend operator fun invoke(url: String): String? =
-        suspendCancellableCoroutine { cont ->
-            val req =
-                StringRequest(
-                    url.withHttps(),
-                    { response ->
-                        if (!cont.isActive) return@StringRequest
-                        // Broad catch is intentional: Volley delivers this callback on the main thread, so an
-                        // unexpected exception here must not escape and crash the whole app.
-                        try {
-                            val title =
-                                Regex("<title[^>]*>(.*?)</title>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
-                                    .find(response)
-                                    ?.groupValues
-                                    ?.get(1)
-                                    ?.trim()
-                            Log.d("GetURLTitleUseCase", "title: $title")
-                            cont.resume(title)
-                        } catch (e: Exception) {
-                            Log.e("GetURLTitleUseCase", "error parsing title from response", e)
-                            cont.resume(null)
-                        }
-                    },
-                    { error ->
-                        if (!cont.isActive) return@StringRequest
-                        error.printStackTrace()
-                        cont.resume(null)
-                    },
-                )
-            queue.add(req)
-            cont.invokeOnCancellation { req.cancel() }
-        }
+    suspend operator fun invoke(url: String): String? = pageTitleFetcher.title(url.withHttps())
 }
