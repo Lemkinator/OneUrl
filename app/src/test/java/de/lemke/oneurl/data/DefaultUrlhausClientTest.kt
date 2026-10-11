@@ -126,6 +126,39 @@ class DefaultUrlhausClientTest {
         }
 
     @Test
+    fun `returns Blacklisted naming only SURBL with the default reason when spamhaus does not list the url`() =
+        runTest {
+            respond("""{"query_status":"ok","blacklists":{"surbl":"listed","spamhaus_dbl":"not listed"}}""")
+
+            val result = urlhausClient.check("example.com")
+
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
+            result.message shouldBe
+                blacklisted(
+                    "URLhaus, SURBL",
+                    "It may have been used abusively in the past, or it may link to another URL redirection service.",
+                )
+        }
+
+    @Test
+    fun `returns a null virustotal link when the first payload carries no usable link`() =
+        runTest {
+            listOf(
+                """[]""",
+                """["not an object"]""",
+                """[{}]""",
+                """[{"virustotal":{"link":""}}]""",
+            ).forEach { payloads ->
+                respond("""{"query_status":"ok","blacklists":{"surbl":"listed"},"payloads":$payloads}""")
+
+                val result = urlhausClient.check("example.com")
+
+                result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
+                result.virustotalLink shouldBe null
+            }
+        }
+
+    @Test
     fun `maps every known spamhaus status and falls back to the default reason otherwise`() =
         runTest {
             val statusToReason =
