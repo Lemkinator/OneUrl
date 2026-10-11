@@ -180,6 +180,7 @@ androidComponents {
 dependencies {
     implementation(libs.oneui.design)
     implementation(libs.oneui.icons)
+    implementation(libs.androidx.collection)
     implementation(libs.common.utils)
     implementation(libs.bundler)
     implementation(libs.coroutines.android)

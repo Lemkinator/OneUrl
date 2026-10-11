@@ -33,7 +33,6 @@ import org.robolectric.annotation.Config
 
 private fun bitmap(): Bitmap = mockk { every { byteCount } returns 1024 }
 
-// QRCodeCache wraps android.util.LruCache, which needs a real Android runtime, hence Robolectric here.
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
