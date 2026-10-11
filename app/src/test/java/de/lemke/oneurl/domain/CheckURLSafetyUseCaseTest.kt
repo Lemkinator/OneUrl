@@ -231,6 +231,28 @@ class CheckURLSafetyUseCaseTest {
         }
 
     @Test
+    fun `returns a null virustotal link when the payloads are empty`() =
+        runTest {
+            respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"},"payloads":[]}""")
+
+            val result = checkURLSafety("example.com")
+
+            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.virustotalLink shouldBe null
+        }
+
+    @Test
+    fun `returns a null virustotal link when the payload has a json null virustotal entry`() =
+        runTest {
+            respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"},"payloads":[{"virustotal":null}]}""")
+
+            val result = checkURLSafety("example.com")
+
+            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.virustotalLink shouldBe null
+        }
+
+    @Test
     fun `treats json null blacklist entries as not listed`() =
         runTest {
             respond("""{"query_status":"ok","blacklists":{"surbl":null,"spamhaus_dbl":null}}""")
