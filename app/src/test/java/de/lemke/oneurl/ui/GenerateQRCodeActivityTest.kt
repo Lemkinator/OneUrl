@@ -28,7 +28,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Looper
 import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
@@ -55,8 +54,6 @@ import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
-import io.mockk.every
-import io.mockk.mockk
 import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -577,8 +574,6 @@ class GenerateQRCodeActivityTest {
     private fun withActivity(block: (GenerateQRCodeActivity) -> Unit) {
         ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario -> scenario.onActivity(block) }
     }
-
-    private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
 
     private fun GenerateQRCodeActivity.preparedExportMenuItemsEnabled(): List<Boolean> {
         val menu = PopupMenu(this, findViewById(R.id.qr_code)).menu

@@ -29,17 +29,16 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
-import io.mockk.every
-import io.mockk.mockk
 import java.time.ZonedDateTime
 import kotlinx.coroutines.runBlocking
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.fakes.RoboMenuItem
 
 internal fun awaitMainIdle() {
     shadowOf(Looper.getMainLooper()).idle()
 }
 
-internal fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
+internal fun menuItem(itemId: Int): MenuItem = RoboMenuItem(itemId)
 
 internal fun MainActivity.searchView(): SearchView = (window.decorView as ViewGroup).descendants.filterIsInstance<SearchView>().first()
 

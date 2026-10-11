@@ -27,7 +27,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Looper
 import android.view.Menu
-import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
@@ -59,8 +58,6 @@ import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
-import io.mockk.every
-import io.mockk.mockk
 import java.io.File
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -852,6 +849,4 @@ class URLActivityTest {
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
 
     private fun URLActivity.exportState(): QRCodeExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
-
-    private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
 }
