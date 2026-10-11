@@ -135,7 +135,7 @@ class DagdTest {
 
         req.cancel()
 
-        req.isCanceled shouldBe true
+        queue.added shouldBe emptyList()
     }
 
     @Test
