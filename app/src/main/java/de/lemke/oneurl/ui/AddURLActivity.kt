@@ -40,8 +40,8 @@ import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityAddUrlBinding
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
 import de.lemke.oneurl.domain.model.AliasConfig
+import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet

@@ -25,9 +25,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.VolleyQueue
 import de.lemke.commonutils.R as commonutilsR
 
 /*
@@ -70,45 +68,43 @@ object Murl : ShortURLProvider {
 
     @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
-        context: Context,
+        queue: VolleyQueue,
         url: URL,
         callback: (clicks: Int?) -> Unit,
     ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$baseURL/${url.alias}"
         Log.d(tag, "start request: $requestURL")
-        RequestQueueSingleton.getInstance(context).apply {
-            removeCacheEntry(requestURL) // this provider is weird
-            addToRequestQueue(
-                StringRequest(
-                    Request.Method.GET,
-                    requestURL,
-                    { response ->
-                        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                        // escaping exception here would crash the whole app.
-                        try {
-                            // Log.d(tag, "response: $response")
-                            // <span class="mu-mc count-480357" title="Views">1</span>
-                            val clicks = response.substringAfter("\" title=\"Views\">").substringBefore("</span>").toIntOrNull()
-                            Log.d(tag, response.substringAfter("entry-date").substringBefore("entry-links"))
-                            Log.d(tag, "clicks: $clicks")
-                            callback(clicks)
-                        } catch (e: Exception) {
-                            Log.e(tag, "error: ${e.message}", e)
-                            callback(null)
-                        }
-                    },
-                    { error ->
-                        Log.e(tag, "error: $error")
+        queue.removeCacheEntry(requestURL) // this provider is weird
+        queue.add(
+            StringRequest(
+                Request.Method.GET,
+                requestURL,
+                { response ->
+                    // Broad catch is intentional: this runs in a Volley callback on the main thread; an
+                    // escaping exception here would crash the whole app.
+                    try {
+                        // Log.d(tag, "response: $response")
+                        // <span class="mu-mc count-480357" title="Views">1</span>
+                        val clicks = response.substringAfter("\" title=\"Views\">").substringBefore("</span>").toIntOrNull()
+                        Log.d(tag, response.substringAfter("entry-date").substringBefore("entry-links"))
+                        Log.d(tag, "clicks: $clicks")
+                        callback(clicks)
+                    } catch (e: Exception) {
+                        Log.e(tag, "error: ${e.message}", e)
                         callback(null)
-                    },
-                ),
-            )
-        }
+                    }
+                },
+                { error ->
+                    Log.e(tag, "error: $error")
+                    callback(null)
+                },
+            ),
+        )
     }
 
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,

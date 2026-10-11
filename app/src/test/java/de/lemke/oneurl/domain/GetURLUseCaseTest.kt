@@ -16,14 +16,12 @@
 
 package de.lemke.oneurl.domain
 
-import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.data.FakeURLRepository
+import de.lemke.oneurl.domain.model.Dagd
+import de.lemke.oneurl.domain.model.Tinyurl
 import de.lemke.oneurl.domain.model.URL
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
@@ -33,53 +31,45 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetURLUseCaseTest : ShouldSpec(
     {
-        val urlRepository = mockk<URLRepository>()
-        val dispatcher = StandardTestDispatcher()
-        val getURL = GetURLUseCase(urlRepository, dispatcher)
+        val newer = testUrl(shortURL = "https://da.gd/newer", provider = Dagd)
+        val older = testUrl(shortURL = "https://da.gd/older", provider = Dagd)
+        val otherProvider = testUrl(shortURL = "https://tinyurl.com/x", provider = Tinyurl)
+        val repository = FakeURLRepository(listOf(newer, otherProvider, older))
 
-        should("invoke(shortURL) suspends on the injected dispatcher before delegating to urlRepository.getURL") {
-            val url = testUrl(shortURL = "https://short.url/abc")
-            coEvery { urlRepository.getURL("https://short.url/abc") } returns url
+        should("invoke(shortURL) returns the stored url once the injected dispatcher runs") {
+            val dispatcher = StandardTestDispatcher()
+            val getURL = GetURLUseCase(repository, dispatcher)
             var result: URL? = null
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { result = getURL("https://short.url/abc") }
-                coVerify(exactly = 0) { urlRepository.getURL("https://short.url/abc") }
+                launch(Dispatchers.Unconfined) { result = getURL("https://da.gd/older") }
+                result shouldBe null
 
                 dispatcher.scheduler.advanceUntilIdle()
 
-                coVerify(exactly = 1) { urlRepository.getURL("https://short.url/abc") }
+                result shouldBe older
             }
-            result shouldBe url
         }
 
-        should("invoke(shortURL) returns null when urlRepository has no match") {
-            coEvery { urlRepository.getURL("https://short.url/missing") } returns null
-            var result: URL? = null
+        should("invoke(shortURL) returns null for an unknown short url") {
+            val getURL = GetURLUseCase(repository, Dispatchers.Unconfined)
 
-            coroutineScope {
-                launch(Dispatchers.Unconfined) { result = getURL("https://short.url/missing") }
-                dispatcher.scheduler.advanceUntilIdle()
-            }
-
-            result shouldBe null
+            getURL("https://da.gd/missing") shouldBe null
         }
 
-        should("invoke(shortURLProvider, longURL) suspends on the injected dispatcher before delegating to urlRepository.getURL") {
-            val provider = ShortURLProviderCompanion.default
-            val urls = listOf(testUrl(shortURL = "https://short.url/abc", provider = provider))
-            coEvery { urlRepository.getURL(provider, "https://example.com") } returns urls
+        should("invoke(shortURLProvider, longURL) lists the provider's urls newest first once the injected dispatcher runs") {
+            val dispatcher = StandardTestDispatcher()
+            val getURL = GetURLUseCase(repository, dispatcher)
             var result: List<URL>? = null
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { result = getURL(provider, "https://example.com") }
-                coVerify(exactly = 0) { urlRepository.getURL(provider, "https://example.com") }
+                launch(Dispatchers.Unconfined) { result = getURL(Dagd, "https://example.com") }
+                result shouldBe null
 
                 dispatcher.scheduler.advanceUntilIdle()
 
-                coVerify(exactly = 1) { urlRepository.getURL(provider, "https://example.com") }
+                result shouldBe listOf(newer, older)
             }
-            result shouldBe urls
         }
     },
 )

@@ -18,72 +18,77 @@ package de.lemke.oneurl.ui
 
 import androidx.lifecycle.SavedStateHandle
 import de.lemke.commonutils.data.FakeSharedPreferences
+import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeNetworkMonitor
+import de.lemke.oneurl.data.FakePageTitleFetcher
+import de.lemke.oneurl.data.FakeShortURLClient
+import de.lemke.oneurl.data.FakeShortURLClient.Create
+import de.lemke.oneurl.data.FakeURLRepository
+import de.lemke.oneurl.data.FakeUrlhausClient
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.AddURLUseCase
+import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.GetURLTitleUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.GenerateURLResult
 import de.lemke.oneurl.domain.generateURL.GenerateURLUseCase
-import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.GenerateURLError
+import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
-import de.lemke.oneurl.domain.model.URL
+import de.lemke.oneurl.domain.model.UrlhausResult
 import de.lemke.oneurl.domain.testUrl
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import io.mockk.slot
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddURLViewModelTest : ShouldSpec(
     {
-        val generateURL = mockk<GenerateURLUseCase>()
-        val getURLTitle = mockk<GetURLTitleUseCase>()
-        val addURL = mockk<AddURLUseCase>()
-        val getURL = mockk<GetURLUseCase>()
+        val provider = ShortURLProviderCompanion.default
         lateinit var userSettings: UserSettings
+        lateinit var repository: FakeURLRepository
+        lateinit var networkMonitor: FakeNetworkMonitor
+        lateinit var urlhausClient: FakeUrlhausClient
+        lateinit var pageTitleFetcher: FakePageTitleFetcher
+        lateinit var shortURLClient: FakeShortURLClient
 
         fun newViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()) =
             AddURLViewModel(
                 savedStateHandle,
                 userSettings,
-                generateURL,
-                getURLTitle,
-                addURL,
-                getURL,
+                GenerateURLUseCase(networkMonitor, CheckURLSafetyUseCase(urlhausClient), shortURLClient, Dispatchers.Unconfined),
+                GetURLTitleUseCase(pageTitleFetcher),
+                AddURLUseCase(repository, Dispatchers.Unconfined),
+                GetURLUseCase(repository, Dispatchers.Unconfined),
             )
 
         beforeEach {
-            clearMocks(generateURL, getURLTitle, addURL, getURL)
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
-            coEvery { getURL(any<ShortURLProvider>(), any()) } returns emptyList()
-            coEvery { getURLTitle(any()) } returns "title"
-            coEvery { addURL(any()) } returns Unit
-            coEvery { generateURL(any(), any(), any(), any()) } returns GenerateURLResult.Success("https://short.url/abc")
+            repository = FakeURLRepository()
+            networkMonitor = FakeNetworkMonitor()
+            urlhausClient = FakeUrlhausClient()
+            pageTitleFetcher = FakePageTitleFetcher().apply { titles["https://example.com"] = "title" }
+            shortURLClient = FakeShortURLClient().apply { results[provider] = GenerateURLResult.Success("https://short.url/abc") }
         }
 
         should("init state reflects userSettings when there is no intent URL") {
             userSettings.lastURL = "https://last.example.com"
             userSettings.lastAlias = "alias"
             userSettings.lastDescription = "a description"
-            val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
-            userSettings.selectedShortURLProvider = provider
+            val other = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
+            userSettings.selectedShortURLProvider = other
 
             val viewModel = newViewModel()
 
             viewModel.state.value.initialURL shouldBe "https://last.example.com"
             viewModel.state.value.initialAlias shouldBe "alias"
             viewModel.state.value.initialDescription shouldBe "a description"
-            viewModel.state.value.selectedProvider shouldBe provider
+            viewModel.state.value.selectedProvider shouldBe other
         }
 
         should("init state uses the intent URL and overwrites lastURL when launched with one") {
@@ -123,8 +128,7 @@ class AddURLViewModelTest : ShouldSpec(
         }
 
         should("submit is a no-op while already loading") {
-            val stuck = CompletableDeferred<List<URL>>()
-            coEvery { getURL(any<ShortURLProvider>(), any()) } coAnswers { stuck.await() }
+            shortURLClient.gate = CompletableDeferred()
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "", "")
@@ -132,62 +136,58 @@ class AddURLViewModelTest : ShouldSpec(
                 .shouldBeTrue()
             viewModel.submit("https://example.com", "", "")
 
-            coVerify(exactly = 1) { getURL(any<ShortURLProvider>(), any()) }
+            shortURLClient.created shouldBe listOf(Create(provider, "https://example.com", ""))
+            viewModel.state.value.loadingMessageRes shouldBe R.string.generating_url
         }
 
         should("submit holds AlreadyShortened with blank alias when an existing URL is found") {
-            val provider = ShortURLProviderCompanion.default
             val existing = testUrl(shortURL = "${provider.baseURL}/existing", provider = provider)
-            coEvery { getURL(provider, any()) } returns listOf(existing)
+            repository = FakeURLRepository(listOf(existing))
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "", "")
 
             viewModel.outcome.value shouldBe AddUrlOutcome.AlreadyShortened(existing.shortURL)
-            coVerify(exactly = 0) { generateURL(any(), any(), any(), any()) }
+            shortURLClient.created shouldBe emptyList()
         }
 
         should("submit holds AlreadyShortened when the alias matches an existing entry's shortURL exactly") {
-            val provider = ShortURLProviderCompanion.default
             val other = testUrl(shortURL = "${provider.baseURL}/other", provider = provider)
             val exact = testUrl(shortURL = "${provider.baseURL}/my-alias", provider = provider)
-            coEvery { getURL(provider, any()) } returns listOf(other, exact)
+            repository = FakeURLRepository(listOf(other, exact))
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "my-alias", "")
 
             viewModel.outcome.value shouldBe AddUrlOutcome.AlreadyShortened(exact.shortURL)
-            coVerify(exactly = 0) { generateURL(any(), any(), any(), any()) }
+            shortURLClient.created shouldBe emptyList()
         }
 
-        should("submit falls through to generateURL when alias is given but does not match an existing entry") {
-            val provider = ShortURLProviderCompanion.default
+        should("submit generates a URL when the alias does not match an existing entry") {
             val other = testUrl(shortURL = "${provider.baseURL}/other", provider = provider)
-            coEvery { getURL(provider, any()) } returns listOf(other)
+            repository = FakeURLRepository(listOf(other))
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "not-taken", "")
 
             viewModel.outcome.value shouldBe AddUrlOutcome.Saved
-            coVerify(exactly = 1) { getURLTitle(any()) }
-            coVerify(exactly = 1) { generateURL(provider, any(), "not-taken", any()) }
+            pageTitleFetcher.requested shouldBe listOf("https://example.com")
+            shortURLClient.created shouldBe listOf(Create(provider, "https://example.com", "not-taken"))
         }
 
-        should("submit calls getURLTitle and generateURL with the sanitized long URL when no existing URL is found") {
-            val provider = ShortURLProviderCompanion.default
+        should("submit fetches the title, checks and generates the URL with the sanitized long URL") {
             val viewModel = newViewModel()
-            val sanitized = provider.sanitizeLongURL("  https://example.com  ")
 
-            viewModel.submit("  https://example.com  ", "", "")
+            viewModel.submit("example.com", "", "")
 
             viewModel.outcome.value shouldBe AddUrlOutcome.Saved
-
-            coVerify(exactly = 1) { getURLTitle(sanitized) }
-            coVerify(exactly = 1) { generateURL(provider, sanitized, "", any()) }
+            pageTitleFetcher.requested shouldBe listOf("https://example.com")
+            urlhausClient.checked shouldBe listOf("https://example.com")
+            shortURLClient.created shouldBe listOf(Create(provider, "https://example.com", ""))
         }
 
-        should("submit holds Failed and stops loading without calling addURL on Failure") {
-            coEvery { generateURL(any(), any(), any(), any()) } returns GenerateURLResult.Failure(GenerateURLError.NoInternet)
+        should("submit holds Failed and stores nothing without internet") {
+            networkMonitor.online = false
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "", "")
@@ -195,60 +195,57 @@ class AddURLViewModelTest : ShouldSpec(
             viewModel.outcome.value shouldBe AddUrlOutcome.Failed(GenerateURLError.NoInternet)
             viewModel.state.value.isLoading
                 .shouldBeFalse()
-            coVerify(exactly = 0) { addURL(any()) }
+            repository.urls shouldBe emptyList()
+        }
+
+        should("submit holds Failed with the URLhaus details for a blacklisted URL") {
+            urlhausClient.results["https://example.com"] = UrlhausResult.Blacklisted("listed", "urlhaus-link", null)
+            val viewModel = newViewModel()
+
+            viewModel.submit("https://example.com", "", "")
+
+            viewModel.outcome.value shouldBe AddUrlOutcome.Failed(GenerateURLError.BlacklistedURL("listed", "urlhaus-link", null))
+            shortURLClient.created shouldBe emptyList()
         }
 
         should("submit saves and holds Saved on Success when autoCopyOnCreate is false") {
             userSettings.autoCopyOnCreate = false
-            val slot = slot<URL>()
-            coEvery { addURL(capture(slot)) } returns Unit
-            val provider = ShortURLProviderCompanion.default
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "", "my description")
 
             viewModel.outcome.value shouldBe AddUrlOutcome.Saved
-
-            coVerify(exactly = 1) { addURL(any()) }
-            slot.captured.shortURL shouldBe "https://short.url/abc"
-            slot.captured.longURL shouldBe provider.sanitizeLongURL("https://example.com")
-            slot.captured.shortURLProvider shouldBe provider
-            slot.captured.title shouldBe "title"
-            slot.captured.description shouldBe "my description"
-            slot.captured.favorite.shouldBeFalse()
+            val saved = repository.urls.single()
+            saved.shortURL shouldBe "https://short.url/abc"
+            saved.longURL shouldBe "https://example.com"
+            saved.shortURLProvider shouldBe provider
+            saved.title shouldBe "title"
+            saved.description shouldBe "my description"
+            saved.favorite.shouldBeFalse()
         }
 
-        should("submit falls back to an empty title when getURLTitle returns null") {
-            coEvery { getURLTitle(any()) } returns null
-            val slot = slot<URL>()
-            coEvery { addURL(capture(slot)) } returns Unit
+        should("submit falls back to an empty title when the page has none") {
+            pageTitleFetcher.titles.clear()
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "", "")
 
             viewModel.outcome.value shouldBe AddUrlOutcome.Saved
-
-            slot.captured.title shouldBe ""
+            repository.urls.single().title shouldBe ""
         }
 
-        should("submit forwards generateURL's progress callback into loadingMessageRes") {
-            val progress = slot<(Int) -> Unit>()
-            coEvery { generateURL(any(), any(), any(), capture(progress)) } coAnswers {
-                progress.captured(de.lemke.oneurl.R.string.generating_url)
-                GenerateURLResult.Success("https://short.url/abc")
-            }
+        should("submit ends on the last progress message of generateURL") {
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "", "")
 
             viewModel.outcome.value shouldBe AddUrlOutcome.Saved
-
-            viewModel.state.value.loadingMessageRes shouldBe de.lemke.oneurl.R.string.generating_url
+            viewModel.state.value.loadingMessageRes shouldBe R.string.generating_url
         }
 
         should("submit holds Copy on Success when autoCopyOnCreate is true") {
             userSettings.autoCopyOnCreate = true
-            coEvery { getURLTitle(any()) } returns "my title"
+            pageTitleFetcher.titles["https://example.com"] = "my title"
             val viewModel = newViewModel()
 
             viewModel.submit("https://example.com", "", "")
@@ -271,11 +268,12 @@ class AddURLViewModelTest : ShouldSpec(
             viewModel.outcome.value shouldBe AddUrlOutcome.None
             viewModel.submit("https://example.org", "", "")
             viewModel.outcome.value shouldBe AddUrlOutcome.Saved
-            coVerify(exactly = 2) { generateURL(any(), any(), any(), any()) }
+            shortURLClient.created shouldBe
+                listOf(Create(provider, "https://example.com", ""), Create(provider, "https://example.org", ""))
         }
 
         should("onOutcomeHandled keeps an outcome other than the handled one") {
-            coEvery { generateURL(any(), any(), any(), any()) } returns GenerateURLResult.Failure(GenerateURLError.NoInternet)
+            networkMonitor.online = false
             val viewModel = newViewModel()
             viewModel.submit("https://example.com", "", "")
             viewModel.onOutcomeHandled(AddUrlOutcome.Saved)

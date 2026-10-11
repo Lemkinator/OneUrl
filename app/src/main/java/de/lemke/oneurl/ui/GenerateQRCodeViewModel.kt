@@ -17,13 +17,13 @@
 package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
-import android.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
+import de.lemke.oneurl.domain.model.QRCodeStyle
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Job
@@ -58,8 +58,7 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun setSize(size: Int) {
-        state.update { it.copy(size = size) }
-        regenerate()
+        updateStyle { it.copy(size = size) }
         sizeSaveJob?.cancel()
         sizeSaveJob =
             viewModelScope.launch {
@@ -69,27 +68,23 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun setRoundedFrame(enabled: Boolean) {
-        state.update { it.copy(roundedFrame = enabled) }
+        updateStyle { it.copy(roundedFrame = enabled) }
         userSettings.qrFrame = enabled
-        regenerate()
     }
 
     fun setIcon(enabled: Boolean) {
-        state.update { it.copy(icon = enabled) }
+        updateStyle { it.copy(icon = enabled) }
         userSettings.qrIcon = enabled
-        regenerate()
     }
 
     fun setTintBorder(enabled: Boolean) {
-        state.update { it.copy(tintBorder = enabled) }
+        updateStyle { it.copy(tintBorder = enabled) }
         userSettings.qrTintBorder = enabled
-        regenerate()
     }
 
     fun setTintAnchor(enabled: Boolean) {
-        state.update { it.copy(tintAnchor = enabled) }
+        updateStyle { it.copy(tintAnchor = enabled) }
         userSettings.qrTintAnchor = enabled
-        regenerate()
     }
 
     fun setForegroundColor(color: Int) {
@@ -99,7 +94,7 @@ class GenerateQRCodeViewModel @Inject constructor(
                 .also { it.add(0, color) }
                 .distinct()
                 .take(6)
-        state.update { it.copy(foregroundColor = color, recentForegroundColors = recentColors) }
+        state.update { it.copy(style = it.style.copy(foregroundColor = color), recentForegroundColors = recentColors) }
         userSettings.qrRecentForegroundColors = recentColors
         regenerate()
     }
@@ -111,7 +106,7 @@ class GenerateQRCodeViewModel @Inject constructor(
                 .also { it.add(0, color) }
                 .distinct()
                 .take(6)
-        state.update { it.copy(backgroundColor = color, recentBackgroundColors = recentColors) }
+        state.update { it.copy(style = it.style.copy(backgroundColor = color), recentBackgroundColors = recentColors) }
         userSettings.qrRecentBackgroundColors = recentColors
         regenerate()
     }
@@ -139,50 +134,45 @@ class GenerateQRCodeViewModel @Inject constructor(
 
     private fun initialState(): QrUiState {
         val url = userSettings.qrURL
-        val size = userSettings.qrSize
         val recentForegroundColors = userSettings.qrRecentForegroundColors
         val recentBackgroundColors = userSettings.qrRecentBackgroundColors
-        val foregroundColor = recentForegroundColors.first()
-        val backgroundColor = recentBackgroundColors.first()
-        val tintAnchor = userSettings.qrTintAnchor
-        val tintBorder = userSettings.qrTintBorder
-        val icon = userSettings.qrIcon
-        val roundedFrame = userSettings.qrFrame
+        val style =
+            QRCodeStyle(
+                size = userSettings.qrSize,
+                foregroundColor = recentForegroundColors.first(),
+                backgroundColor = recentBackgroundColors.first(),
+                tintAnchor = userSettings.qrTintAnchor,
+                tintBorder = userSettings.qrTintBorder,
+                icon = userSettings.qrIcon,
+                roundedFrame = userSettings.qrFrame,
+            )
         return QrUiState(
             url = url,
-            qrCode = generateQRCode(url, size, foregroundColor, backgroundColor, tintAnchor, tintBorder, icon, roundedFrame),
-            size = size,
-            foregroundColor = foregroundColor,
-            backgroundColor = backgroundColor,
-            tintAnchor = tintAnchor,
-            tintBorder = tintBorder,
-            icon = icon,
-            roundedFrame = roundedFrame,
+            qrCode = generateQRCode(url, style),
+            style = style,
             recentForegroundColors = recentForegroundColors,
             recentBackgroundColors = recentBackgroundColors,
         )
+    }
+
+    private fun updateStyle(transform: (QRCodeStyle) -> QRCodeStyle) {
+        state.update { it.copy(style = transform(it.style)) }
+        regenerate()
     }
 
     // Runs synchronously on the calling (Main) dispatcher. QR encoding + canvas drawing is only a
     // few ms, and dispatching it to a background dispatcher makes cancellation ineffective mid-job
     // on rapid slider/text changes, producing concurrent bitmap allocations instead of preventing them.
     private fun regenerate() {
-        val s = state.value
-        val qr = generateQRCode(s.url, s.size, s.foregroundColor, s.backgroundColor, s.tintAnchor, s.tintBorder, s.icon, s.roundedFrame)
-        state.update { it.copy(qrCode = qr) }
+        val current = state.value
+        state.update { it.copy(qrCode = generateQRCode(current.url, current.style)) }
     }
 }
 
 data class QrUiState(
-    val url: String = "",
+    val url: String,
     val qrCode: Bitmap,
-    val size: Int = 512,
-    val foregroundColor: Int = Color.BLACK,
-    val backgroundColor: Int = Color.WHITE,
-    val tintAnchor: Boolean = false,
-    val tintBorder: Boolean = false,
-    val icon: Boolean = true,
-    val roundedFrame: Boolean = true,
-    val recentForegroundColors: List<Int> = listOf(Color.BLACK),
-    val recentBackgroundColors: List<Int> = listOf(Color.WHITE),
+    val style: QRCodeStyle,
+    val recentForegroundColors: List<Int>,
+    val recentBackgroundColors: List<Int>,
 )

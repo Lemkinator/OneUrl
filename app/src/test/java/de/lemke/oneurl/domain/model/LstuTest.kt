@@ -22,71 +22,28 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.params
+import de.lemke.oneurl.data.parseResponse
 import de.lemke.oneurl.domain.testUrl
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
-
-// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
-// Tests reach it via reflection to assert what the request actually sends.
-private fun Request<*>.paramsViaReflection(): Map<*, *>? {
-    val method = Request::class.java.getDeclaredMethod("getParams")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>?
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class LstuTest {
-    private val context = mockk<Context>()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `alias validity follows the allowed character set`() {
@@ -98,9 +55,9 @@ class LstuTest {
     @Test
     fun `create request succeeds when the short url ends with the requested alias`() {
         var result: String? = null
-        val req = Lstu.getCreateRequest(context, longURL, "test", { result = it }, { fail("unexpected error: $it") })
+        val req = Lstu.getCreateRequest(queue, longURL, "test", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("""{"success":true,"short":"https://lstu.fr/test"}""")
+        req.deliverResponse("""{"success":true,"short":"https://lstu.fr/test"}""")
 
         result shouldBe "https://lstu.fr/test"
     }
@@ -108,9 +65,9 @@ class LstuTest {
     @Test
     fun `create request succeeds for a blank alias regardless of the returned short url`() {
         var result: String? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("""{"success":true,"short":"https://lstu.fr/random123"}""")
+        req.deliverResponse("""{"success":true,"short":"https://lstu.fr/random123"}""")
 
         result shouldBe "https://lstu.fr/random123"
     }
@@ -118,9 +75,9 @@ class LstuTest {
     @Test
     fun `create request fails with AliasAlreadyExists when the short url does not end with the alias`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "test", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "test", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"success":true,"short":"https://lstu.fr/other"}""")
+        req.deliverResponse("""{"success":true,"short":"https://lstu.fr/other"}""")
 
         error shouldBe GenerateURLError.AliasAlreadyExists
     }
@@ -128,9 +85,9 @@ class LstuTest {
     @Test
     fun `create request fails with Custom when the response reports a msg`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"msg":"example.com is not a valid URL.","success":false}""")
+        req.deliverResponse("""{"msg":"example.com is not a valid URL.","success":false}""")
 
         error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "example.com is not a valid URL.")
     }
@@ -138,9 +95,9 @@ class LstuTest {
     @Test
     fun `create request fails with Unknown when the response has neither success nor msg`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"foo":"bar"}""")
+        req.deliverResponse("""{"foo":"bar"}""")
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -148,10 +105,10 @@ class LstuTest {
     @Test
     fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
-        req.deliverStringResponse(parsed.result as String)
+        req.deliverResponse(parsed.result as String)
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://lstu.fr")
     }
@@ -159,7 +116,7 @@ class LstuTest {
     @Test
     fun `create request offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -169,7 +126,7 @@ class LstuTest {
     @Test
     fun `create request with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -179,7 +136,7 @@ class LstuTest {
     @Test
     fun `create request with a status code maps to Unknown with that code`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
@@ -189,12 +146,10 @@ class LstuTest {
     @Test
     fun `getURLClickCount returns the counter reported by the stats endpoint`() {
         var clicks: Int? = -1
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
         val url = testUrl(shortURL = "https://lstu.fr/test")
 
-        Lstu.getURLClickCount(context, url) { clicks = it }
-        innerReq.captured.deliverStringResponse("""{"counter":702,"short":"https://lstu.fr/test","success":true}""")
+        Lstu.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse("""{"counter":702,"short":"https://lstu.fr/test","success":true}""")
 
         clicks shouldBe 702
     }
@@ -202,12 +157,10 @@ class LstuTest {
     @Test
     fun `getURLClickCount returns null when the response is not valid json`() {
         var clicks: Int? = -1
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
         val url = testUrl(shortURL = "https://lstu.fr/test")
 
-        Lstu.getURLClickCount(context, url) { clicks = it }
-        innerReq.captured.deliverStringResponse("not json")
+        Lstu.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse("not json")
 
         clicks shouldBe null
     }
@@ -215,12 +168,10 @@ class LstuTest {
     @Test
     fun `getURLClickCount returns null on a network error`() {
         var clicks: Int? = -1
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
         val url = testUrl(shortURL = "https://lstu.fr/test")
 
-        Lstu.getURLClickCount(context, url) { clicks = it }
-        innerReq.captured.deliverError(VolleyError("no network"))
+        Lstu.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverError(VolleyError("no network"))
 
         clicks shouldBe null
     }
@@ -251,9 +202,9 @@ class LstuTest {
     @Test
     fun `create request falls through to Unknown when success is true but short is missing`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"success":true}""")
+        req.deliverResponse("""{"success":true}""")
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -261,7 +212,7 @@ class LstuTest {
     @Test
     fun `create request with a status code and a null response body maps to Unknown with that status`() {
         var error: GenerateURLError? = null
-        val req = Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
@@ -273,7 +224,7 @@ class LstuTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Lstu.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -285,14 +236,14 @@ class LstuTest {
 
     @Test
     fun `getParams returns the lsturl, alias, and format params`() {
-        val req = Lstu.getCreateRequest(context, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Lstu.getCreateRequest(queue, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.paramsViaReflection() shouldBe mapOf("lsturl" to longURL, "lsturl-custom" to "test", "format" to "json")
+        req.params() shouldBe mapOf("lsturl" to longURL, "lsturl-custom" to "test", "format" to "json")
     }
 
     @Test
     fun `getRetryPolicy returns a policy with the request timeout and default retry settings`() {
-        val req = Lstu.getCreateRequest(context, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Lstu.getCreateRequest(queue, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
         val retryPolicy = req.retryPolicy
 

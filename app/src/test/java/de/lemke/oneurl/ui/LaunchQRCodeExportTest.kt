@@ -18,13 +18,9 @@ package de.lemke.oneurl.ui
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
-import androidx.activity.result.ActivityResultLauncher
 import androidx.test.core.app.ApplicationProvider
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
-import io.mockk.confirmVerified
-import io.mockk.mockk
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -37,7 +33,7 @@ import de.lemke.commonutils.R as commonutilsR
 @Config(application = Application::class, sdk = [36])
 class LaunchQRCodeExportTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val picker = mockk<ActivityResultLauncher<Intent>>()
+    private val picker = RecordingActivityResultLauncher()
     private val shareErrorText = context.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
 
     @Test
@@ -45,7 +41,7 @@ class LaunchQRCodeExportTest {
         context.launchQRCodeExport(QRCodeExport.CopyFailed, picker).shouldBeTrue()
 
         ShadowToast.getTextOfLatestToast() shouldBe shareErrorText
-        confirmVerified(picker)
+        picker.launched shouldBe emptyList()
     }
 
     @Test
@@ -53,6 +49,6 @@ class LaunchQRCodeExportTest {
         context.launchQRCodeExport(QRCodeExport.ShareFailed, picker).shouldBeTrue()
 
         ShadowToast.getTextOfLatestToast() shouldBe shareErrorText
-        confirmVerified(picker)
+        picker.launched shouldBe emptyList()
     }
 }

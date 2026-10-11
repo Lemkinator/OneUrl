@@ -20,11 +20,14 @@ import androidx.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dagger.hilt.android.testing.HiltAndroidTest
+import de.lemke.oneurl.data.FakeShortURLClient
+import de.lemke.oneurl.data.ShortURLClient
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.data.database.AppDatabase
 import javax.inject.Inject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +36,7 @@ import org.junit.runner.RunWith
 /**
  * Guards against Hilt's KSP module aggregation silently dropping a @TestInstallIn module
  * declared in src/testFixtures for the instrumented (src/androidTest) side, leaving the
- * production SettingsProvideModule/PersistenceModule active undetected. src/androidTest resolves
+ * production SettingsProvideModule/PersistenceModule/NetworkModule active undetected. src/androidTest resolves
  * testFixtures-hosted modules through a separate discovery path than the Robolectric (src/test)
  * side, so that side's TestFixturesModuleInstallationTest does not cover this one. Keep this test
  * even though it currently passes - a silent regression here produces no other failing test.
@@ -49,6 +52,9 @@ class TestFixturesModuleInstallationTest {
 
     @Inject
     lateinit var database: AppDatabase
+
+    @Inject
+    lateinit var shortURLClient: ShortURLClient
 
     @Before
     fun setUp() {
@@ -74,6 +80,15 @@ class TestFixturesModuleInstallationTest {
             "AppDatabase is file-backed ('app') - TestPersistenceModule (src/testFixtures) was NOT installed; " +
                 "production PersistenceModule won instead",
             database.openHelper.databaseName,
+        )
+    }
+
+    @Test
+    fun injectedNetworkClientsAreTheTestNetworkModuleFakes() {
+        assertTrue(
+            "ShortURLClient is ${shortURLClient::class.simpleName} - TestNetworkModule (src/testFixtures) was NOT installed; " +
+                "production NetworkModule would reach the real network",
+            shortURLClient is FakeShortURLClient,
         )
     }
 }

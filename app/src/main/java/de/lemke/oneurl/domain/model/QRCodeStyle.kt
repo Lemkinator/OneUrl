@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl.domain.generateURL
+package de.lemke.oneurl.domain.model
 
-sealed class GenerateURLResult {
-    data class Success(val shortURL: String) : GenerateURLResult()
-
-    data class Failure(val error: GenerateURLError) : GenerateURLResult()
-}
+/**
+ * The look of a customized QR code: its pixel [size], colors, whether the foreground tints the anchors and the border,
+ * whether the launcher [icon] sits in the center and whether a rounded frame surrounds it.
+ */
+data class QRCodeStyle(
+    val size: Int,
+    val foregroundColor: Int,
+    val backgroundColor: Int,
+    val tintAnchor: Boolean,
+    val tintBorder: Boolean,
+    val icon: Boolean,
+    val roundedFrame: Boolean,
+)

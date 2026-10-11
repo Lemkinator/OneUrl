@@ -17,7 +17,7 @@
 package de.lemke.oneurl.data
 
 import android.graphics.Bitmap
-import android.util.LruCache
+import androidx.collection.LruCache
 import javax.inject.Inject
 import javax.inject.Singleton
 

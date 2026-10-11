@@ -14,40 +14,31 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl.domain.generateURL
+package de.lemke.oneurl.data
 
 import android.app.Application
+import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import io.kotest.matchers.shouldBe
+import de.lemke.oneurl.data.database.AppDatabase
 import org.junit.After
-import org.junit.Before
-import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
-class RequestQueueSingletonTest {
-    private val context = ApplicationProvider.getApplicationContext<Application>()
+class DefaultURLRepositoryContractTest : URLRepositoryContract() {
+    private val database =
+        Room
+            .inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
+            .allowMainThreadQueries()
+            .setQueryCoroutineContext(dispatcher)
+            .build()
 
-    private fun resetInstance() {
-        val field = RequestQueueSingleton::class.java.getDeclaredField("instance")
-        field.isAccessible = true
-        field.set(null, null)
-    }
-
-    @Before
-    fun setUp() = resetInstance()
+    override fun createRepository(): URLRepository = DefaultURLRepository(database.urlDao())
 
     @After
-    fun tearDown() = resetInstance()
-
-    @Test
-    fun `getInstance returns the same instance for repeated calls`() {
-        val first = RequestQueueSingleton.getInstance(context)
-        val second = RequestQueueSingleton.getInstance(context)
-
-        first shouldBe second
+    fun closeDatabase() {
+        database.close()
     }
 }

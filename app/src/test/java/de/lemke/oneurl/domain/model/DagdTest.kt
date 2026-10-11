@@ -17,62 +17,32 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
-import android.content.Context
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.StringRequest
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class DagdTest {
-    private val context = mockk<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `blank alias succeeds when da-gd returns a short url`() {
         var result: String? = null
-        val req = Dagd.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Dagd.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("https://da.gd/abc")
+        req.deliverResponse("https://da.gd/abc")
 
         result shouldBe "https://da.gd/abc"
     }
@@ -80,9 +50,9 @@ class DagdTest {
     @Test
     fun `blank alias fails with Unknown when the response is unrecognized`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("not a da.gd url")
+        req.deliverResponse("not a da.gd url")
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -90,9 +60,9 @@ class DagdTest {
     @Test
     fun `alias coshorten check succeeds when the existing short url points to the same long url`() {
         var result: String? = null
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse(longURL)
+        req.deliverResponse(longURL)
 
         result shouldBe "https://da.gd/abc"
     }
@@ -100,9 +70,9 @@ class DagdTest {
     @Test
     fun `alias coshorten check fails with AliasAlreadyExists when it points elsewhere`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("https://other.example.com")
+        req.deliverResponse("https://other.example.com")
 
         error shouldBe GenerateURLError.AliasAlreadyExists
     }
@@ -110,7 +80,7 @@ class DagdTest {
     @Test
     fun `alias coshorten check offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -120,7 +90,7 @@ class DagdTest {
     @Test
     fun `alias coshorten check with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -130,12 +100,10 @@ class DagdTest {
     @Test
     fun `alias coshorten check 404 falls through to creating the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
         req.deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
-        innerReq.captured.deliverStringResponse("https://da.gd/abc")
+        queue.added.single().deliverResponse("https://da.gd/abc")
 
         result shouldBe "https://da.gd/abc"
     }
@@ -143,35 +111,31 @@ class DagdTest {
     @Test
     fun `alias coshorten check with a non-404 status still falls through to creating the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
-        innerReq.captured.deliverStringResponse("https://da.gd/abc")
+        queue.added.single().deliverResponse("https://da.gd/abc")
 
         result shouldBe "https://da.gd/abc"
     }
 
     @Test
     fun `cancel also cancels the inner create request once the coshorten check has queued it`() {
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error") })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error") })
 
         req.deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
         req.cancel()
 
-        innerReq.captured.isCanceled shouldBe true
+        queue.added.single().isCanceled shouldBe true
     }
 
     @Test
     fun `cancel before the inner create request exists only cancels the check request`() {
-        val req = Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error") })
+        val req = Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error") })
 
         req.cancel()
 
-        req.isCanceled shouldBe true
+        queue.added shouldBe emptyList()
     }
 
     @Test
@@ -179,7 +143,7 @@ class DagdTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Dagd.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }) {
+            Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -201,7 +165,7 @@ class DagdTest {
             )
         cases.forEach { (message, expected) ->
             var error: GenerateURLError? = null
-            val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+            val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
             req.deliverError(VolleyError(NetworkResponse(400, message.toByteArray(), false, 0L, emptyList())))
 
@@ -212,7 +176,7 @@ class DagdTest {
     @Test
     fun `create request falls back to Custom for an unrecognized error message`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
@@ -222,7 +186,7 @@ class DagdTest {
     @Test
     fun `create request maps a blank error body to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
@@ -232,7 +196,7 @@ class DagdTest {
     @Test
     fun `create request maps a null error body to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
@@ -244,7 +208,7 @@ class DagdTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -257,7 +221,7 @@ class DagdTest {
     @Test
     fun `create request offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -267,7 +231,7 @@ class DagdTest {
     @Test
     fun `create request with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Dagd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 

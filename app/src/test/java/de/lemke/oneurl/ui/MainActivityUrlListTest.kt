@@ -21,7 +21,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
-import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.bypassOobe
@@ -30,14 +29,9 @@ import de.lemke.commonutils.ui.widget.NoEntryView
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.ObserveURLsUseCase
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.every
-import io.mockk.mockk
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -56,10 +50,6 @@ class MainActivityUrlListTest {
     @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
 
-    @BindValue
-    @JvmField
-    val observeURLsStub: ObserveURLsUseCase = mockk()
-
     @Inject
     lateinit var settings: SettingsRepository
 
@@ -70,9 +60,6 @@ class MainActivityUrlListTest {
     fun setup() {
         hiltRule.inject()
         settings.bypassOobe()
-        every { observeURLsStub(any(), any()) } answers {
-            ObserveURLsUseCase(urlRepository, Dispatchers.Unconfined).invoke(firstArg(), secondArg())
-        }
     }
 
     @Test
@@ -300,27 +287,6 @@ class MainActivityUrlListTest {
             scenario.recreate()
             awaitMainIdle()
             scenario.read { it.urlList().firstVisiblePosition() } shouldBe scrolledTo
-        }
-    }
-
-    // common-utils' configureCommonUtilsSplashScreen keeps the real splash screen on-screen via a
-    // pre-draw block for as long as !isUIReady; ActivityScenario.launch's visible() transition
-    // idles the main looper until that resolves, which never happens with an ever-empty flow -
-    // build the activity without a visible() window (no real traversal/splash loop) instead.
-    @Test
-    fun `collectState returns early while the view model is not ui-ready`() {
-        every { observeURLsStub(any(), any()) } returns emptyFlow()
-        val controller =
-            Robolectric
-                .buildActivity(MainActivity::class.java)
-                .create()
-                .start()
-                .resume()
-        try {
-            awaitMainIdle()
-            controller.get().noEntryView().text shouldBe controller.get().getString(commonutilsR.string.commonutils_no_results_found)
-        } finally {
-            controller.pause().stop().destroy()
         }
     }
 

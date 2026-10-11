@@ -16,155 +16,74 @@
 
 package de.lemke.oneurl.domain
 
-import android.graphics.Color
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.test.core.app.ApplicationProvider
-import de.lemke.oneurl.App
-import dev.oneuiproject.oneui.qr.utils.QrEncoder
-import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.every
-import io.mockk.mockkConstructor
-import io.mockk.mockkStatic
-import io.mockk.unmockkConstructor
-import io.mockk.unmockkStatic
-import kotlinx.coroutines.test.runTest
+import android.app.Application
+import android.graphics.Bitmap
+import de.lemke.oneurl.data.FakeQRCodeRenderer
+import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
+import de.lemke.oneurl.domain.model.QRCodeStyle
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
-import de.lemke.commonutils.R as commonutilsR
 
-// QrEncoder draws through android.graphics; the default Robolectric legacy graphics stub cannot
-// produce a real bitmap, hence the native graphics mode.
 @RunWith(RobolectricTestRunner::class)
-@Config(application = App::class, sdk = [36])
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(application = Application::class, sdk = [36])
 class GenerateQRCodeUseCaseTest {
-    private val context = ApplicationProvider.getApplicationContext<App>()
-    private val generateQRCode = GenerateQRCodeUseCase(context)
+    private val qrCode = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
+    private val placeholder = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+    private val renderer = FakeQRCodeRenderer(qrCode, placeholder)
+    private val generateQRCode = GenerateQRCodeUseCase(renderer)
+    private val style =
+        QRCodeStyle(
+            size = 300,
+            foregroundColor = 0xFF112233.toInt(),
+            backgroundColor = 0xFFFFFFFF.toInt(),
+            tintAnchor = true,
+            tintBorder = false,
+            icon = true,
+            roundedFrame = false,
+        )
 
     @Test
-    fun `default overload returns a bitmap`() =
-        runTest {
-            generateQRCode("https://example.com") shouldNotBe null
-        }
+    fun `default overload renders the url without a style`() {
+        generateQRCode("https://example.com") shouldBeSameInstanceAs qrCode
+
+        renderer.renders shouldBe listOf(Render("https://example.com", null))
+    }
 
     @Test
-    fun `customized overload with icon returns a bitmap of the requested size`() =
-        runTest {
-            val result =
-                generateQRCode(
-                    "https://example.com",
-                    size = 300,
-                    foregroundColor = Color.BLACK,
-                    backgroundColor = Color.WHITE,
-                    tintAnchor = true,
-                    tintBorder = true,
-                    icon = true,
-                    roundedFrame = true,
-                )
+    fun `styled overload renders the url in the given style`() {
+        generateQRCode("https://example.com", style) shouldBeSameInstanceAs qrCode
 
-            result.shouldBeInstanceOf<android.graphics.Bitmap>()
-        }
+        renderer.renders shouldBe listOf(Render("https://example.com", style))
+    }
 
     @Test
-    fun `customized overload without icon still returns a bitmap`() =
-        runTest {
-            val result =
-                generateQRCode(
-                    "https://example.com",
-                    size = 200,
-                    foregroundColor = Color.BLACK,
-                    backgroundColor = Color.WHITE,
-                    tintAnchor = false,
-                    tintBorder = false,
-                    icon = false,
-                    roundedFrame = false,
-                )
+    fun `a render without a bitmap returns the placeholder`() {
+        renderer.qrCode = null
 
-            result shouldNotBe null
-        }
+        generateQRCode("https://example.com", style) shouldBeSameInstanceAs placeholder
+
+        renderer.placeholdersDrawn shouldBe 1
+    }
 
     @Test
-    fun `invalid size falls back to the no-support placeholder bitmap`() =
-        runTest {
-            val result =
-                generateQRCode(
-                    "https://example.com",
-                    size = -1,
-                    foregroundColor = Color.BLACK,
-                    backgroundColor = Color.WHITE,
-                    tintAnchor = false,
-                    tintBorder = false,
-                    icon = false,
-                    roundedFrame = false,
-                )
+    fun `a failed default render returns the placeholder`() {
+        renderer.failure = IllegalArgumentException("boom")
 
-            result shouldNotBe null
-        }
+        generateQRCode("https://example.com") shouldBeSameInstanceAs placeholder
+
+        renderer.placeholdersDrawn shouldBe 1
+    }
 
     @Test
-    fun `default overload falls back to the no-support placeholder when QrEncoder throws`() =
-        runTest {
-            mockkConstructor(QrEncoder::class)
-            every { anyConstructed<QrEncoder>().setIcon(any<Int>()) } throws RuntimeException("boom")
+    fun `a failed styled render returns the placeholder`() {
+        renderer.failure = IllegalStateException("boom")
 
-            try {
-                generateQRCode("https://example.com") shouldNotBe null
-            } finally {
-                unmockkConstructor(QrEncoder::class)
-            }
-        }
+        generateQRCode("https://example.com", style) shouldBeSameInstanceAs placeholder
 
-    @Test
-    fun `no-support placeholder still renders when the launcher icon drawable is unavailable`() =
-        runTest {
-            mockkStatic(AppCompatResources::class)
-            every { AppCompatResources.getDrawable(context, commonutilsR.drawable.ic_launcher_themed) } returns null
-
-            try {
-                val result =
-                    generateQRCode(
-                        "https://example.com",
-                        size = -1,
-                        foregroundColor = Color.BLACK,
-                        backgroundColor = Color.WHITE,
-                        tintAnchor = false,
-                        tintBorder = false,
-                        icon = false,
-                        roundedFrame = false,
-                    )
-
-                result shouldNotBe null
-            } finally {
-                unmockkStatic(AppCompatResources::class)
-            }
-        }
-
-    @Test
-    fun `customized overload falls back to the no-support placeholder when QrEncoder throws`() =
-        runTest {
-            mockkConstructor(QrEncoder::class)
-            every { anyConstructed<QrEncoder>().setBackgroundColor(any()) } throws RuntimeException("boom")
-
-            try {
-                val result =
-                    generateQRCode(
-                        "https://example.com",
-                        size = 300,
-                        foregroundColor = Color.BLACK,
-                        backgroundColor = Color.WHITE,
-                        tintAnchor = true,
-                        tintBorder = true,
-                        icon = true,
-                        roundedFrame = true,
-                    )
-
-                result shouldNotBe null
-            } finally {
-                unmockkConstructor(QrEncoder::class)
-            }
-        }
+        renderer.placeholdersDrawn shouldBe 1
+    }
 }

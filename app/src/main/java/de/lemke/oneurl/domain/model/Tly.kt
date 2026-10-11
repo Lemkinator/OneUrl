@@ -23,8 +23,7 @@ import com.android.volley.ParseError
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
+import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -182,7 +181,7 @@ sealed class Tly : ShortURLProvider {
         override val name = "t.ly"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -194,7 +193,7 @@ sealed class Tly : ShortURLProvider {
         override val name = "t.ly (ibit.ly)"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -206,7 +205,7 @@ sealed class Tly : ShortURLProvider {
         override val name = "t.ly (twtr.to)"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -218,7 +217,7 @@ sealed class Tly : ShortURLProvider {
         override val name = "t.ly (jpeg.ly)"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -231,7 +230,7 @@ sealed class Tly : ShortURLProvider {
         override val name = "t.ly (rebrand.ly)"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -244,7 +243,7 @@ sealed class Tly : ShortURLProvider {
         override val name = "t.ly (bit.ly)"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,

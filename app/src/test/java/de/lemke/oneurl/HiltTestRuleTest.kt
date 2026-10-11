@@ -23,11 +23,6 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import io.mockk.verify
 import javax.inject.Inject
 import org.junit.Rule
 import org.junit.Test
@@ -68,7 +63,7 @@ class HiltTestRuleTest {
         val closeFailure = IllegalStateException("close failed")
         hiltRule.inject()
         database.openHelper.writableDatabase
-        HiltTestRule.closeAfterTest(mockk { every { close() } throws closeFailure })
+        HiltTestRule.closeAfterTest { throw closeFailure }
         outcome.verify = { failure ->
             failure shouldBeSameInstanceAs testFailure
             failure!!.suppressed.toList() shouldContainExactly listOf(closeFailure)
@@ -80,7 +75,7 @@ class HiltTestRuleTest {
     @Test
     fun `reports a close failure when the test passes`() {
         val closeFailure = IllegalStateException("close failed")
-        HiltTestRule.closeAfterTest(mockk { every { close() } throws closeFailure })
+        HiltTestRule.closeAfterTest { throw closeFailure }
         outcome.verify = { failure -> failure shouldBeSameInstanceAs closeFailure }
     }
 
@@ -88,27 +83,23 @@ class HiltTestRuleTest {
     fun `closes every database and keeps every close failure`() {
         val firstFailure = IllegalStateException("first close failed")
         val secondFailure = IllegalStateException("second close failed")
-        val healthy = mockk<AppDatabase>(relaxed = true)
-        HiltTestRule.closeAfterTest(mockk { every { close() } throws firstFailure })
-        HiltTestRule.closeAfterTest(healthy)
-        HiltTestRule.closeAfterTest(mockk { every { close() } throws secondFailure })
+        var healthyCloses = 0
+        HiltTestRule.closeAfterTest { throw firstFailure }
+        HiltTestRule.closeAfterTest { healthyCloses++ }
+        HiltTestRule.closeAfterTest { throw secondFailure }
         outcome.verify = { failure ->
             failure shouldBeSameInstanceAs firstFailure
             failure!!.suppressed.toList() shouldContainExactly listOf(secondFailure)
-            verify(exactly = 1) { healthy.close() }
+            healthyCloses shouldBe 1
         }
     }
 
     @Test
     fun `builds no database to close when the test never injects`() {
-        mockkObject(TestPersistenceModule)
+        val registrationsBefore = HiltTestRule.registrations
         outcome.verify = { failure ->
-            try {
-                failure.shouldBeNull()
-                verify(exactly = 0) { TestPersistenceModule.provideTestAppDatabase(any()) }
-            } finally {
-                unmockkObject(TestPersistenceModule)
-            }
+            failure.shouldBeNull()
+            HiltTestRule.registrations shouldBe registrationsBefore
         }
     }
 

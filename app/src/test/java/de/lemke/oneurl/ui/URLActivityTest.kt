@@ -27,7 +27,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Looper
 import android.view.Menu
-import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
@@ -44,6 +43,7 @@ import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.QRCodeExporter
 import de.lemke.oneurl.data.URLRepository
@@ -58,11 +58,6 @@ import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import io.mockk.verify
 import java.io.File
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -81,10 +76,6 @@ import org.robolectric.shadows.ShadowToast
 import de.lemke.commonutils.R as commonutilsR
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
-// Dagd is used as in URLActivityScreenshotTest: its default getURLClickCount() resolves
-// synchronously with no Volley/network I/O, so refreshVisitCount() (fired from URLViewModel.init)
-// never touches the network Robolectric has no access to.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
@@ -104,6 +95,9 @@ class URLActivityTest {
 
     @Inject
     lateinit var qrCodeCache: QRCodeCache
+
+    @Inject
+    lateinit var shortURLClient: FakeShortURLClient
 
     private lateinit var seededUrl: URL
 
@@ -588,21 +582,21 @@ class URLActivityTest {
     }
 
     @Test
-    fun `urlVisitsRefreshButton click re-invokes refreshVisitCount`() {
-        mockkObject(Dagd)
-        every { Dagd.getURLClickCount(any(), any(), any()) } answers { thirdArg<(Int?) -> Unit>().invoke(1) }
-        try {
-            withUrlActivity { activity ->
-                awaitMainIdle()
-                activity.findViewById<android.view.View>(R.id.url_visits_refresh_button).performClick()
-                awaitMainIdle()
-                verify(exactly = 2) { Dagd.getURLClickCount(any(), any(), any()) }
-                val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
-                button.isEnabled.shouldBeTrue()
-                button.alpha shouldBe 1f
-            }
-        } finally {
-            unmockkObject(Dagd)
+    fun `urlVisitsRefreshButton click shows the refreshed visit count`() {
+        shortURLClient.visitCounts[seededUrl.shortURL] = 1
+        withUrlActivity { activity ->
+            awaitMainIdle()
+            val visits = activity.findViewById<android.widget.TextView>(R.id.url_visits_textview)
+            visits.text.toString() shouldBe "1"
+            shortURLClient.visitCounts[seededUrl.shortURL] = 7
+
+            activity.findViewById<android.view.View>(R.id.url_visits_refresh_button).performClick()
+            awaitMainIdle()
+
+            visits.text.toString() shouldBe "7"
+            val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
+            button.isEnabled.shouldBeTrue()
+            button.alpha shouldBe 1f
         }
     }
 
@@ -622,18 +616,13 @@ class URLActivityTest {
     fun `visit count textview shows the formatted click count when the provider returns one`() {
         val url = seededUrl.copy(shortURL = "https://da.gd/visit-count-shown")
         runBlocking { urlRepository.addURL(url) }
-        mockkObject(Dagd)
-        every { Dagd.getURLClickCount(any(), any(), any()) } answers { thirdArg<(Int?) -> Unit>().invoke(42) }
+        shortURLClient.visitCounts[url.shortURL] = 42
 
-        try {
-            withUrlActivity(shortURL = url.shortURL) { activity ->
-                awaitMainIdle()
-                activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeTrue()
-                activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeTrue()
-                activity.findViewById<android.widget.TextView>(R.id.url_visits_textview).text.toString() shouldBe "42"
-            }
-        } finally {
-            unmockkObject(Dagd)
+        withUrlActivity(shortURL = url.shortURL) { activity ->
+            awaitMainIdle()
+            activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeTrue()
+            activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeTrue()
+            activity.findViewById<android.widget.TextView>(R.id.url_visits_textview).text.toString() shouldBe "42"
         }
     }
 
@@ -865,6 +854,4 @@ class URLActivityTest {
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
 
     private fun URLActivity.exportState(): QRCodeExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
-
-    private fun menuItem(itemId: Int): MenuItem = mockk { every { getItemId() } returns itemId }
 }

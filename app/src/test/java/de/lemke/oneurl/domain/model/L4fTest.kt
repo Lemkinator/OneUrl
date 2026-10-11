@@ -21,61 +21,33 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJSONResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class L4fTest {
-    private val context = mockk<Context>()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `blank alias succeeds when the response has no error`() {
         var result: String? = null
-        val req = L4f.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = L4f.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJSONResponse(
+        req.deliverResponse(
             JSONObject("""{"error":false,"message":"Link has been shortened","data":{"id":7498,"shorturl":"https://l4f.com/xyz"}}"""),
         )
 
@@ -85,9 +57,9 @@ class L4fTest {
     @Test
     fun `alias succeeds when the returned short url matches the requested alias`() {
         var result: String? = null
-        val req = L4f.getCreateRequest(context, longURL, "asdf", { result = it }, { fail("unexpected error: $it") })
+        val req = L4f.getCreateRequest(queue, longURL, "asdf", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJSONResponse(
+        req.deliverResponse(
             JSONObject("""{"error":false,"message":"Link has been shortened","data":{"id":7498,"shorturl":"https://l4f.com/asdf"}}"""),
         )
 
@@ -97,9 +69,9 @@ class L4fTest {
     @Test
     fun `fails with URLExistsWithDifferentAlias when the returned short url does not match the requested alias`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(
+        req.deliverResponse(
             JSONObject("""{"error":false,"message":"Link has been shortened","data":{"id":7498,"shorturl":"https://l4f.com/other"}}"""),
         )
 
@@ -117,9 +89,9 @@ class L4fTest {
             )
         cases.forEach { (message, expected) ->
             var error: GenerateURLError? = null
-            val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+            val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
-            req.deliverJSONResponse(JSONObject().put("error", true).put("message", message))
+            req.deliverResponse(JSONObject().put("error", true).put("message", message))
 
             error shouldBe expected
         }
@@ -128,9 +100,9 @@ class L4fTest {
     @Test
     fun `response falls back to Custom for an unrecognized error message`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("error", true).put("message", "something unexpected happened"))
+        req.deliverResponse(JSONObject().put("error", true).put("message", "something unexpected happened"))
 
         error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "something unexpected happened")
     }
@@ -138,7 +110,7 @@ class L4fTest {
     @Test
     fun `network error offline maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -148,7 +120,7 @@ class L4fTest {
     @Test
     fun `network error with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -158,7 +130,7 @@ class L4fTest {
     @Test
     fun `network error with a status code maps to Unknown with that status code`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
@@ -168,7 +140,7 @@ class L4fTest {
     @Test
     fun `network error with a null response body maps to Unknown with that status code`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
@@ -178,9 +150,9 @@ class L4fTest {
     @Test
     fun `response with no error and no shorturl falls back to Custom`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject("""{"error":false,"message":"unexpected shape"}"""))
+        req.deliverResponse(JSONObject("""{"error":false,"message":"unexpected shape"}"""))
 
         error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "unexpected shape")
     }
@@ -214,9 +186,9 @@ class L4fTest {
     @Test
     fun `response success callback that throws is caught and reported as unknown`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(context, longURL, "", { throw IllegalStateException("boom") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "", { throw IllegalStateException("boom") }, { error = it })
 
-        req.deliverJSONResponse(
+        req.deliverResponse(
             JSONObject("""{"error":false,"message":"Link has been shortened","data":{"id":7498,"shorturl":"https://l4f.com/xyz"}}"""),
         )
 
@@ -228,7 +200,7 @@ class L4fTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            L4f.getCreateRequest(context, longURL, "asdf", { fail("unexpected success") }) {
+            L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }

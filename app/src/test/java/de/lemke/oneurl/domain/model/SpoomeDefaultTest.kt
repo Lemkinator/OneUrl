@@ -17,64 +17,28 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
-import android.content.Context
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.JsonObjectRequest
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
 import java.time.ZonedDateTime
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJsonResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class SpoomeDefaultTest {
-    private val context = mockk<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `sanitizeLongURL adds https, encodes ampersands, and trims`() {
@@ -84,7 +48,7 @@ class SpoomeDefaultTest {
 
     @Test
     fun `create request sends the expected Accept header`() {
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { }, { fail("unexpected error") })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { }, { fail("unexpected error") })
 
         req.headers["Accept"] shouldBe "application/json"
     }
@@ -92,9 +56,9 @@ class SpoomeDefaultTest {
     @Test
     fun `succeeds with the trimmed short url when the response contains one`() {
         var result: String? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJsonResponse(JSONObject().put("short_url", " https://spoo.me/NSPBXZ "))
+        req.deliverResponse(JSONObject().put("short_url", " https://spoo.me/NSPBXZ "))
 
         result shouldBe "https://spoo.me/NSPBXZ"
     }
@@ -102,9 +66,9 @@ class SpoomeDefaultTest {
     @Test
     fun `fails with Unknown when the response has no short_url`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject())
+        req.deliverResponse(JSONObject())
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -112,7 +76,7 @@ class SpoomeDefaultTest {
     @Test
     fun `offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -122,7 +86,7 @@ class SpoomeDefaultTest {
     @Test
     fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
         req.deliverError(parsed.error)
@@ -133,7 +97,7 @@ class SpoomeDefaultTest {
     @Test
     fun `error with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -143,7 +107,7 @@ class SpoomeDefaultTest {
     @Test
     fun `error with a null body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, null, false, 0L, emptyList())))
 
@@ -153,7 +117,7 @@ class SpoomeDefaultTest {
     @Test
     fun `error body with UrlError maps to InvalidURL`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = """{"UrlError":"Invalid URL, URL must have a valid protocol"}"""
 
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
@@ -164,7 +128,7 @@ class SpoomeDefaultTest {
     @Test
     fun `error body with an already-exists AliasError maps to AliasAlreadyExists`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = """{"AliasError":"Alias already exists"}"""
 
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
@@ -175,7 +139,7 @@ class SpoomeDefaultTest {
     @Test
     fun `error body with an invalid AliasError maps to InvalidAlias`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = """{"AliasError":"Invalid Alias"}"""
 
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
@@ -186,7 +150,7 @@ class SpoomeDefaultTest {
     @Test
     fun `error body with an unrecognized AliasError falls back to Custom`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = """{"AliasError":"something else entirely"}"""
 
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
@@ -197,7 +161,7 @@ class SpoomeDefaultTest {
     @Test
     fun `429 status with an unrecognized body maps to RateLimitExceeded`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = """{"message":"rate limited"}"""
 
         req.deliverError(VolleyError(NetworkResponse(429, body.toByteArray(), false, 0L, emptyList())))
@@ -208,7 +172,7 @@ class SpoomeDefaultTest {
     @Test
     fun `unrecognized error body falls back to Custom with the raw body`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = """{"message":"server exploded"}"""
 
         req.deliverError(VolleyError(NetworkResponse(500, body.toByteArray(), false, 0L, emptyList())))
@@ -219,7 +183,7 @@ class SpoomeDefaultTest {
     @Test
     fun `plain-text 503 error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(503, "Service Unavailable".toByteArray(), false, 0L, emptyList())))
 
@@ -229,7 +193,7 @@ class SpoomeDefaultTest {
     @Test
     fun `HTML 404 error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = "<html><body><h1>404 Not Found</h1></body></html>"
 
         req.deliverError(VolleyError(NetworkResponse(404, body.toByteArray(), false, 0L, emptyList())))
@@ -241,7 +205,7 @@ class SpoomeDefaultTest {
     fun `error body that is not a JSON object maps to Unknown with the status code`() {
         listOf("""["UrlError"]""", "null", """{"UrlError":"Invalid URL"""").forEach { body ->
             var error: GenerateURLError? = null
-            val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+            val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
             req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
 
@@ -252,7 +216,7 @@ class SpoomeDefaultTest {
     @Test
     fun `429 status with a plain-text body maps to RateLimitExceeded`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(429, "Too Many Requests".toByteArray(), false, 0L, emptyList())))
 
@@ -262,7 +226,7 @@ class SpoomeDefaultTest {
     @Test
     fun `429 status with an empty body maps to RateLimitExceeded`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(429, ByteArray(0), false, 0L, emptyList())))
 
@@ -272,7 +236,7 @@ class SpoomeDefaultTest {
     @Test
     fun `429 status with a null body maps to RateLimitExceeded`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(429, null, false, 0L, emptyList())))
 
@@ -282,7 +246,7 @@ class SpoomeDefaultTest {
     @Test
     fun `error with an empty body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
 
@@ -297,39 +261,33 @@ class SpoomeDefaultTest {
 
     @Test
     fun `getURLClickCount resolves the click count from total-clicks`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var clicks: Int? = -1
         val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
 
-        Spoome.Default.getURLClickCount(context, url) { clicks = it }
-        slot.captured.deliverJsonResponse(JSONObject().put("total-clicks", 42))
+        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject().put("total-clicks", 42))
 
         clicks shouldBe 42
     }
 
     @Test
     fun `getURLClickCount resolves to null when total-clicks is missing`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var clicks: Int? = -1
         val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
 
-        Spoome.Default.getURLClickCount(context, url) { clicks = it }
-        slot.captured.deliverJsonResponse(JSONObject())
+        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject())
 
         clicks shouldBe null
     }
 
     @Test
     fun `getURLClickCount resolves to null on error`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var clicks: Int? = -1
         val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
 
-        Spoome.Default.getURLClickCount(context, url) { clicks = it }
-        slot.captured.deliverError(VolleyError("no network"))
+        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverError(VolleyError("no network"))
 
         clicks shouldBe null
     }

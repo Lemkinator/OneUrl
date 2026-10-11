@@ -23,58 +23,67 @@ import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
+import de.lemke.oneurl.data.FakeQRCodeRenderer
+import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
+import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetQRCodeUseCase
 import de.lemke.oneurl.ui.FakeQRCodeExporter.Call
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class QRBottomSheetViewModelTest : ShouldSpec(
     {
-        val getQRCode = mockk<GetQRCodeUseCase>()
-        val qrCode = mockk<Bitmap>()
+        val qrCode = mockk<Bitmap> { every { byteCount } returns 1024 }
         val shortURL = "https://short.url/x"
         lateinit var userSettings: UserSettings
+        lateinit var renderer: FakeQRCodeRenderer
         lateinit var exporter: FakeQRCodeExporter
 
-        fun newViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf(QRBottomSheet.KEY_SHORT_URL to shortURL))) =
-            QRBottomSheetViewModel(savedStateHandle, getQRCode, userSettings, exporter)
+        fun newViewModel(
+            savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf(QRBottomSheet.KEY_SHORT_URL to shortURL)),
+            defaultDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher(),
+        ) = QRBottomSheetViewModel(
+            savedStateHandle,
+            GetQRCodeUseCase(QRCodeCache(), GenerateQRCodeUseCase(renderer), defaultDispatcher),
+            userSettings,
+            exporter,
+        )
 
         beforeEach {
-            clearMocks(getQRCode)
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
             exporter = FakeQRCodeExporter()
-            coEvery { getQRCode(any()) } returns qrCode
         }
 
         should("init takes the short URL from the saved state and loads its QR code") {
             val viewModel = newViewModel()
 
             viewModel.state.value shouldBe QRBottomSheetUiState(shortURL = shortURL, qrCode = qrCode)
-            coVerify(exactly = 1) { getQRCode(shortURL) }
+            renderer.renders shouldBe listOf(Render(shortURL, null))
         }
 
         should("init loads no QR code when the saved-state key is missing") {
             val viewModel = newViewModel(SavedStateHandle())
 
             viewModel.state.value shouldBe QRBottomSheetUiState(shortURL = "", qrCode = null)
-            coVerify(exactly = 0) { getQRCode(any()) }
+            renderer.renders shouldBe emptyList()
         }
 
         should("init loads no QR code for an empty short URL") {
             val viewModel = newViewModel(SavedStateHandle(mapOf(QRBottomSheet.KEY_SHORT_URL to "")))
 
             viewModel.state.value shouldBe QRBottomSheetUiState(shortURL = "", qrCode = null)
-            coVerify(exactly = 0) { getQRCode(any()) }
+            renderer.renders shouldBe emptyList()
         }
 
         should("onSave, onShare and onQuickShare export nothing without a QR code") {
@@ -139,16 +148,12 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         }
 
         should("onDocumentPicked during the QR code load deletes the created document and holds WriteFailed") {
-            val gate = CompletableDeferred<Unit>()
-            coEvery { getQRCode(shortURL) } coAnswers {
-                gate.await()
-                qrCode
-            }
+            val qrCodeDispatcher = StandardTestDispatcher()
             val uri = mockk<Uri>()
-            val viewModel = newViewModel()
+            val viewModel = newViewModel(defaultDispatcher = qrCodeDispatcher)
 
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
-            gate.complete(Unit)
+            qrCodeDispatcher.scheduler.advanceUntilIdle()
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
             exporter.deletedDocuments shouldBe listOf(uri)

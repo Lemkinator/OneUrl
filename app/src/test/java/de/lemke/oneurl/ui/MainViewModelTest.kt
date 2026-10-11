@@ -16,153 +16,114 @@
 
 package de.lemke.oneurl.ui
 
+import de.lemke.oneurl.data.FakeURLRepository
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.ObserveURLsUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
-import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
-import de.lemke.oneurl.domain.model.URL
+import de.lemke.oneurl.domain.testUrl
 import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import java.time.ZonedDateTime
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 
-private fun testUrl(
-    shortURL: String = "https://short.url/x",
-    longURL: String = "https://example.com",
-    provider: ShortURLProvider = ShortURLProviderCompanion.default,
-    favorite: Boolean = false,
-    title: String = "title",
-    description: String = "description",
-    added: ZonedDateTime = ZonedDateTime.now(),
-) = URL(
-    shortURL = shortURL,
-    longURL = longURL,
-    shortURLProvider = provider,
-    favorite = favorite,
-    title = title,
-    description = description,
-    added = added,
-)
-
+@OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest : ShouldSpec(
     {
-        val observeURLs = mockk<ObserveURLsUseCase>()
-        val deleteURL = mockk<DeleteURLUseCase>()
-        val updateURL = mockk<UpdateURLUseCase>()
+        val url1 = testUrl(shortURL = "https://short.url/1")
+        val url2 = testUrl(shortURL = "https://short.url/2")
+        val url3 = testUrl(shortURL = "https://short.url/3")
+        lateinit var repository: FakeURLRepository
 
-        fun newViewModel() = MainViewModel(observeURLs, deleteURL, updateURL)
+        fun newViewModel(observeDispatcher: CoroutineDispatcher = Dispatchers.Unconfined) =
+            MainViewModel(
+                ObserveURLsUseCase(repository, observeDispatcher),
+                DeleteURLUseCase(repository, Dispatchers.Unconfined),
+                UpdateURLUseCase(repository, Dispatchers.Unconfined),
+            )
 
         beforeEach {
-            clearMocks(observeURLs, deleteURL, updateURL)
-            every { observeURLs(any(), any()) } returns MutableStateFlow(emptyList())
-            coEvery { updateURL(any<URL>()) } returns Unit
-            coEvery { updateURL(any<List<URL>>()) } returns Unit
-            coEvery { deleteURL(any<List<URL>>()) } returns Unit
+            repository = FakeURLRepository()
         }
 
-        should("state.urls and isUIReady reflect what observeURLs emits") {
-            val url = testUrl()
-            every { observeURLs(any(), any()) } returns MutableStateFlow(listOf(url))
+        should("state.urls and isUIReady reflect the stored urls") {
+            repository = FakeURLRepository(listOf(url1))
             val viewModel = newViewModel()
 
-            viewModel.state.value.urls shouldBe listOf(url)
-            viewModel.state.value.isUIReady shouldBe true
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url1), isUIReady = true, reveal = null)
         }
 
-        should("state.reveal holds the added short URL when a second emission adds one under the same search/filterFavorite") {
-            val url1 = testUrl(shortURL = "https://short.url/1")
-            val url2 = testUrl(shortURL = "https://short.url/2")
-            val urlsFlow = MutableStateFlow(listOf(url1))
-            every { observeURLs(any(), any()) } returns urlsFlow
+        should("state.reveal holds the added short URL when a url is added under the same search/filterFavorite") {
+            repository = FakeURLRepository(listOf(url1))
             val viewModel = newViewModel()
 
             viewModel.state.value.reveal shouldBe null
-            urlsFlow.value = listOf(url1, url2)
+            repository.addURL(url2)
 
-            viewModel.state.value shouldBe MainUiState(urls = listOf(url1, url2), isUIReady = true, reveal = "https://short.url/2")
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url2, url1), isUIReady = true, reveal = "https://short.url/2")
         }
 
         should("state.reveal holds the newest added short URL when one emission adds two") {
-            val url1 = testUrl(shortURL = "https://short.url/1")
-            val url2 = testUrl(shortURL = "https://short.url/2")
-            val url3 = testUrl(shortURL = "https://short.url/3")
-            val urlsFlow = MutableStateFlow(listOf(url1))
-            every { observeURLs(any(), any()) } returns urlsFlow
-            val viewModel = newViewModel()
+            repository = FakeURLRepository(listOf(url1))
+            val observeDispatcher = StandardTestDispatcher()
+            val viewModel = newViewModel(observeDispatcher)
+            observeDispatcher.scheduler.advanceUntilIdle()
 
-            urlsFlow.value = listOf(url3, url2, url1)
+            repository.addURL(url2)
+            repository.addURL(url3)
+            observeDispatcher.scheduler.advanceUntilIdle()
 
-            viewModel.state.value.reveal shouldBe "https://short.url/3"
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url3, url2, url1), isUIReady = true, reveal = "https://short.url/3")
         }
 
-        should("state.reveal stays null when a second emission only reorders or removes ids") {
-            val url1 = testUrl(shortURL = "https://short.url/1")
-            val url2 = testUrl(shortURL = "https://short.url/2")
-            val urlsFlow = MutableStateFlow(listOf(url1, url2))
-            every { observeURLs(any(), any()) } returns urlsFlow
+        should("state.reveal stays null when a write only changes or removes stored urls") {
+            repository = FakeURLRepository(listOf(url2, url1))
             val viewModel = newViewModel()
 
-            urlsFlow.value = listOf(url2, url1)
-            urlsFlow.value = listOf(url2)
+            viewModel.setFavorite(url1, true)
+            viewModel.delete(listOf(url2))
 
-            viewModel.state.value.reveal shouldBe null
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url1.copy(favorite = true)), isUIReady = true, reveal = null)
         }
 
-        should("state.reveal stays null when search/filterFavorite changed even though ids grew") {
-            val url1 = testUrl(shortURL = "https://short.url/1")
-            val url2 = testUrl(shortURL = "https://short.url/2")
-            val urlsFlow = MutableStateFlow(listOf(url1))
-            every { observeURLs(any(), any()) } returns urlsFlow
+        should("state.reveal stays null when a search/filterFavorite change brings urls into view") {
+            val favorite = url1.copy(favorite = true)
+            repository = FakeURLRepository(listOf(url2, favorite))
             val viewModel = newViewModel()
+            viewModel.setFilterFavorite(true)
 
-            viewModel.setSearch("changed")
-            urlsFlow.value = listOf(url1, url2)
+            viewModel.setFilterFavorite(false)
 
-            viewModel.state.value.reveal shouldBe null
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url2, favorite), isUIReady = true, reveal = null)
         }
 
-        should("an unhandled reveal survives a later emission that adds nothing") {
-            val url1 = testUrl(shortURL = "https://short.url/1")
-            val url2 = testUrl(shortURL = "https://short.url/2")
-            val urlsFlow = MutableStateFlow(listOf(url1))
-            every { observeURLs(any(), any()) } returns urlsFlow
+        should("an unhandled reveal survives a later write that adds nothing") {
+            repository = FakeURLRepository(listOf(url1))
             val viewModel = newViewModel()
 
-            urlsFlow.value = listOf(url1, url2)
-            urlsFlow.value = listOf(url2, url1)
+            repository.addURL(url2)
+            viewModel.setFavorite(url1, true)
 
             viewModel.state.value.reveal shouldBe "https://short.url/2"
         }
 
         should("onRevealHandled clears the handled reveal") {
-            val url1 = testUrl(shortURL = "https://short.url/1")
-            val url2 = testUrl(shortURL = "https://short.url/2")
-            val urlsFlow = MutableStateFlow(listOf(url1))
-            every { observeURLs(any(), any()) } returns urlsFlow
+            repository = FakeURLRepository(listOf(url1))
             val viewModel = newViewModel()
-            urlsFlow.value = listOf(url1, url2)
+            repository.addURL(url2)
 
             viewModel.onRevealHandled("https://short.url/2")
 
-            viewModel.state.value shouldBe MainUiState(urls = listOf(url1, url2), isUIReady = true, reveal = null)
+            viewModel.state.value shouldBe MainUiState(urls = listOf(url2, url1), isUIReady = true, reveal = null)
         }
 
         should("onRevealHandled keeps a newer reveal") {
-            val url1 = testUrl(shortURL = "https://short.url/1")
-            val url2 = testUrl(shortURL = "https://short.url/2")
-            val url3 = testUrl(shortURL = "https://short.url/3")
-            val urlsFlow = MutableStateFlow(listOf(url1))
-            every { observeURLs(any(), any()) } returns urlsFlow
+            repository = FakeURLRepository(listOf(url1))
             val viewModel = newViewModel()
-            urlsFlow.value = listOf(url1, url2)
-            urlsFlow.value = listOf(url3, url1, url2)
+            repository.addURL(url2)
+            repository.addURL(url3)
 
             viewModel.onRevealHandled("https://short.url/2")
 
@@ -175,31 +136,42 @@ class MainViewModelTest : ShouldSpec(
             viewModel.search.value shouldBe "query"
         }
 
-        should("setFilterFavorite updates filterFavorite") {
+        should("setFilterFavorite updates filterFavorite and filters the urls") {
+            repository = FakeURLRepository(listOf(url2, url1.copy(favorite = true)))
             val viewModel = newViewModel()
+
             viewModel.setFilterFavorite(true)
+
             viewModel.filterFavorite.value shouldBe true
+            viewModel.state.value.urls shouldBe listOf(url1.copy(favorite = true))
         }
 
-        should("setFavorite updates the url's favorite flag via updateURL") {
+        should("setFavorite stores the url's new favorite flag") {
+            repository = FakeURLRepository(listOf(url1))
             val viewModel = newViewModel()
-            val url = testUrl(favorite = false)
-            viewModel.setFavorite(url, true)
-            coVerify { updateURL(url.copy(favorite = true)) }
+
+            viewModel.setFavorite(url1, true)
+
+            repository.urls shouldBe listOf(url1.copy(favorite = true))
         }
 
-        should("setFavorites updates all urls' favorite flag via updateURL") {
+        should("setFavorites stores the new favorite flag of every url") {
+            repository = FakeURLRepository(listOf(url2, url1))
             val viewModel = newViewModel()
-            val urls = listOf(testUrl(shortURL = "https://short.url/1"), testUrl(shortURL = "https://short.url/2"))
-            viewModel.setFavorites(urls, true)
-            coVerify { updateURL(urls.map { it.copy(favorite = true) }) }
+
+            viewModel.setFavorites(listOf(url2, url1), true)
+
+            repository.urls shouldBe listOf(url2.copy(favorite = true), url1.copy(favorite = true))
         }
 
-        should("delete calls deleteURL with the given urls") {
+        should("delete removes the given urls") {
+            repository = FakeURLRepository(listOf(url3, url2, url1))
             val viewModel = newViewModel()
-            val urls = listOf(testUrl(shortURL = "https://short.url/1"), testUrl(shortURL = "https://short.url/2"))
-            viewModel.delete(urls)
-            coVerify { deleteURL(urls) }
+
+            viewModel.delete(listOf(url3, url1))
+
+            repository.urls shouldBe listOf(url2)
+            viewModel.state.value.urls shouldBe listOf(url2)
         }
 
         should("setAllSelectorState updates allSelectorState") {

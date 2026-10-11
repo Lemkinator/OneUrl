@@ -43,7 +43,7 @@ object TestPersistenceModule {
             .setQueryExecutor(Executor { it.run() })
             .setTransactionExecutor(Executor { it.run() })
             .build()
-            .let(HiltTestRule::closeAfterTest)
+            .also { HiltTestRule.closeAfterTest(AutoCloseable(it::close)) }
 
     @Provides
     fun provideURLDao(database: AppDatabase): URLDao = database.urlDao()

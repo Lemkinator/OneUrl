@@ -21,62 +21,28 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import de.lemke.commonutils.R as commonutilsR
 
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJsonResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
-
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class TlyDefaultTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `name group and enabled reflect the default t_ly provider`() {
@@ -87,14 +53,14 @@ class TlyDefaultTest {
 
     @Test
     fun `request body targets the t_ly provider`() {
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { }, { fail("unexpected error") })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { }, { fail("unexpected error") })
 
         JSONObject(String(req.body!!, Charsets.UTF_8)).getString("provider") shouldBe "t.ly"
     }
 
     @Test
     fun `create request sends the expected headers`() {
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { }, { fail("unexpected error") })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { }, { fail("unexpected error") })
 
         req.headers shouldBe
             mapOf(
@@ -107,9 +73,9 @@ class TlyDefaultTest {
     @Test
     fun `succeeds when the response contains a short_url`() {
         var result: String? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJsonResponse(JSONObject("""{"short_url":"https://t.ly/abc"}"""))
+        req.deliverResponse(JSONObject("""{"short_url":"https://t.ly/abc"}"""))
 
         result shouldBe "https://t.ly/abc"
     }
@@ -117,9 +83,9 @@ class TlyDefaultTest {
     @Test
     fun `fails with Unknown when the response has no short_url`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject("""{"provider_success":true}"""))
+        req.deliverResponse(JSONObject("""{"provider_success":true}"""))
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -127,7 +93,7 @@ class TlyDefaultTest {
     @Test
     fun `error ServiceOffline on NoConnectionError`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -137,7 +103,7 @@ class TlyDefaultTest {
     @Test
     fun `error ServiceTemporarilyUnavailable when the reply is not JSON`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
         req.deliverError(parsed.error)
@@ -148,7 +114,7 @@ class TlyDefaultTest {
     @Test
     fun `error Unknown when there is no status code`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -158,7 +124,7 @@ class TlyDefaultTest {
     @Test
     fun `error ServiceTemporarilyUnavailable on 503`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(503, ByteArray(0), false, 0L, emptyList())))
 
@@ -168,7 +134,7 @@ class TlyDefaultTest {
     @Test
     fun `error Unknown with status code when the error body is blank`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
@@ -178,7 +144,7 @@ class TlyDefaultTest {
     @Test
     fun `error Unknown with status code when the error body is null`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
@@ -188,7 +154,7 @@ class TlyDefaultTest {
     @Test
     fun `error Unknown with status code when the error body has no message field`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(422, """{"errors":{}}""".toByteArray(), false, 0L, emptyList())))
 
@@ -198,7 +164,7 @@ class TlyDefaultTest {
     @Test
     fun `error InvalidURL when message mentions the long url field is required`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val body = """{"message":"The long url field is required."}"""
         req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
@@ -209,7 +175,7 @@ class TlyDefaultTest {
     @Test
     fun `error RateLimitExceeded when message mentions the T_LY account and API key`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val body = """{"message":"T.LY account and API key required to create additional short links."}"""
         req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
@@ -220,7 +186,7 @@ class TlyDefaultTest {
     @Test
     fun `error Custom for an unrecognized message`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val body = """{"message":"something went wrong"}"""
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
@@ -231,7 +197,7 @@ class TlyDefaultTest {
     @Test
     fun `error Unknown with status code when the error body is not valid JSON`() {
         var error: GenerateURLError? = null
-        val req = Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "not json".toByteArray(), false, 0L, emptyList())))
 
@@ -243,7 +209,7 @@ class TlyDefaultTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Tly.Default.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }

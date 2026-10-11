@@ -16,20 +16,12 @@
 
 package de.lemke.oneurl.domain
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
+import de.lemke.oneurl.data.ShortURLClient
 import de.lemke.oneurl.domain.model.URL
 import javax.inject.Inject
-import kotlin.coroutines.resume
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 class GetVisitCountUseCase @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    private val shortURLClient: ShortURLClient,
 ) {
-    suspend operator fun invoke(url: URL): Int? =
-        suspendCancellableCoroutine { cont ->
-            url.shortURLProvider.getURLClickCount(context, url) { count ->
-                if (cont.isActive) cont.resume(count)
-            }
-        }
+    suspend operator fun invoke(url: URL): Int? = shortURLClient.visitCount(url)
 }

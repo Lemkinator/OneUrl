@@ -20,11 +20,14 @@ import androidx.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.oneurl.data.FakeShortURLClient
+import de.lemke.oneurl.data.ShortURLClient
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.data.database.AppDatabase
 import javax.inject.Inject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -35,7 +38,7 @@ import org.robolectric.annotation.Config
 /**
  * Guards against Hilt's KSP module aggregation silently dropping a @TestInstallIn module
  * declared in src/testFixtures for the Robolectric (src/test) side, leaving the production
- * SettingsProvideModule/PersistenceModule active undetected. Keep this test even though it
+ * SettingsProvideModule/PersistenceModule/NetworkModule active undetected. Keep this test even though it
  * currently passes - a silent regression here produces no other failing test.
  */
 @HiltAndroidTest
@@ -50,6 +53,9 @@ class TestFixturesModuleInstallationTest {
 
     @Inject
     lateinit var database: AppDatabase
+
+    @Inject
+    lateinit var shortURLClient: ShortURLClient
 
     @Before
     fun setUp() {
@@ -75,6 +81,15 @@ class TestFixturesModuleInstallationTest {
             "AppDatabase is file-backed ('app') - TestPersistenceModule (src/testFixtures) was NOT installed; " +
                 "production PersistenceModule won instead",
             database.openHelper.databaseName,
+        )
+    }
+
+    @Test
+    fun `injected network clients are the TestNetworkModule fakes`() {
+        assertTrue(
+            "ShortURLClient is ${shortURLClient::class.simpleName} - TestNetworkModule (src/testFixtures) was NOT installed; " +
+                "production NetworkModule would reach the real network",
+            shortURLClient is FakeShortURLClient,
         )
     }
 }

@@ -14,84 +14,45 @@
  * limitations under the License.
  */
 
-package de.lemke.oneurl.domain
+package de.lemke.oneurl.data
 
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.BuildConfig
-import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.domain.model.UrlhausResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.Runs
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-// Request#getParams()/getHeaders() are protected - only Volley's own network dispatcher normally
-// calls them. Tests reach them via reflection to assert what the request actually sends.
-private fun Request<*>.paramsViaReflection(): Map<*, *>? {
-    val method = Request::class.java.getDeclaredMethod("getParams")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>?
-}
-
-private fun Request<*>.headersViaReflection(): Map<*, *> {
-    val method = Request::class.java.getDeclaredMethod("getHeaders")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
-class CheckURLSafetyUseCaseTest {
+class DefaultUrlhausClientTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>()
-    private val checkURLSafety = CheckURLSafetyUseCase(context)
+    private val queue = FakeVolleyQueue()
+    private val urlhausClient = DefaultUrlhausClient(context, queue)
 
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
+    private fun blacklisted(
+        lists: String,
+        reason: String,
+    ) = "This URL is blacklisted on: $lists.\n$reason\n" +
+        "If you continue trying to shorten blacklisted URLs, you may be blocked from using this App."
 
     private fun respond(json: String) {
-        every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-            firstArg<StringRequest>().deliverStringResponse(json)
+        queue.onAdd = {
+            it.deliverResponse(json)
         }
     }
 
@@ -100,7 +61,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"no_results"}""")
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -108,7 +69,7 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok"}""")
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -116,17 +77,17 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("not json")
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
     fun `returns Ok on a network error`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                firstArg<StringRequest>().deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
+            queue.onAdd = {
+                it.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
             }
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
@@ -143,17 +104,12 @@ class CheckURLSafetyUseCaseTest {
                 """.trimIndent(),
             )
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe "https://urlhaus.abuse.ch/url/123/"
             result.virustotalLink shouldBe "https://virustotal.com/report/1"
-            result.message shouldBe
-                context.getString(
-                    R.string.error_urlhaus_blacklisted,
-                    "URLhaus, SURBL, Spamhaus",
-                    context.getString(R.string.error_urlhaus_phishing_domain),
-                )
+            result.message shouldBe blacklisted("URLhaus, SURBL, Spamhaus", "It is a known phishing domain.")
         }
 
     @Test
@@ -161,17 +117,45 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"}}""")
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe null
             result.virustotalLink shouldBe null
+            result.message shouldBe blacklisted("URLhaus, Spamhaus", "It is a known spammer domain.")
+        }
+
+    @Test
+    fun `returns Blacklisted naming only SURBL with the default reason when spamhaus does not list the url`() =
+        runTest {
+            respond("""{"query_status":"ok","blacklists":{"surbl":"listed","spamhaus_dbl":"not listed"}}""")
+
+            val result = urlhausClient.check("example.com")
+
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.message shouldBe
-                context.getString(
-                    R.string.error_urlhaus_blacklisted,
-                    "URLhaus, Spamhaus",
-                    context.getString(R.string.error_urlhaus_spammer_domain),
+                blacklisted(
+                    "URLhaus, SURBL",
+                    "It may have been used abusively in the past, or it may link to another URL redirection service.",
                 )
+        }
+
+    @Test
+    fun `returns a null virustotal link when the first payload carries no usable link`() =
+        runTest {
+            listOf(
+                """[]""",
+                """["not an object"]""",
+                """[{}]""",
+                """[{"virustotal":{"link":""}}]""",
+            ).forEach { payloads ->
+                respond("""{"query_status":"ok","blacklists":{"surbl":"listed"},"payloads":$payloads}""")
+
+                val result = urlhausClient.check("example.com")
+
+                result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
+                result.virustotalLink shouldBe null
+            }
         }
 
     @Test
@@ -188,9 +172,9 @@ class CheckURLSafetyUseCaseTest {
                 """.trimIndent(),
             )
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe null
             result.virustotalLink shouldBe null
         }
@@ -202,9 +186,9 @@ class CheckURLSafetyUseCaseTest {
                 """{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"},"payloads":[{"virustotal":{}}]}""",
             )
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe null
             result.virustotalLink shouldBe null
         }
@@ -223,9 +207,9 @@ class CheckURLSafetyUseCaseTest {
                 """.trimIndent(),
             )
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe null
             result.virustotalLink shouldBe null
         }
@@ -235,9 +219,9 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"},"payloads":[]}""")
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.virustotalLink shouldBe null
         }
 
@@ -246,9 +230,9 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"spammer_domain"},"payloads":[{"virustotal":null}]}""")
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.virustotalLink shouldBe null
         }
 
@@ -257,9 +241,9 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok","blacklists":{"surbl":null,"spamhaus_dbl":null}}""")
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.message shouldBe
                 "This URL is blacklisted on: URLhaus.\n" +
                 "It may have been used abusively in the past, or it may link to another URL redirection service.\n" +
@@ -271,9 +255,9 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":"ok","blacklists":{"surbl":"","spamhaus_dbl":""}}""")
 
-            val result = checkURLSafety("example.com")
+            val result = urlhausClient.check("example.com")
 
-            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.message shouldBe
                 "This URL is blacklisted on: URLhaus.\n" +
                 "It may have been used abusively in the past, or it may link to another URL redirection service.\n" +
@@ -285,86 +269,80 @@ class CheckURLSafetyUseCaseTest {
         runTest {
             respond("""{"query_status":null,"blacklists":{"surbl":"listed"}}""")
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
     fun `maps every known spamhaus status and falls back to the default reason otherwise`() =
         runTest {
-            val statusToStringRes =
+            val statusToReason =
                 mapOf(
-                    "spammer_domain" to R.string.error_urlhaus_spammer_domain,
-                    "phishing_domain" to R.string.error_urlhaus_phishing_domain,
-                    "botnet_cc_domain" to R.string.error_urlhaus_botnet_cc_domain,
-                    "abused_legit_spam" to R.string.error_urlhaus_abused_legit_spam,
-                    "abused_legit_malware" to R.string.error_urlhaus_abused_legit_malware,
-                    "abused_legit_phishing" to R.string.error_urlhaus_abused_legit_phishing,
-                    "abused_legit_botnetcc" to R.string.error_urlhaus_abused_legit_botnetcc,
-                    "abused_redirector" to R.string.error_urlhaus_abused_redirector,
-                    "something_else" to R.string.error_urlhaus_default,
+                    "spammer_domain" to "It is a known spammer domain.",
+                    "phishing_domain" to "It is a known phishing domain.",
+                    "botnet_cc_domain" to "It is a known botnet C&C domain.",
+                    "abused_legit_spam" to "It is a known compromised website used for spammer hosting.",
+                    "abused_legit_malware" to "It is a known compromised website used for malware distribution.",
+                    "abused_legit_phishing" to "It is a known compromised website used for phishing hosting.",
+                    "abused_legit_botnetcc" to "It is a known compromised website used for botnet C&C hosting.",
+                    "abused_redirector" to "It is a known abused redirector or URL shortener.",
+                    "something_else" to
+                        "It may have been used abusively in the past, or it may link to another URL redirection service.",
                 )
 
-            statusToStringRes.forEach { (status, expectedStringRes) ->
+            statusToReason.forEach { (status, reason) ->
                 respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"$status"}}""")
 
-                val result = checkURLSafety("example.com")
+                val result = urlhausClient.check("example.com")
 
-                result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
-                result.message shouldBe
-                    context.getString(R.string.error_urlhaus_blacklisted, "URLhaus, Spamhaus", context.getString(expectedStringRes))
+                result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
+                result.message shouldBe blacklisted("URLhaus, Spamhaus", reason)
             }
         }
 
     @Test
     fun `sends the url as a param and the auth key as a header`() =
         runTest {
-            val requestSlot = slot<StringRequest>()
-            every { requestQueue.addToRequestQueue(capture(requestSlot)) } answers {
-                requestSlot.captured.deliverStringResponse("""{"query_status":"ok"}""")
+            queue.onAdd = {
+                it.deliverResponse("""{"query_status":"ok"}""")
             }
 
-            checkURLSafety("example.com")
+            urlhausClient.check("example.com")
 
-            requestSlot.captured.paramsViaReflection() shouldBe mapOf("url" to "example.com")
-            requestSlot.captured.headersViaReflection() shouldBe mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
+            queue.added.single().params() shouldBe mapOf("url" to "example.com")
+            queue.added.single().headers() shouldBe mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
         }
 
     @Test
     fun `ignores a response delivered after the continuation already resumed`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                val request = firstArg<StringRequest>()
-                request.deliverStringResponse("""{"query_status":"ok"}""")
-                request.deliverStringResponse("""{"query_status":"ok"}""")
+            queue.onAdd = { request ->
+                request.deliverResponse("""{"query_status":"ok"}""")
+                request.deliverResponse("""{"query_status":"ok"}""")
             }
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
     fun `ignores a network error delivered after the continuation already resumed`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                val request = firstArg<StringRequest>()
+            queue.onAdd = { request ->
                 val error = VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList()))
                 request.deliverError(error)
                 request.deliverError(error)
             }
 
-            checkURLSafety("example.com") shouldBe CheckURLSafetyUseCase.UrlhausResult.Ok
+            urlhausClient.check("example.com") shouldBe UrlhausResult.Ok
         }
 
     @Test
     fun `cancelling the coroutine cancels the underlying request`() =
         runTest {
-            val requestSlot = slot<StringRequest>()
-            every { requestQueue.addToRequestQueue(capture(requestSlot)) } just Runs
-
-            val job = launch { checkURLSafety("example.com") }
+            val job = launch { urlhausClient.check("example.com") }
             runCurrent()
             job.cancel()
             runCurrent()
 
-            requestSlot.captured.isCanceled shouldBe true
+            queue.added.single().isCanceled shouldBe true
         }
 }

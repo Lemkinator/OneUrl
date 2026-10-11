@@ -21,14 +21,12 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import org.json.JSONObject
 import org.junit.Assert.fail
 import org.junit.Test
@@ -37,27 +35,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import de.lemke.commonutils.R as commonutilsR
 
-// JsonRequest#deliverResponse(T) is protected - only Volley's own RequestQueue can normally
-// trigger it. Tests stand in for the queue, so they reach it via reflection instead of a real
-// round-trip.
-private fun Request<*>.deliverJsonResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
-
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class ZwsimTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
@@ -82,9 +65,9 @@ class ZwsimTest {
     @Test
     fun `create request succeeds using the short field`() {
         var result: String? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJsonResponse(JSONObject(mapOf("short" to "abc123")))
+        req.deliverResponse(JSONObject(mapOf("short" to "abc123")))
 
         result shouldBe "https://zws.im/abc123"
     }
@@ -92,9 +75,9 @@ class ZwsimTest {
     @Test
     fun `create request succeeds using the url field when short is absent`() {
         var result: String? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJsonResponse(JSONObject(mapOf("url" to "https://zws.im/abc123")))
+        req.deliverResponse(JSONObject(mapOf("url" to "https://zws.im/abc123")))
 
         result shouldBe "https://zws.im/abc123"
     }
@@ -102,9 +85,9 @@ class ZwsimTest {
     @Test
     fun `create request fails with Unknown when the response has neither short nor url`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject(mapOf("foo" to "bar")))
+        req.deliverResponse(JSONObject(mapOf("foo" to "bar")))
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -112,7 +95,7 @@ class ZwsimTest {
     @Test
     fun `create request offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -122,7 +105,7 @@ class ZwsimTest {
     @Test
     fun `create request reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
         req.deliverError(parsed.error)
@@ -133,7 +116,7 @@ class ZwsimTest {
     @Test
     fun `create request with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -143,7 +126,7 @@ class ZwsimTest {
     @Test
     fun `create request with a blank error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
@@ -153,7 +136,7 @@ class ZwsimTest {
     @Test
     fun `create request with a null error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
@@ -163,7 +146,7 @@ class ZwsimTest {
     @Test
     fun `create request maps 422 invalid url to InvalidURL`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
         val body = """{"message":["url: Invalid url"],"error":"Unprocessable Entity","statusCode":422}"""
 
         req.deliverError(
@@ -176,7 +159,7 @@ class ZwsimTest {
     @Test
     fun `create request maps 422 without an invalid url message to Custom`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
         val body = """{"message":["something else"]}"""
 
         req.deliverError(
@@ -189,7 +172,7 @@ class ZwsimTest {
     @Test
     fun `create request maps 503 to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(
             VolleyError(NetworkResponse(HttpStatusCode.SERVICE_UNAVAILABLE, "down".toByteArray(), false, 0L, emptyList())),
@@ -201,7 +184,7 @@ class ZwsimTest {
     @Test
     fun `create request maps any other status code to Custom`() {
         var error: GenerateURLError? = null
-        val req = Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
         val body = "server exploded"
 
         req.deliverError(VolleyError(NetworkResponse(500, body.toByteArray(), false, 0L, emptyList())))
@@ -214,7 +197,7 @@ class ZwsimTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Zwsim.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }

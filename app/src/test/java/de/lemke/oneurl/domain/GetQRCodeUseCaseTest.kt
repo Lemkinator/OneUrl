@@ -18,11 +18,11 @@ package de.lemke.oneurl.domain
 
 import android.app.Application
 import android.graphics.Bitmap
+import de.lemke.oneurl.data.FakeQRCodeRenderer
+import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.QRCodeCache
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -31,52 +31,48 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-private fun bitmap(): Bitmap = mockk { every { byteCount } returns 1024 }
+private fun bitmap(): Bitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
 
-// QRCodeCache wraps android.util.LruCache, which needs a real Android runtime, hence Robolectric here.
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class GetQRCodeUseCaseTest {
     private val url = "https://short.url/x"
     private val cache = QRCodeCache()
-    private val generateQRCode = mockk<GenerateQRCodeUseCase>()
+    private val generated = bitmap()
+    private val renderer = FakeQRCodeRenderer(generated, placeholder = bitmap())
 
     @Test
-    fun `a cache hit returns the cached bitmap and never generates`() =
+    fun `a cache hit returns the cached bitmap and never renders`() =
         runTest {
             val cached = bitmap()
             cache[url] = cached
-            val getQRCode = GetQRCodeUseCase(cache, generateQRCode, StandardTestDispatcher(testScheduler))
+            val getQRCode = GetQRCodeUseCase(cache, GenerateQRCodeUseCase(renderer), StandardTestDispatcher(testScheduler))
 
-            getQRCode(url) shouldBe cached
+            getQRCode(url) shouldBeSameInstanceAs cached
 
-            verify(exactly = 0) { generateQRCode(any<String>()) }
+            renderer.renders shouldBe emptyList()
         }
 
     @Test
-    fun `a cache miss generates the bitmap once, returns it and caches it`() =
+    fun `a cache miss renders the bitmap once, returns it and caches it`() =
         runTest {
-            val generated = bitmap()
-            every { generateQRCode(url) } returns generated
-            val getQRCode = GetQRCodeUseCase(cache, generateQRCode, StandardTestDispatcher(testScheduler))
+            val getQRCode = GetQRCodeUseCase(cache, GenerateQRCodeUseCase(renderer), StandardTestDispatcher(testScheduler))
 
-            getQRCode(url) shouldBe generated
+            getQRCode(url) shouldBeSameInstanceAs generated
 
-            cache[url] shouldBe generated
-            verify(exactly = 1) { generateQRCode(url) }
+            cache[url] shouldBeSameInstanceAs generated
+            renderer.renders shouldBe listOf(Render(url, null))
         }
 
     @Test
     fun `a second call for the same url hits the cache`() =
         runTest {
-            val generated = bitmap()
-            every { generateQRCode(url) } returns generated
-            val getQRCode = GetQRCodeUseCase(cache, generateQRCode, StandardTestDispatcher(testScheduler))
+            val getQRCode = GetQRCodeUseCase(cache, GenerateQRCodeUseCase(renderer), StandardTestDispatcher(testScheduler))
 
             getQRCode(url)
-            getQRCode(url) shouldBe generated
+            getQRCode(url) shouldBeSameInstanceAs generated
 
-            verify(exactly = 1) { generateQRCode(url) }
+            renderer.renders shouldBe listOf(Render(url, null))
         }
 }

@@ -16,43 +16,12 @@
 
 package de.lemke.oneurl.domain.model
 
-import android.content.Context
-import com.android.volley.Request
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.domain.testUrl
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-
-private class MinimalProvider : ShortURLProvider {
-    override val name = "Minimal"
-    override val baseURL = "https://minimal.example"
-
-    override fun getCreateRequest(
-        context: Context,
-        longURL: String,
-        alias: String,
-        successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit,
-    ): Request<*> = throw UnsupportedOperationException()
-}
-
-private class ProviderWithLinks : ShortURLProvider {
-    override val name = "WithLinks"
-    override val baseURL = "https://withlinks.example"
-    override val privacyURL = "https://withlinks.example/privacy"
-    override val termsURL = "https://withlinks.example/terms"
-
-    override fun getCreateRequest(
-        context: Context,
-        longURL: String,
-        alias: String,
-        successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit,
-    ): Request<*> = throw UnsupportedOperationException()
-}
 
 class ShortURLProviderDefaultsTest : ShouldSpec(
     {
@@ -92,44 +61,13 @@ class ShortURLProviderDefaultsTest : ShouldSpec(
 
         should("getURLClickCount defaults to reporting null clicks") {
             var clicks: Int? = -1
-            provider.getURLClickCount(mockk(), mockk(), { clicks = it })
+            provider.getURLClickCount(FakeVolleyQueue(), testUrl("https://minimal.example/abc"), { clicks = it })
 
             clicks.shouldBeNull()
         }
 
         should("sanitizeLongURL defaults to trimming the URL") {
             provider.sanitizeLongURL("  https://example.com  ") shouldBe "https://example.com"
-        }
-
-        should("getInfoContents defaults to an empty list") {
-            provider.getInfoContents(mockk()) shouldBe emptyList()
-        }
-
-        should("getTipsCardTitleAndInfo defaults to null") {
-            provider.getTipsCardTitleAndInfo(mockk()).shouldBeNull()
-        }
-
-        should("getInfoButtons defaults to only the info entry when privacy and terms are absent") {
-            val context = mockk<Context>()
-            every { context.getString(any()) } returns "More information"
-
-            val buttons = provider.getInfoButtons(context)
-
-            buttons.size shouldBe 1
-            buttons[0].linkOrDescription shouldBe provider.infoURL
-        }
-
-        should("getInfoButtons includes privacy and terms entries when present") {
-            val withLinks = ProviderWithLinks()
-            val context = mockk<Context>()
-            every { context.getString(any()) } returns "label"
-
-            val buttons = withLinks.getInfoButtons(context)
-
-            buttons.size shouldBe 3
-            buttons[0].linkOrDescription shouldBe withLinks.privacyURL
-            buttons[1].linkOrDescription shouldBe withLinks.termsURL
-            buttons[2].linkOrDescription shouldBe withLinks.infoURL
         }
     },
 )

@@ -17,62 +17,72 @@
 package de.lemke.oneurl.domain
 
 import app.cash.turbine.test
-import de.lemke.oneurl.data.URLRepository
+import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 class ObserveURLsUseCaseTest : ShouldSpec(
     {
-        val urlRepository = mockk<URLRepository>()
-        val observeURLs = ObserveURLsUseCase(urlRepository, Dispatchers.Unconfined)
-
         val favoriteUrl = testUrl(shortURL = "https://short.url/fav", favorite = true, title = "favorite title")
         val plainUrl = testUrl(shortURL = "https://short.url/plain", favorite = false, title = "plain title")
         val allUrls = listOf(favoriteUrl, plainUrl)
+        lateinit var urlRepository: FakeURLRepository
+        lateinit var observeURLs: ObserveURLsUseCase
+
+        beforeEach {
+            urlRepository = FakeURLRepository(allUrls)
+            observeURLs = ObserveURLsUseCase(urlRepository, Dispatchers.Unconfined)
+        }
 
         should("emits emptyList when searchQuery is non-null and blank, regardless of repository contents") {
-            every { urlRepository.observeURLs() } returns flowOf(allUrls)
 
             observeURLs(searchQuery = flowOf("   "), filterFavorite = flowOf(false)).test {
                 awaitItem() shouldBe emptyList()
-                awaitComplete()
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
         should("emits repository urls filtered by url.contains(query) when searchQuery is non-null and non-blank") {
-            every { urlRepository.observeURLs() } returns flowOf(allUrls)
 
             observeURLs(searchQuery = flowOf("favorite"), filterFavorite = flowOf(false)).test {
                 awaitItem() shouldBe listOf(favoriteUrl)
-                awaitComplete()
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
         should("emits repository urls filtered to favorite == true when searchQuery is null and filterFavorite is true") {
-            every { urlRepository.observeURLs() } returns flowOf(allUrls)
 
             observeURLs(searchQuery = flowOf(null), filterFavorite = flowOf(true)).test {
                 awaitItem() shouldBe listOf(favoriteUrl)
-                awaitComplete()
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
         should("emits all repository urls unfiltered when searchQuery is null and filterFavorite is false") {
-            every { urlRepository.observeURLs() } returns flowOf(allUrls)
 
             observeURLs(searchQuery = flowOf(null), filterFavorite = flowOf(false)).test {
                 awaitItem() shouldBe allUrls
-                awaitComplete()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        should("emits again when the repository stores a new url") {
+            val added = testUrl(shortURL = "https://short.url/added", favorite = true, title = "added title")
+
+            observeURLs(searchQuery = flowOf(null), filterFavorite = flowOf(true)).test {
+                awaitItem() shouldBe listOf(favoriteUrl)
+
+                urlRepository.addURL(added)
+
+                awaitItem() shouldBe listOf(added, favoriteUrl)
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
         should("re-subscribes to the filterFavorite branch when searchQuery switches from a query back to null") {
-            every { urlRepository.observeURLs() } returns flowOf(allUrls)
             val searchQuery = MutableStateFlow<String?>("favorite")
             val filterFavorite = MutableStateFlow(false)
 

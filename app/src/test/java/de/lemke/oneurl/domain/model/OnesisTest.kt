@@ -21,42 +21,26 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.params
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
-// Tests reach it via reflection to assert what the request actually sends.
-private fun Request<*>.paramsViaReflection(): Map<*, *>? {
-    val method = Request::class.java.getDeclaredMethod("getParams")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>?
-}
-
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class OnesisTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
@@ -75,9 +59,9 @@ class OnesisTest {
     @Test
     fun `blank alias succeeds when the response contains the short url span`() {
         var result: String? = null
-        val req = Onesis.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Onesis.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse(
+        req.deliverResponse(
             """<span id="shortlink-url" style="color: #007bff; font-weight: bold;">https://1s.is/K5F8WO</span>""",
         )
 
@@ -87,9 +71,9 @@ class OnesisTest {
     @Test
     fun `matching custom alias succeeds`() {
         var result: String? = null
-        val req = Onesis.getCreateRequest(context, longURL, "K5F8WO", { result = it }, { fail("unexpected error: $it") })
+        val req = Onesis.getCreateRequest(queue, longURL, "K5F8WO", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse(
+        req.deliverResponse(
             """<span id="shortlink-url" style="color: #007bff; font-weight: bold;">https://1s.is/K5F8WO</span>""",
         )
 
@@ -99,9 +83,9 @@ class OnesisTest {
     @Test
     fun `differing custom alias fails with URLExistsWithDifferentAlias`() {
         var error: GenerateURLError? = null
-        val req = Onesis.getCreateRequest(context, longURL, "custom", { fail("unexpected success") }, { error = it })
+        val req = Onesis.getCreateRequest(queue, longURL, "custom", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse(
+        req.deliverResponse(
             """<span id="shortlink-url" style="color: #007bff; font-weight: bold;">https://1s.is/K5F8WO</span>""",
         )
 
@@ -111,9 +95,9 @@ class OnesisTest {
     @Test
     fun `alias already taken maps to AliasAlreadyExists`() {
         var error: GenerateURLError? = null
-        val req = Onesis.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Onesis.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("Short URL already exists. Please choose another one.")
+        req.deliverResponse("Short URL already exists. Please choose another one.")
 
         error shouldBe GenerateURLError.AliasAlreadyExists
     }
@@ -121,9 +105,9 @@ class OnesisTest {
     @Test
     fun `invalid alias format maps to InvalidAlias`() {
         var error: GenerateURLError? = null
-        val req = Onesis.getCreateRequest(context, longURL, "a b", { fail("unexpected success") }, { error = it })
+        val req = Onesis.getCreateRequest(queue, longURL, "a b", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("The custom short URL must follow the correct format: no spaces, no accents.")
+        req.deliverResponse("The custom short URL must follow the correct format: no spaces, no accents.")
 
         error shouldBe GenerateURLError.InvalidAlias
     }
@@ -131,9 +115,9 @@ class OnesisTest {
     @Test
     fun `unrecognized response body maps to Unknown 200`() {
         var error: GenerateURLError? = null
-        val req = Onesis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Onesis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("something unexpected")
+        req.deliverResponse("something unexpected")
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -150,7 +134,7 @@ class OnesisTest {
             )
         cases.forEach { (volleyError, expected) ->
             var error: GenerateURLError? = null
-            val req = Onesis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+            val req = Onesis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
             req.deliverError(volleyError)
 
@@ -182,9 +166,9 @@ class OnesisTest {
     @Test
     fun `response containing an unresolvable short url span maps to Unknown 200`() {
         var error: GenerateURLError? = null
-        val req = Onesis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Onesis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse(
+        req.deliverResponse(
             """<span id="shortlink-url" style="color: #007bff; font-weight: bold;">https://other.example/K5F8WO</span>""",
         )
 
@@ -196,7 +180,7 @@ class OnesisTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Onesis.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Onesis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -208,8 +192,8 @@ class OnesisTest {
 
     @Test
     fun `getParams returns the original url and custom short url params`() {
-        val req = Onesis.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Onesis.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.paramsViaReflection() shouldBe mapOf("original_url" to longURL, "custom_short_url" to "abc")
+        req.params() shouldBe mapOf("original_url" to longURL, "custom_short_url" to "abc")
     }
 }

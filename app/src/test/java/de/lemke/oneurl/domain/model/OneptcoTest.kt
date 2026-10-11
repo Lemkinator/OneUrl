@@ -22,14 +22,12 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import org.json.JSONObject
 import org.junit.Assert.fail
 import org.junit.Test
@@ -37,26 +35,12 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJsonResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
-
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class OneptcoTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
@@ -90,9 +74,9 @@ class OneptcoTest {
     @Test
     fun `create request succeeds when short is present and receivedRequestedShort is absent`() {
         var result: String? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJsonResponse(JSONObject("""{"message":"Added!","short":"ajodd","long":"t"}"""))
+        req.deliverResponse(JSONObject("""{"message":"Added!","short":"ajodd","long":"t"}"""))
 
         result shouldBe "${Oneptco.baseURL}/ajodd"
     }
@@ -100,9 +84,9 @@ class OneptcoTest {
     @Test
     fun `create request succeeds when receivedRequestedShort is true`() {
         var result: String? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "ajodd", { result = it }, { fail("unexpected error: $it") })
+        val req = Oneptco.getCreateRequest(queue, longURL, "ajodd", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJsonResponse(
+        req.deliverResponse(
             JSONObject("""{"message":"Added!","short":"ajodd","long":"t","receivedRequestedShort":true}"""),
         )
 
@@ -112,9 +96,9 @@ class OneptcoTest {
     @Test
     fun `create request fails with AliasAlreadyExists when receivedRequestedShort is false`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "test", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "test", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(
+        req.deliverResponse(
             JSONObject("""{"message":"Added!","short":"asdfg","long":"asdfasdf","receivedRequestedShort":false}"""),
         )
 
@@ -124,9 +108,9 @@ class OneptcoTest {
     @Test
     fun `create request fails with Unknown when the response has no message`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject("""{"short":"ajodd"}"""))
+        req.deliverResponse(JSONObject("""{"short":"ajodd"}"""))
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -134,9 +118,9 @@ class OneptcoTest {
     @Test
     fun `create request fails with Custom when the message is not Added`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject("""{"message":"Bad request"}"""))
+        req.deliverResponse(JSONObject("""{"message":"Bad request"}"""))
 
         error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "Bad request")
     }
@@ -144,9 +128,9 @@ class OneptcoTest {
     @Test
     fun `create request fails with Unknown when the response has no short`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject("""{"message":"Added!"}"""))
+        req.deliverResponse(JSONObject("""{"message":"Added!"}"""))
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -154,9 +138,9 @@ class OneptcoTest {
     @Test
     fun `create request fails with Unknown when receivedRequestedShort is not a boolean`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "test", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "test", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject("""{"message":"Added!","short":"ajodd","receivedRequestedShort":42}"""))
+        req.deliverResponse(JSONObject("""{"message":"Added!","short":"ajodd","receivedRequestedShort":42}"""))
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -164,7 +148,7 @@ class OneptcoTest {
     @Test
     fun `create request offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -174,7 +158,7 @@ class OneptcoTest {
     @Test
     fun `create request reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
         req.deliverError(parsed.error)
@@ -185,7 +169,7 @@ class OneptcoTest {
     @Test
     fun `create request with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -195,7 +179,7 @@ class OneptcoTest {
     @Test
     fun `create request with a blank error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
 
@@ -205,7 +189,7 @@ class OneptcoTest {
     @Test
     fun `create request maps 404 with a body to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(HttpStatusCode.NOT_FOUND, "body".toByteArray(), false, 0L, emptyList())))
 
@@ -215,7 +199,7 @@ class OneptcoTest {
     @Test
     fun `create request maps 500 with a body to InternalServerError`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(HttpStatusCode.INTERNAL_SERVER_ERROR, "body".toByteArray(), false, 0L, emptyList())))
 
@@ -225,7 +209,7 @@ class OneptcoTest {
     @Test
     fun `create request maps 503 with a body to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(HttpStatusCode.SERVICE_UNAVAILABLE, "body".toByteArray(), false, 0L, emptyList())))
 
@@ -235,7 +219,7 @@ class OneptcoTest {
     @Test
     fun `create request falls back to Custom for an unrecognized status code`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, "server exploded".toByteArray(), false, 0L, emptyList())))
 
@@ -245,7 +229,7 @@ class OneptcoTest {
     @Test
     fun `create request with a null error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, null, false, 0L, emptyList())))
 
@@ -257,7 +241,7 @@ class OneptcoTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -269,7 +253,7 @@ class OneptcoTest {
 
     @Test
     fun `getRetryPolicy returns a policy with the request timeout and default retry settings`() {
-        val req = Oneptco.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
         val retryPolicy = req.retryPolicy as DefaultRetryPolicy
 

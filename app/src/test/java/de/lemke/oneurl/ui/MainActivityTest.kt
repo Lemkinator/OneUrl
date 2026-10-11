@@ -50,8 +50,6 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
 import javax.inject.Inject
 import leakcanary.AppWatcher
 import org.junit.Before
@@ -62,6 +60,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.fakes.RoboMenu
 import androidx.appcompat.R as appcompatR
 import dev.oneuiproject.oneui.design.R as designR
 
@@ -179,8 +178,7 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMainIdle()
             scenario.onActivity { activity ->
-                val menu = mockk<Menu> { every { findItem(any()) } returns null }
-                activity.onPrepareOptionsMenu(menu).shouldBeTrue()
+                activity.onPrepareOptionsMenu(RoboMenu(activity)).shouldBeTrue()
             }
         }
     }

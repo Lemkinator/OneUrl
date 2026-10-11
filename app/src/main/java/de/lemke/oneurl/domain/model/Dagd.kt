@@ -24,9 +24,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.VolleyQueue
 
 /*
 https://da.gd/help
@@ -80,7 +78,7 @@ object Dagd : ShortURLProvider {
 
     @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -136,7 +134,7 @@ object Dagd : ShortURLProvider {
                                 Log.w(tag, "error, trying to create it anyway")
                             }
                             innerReq = requestCreateDAGD(longURL, alias, successCallback, errorCallback)
-                            RequestQueueSingleton.getInstance(context).addToRequestQueue(innerReq)
+                            queue.add(innerReq)
                         }
                     }
                 } catch (e: Exception) {

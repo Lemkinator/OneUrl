@@ -17,84 +17,48 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJsonResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class IsgdTest {
-    private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `succeeds when the response contains shorturl`() {
         var result: String? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJsonResponse(JSONObject("""{"shorturl":"https://is.gd/abc"}"""))
+        req.deliverResponse(JSONObject("""{"shorturl":"https://is.gd/abc"}"""))
 
         result shouldBe "https://is.gd/abc"
     }
 
     @Test
     fun `request url omits the shorturl param when alias is blank`() {
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { }, { fail("unexpected error") })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { }, { fail("unexpected error") })
 
         req.url.contains("&shorturl=") shouldBe false
     }
 
     @Test
     fun `request url includes shorturl and logstats params when alias is given`() {
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "abc", { }, { fail("unexpected error") })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "abc", { }, { fail("unexpected error") })
 
         req.url.contains("&shorturl=abc&logstats=1") shouldBe true
     }
@@ -102,9 +66,9 @@ class IsgdTest {
     @Test
     fun `fails with Unknown when the response has neither errorcode nor shorturl`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJsonResponse(JSONObject("""{"foo":"bar"}"""))
+        req.deliverResponse(JSONObject("""{"foo":"bar"}"""))
 
         error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
     }
@@ -125,9 +89,9 @@ class IsgdTest {
             )
         cases.forEach { (json, expected) ->
             var error: GenerateURLError? = null
-            val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+            val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-            req.deliverJsonResponse(JSONObject(json))
+            req.deliverResponse(JSONObject(json))
 
             error shouldBe expected
         }
@@ -136,7 +100,7 @@ class IsgdTest {
     @Test
     fun `error ServiceOffline on NoConnectionError`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -146,7 +110,7 @@ class IsgdTest {
     @Test
     fun `error Unknown when there is no status code`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -156,7 +120,7 @@ class IsgdTest {
     @Test
     fun `error Unknown with status code when the error body is blank`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
@@ -166,7 +130,7 @@ class IsgdTest {
     @Test
     fun `error Unknown with status code when the error body is null`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
 
@@ -176,7 +140,7 @@ class IsgdTest {
     @Test
     fun `error ServiceTemporarilyUnavailable when the reply is not JSON`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val parsed =
             req.parseResponse(
@@ -190,7 +154,7 @@ class IsgdTest {
     @Test
     fun `error ServiceTemporarilyUnavailable when the reply is a JSON array`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "[]".toByteArray(), false, 0L, emptyList()))
         req.deliverError(parsed.error)
@@ -201,7 +165,7 @@ class IsgdTest {
     @Test
     fun `error Custom with the raw body otherwise`() {
         var error: GenerateURLError? = null
-        val req = VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
@@ -213,7 +177,7 @@ class IsgdTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            VgdIsgd.Isgd.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }

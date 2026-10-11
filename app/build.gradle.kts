@@ -180,6 +180,7 @@ androidComponents {
 dependencies {
     implementation(libs.oneui.design)
     implementation(libs.oneui.icons)
+    implementation(libs.androidx.collection)
     implementation(libs.common.utils)
     implementation(libs.bundler)
     implementation(libs.coroutines.android)
@@ -208,6 +209,7 @@ dependencies {
     testImplementation(libs.konsist)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit4)
+    testRuntimeOnly(libs.apache.httpcore)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.vintage.engine)
@@ -215,7 +217,6 @@ dependencies {
 
     androidTestImplementation(testFixtures(libs.common.utils))
     androidTestImplementation(libs.bundles.android.test)
-    androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.turbine)
     androidTestImplementation(libs.kotest.assertions.core)
     androidTestImplementation(libs.coroutines.test)

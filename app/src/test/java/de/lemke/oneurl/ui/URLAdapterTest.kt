@@ -32,6 +32,8 @@ import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeQRCodeRenderer
+import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.URL
@@ -39,9 +41,6 @@ import de.lemke.oneurl.domain.testUrl
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +57,7 @@ import org.robolectric.annotation.Config
 
 // sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 //
-// Constructed directly (not via Hilt) so generateQRCode can be mocked; MainActivity only supplies
+// Constructed directly (not via Hilt) so generateQRCode renders through a fake; MainActivity only supplies
 // a themed Context/LayoutInflater to inflate listview_item.xml and stays on an empty list of its
 // own.
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -76,7 +75,8 @@ class URLAdapterTest {
     lateinit var settings: SettingsRepository
 
     private val dispatcher = UnconfinedTestDispatcher()
-    private val generateQRCode = mockk<GenerateQRCodeUseCase>()
+    private val renderer = FakeQRCodeRenderer(freshBitmap(), placeholder = freshBitmap())
+    private val generateQRCode = GenerateQRCodeUseCase(renderer)
 
     @Before
     fun setup() {
@@ -114,14 +114,13 @@ class URLAdapterTest {
             val drawableBefore = holder.listItemImg.drawable
             adapter.onViewRecycled(holder)
             holder.listItemImg.drawable shouldBe drawableBefore
-            verify(exactly = 0) { generateQRCode(any()) }
+            renderer.renders shouldBe emptyList()
         }
     }
 
     @Test
     fun `onViewRecycled cancels a pending qr load's UI update but keeps the cache write`() {
         val pendingDispatcher = StandardTestDispatcher()
-        every { generateQRCode(any()) } returns freshBitmap()
         withAdapter(defaultDispatcher = pendingDispatcher) { adapter, holder ->
             val url = testUrl("https://short.url/recycle")
             adapter.submitList(listOf(url))
@@ -135,7 +134,7 @@ class URLAdapterTest {
             val qrSizePx =
                 holder.itemView.context.resources
                     .getDimensionPixelSize(R.dimen.list_item_qr_size)
-            verify(exactly = 1) { generateQRCode(any()) }
+            renderer.renders shouldBe listOf(Render(url.shortURL, null))
             qrCodeCache[url.shortURL, qrSizePx] shouldNotBe null
             holder.listItemImg.drawable shouldBe placeholderDrawable
         }
@@ -154,14 +153,13 @@ class URLAdapterTest {
 
             adapter.onBindViewHolder(holder, 0)
 
-            holder.listItemImg.drawable shouldNotBe null
-            verify(exactly = 0) { generateQRCode(any()) }
+            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldBe cached
+            renderer.renders shouldBe emptyList()
         }
     }
 
     @Test
     fun `bind on cache miss generates and caches a thumbnail for a still-bound holder`() {
-        every { generateQRCode(any()) } returns freshBitmap()
         withAdapter { adapter, holder ->
             val url = testUrl("https://short.url/miss")
             adapter.submitList(listOf(url))

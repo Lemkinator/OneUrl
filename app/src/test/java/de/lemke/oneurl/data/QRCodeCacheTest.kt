@@ -19,17 +19,13 @@ package de.lemke.oneurl.data
 import android.app.Application
 import android.graphics.Bitmap
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-private fun bitmap(byteCount: Int = 1024): Bitmap = mockk { every { this@mockk.byteCount } returns byteCount }
+private fun bitmap(): Bitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
 
-// android.util.LruCache needs a real Android runtime (not the default unit-test "not mocked"
-// stub jar), hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class QRCodeCacheTest {

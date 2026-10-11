@@ -66,12 +66,15 @@ don't store history.
 
 Clean Architecture with three layers:
 
-**`data/`** — `URLRepository` wraps Room; `UserSettings` wraps SharedPreferences, bound as `SettingsRepository`. All DB entities live in
-`data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
+**`data/`** — `URLRepository` is an interface; `DefaultURLRepository` implements it over Room. `UserSettings` wraps SharedPreferences,
+bound as `SettingsRepository`. All DB entities live in `data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
+Framework and network work sits behind interfaces with a `Default*` implementation: `QRCodeRenderer` (OneUI `QrEncoder`),
+`QRCodeExporter`, `VolleyQueue` (the app's one Volley `RequestQueue`), and the three network clients built on it: `UrlhausClient`,
+`PageTitleFetcher` and `ShortURLClient` (create a short URL, read its visit count). `NetworkMonitor` reads validated connectivity.
 
 **`domain/`** — Use cases (`*UseCase.kt`), each doing one thing, injected by Hilt. `GenerateURLUseCase` is the core flow: checks internet →
-checks URL against URLhaus → delegates to the selected provider's `getCreateRequest()`. URL generation uses Volley (`RequestQueueSingleton`)
-for all HTTP calls.
+checks URL against URLhaus → delegates to the selected provider's `getCreateRequest()`. It reads connectivity through `NetworkMonitor`, checks
+through `CheckURLSafetyUseCase` over `UrlhausClient`, and creates through `ShortURLClient`. Every HTTP call goes through `VolleyQueue`.
 
 **`ui/`** — Activities, adapters, and ViewModels. Activities interact with use cases through ViewModels (MainViewModel, AddURLViewModel,
 URLViewModel, GenerateQRCodeViewModel, QRBottomSheetViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
@@ -88,13 +91,22 @@ exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` 
 
 **DI** — `di/` holds the `SingletonComponent` Hilt modules: `PersistenceModule` (Room DB, `URLDao`), `SettingsModule.kt`
 (`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (`@DefaultDispatcher`, `@IoDispatcher`, `@ApplicationScope`),
-`ProviderModule` (`@EnabledProviders`) and `QRCodeExporterModule` (binds `DefaultQRCodeExporter`; screen tests uninstall it to
-bind an exporter on a pausable IO dispatcher).
+`ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (binds `VolleyQueue`,
+`NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`) and
+`QRCodeExporterModule` (binds `DefaultQRCodeExporter`; screen tests uninstall it to bind an exporter on a pausable IO dispatcher).
+
+**Test doubles** — `testFixtures` holds the `@TestInstallIn` modules that every Hilt test, local or instrumented, loads:
+`TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule` and `TestNetworkModule`. `TestNetworkModule` binds the singleton
+fakes `FakeNetworkMonitor`, `FakeUrlhausClient`, `FakePageTitleFetcher` and `FakeShortURLClient`, so no Hilt test reaches the network;
+a test injects a fake to set its answers. ViewModel and use-case tests run real use cases over fakes such as `FakeURLRepository`,
+`FakeQRCodeRenderer` and `FakeVolleyQueue`. `URLRepositoryContract` runs against both `DefaultURLRepository` and `FakeURLRepository`.
+MockK stays only for framework values (`Bitmap`, `Uri`, `ClipData`) and `Log` in plain JVM Kotest specs, which cannot build them.
 
 ## Adding a New URL Provider
 
 1. Create `app/src/main/java/de/lemke/oneurl/domain/model/ProviderName.kt` implementing `ShortURLProvider`.
-2. Implement `getCreateRequest()` using Volley — follow the pattern in `Dagd.kt` (parse error body strings for specific `GenerateURLError`
+2. Implement `getCreateRequest()` using Volley and send each request through the `queue` parameter — follow the pattern in `Dagd.kt`
+   (parse error body strings for specific `GenerateURLError`
    subtypes). A provider maps a 2xx body that is not a JSON object to `ServiceTemporarilyUnavailable(baseURL)`: the `ParseError` of a
    `JsonObjectRequest`, or the `JSONException` from `JSONObject(response)` in a `StringRequest` listener.
 3. Add to the `provider` list in `ShortURLProviderCompanion` in `ShortURLProvider.kt`.

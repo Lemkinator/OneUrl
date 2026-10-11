@@ -21,36 +21,19 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
 import java.time.ZonedDateTime
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import de.lemke.commonutils.R as commonutilsR
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJSONResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
 
 private fun testURL(shortURL: String) =
     URL(
@@ -69,26 +52,15 @@ private fun testURL(shortURL: String) =
 @Config(application = Application::class, sdk = [36])
 class OwoTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `create request succeeds when the response has an id`() {
         var result: String? = null
-        val req = Owovc.Owo.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Owovc.Owo.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJSONResponse(JSONObject().put("id", " uvu.owo.vc/uwU-uvU.uwU-uwU "))
+        req.deliverResponse(JSONObject().put("id", " uvu.owo.vc/uwU-uvU.uwU-uwU "))
 
         result shouldBe "uvu.owo.vc/uwU-uvU.uwU-uwU"
     }
@@ -96,9 +68,9 @@ class OwoTest {
     @Test
     fun `create request fails with Unknown when the response has no id`() {
         var error: GenerateURLError? = null
-        val req = Owovc.Owo.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Owovc.Owo.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("destination", longURL))
+        req.deliverResponse(JSONObject().put("destination", longURL))
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -129,7 +101,7 @@ class OwoTest {
             )
         cases.forEach { (volleyError, expected) ->
             var error: GenerateURLError? = null
-            val req = Owovc.Owo.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+            val req = Owovc.Owo.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
             req.deliverError(volleyError)
 
@@ -142,7 +114,7 @@ class OwoTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Owovc.Owo.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Owovc.Owo.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -155,11 +127,9 @@ class OwoTest {
     @Test
     fun `getURLClickCount returns the visit count`() {
         var clicks: Int? = -1
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
 
-        Owovc.Owo.getURLClickCount(context, testURL("owo.vc/abc")) { clicks = it }
-        slot.captured.deliverJSONResponse(JSONObject().put("visits", 5))
+        Owovc.Owo.getURLClickCount(queue, testURL("owo.vc/abc")) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject().put("visits", 5))
 
         clicks shouldBe 5
     }
@@ -167,11 +137,9 @@ class OwoTest {
     @Test
     fun `getURLClickCount returns null when the response has no visits field`() {
         var clicks: Int? = -1
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
 
-        Owovc.Owo.getURLClickCount(context, testURL("owo.vc/abc")) { clicks = it }
-        slot.captured.deliverJSONResponse(JSONObject().put("id", "owo.vc/abc"))
+        Owovc.Owo.getURLClickCount(queue, testURL("owo.vc/abc")) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject().put("id", "owo.vc/abc"))
 
         clicks shouldBe null
     }
@@ -179,11 +147,9 @@ class OwoTest {
     @Test
     fun `getURLClickCount returns null on a network error`() {
         var clicks: Int? = -1
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
 
-        Owovc.Owo.getURLClickCount(context, testURL("owo.vc/abc")) { clicks = it }
-        slot.captured.deliverError(VolleyError("no network"))
+        Owovc.Owo.getURLClickCount(queue, testURL("owo.vc/abc")) { clicks = it }
+        queue.added.single().deliverError(VolleyError("no network"))
 
         clicks shouldBe null
     }

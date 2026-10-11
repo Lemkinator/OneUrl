@@ -130,6 +130,7 @@
     <string name="scan_qr">Scan this QR code on another device to view the url.</string>
     <string name="delete_url_message">Do you really want to delete this URL?</string>
     <string name="content_description_qr_code">QR code</string>
+    <string name="qr_code_not_supported">QR codes are not\nsupported by this provider</string>
     <string name="url_safety_google_safe_browsing" translatable="false">Google Safe Browsing</string>
     <string name="url_safety_norton_safe_web" translatable="false">Norton Safe Web</string>
     <string name="url_safety_link_shield" translatable="false">Link Shield</string>

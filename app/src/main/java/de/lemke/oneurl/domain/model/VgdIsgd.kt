@@ -25,8 +25,7 @@ import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.GenerateURLError
-import de.lemke.oneurl.domain.generateURL.HttpStatusCode
+import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -220,7 +219,7 @@ sealed class VgdIsgd : ShortURLProvider {
             )
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -255,7 +254,7 @@ sealed class VgdIsgd : ShortURLProvider {
             )
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
