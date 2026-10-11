@@ -18,41 +18,46 @@ package de.lemke.oneurl.data
 
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.URL
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.MutableSharedFlow
 
-/** Keeps [urls] in memory, newest first, with the replace-on-add and update-in-place rules of [DefaultURLRepository]. */
+/**
+ * Keeps [urls] in memory, newest first, with the replace-on-add and update-in-place rules of [DefaultURLRepository].
+ * Like Room, [observeURLs] emits after every write that touches a row, even when the rows stay equal.
+ */
 internal class FakeURLRepository(
     urls: List<URL> = emptyList(),
 ) : URLRepository {
-    private val rows = MutableStateFlow(urls)
-    val urls: List<URL> get() = rows.value
+    private val rows = MutableSharedFlow<List<URL>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply { tryEmit(urls) }
+    val urls: List<URL> get() = rows.replayCache.single()
 
     override fun observeURLs(): Flow<List<URL>> = rows
 
-    override suspend fun getURL(shortURL: String): URL? = rows.value.find { it.shortURL == shortURL }
+    override suspend fun getURL(shortURL: String): URL? = urls.find { it.shortURL == shortURL }
 
     override suspend fun getURL(
         provider: ShortURLProvider,
         longURL: String,
-    ): List<URL> = rows.value.filter { it.shortURLProvider.name == provider.name && it.longURL == longURL }
+    ): List<URL> = urls.filter { it.shortURLProvider.name == provider.name && it.longURL == longURL }
 
     override suspend fun addURL(url: URL) {
-        rows.update { stored -> listOf(url) + stored.filterNot { it.shortURL == url.shortURL } }
+        rows.emit(listOf(url) + urls.filterNot { it.shortURL == url.shortURL })
     }
 
     override suspend fun updateURL(url: URL) = updateURLs(listOf(url))
 
     override suspend fun updateURLs(urls: List<URL>) {
         val updates = urls.associateBy { it.shortURL }
-        rows.update { stored -> stored.map { updates[it.shortURL] ?: it } }
+        val stored = this.urls
+        if (stored.any { it.shortURL in updates }) rows.emit(stored.map { updates[it.shortURL] ?: it })
     }
 
     override suspend fun deleteURL(url: URL) = deleteURLs(listOf(url))
 
     override suspend fun deleteURLs(urls: List<URL>) {
         val deleted = urls.mapTo(HashSet()) { it.shortURL }
-        rows.update { stored -> stored.filterNot { it.shortURL in deleted } }
+        val stored = this.urls
+        if (stored.any { it.shortURL in deleted }) rows.emit(stored.filterNot { it.shortURL in deleted })
     }
 }

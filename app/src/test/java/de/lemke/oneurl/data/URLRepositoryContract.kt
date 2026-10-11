@@ -16,6 +16,8 @@
 
 package de.lemke.oneurl.data
 
+import app.cash.turbine.ReceiveTurbine
+import app.cash.turbine.test
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.Tinyurl
@@ -157,6 +159,61 @@ abstract class URLRepositoryContract {
             repository.deleteURLs(listOf(first, third, url("https://da.gd/missing")))
 
             repository.stored() shouldBe listOf(second)
+        }
+
+    private fun observeWhileWriting(block: suspend ReceiveTurbine<List<URL>>.(URLRepository) -> Unit) =
+        runTest {
+            val repository = createRepository()
+            repository.observeURLs().test {
+                awaitItem() shouldBe emptyList()
+                repository.addURL(first)
+                awaitItem() shouldBe listOf(first)
+                repository.addURL(second)
+                awaitItem() shouldBe listOf(second, first)
+                block(repository)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `observeURLs emits after addURL, also for an unchanged url`() =
+        observeWhileWriting { repository ->
+            repository.addURL(third)
+            awaitItem() shouldBe listOf(third, second, first)
+
+            repository.addURL(third)
+            awaitItem() shouldBe listOf(third, second, first)
+        }
+
+    @Test
+    fun `observeURLs emits after updateURL, also for unchanged values`() =
+        observeWhileWriting { repository ->
+            val favorite = first.copy(favorite = true)
+            repository.updateURL(favorite)
+            awaitItem() shouldBe listOf(second, favorite)
+
+            repository.updateURL(favorite)
+            awaitItem() shouldBe listOf(second, favorite)
+        }
+
+    @Test
+    fun `observeURLs does not emit after updateURL of an unknown short url`() =
+        observeWhileWriting { repository ->
+            repository.updateURL(third)
+            repository.updateURLs(listOf(third, url("https://da.gd/missing")))
+            repository.addURL(third)
+
+            awaitItem() shouldBe listOf(third, second, first)
+        }
+
+    @Test
+    fun `observeURLs emits after deleteURL and not after deleting an unknown short url`() =
+        observeWhileWriting { repository ->
+            repository.deleteURL(third)
+            repository.deleteURLs(listOf(third))
+            repository.deleteURL(first)
+
+            awaitItem() shouldBe listOf(second)
         }
 
     private companion object {
