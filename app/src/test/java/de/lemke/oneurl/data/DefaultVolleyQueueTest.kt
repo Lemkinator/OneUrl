@@ -17,7 +17,6 @@
 package de.lemke.oneurl.data
 
 import android.app.Application
-import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.Cache
 import com.android.volley.Request
@@ -25,17 +24,27 @@ import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.StringRequest
 import io.kotest.matchers.shouldBe
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.LooperMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
+@LooperMode(LooperMode.Mode.INSTRUMENTATION_TEST)
 class DefaultVolleyQueueTest {
     private val context = ApplicationProvider.getApplicationContext<Application>()
     private val url = "https://example.com/cached"
+    private val queue = DefaultVolleyQueue(context)
+
+    @After
+    fun stopQueue() {
+        queue.stop()
+    }
 
     private fun volleyCache() = DiskBasedCache(File(context.cacheDir, "volley")).apply { initialize() }
 
@@ -54,16 +63,16 @@ class DefaultVolleyQueueTest {
     fun `add delivers the response Volley serves for the request`() {
         cacheResponse("cached body")
         var delivered: String? = null
-        val queue = DefaultVolleyQueue(context)
+        val deliveredLatch = CountDownLatch(1)
 
-        queue.add(StringRequest(Request.Method.GET, url, { delivered = it }, {}))
-        repeat(AWAIT_ATTEMPTS) {
-            if (delivered == null) {
-                Thread.sleep(AWAIT_STEP_MS)
-                shadowOf(Looper.getMainLooper()).idle()
-            }
-        }
+        queue.add(
+            StringRequest(Request.Method.GET, url, {
+                delivered = it
+                deliveredLatch.countDown()
+            }, {}),
+        )
 
+        deliveredLatch.await(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe true
         delivered shouldBe "cached body"
     }
 
@@ -71,13 +80,12 @@ class DefaultVolleyQueueTest {
     fun `removeCacheEntry drops the cached response of the url`() {
         cacheResponse("cached body")
 
-        DefaultVolleyQueue(context).removeCacheEntry(url)
+        queue.removeCacheEntry(url)
 
         volleyCache().get(url) shouldBe null
     }
 
     private companion object {
-        const val AWAIT_ATTEMPTS = 200
-        const val AWAIT_STEP_MS = 10L
+        const val DELIVERY_TIMEOUT_SECONDS = 5L
     }
 }

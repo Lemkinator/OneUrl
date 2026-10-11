@@ -51,6 +51,11 @@ class DefaultVolleyQueue @Inject constructor(
         queue.cache.remove(url)
     }
 
+    /** Stops the queue's cache and network dispatcher threads. */
+    fun stop() {
+        queue.stop()
+    }
+
     private companion object {
         const val CACHE_DIRECTORY = "volley"
     }
