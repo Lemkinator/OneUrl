@@ -16,14 +16,9 @@
 
 package de.lemke.oneurl.domain.generateURL
 
-import android.content.Context
-import android.content.Context.CONNECTIVITY_SERVICE
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
-import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import com.android.volley.Request
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeNetworkMonitor
 import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.GenerateURLError
@@ -43,32 +38,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 
-private fun connectivityManager(
-    hasNetwork: Boolean = true,
-    hasInternet: Boolean = true,
-    isValidated: Boolean = true,
-): ConnectivityManager {
-    val caps =
-        mockk<NetworkCapabilities> {
-            every { hasCapability(NET_CAPABILITY_INTERNET) } returns hasInternet
-            every { hasCapability(NET_CAPABILITY_VALIDATED) } returns isValidated
-        }
-    return mockk {
-        every { activeNetwork } returns if (hasNetwork) mockk() else null
-        every { getNetworkCapabilities(any()) } returns if (hasNetwork) caps else null
-    }
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class GenerateURLUseCaseTest : ShouldSpec(
     {
-        val context = mockk<Context>()
+        val networkMonitor = FakeNetworkMonitor()
         val checkURLSafety = mockk<CheckURLSafetyUseCase>()
         val queue = FakeVolleyQueue()
-        val generateURL = GenerateURLUseCase(context, checkURLSafety, queue, Dispatchers.Unconfined)
+        val generateURL = GenerateURLUseCase(networkMonitor, checkURLSafety, queue, Dispatchers.Unconfined)
 
-        should("fail with NoInternet when there is no active network") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager(hasNetwork = false)
+        beforeTest { networkMonitor.online = true }
+
+        should("fail with NoInternet without validated internet") {
+            networkMonitor.online = false
             val progress = mutableListOf<Int>()
 
             val result = generateURL(mockk<ShortURLProvider>(), "https://example.com", "alias", progress::add)
@@ -77,24 +58,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
             progress shouldContainExactly listOf(R.string.checking_internet)
         }
 
-        should("fail with NoInternet when the network lacks the internet capability") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager(hasInternet = false)
-
-            val result = generateURL(mockk<ShortURLProvider>(), "https://example.com", "alias") {}
-
-            result shouldBe GenerateURLResult.Failure(GenerateURLError.NoInternet)
-        }
-
-        should("fail with NoInternet when the network is not validated") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager(isValidated = false)
-
-            val result = generateURL(mockk<ShortURLProvider>(), "https://example.com", "alias") {}
-
-            result shouldBe GenerateURLResult.Failure(GenerateURLError.NoInternet)
-        }
-
         should("fail with BlacklistedURL when the safety check reports a blacklisted url") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
             coEvery { checkURLSafety(any()) } returns
                 UrlhausResult.Blacklisted("blacklisted", "urlhaus-link", "vt-link")
 
@@ -105,7 +69,6 @@ class GenerateURLUseCaseTest : ShouldSpec(
         }
 
         should("delegate to the provider and return Success when the safety check passes") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
@@ -128,7 +91,6 @@ class GenerateURLUseCaseTest : ShouldSpec(
         }
 
         should("return the provider's Failure when it reports an error") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
@@ -144,7 +106,6 @@ class GenerateURLUseCaseTest : ShouldSpec(
         }
 
         should("ignore a second success callback delivered after the continuation already resumed") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
@@ -161,7 +122,6 @@ class GenerateURLUseCaseTest : ShouldSpec(
         }
 
         should("ignore a second failure callback delivered after the continuation already resumed") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
@@ -178,7 +138,6 @@ class GenerateURLUseCaseTest : ShouldSpec(
         }
 
         should("cancel the provider's request when the coroutine is cancelled") {
-            every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager()
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val createdRequest = mockk<Request<Any>>(relaxed = true)
             val provider =

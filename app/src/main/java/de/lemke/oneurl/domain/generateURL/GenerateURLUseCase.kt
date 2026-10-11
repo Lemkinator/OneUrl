@@ -16,15 +16,10 @@
 
 package de.lemke.oneurl.domain.generateURL
 
-import android.content.Context
-import android.content.Context.CONNECTIVITY_SERVICE
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
-import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
-import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.NetworkMonitor
 import de.lemke.oneurl.data.VolleyQueue
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.GenerateURLError
@@ -38,7 +33,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 class GenerateURLUseCase @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    private val networkMonitor: NetworkMonitor,
     private val checkURLSafety: CheckURLSafetyUseCase,
     private val queue: VolleyQueue,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
@@ -53,12 +48,7 @@ class GenerateURLUseCase @Inject constructor(
         onProgress: (Int) -> Unit,
     ): GenerateURLResult {
         onProgress(R.string.checking_internet)
-        val caps =
-            withContext(defaultDispatcher) {
-                val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-                cm.getNetworkCapabilities(cm.activeNetwork)
-            }
-        if (caps == null || !caps.hasCapability(NET_CAPABILITY_INTERNET) || !caps.hasCapability(NET_CAPABILITY_VALIDATED)) {
+        if (!withContext(defaultDispatcher) { networkMonitor.hasValidatedInternet() }) {
             return GenerateURLResult.Failure(GenerateURLError.NoInternet)
         }
         onProgress(R.string.checking_url)

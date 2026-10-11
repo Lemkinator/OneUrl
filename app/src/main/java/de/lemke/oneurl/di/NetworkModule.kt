@@ -20,7 +20,9 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import de.lemke.oneurl.data.DefaultNetworkMonitor
 import de.lemke.oneurl.data.DefaultVolleyQueue
+import de.lemke.oneurl.data.NetworkMonitor
 import de.lemke.oneurl.data.VolleyQueue
 
 @Module
@@ -28,4 +30,7 @@ import de.lemke.oneurl.data.VolleyQueue
 abstract class NetworkModule {
     @Binds
     abstract fun bindVolleyQueue(queue: DefaultVolleyQueue): VolleyQueue
+
+    @Binds
+    abstract fun bindNetworkMonitor(monitor: DefaultNetworkMonitor): NetworkMonitor
 }
