@@ -32,6 +32,7 @@ class DefaultURLRepositoryContractTest : URLRepositoryContract() {
         Room
             .inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
             .allowMainThreadQueries()
+            .setQueryCoroutineContext(dispatcher)
             .build()
 
     override fun createRepository(): URLRepository = DefaultURLRepository(database.urlDao())

@@ -25,12 +25,17 @@ import de.lemke.oneurl.domain.model.URL
 import io.kotest.matchers.shouldBe
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /** Behaviour every [URLRepository] shares, so [FakeURLRepository] stays true to [DefaultURLRepository]. */
 abstract class URLRepositoryContract {
+    /** Runs every test; a repository must launch its notification work here for [settle] to wait for it. */
+    protected val dispatcher = StandardTestDispatcher()
+
     abstract fun createRepository(): URLRepository
 
     private val first = url("https://da.gd/first")
@@ -41,13 +46,13 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `a new repository observes no urls`() =
-        runTest {
+        runTest(dispatcher) {
             createRepository().stored() shouldBe emptyList()
         }
 
     @Test
     fun `observeURLs lists added urls newest first`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
 
             repository.addURL(first)
@@ -59,7 +64,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `getURL by short url returns the stored url or null`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
 
@@ -69,7 +74,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `getURL by provider and long url lists the matching urls newest first`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             val otherLongURL = url("https://da.gd/other", longURL = "https://other.example.com")
             val otherProvider = url("https://tinyurl.com/x", provider = Tinyurl)
@@ -85,7 +90,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `addURL of a stored short url replaces it and makes it the newest`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
             repository.addURL(second)
@@ -98,7 +103,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `updateURL replaces the stored url in place`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
             repository.addURL(second)
@@ -111,7 +116,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `updateURL of an unknown short url stores nothing`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
 
@@ -122,7 +127,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `updateURLs replaces every given url in place`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
             repository.addURL(second)
@@ -137,7 +142,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `deleteURL removes the url with the same short url`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
             repository.addURL(second)
@@ -150,7 +155,7 @@ abstract class URLRepositoryContract {
 
     @Test
     fun `deleteURLs removes every given url and ignores unknown ones`() =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
             repository.addURL(second)
@@ -162,7 +167,7 @@ abstract class URLRepositoryContract {
         }
 
     private fun observeWhileWriting(block: suspend ReceiveTurbine<List<URL>>.(URLRepository) -> Unit) =
-        runTest {
+        runTest(dispatcher) {
             val repository = createRepository()
             repository.observeURLs().test {
                 awaitItem() shouldBe emptyList()
@@ -196,14 +201,17 @@ abstract class URLRepositoryContract {
             awaitItem() shouldBe listOf(second, favorite)
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun settle() = dispatcher.scheduler.advanceUntilIdle()
+
     @Test
     fun `observeURLs does not emit after updateURL of an unknown short url`() =
         observeWhileWriting { repository ->
             repository.updateURL(third)
             repository.updateURLs(listOf(third, url("https://da.gd/missing")))
-            repository.addURL(third)
+            settle()
 
-            awaitItem() shouldBe listOf(third, second, first)
+            expectNoEvents()
         }
 
     @Test
@@ -211,6 +219,9 @@ abstract class URLRepositoryContract {
         observeWhileWriting { repository ->
             repository.deleteURL(third)
             repository.deleteURLs(listOf(third))
+            settle()
+            expectNoEvents()
+
             repository.deleteURL(first)
 
             awaitItem() shouldBe listOf(second)
