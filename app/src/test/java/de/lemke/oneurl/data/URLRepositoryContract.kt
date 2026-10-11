@@ -205,6 +205,18 @@ abstract class URLRepositoryContract {
     private fun settle() = dispatcher.scheduler.advanceUntilIdle()
 
     @Test
+    fun `settle delivers the emission of a matching write`() =
+        observeWhileWriting { repository ->
+            val favorite = first.copy(favorite = true)
+            repository.updateURL(favorite)
+            settle()
+
+            // Turbine's takeItem() throws inside any suspending block, so read the channel without suspending.
+            asChannel().tryReceive().getOrNull() shouldBe listOf(second, favorite)
+            expectNoEvents()
+        }
+
+    @Test
     fun `observeURLs does not emit after updateURL of an unknown short url`() =
         observeWhileWriting { repository ->
             repository.updateURL(third)
