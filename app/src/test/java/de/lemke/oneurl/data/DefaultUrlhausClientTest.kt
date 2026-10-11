@@ -22,7 +22,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.VolleyError
 import de.lemke.oneurl.BuildConfig
-import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.UrlhausResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -44,6 +43,12 @@ class DefaultUrlhausClientTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val queue = FakeVolleyQueue()
     private val urlhausClient = DefaultUrlhausClient(context, queue)
+
+    private fun blacklisted(
+        lists: String,
+        reason: String,
+    ) = "This URL is blacklisted on: $lists.\n$reason\n" +
+        "If you continue trying to shorten blacklisted URLs, you may be blocked from using this App."
 
     private fun respond(json: String) {
         queue.onAdd = {
@@ -104,12 +109,7 @@ class DefaultUrlhausClientTest {
             result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe "https://urlhaus.abuse.ch/url/123/"
             result.virustotalLink shouldBe "https://virustotal.com/report/1"
-            result.message shouldBe
-                context.getString(
-                    R.string.error_urlhaus_blacklisted,
-                    "URLhaus, SURBL, Spamhaus",
-                    context.getString(R.string.error_urlhaus_phishing_domain),
-                )
+            result.message shouldBe blacklisted("URLhaus, SURBL, Spamhaus", "It is a known phishing domain.")
         }
 
     @Test
@@ -122,38 +122,33 @@ class DefaultUrlhausClientTest {
             result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
             result.urlhausLink shouldBe null
             result.virustotalLink shouldBe null
-            result.message shouldBe
-                context.getString(
-                    R.string.error_urlhaus_blacklisted,
-                    "URLhaus, Spamhaus",
-                    context.getString(R.string.error_urlhaus_spammer_domain),
-                )
+            result.message shouldBe blacklisted("URLhaus, Spamhaus", "It is a known spammer domain.")
         }
 
     @Test
     fun `maps every known spamhaus status and falls back to the default reason otherwise`() =
         runTest {
-            val statusToStringRes =
+            val statusToReason =
                 mapOf(
-                    "spammer_domain" to R.string.error_urlhaus_spammer_domain,
-                    "phishing_domain" to R.string.error_urlhaus_phishing_domain,
-                    "botnet_cc_domain" to R.string.error_urlhaus_botnet_cc_domain,
-                    "abused_legit_spam" to R.string.error_urlhaus_abused_legit_spam,
-                    "abused_legit_malware" to R.string.error_urlhaus_abused_legit_malware,
-                    "abused_legit_phishing" to R.string.error_urlhaus_abused_legit_phishing,
-                    "abused_legit_botnetcc" to R.string.error_urlhaus_abused_legit_botnetcc,
-                    "abused_redirector" to R.string.error_urlhaus_abused_redirector,
-                    "something_else" to R.string.error_urlhaus_default,
+                    "spammer_domain" to "It is a known spammer domain.",
+                    "phishing_domain" to "It is a known phishing domain.",
+                    "botnet_cc_domain" to "It is a known botnet C&C domain.",
+                    "abused_legit_spam" to "It is a known compromised website used for spammer hosting.",
+                    "abused_legit_malware" to "It is a known compromised website used for malware distribution.",
+                    "abused_legit_phishing" to "It is a known compromised website used for phishing hosting.",
+                    "abused_legit_botnetcc" to "It is a known compromised website used for botnet C&C hosting.",
+                    "abused_redirector" to "It is a known abused redirector or URL shortener.",
+                    "something_else" to
+                        "It may have been used abusively in the past, or it may link to another URL redirection service.",
                 )
 
-            statusToStringRes.forEach { (status, expectedStringRes) ->
+            statusToReason.forEach { (status, reason) ->
                 respond("""{"query_status":"ok","blacklists":{"spamhaus_dbl":"$status"}}""")
 
                 val result = urlhausClient.check("example.com")
 
                 result.shouldBeInstanceOf<UrlhausResult.Blacklisted>()
-                result.message shouldBe
-                    context.getString(R.string.error_urlhaus_blacklisted, "URLhaus, Spamhaus", context.getString(expectedStringRes))
+                result.message shouldBe blacklisted("URLhaus, Spamhaus", reason)
             }
         }
 
