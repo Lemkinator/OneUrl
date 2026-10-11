@@ -51,20 +51,28 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
 
         fun newViewModel() = GenerateQRCodeViewModel(userSettings, GenerateQRCodeUseCase(renderer), exporter)
 
-        fun defaultStyle() =
+        val seededStyle =
             QRCodeStyle(
-                size = userSettings.qrSize,
-                foregroundColor = userSettings.qrRecentForegroundColors.first(),
-                backgroundColor = userSettings.qrRecentBackgroundColors.first(),
-                tintAnchor = userSettings.qrTintAnchor,
-                tintBorder = userSettings.qrTintBorder,
-                icon = userSettings.qrIcon,
-                roundedFrame = userSettings.qrFrame,
+                size = 512,
+                foregroundColor = 0x111111,
+                backgroundColor = 0x333333,
+                tintAnchor = false,
+                tintBorder = false,
+                icon = true,
+                roundedFrame = true,
             )
 
         beforeEach {
             mainScheduler = UnconfinedTestDispatcher().scheduler
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            userSettings.qrURL = "https://seeded.example.com"
+            userSettings.qrSize = 512
+            userSettings.qrRecentForegroundColors = listOf(0x111111)
+            userSettings.qrRecentBackgroundColors = listOf(0x333333)
+            userSettings.qrTintAnchor = false
+            userSettings.qrTintBorder = false
+            userSettings.qrIcon = true
+            userSettings.qrFrame = true
             renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
             exporter = FakeQRCodeExporter()
         }
@@ -108,7 +116,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.setUrl("https://new.example.com")
 
             viewModel.state.value.url shouldBe "https://new.example.com"
-            renderer.renders.last() shouldBe Render("https://new.example.com", defaultStyle())
+            renderer.renders.last() shouldBe Render("https://new.example.com", seededStyle)
             renderer.renders.size shouldBe 2
         }
 
@@ -118,7 +126,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.setSize(1024)
 
             viewModel.state.value.style.size shouldBe 1024
-            renderer.renders.last() shouldBe Render(userSettings.qrURL, defaultStyle().copy(size = 1024))
+            renderer.renders.last() shouldBe Render("https://seeded.example.com", seededStyle.copy(size = 1024))
         }
 
         should("setRoundedFrame flips state, persists immediately, and regenerates") {
@@ -129,7 +137,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.state.value.style.roundedFrame
                 .shouldBeFalse()
             userSettings.qrFrame.shouldBeFalse()
-            renderer.renders.last() shouldBe Render(userSettings.qrURL, defaultStyle())
+            renderer.renders.last() shouldBe Render("https://seeded.example.com", seededStyle.copy(roundedFrame = false))
         }
 
         should("setIcon flips state, persists immediately, and regenerates") {
@@ -140,7 +148,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.state.value.style.icon
                 .shouldBeFalse()
             userSettings.qrIcon.shouldBeFalse()
-            renderer.renders.last() shouldBe Render(userSettings.qrURL, defaultStyle())
+            renderer.renders.last() shouldBe Render("https://seeded.example.com", seededStyle.copy(icon = false))
         }
 
         should("setTintBorder flips state, persists immediately, and regenerates") {
@@ -151,7 +159,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.state.value.style.tintBorder
                 .shouldBeTrue()
             userSettings.qrTintBorder.shouldBeTrue()
-            renderer.renders.last() shouldBe Render(userSettings.qrURL, defaultStyle())
+            renderer.renders.last() shouldBe Render("https://seeded.example.com", seededStyle.copy(tintBorder = true))
         }
 
         should("setTintAnchor flips state, persists immediately, and regenerates") {
@@ -162,7 +170,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.state.value.style.tintAnchor
                 .shouldBeTrue()
             userSettings.qrTintAnchor.shouldBeTrue()
-            renderer.renders.last() shouldBe Render(userSettings.qrURL, defaultStyle())
+            renderer.renders.last() shouldBe Render("https://seeded.example.com", seededStyle.copy(tintAnchor = true))
         }
 
         should("setForegroundColor prepends the color, dedupes, and persists the recent list") {
@@ -172,7 +180,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.setForegroundColor(0x2)
 
             viewModel.state.value.style.foregroundColor shouldBe 0x2
-            renderer.renders.last().style shouldBe defaultStyle()
+            renderer.renders.last() shouldBe Render("https://seeded.example.com", seededStyle.copy(foregroundColor = 0x2))
             viewModel.state.value.recentForegroundColors shouldBe listOf(0x2, 0x1, 0x3)
             userSettings.qrRecentForegroundColors shouldBe listOf(0x2, 0x1, 0x3)
         }
@@ -194,7 +202,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.setBackgroundColor(0x2)
 
             viewModel.state.value.style.backgroundColor shouldBe 0x2
-            renderer.renders.last().style shouldBe defaultStyle()
+            renderer.renders.last() shouldBe Render("https://seeded.example.com", seededStyle.copy(backgroundColor = 0x2))
             viewModel.state.value.recentBackgroundColors shouldBe listOf(0x2, 0x1, 0x3)
             userSettings.qrRecentBackgroundColors shouldBe listOf(0x2, 0x1, 0x3)
         }
