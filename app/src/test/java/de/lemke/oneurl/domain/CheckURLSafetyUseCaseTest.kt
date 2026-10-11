@@ -245,6 +245,20 @@ class CheckURLSafetyUseCaseTest {
         }
 
     @Test
+    fun `treats blank blacklist entries as not listed`() =
+        runTest {
+            respond("""{"query_status":"ok","blacklists":{"surbl":"","spamhaus_dbl":""}}""")
+
+            val result = checkURLSafety("example.com")
+
+            result.shouldBeInstanceOf<CheckURLSafetyUseCase.UrlhausResult.Blacklisted>()
+            result.message shouldBe
+                "This URL is blacklisted on: URLhaus.\n" +
+                "It may have been used abusively in the past, or it may link to another URL redirection service.\n" +
+                "If you continue trying to shorten blacklisted URLs, you may be blocked from using this App."
+        }
+
+    @Test
     fun `returns Ok when query_status is json null`() =
         runTest {
             respond("""{"query_status":null,"blacklists":{"surbl":"listed"}}""")
