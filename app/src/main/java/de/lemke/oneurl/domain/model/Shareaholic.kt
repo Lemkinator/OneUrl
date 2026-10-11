@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.domain.model
 
-import android.content.Context
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.ParseError
@@ -24,6 +23,7 @@ import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
+import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONObject
 
 /*
@@ -63,7 +63,7 @@ object Shareaholic : ShortURLProvider {
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,

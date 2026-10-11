@@ -22,7 +22,7 @@ import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.VolleyQueue
 
 /*
 https://gg.gg/
@@ -73,7 +73,7 @@ object Gg : ShortURLProvider {
 
     @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -92,13 +92,13 @@ object Gg : ShortURLProvider {
                     if (response.contains("Link with this path already exist", true)) {
                         errorCallback(GenerateURLError.AliasAlreadyExists)
                     } else {
-                        RequestQueueSingleton.getInstance(context).addToRequestQueue(
+                        queue.add(
                             requestCreateGg(longURL, alias, successCallback, errorCallback),
                         )
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "error handling check response, creating anyway", e)
-                    RequestQueueSingleton.getInstance(context).addToRequestQueue(
+                    queue.add(
                         requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 }
@@ -112,12 +112,12 @@ object Gg : ShortURLProvider {
                     val statusCode = networkResponse?.statusCode
                     val data = networkResponse?.data?.toString(Charsets.UTF_8)
                     Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    RequestQueueSingleton.getInstance(context).addToRequestQueue(
+                    queue.add(
                         requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 } catch (e: Exception) {
                     Log.e(tag, "error handling check error response, creating anyway", e)
-                    RequestQueueSingleton.getInstance(context).addToRequestQueue(
+                    queue.add(
                         requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 }

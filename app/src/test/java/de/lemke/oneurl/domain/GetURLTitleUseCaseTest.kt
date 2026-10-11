@@ -17,47 +17,19 @@
 package de.lemke.oneurl.domain
 
 import android.app.Application
-import android.content.Context
 import com.android.volley.NetworkResponse
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.StringRequest
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) (and StringRequest's erasure bridge deliverResponse(Object)) is
-// protected - only Volley's own RequestQueue can normally trigger it. Tests stand in for the
-// queue, so they reach it via reflection instead of a real network round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-// The compiled response listener null-checks its parameter before use; invoking it through the
-// erasure bridge with a null argument reaches that check without a real malformed network reply.
-private fun Request<*>.deliverNullResponse() {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, null)
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
@@ -65,26 +37,14 @@ private fun Request<*>.deliverNullResponse() {
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class GetURLTitleUseCaseTest {
-    private val context = mockk<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>()
-    private val getURLTitle = GetURLTitleUseCase(context)
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
+    private val queue = FakeVolleyQueue()
+    private val getURLTitle = GetURLTitleUseCase(queue)
 
     @Test
     fun `extracts the title from the response html`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                firstArg<StringRequest>().deliverStringResponse("<html><head><title> My Page </title></head></html>")
+            queue.onAdd = {
+                it.deliverResponse("<html><head><title> My Page </title></head></html>")
             }
 
             getURLTitle("example.com") shouldBe "My Page"
@@ -93,8 +53,8 @@ class GetURLTitleUseCaseTest {
     @Test
     fun `returns null when the response has no title tag`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                firstArg<StringRequest>().deliverStringResponse("<html><body>no title here</body></html>")
+            queue.onAdd = {
+                it.deliverResponse("<html><body>no title here</body></html>")
             }
 
             getURLTitle("example.com") shouldBe null
@@ -103,8 +63,8 @@ class GetURLTitleUseCaseTest {
     @Test
     fun `returns null on a network error`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                firstArg<StringRequest>().deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
+            queue.onAdd = {
+                it.deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
             }
 
             getURLTitle("example.com") shouldBe null
@@ -113,8 +73,9 @@ class GetURLTitleUseCaseTest {
     @Test
     fun `returns null and logs when parsing the response throws`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                firstArg<StringRequest>().deliverNullResponse()
+            // The compiled listener null-checks its parameter, so a null response reaches the parse failure branch.
+            queue.onAdd = {
+                it.deliverResponse(null)
             }
 
             getURLTitle("example.com") shouldBe null
@@ -123,10 +84,9 @@ class GetURLTitleUseCaseTest {
     @Test
     fun `ignores a response delivered after the continuation already resumed`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                val request = firstArg<StringRequest>()
-                request.deliverStringResponse("<html><head><title>First</title></head></html>")
-                request.deliverStringResponse("<html><head><title>Second</title></head></html>")
+            queue.onAdd = { request ->
+                request.deliverResponse("<html><head><title>First</title></head></html>")
+                request.deliverResponse("<html><head><title>Second</title></head></html>")
             }
 
             getURLTitle("example.com") shouldBe "First"
@@ -135,8 +95,7 @@ class GetURLTitleUseCaseTest {
     @Test
     fun `ignores a network error delivered after the continuation already resumed`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                val request = firstArg<StringRequest>()
+            queue.onAdd = { request ->
                 val error = VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList()))
                 request.deliverError(error)
                 request.deliverError(error)
@@ -148,14 +107,11 @@ class GetURLTitleUseCaseTest {
     @Test
     fun `cancelling the coroutine cancels the underlying request`() =
         runTest {
-            val requestSlot = slot<StringRequest>()
-            every { requestQueue.addToRequestQueue(capture(requestSlot)) } just Runs
-
             val job = launch { getURLTitle("example.com") }
             runCurrent()
             job.cancel()
             runCurrent()
 
-            requestSlot.captured.isCanceled shouldBe true
+            queue.added.single().isCanceled shouldBe true
         }
 }

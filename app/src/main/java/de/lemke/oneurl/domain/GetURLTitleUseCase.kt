@@ -16,18 +16,16 @@
 
 package de.lemke.oneurl.domain
 
-import android.content.Context
 import android.util.Log
 import com.android.volley.toolbox.StringRequest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.commonutils.ui.utils.withHttps
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.VolleyQueue
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class GetURLTitleUseCase @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    private val queue: VolleyQueue,
 ) {
     @Suppress("TooGenericExceptionCaught")
     suspend operator fun invoke(url: String): String? =
@@ -59,7 +57,7 @@ class GetURLTitleUseCase @Inject constructor(
                         cont.resume(null)
                     },
                 )
-            RequestQueueSingleton.getInstance(context).addToRequestQueue(req)
+            queue.add(req)
             cont.invokeOnCancellation { req.cancel() }
         }
 }

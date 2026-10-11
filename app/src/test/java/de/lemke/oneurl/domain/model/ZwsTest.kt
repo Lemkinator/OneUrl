@@ -21,9 +21,10 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
 import org.json.JSONObject
 import org.junit.Assert.fail
@@ -33,28 +34,21 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import de.lemke.commonutils.R as commonutilsR
 
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJSONResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class ZwsTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
 
     @Test
     fun `create request succeeds when the response has an id`() {
         var result: String? = null
-        val req = Owovc.Zws.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Owovc.Zws.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJSONResponse(JSONObject().put("id", " uwu.owo.vc/uwU/uwU_Ovo/uvu "))
+        req.deliverResponse(JSONObject().put("id", " uwu.owo.vc/uwU/uwU_Ovo/uvu "))
 
         result shouldBe "uwu.owo.vc/uwU/uwU_Ovo/uvu"
     }
@@ -62,9 +56,9 @@ class ZwsTest {
     @Test
     fun `create request fails with Unknown when the response has no id`() {
         var error: GenerateURLError? = null
-        val req = Owovc.Zws.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Owovc.Zws.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("destination", longURL))
+        req.deliverResponse(JSONObject().put("destination", longURL))
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -86,7 +80,7 @@ class ZwsTest {
             )
         cases.forEach { (volleyError, expected) ->
             var error: GenerateURLError? = null
-            val req = Owovc.Zws.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+            val req = Owovc.Zws.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
             req.deliverError(volleyError)
 

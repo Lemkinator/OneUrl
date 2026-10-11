@@ -21,76 +21,37 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
 import de.lemke.commonutils.ui.utils.withoutHttps
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.params
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import de.lemke.commonutils.R as commonutilsR
 
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
-
-// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
-// Tests reach it via reflection to assert what the request actually sends.
-private fun Request<*>.paramsViaReflection(): Map<*, *>? {
-    val method = Request::class.java.getDeclaredMethod("getParams")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>?
-}
-
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class KurzelinksdeTest {
-    private val context = mockk<Context>()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `create request succeeds when the response contains a shorturl`() {
         var result: String? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("""{"status":"ok","shorturl":{"url":"https://kurzelinks.de/014q"}}""")
+        req.deliverResponse("""{"status":"ok","shorturl":{"url":"https://kurzelinks.de/014q"}}""")
 
         result shouldBe "https://kurzelinks.de/014q"
     }
@@ -98,9 +59,9 @@ class KurzelinksdeTest {
     @Test
     fun `create request fails with Unknown when shorturl is missing from the response`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"status":"ok"}""")
+        req.deliverResponse("""{"status":"ok"}""")
 
         error shouldBe GenerateURLError.Unknown()
     }
@@ -108,10 +69,10 @@ class KurzelinksdeTest {
     @Test
     fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
-        req.deliverStringResponse(parsed.result as String)
+        req.deliverResponse(parsed.result as String)
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://kurzelinks.de")
     }
@@ -119,7 +80,7 @@ class KurzelinksdeTest {
     @Test
     fun `error offline maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -129,7 +90,7 @@ class KurzelinksdeTest {
     @Test
     fun `error with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -139,7 +100,7 @@ class KurzelinksdeTest {
     @Test
     fun `error with blank body maps to Unknown with status code`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
@@ -149,7 +110,7 @@ class KurzelinksdeTest {
     @Test
     fun `error with a null body maps to Unknown with status code`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
@@ -168,7 +129,7 @@ class KurzelinksdeTest {
             )
         cases.forEach { (statusCode, expected) ->
             var error: GenerateURLError? = null
-            val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+            val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
             req.deliverError(VolleyError(NetworkResponse(statusCode, "body".toByteArray(), false, 0L, emptyList())))
 
@@ -179,7 +140,7 @@ class KurzelinksdeTest {
     @Test
     fun `error falls back to Custom for an unrecognized status code`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
@@ -197,7 +158,7 @@ class KurzelinksdeTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Kurzelinks.Kurzelinksde.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }) {
+            Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -211,14 +172,14 @@ class KurzelinksdeTest {
     fun `create request sends the expected params`() {
         val req =
             Kurzelinks.Kurzelinksde.getCreateRequest(
-                context,
+                queue,
                 longURL,
                 "abc",
                 { fail("unexpected success") },
                 { fail("unexpected error: $it") },
             )
 
-        req.paramsViaReflection() shouldBe
+        req.params() shouldBe
             mapOf(
                 "key" to BuildConfig.KURZELINKS_API_KEY,
                 "json" to "1",

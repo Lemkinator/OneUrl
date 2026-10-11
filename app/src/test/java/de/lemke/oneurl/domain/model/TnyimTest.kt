@@ -22,75 +22,35 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
 import java.time.ZonedDateTime
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.deliverJsonResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-private fun Request<*>.parseResponse(response: NetworkResponse): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class TnyimTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `succeeds when a blank alias gets a short url back`() {
         var result: String? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("""{"shorturl":"http://tny.im/k1Ka"}""")
+        req.deliverResponse("""{"shorturl":"http://tny.im/k1Ka"}""")
 
         result shouldBe "http://tny.im/k1Ka"
     }
@@ -98,9 +58,9 @@ class TnyimTest {
     @Test
     fun `succeeds when the short url matches the requested alias`() {
         var result: String? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "abc12", { result = it }, { fail("unexpected error: $it") })
+        val req = Tnyim.getCreateRequest(queue, longURL, "abc12", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("""{"shorturl":"https://tny.im/abc12"}""")
+        req.deliverResponse("""{"shorturl":"https://tny.im/abc12"}""")
 
         result shouldBe "https://tny.im/abc12"
     }
@@ -108,9 +68,9 @@ class TnyimTest {
     @Test
     fun `fails with URLExistsWithDifferentAlias when the short url does not match the requested alias`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "abc12", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "abc12", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"shorturl":"https://tny.im/k1Ka"}""")
+        req.deliverResponse("""{"shorturl":"https://tny.im/k1Ka"}""")
 
         error shouldBe GenerateURLError.URLExistsWithDifferentAlias
     }
@@ -118,9 +78,9 @@ class TnyimTest {
     @Test
     fun `fails with Unknown when the response has no shorturl`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"status":"fail","code":"error:nourl"}""")
+        req.deliverResponse("""{"status":"fail","code":"error:nourl"}""")
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -128,10 +88,10 @@ class TnyimTest {
     @Test
     fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
-        req.deliverStringResponse(parsed.result as String)
+        req.deliverResponse(parsed.result as String)
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://tny.im")
     }
@@ -139,7 +99,7 @@ class TnyimTest {
     @Test
     fun `offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -149,7 +109,7 @@ class TnyimTest {
     @Test
     fun `error with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -159,7 +119,7 @@ class TnyimTest {
     @Test
     fun `error with a blank body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
 
@@ -169,7 +129,7 @@ class TnyimTest {
     @Test
     fun `500 status maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
@@ -179,7 +139,7 @@ class TnyimTest {
     @Test
     fun `an unrecognized status code falls back to Custom`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(404, "not found".toByteArray(), false, 0L, emptyList())))
 
@@ -189,7 +149,7 @@ class TnyimTest {
     @Test
     fun `error with a null body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
 
@@ -226,69 +186,59 @@ class TnyimTest {
 
     @Test
     fun `getURLClickCount resolves the click count from the link clicks field`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var clicks: Int? = -1
         val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
 
-        Tnyim.getURLClickCount(context, url) { clicks = it }
-        slot.captured.deliverJsonResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
+        Tnyim.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
 
         clicks shouldBe 3
     }
 
     @Test
     fun `getURLClickCount resolves to null when the clicks field is not numeric`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var clicks: Int? = -1
         val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
 
-        Tnyim.getURLClickCount(context, url) { clicks = it }
-        slot.captured.deliverJsonResponse(JSONObject().put("link", JSONObject().put("clicks", "not-a-number")))
+        Tnyim.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject().put("link", JSONObject().put("clicks", "not-a-number")))
 
         clicks shouldBe null
     }
 
     @Test
     fun `getURLClickCount resolves to null when the link field is missing`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var clicks: Int? = -1
         val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
 
-        Tnyim.getURLClickCount(context, url) { clicks = it }
-        slot.captured.deliverJsonResponse(JSONObject().put("statusCode", 404))
+        Tnyim.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject().put("statusCode", 404))
 
         clicks shouldBe null
     }
 
     @Test
     fun `getURLClickCount resolves to null on error`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var clicks: Int? = -1
         val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
 
-        Tnyim.getURLClickCount(context, url) { clicks = it }
-        slot.captured.deliverError(VolleyError("no network"))
+        Tnyim.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverError(VolleyError("no network"))
 
         clicks shouldBe null
     }
 
     @Test
     fun `getURLClickCount callback that throws once is caught and resolves to null`() {
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
         var callbackCount = 0
         var clicks: Int? = -1
         val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
 
-        Tnyim.getURLClickCount(context, url) {
+        Tnyim.getURLClickCount(queue, url) {
             callbackCount++
             if (callbackCount == 1) throw IllegalStateException("boom") else clicks = it
         }
-        slot.captured.deliverJsonResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
+        queue.added.single().deliverResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
 
         clicks shouldBe null
     }
@@ -298,7 +248,7 @@ class TnyimTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
@@ -310,7 +260,7 @@ class TnyimTest {
 
     @Test
     fun `getRetryPolicy returns a policy with the request timeout and default retry settings`() {
-        val req = Tnyim.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
         val retryPolicy = req.retryPolicy as DefaultRetryPolicy
 

@@ -24,7 +24,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONException
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
@@ -81,14 +81,14 @@ sealed class Owovc : ShortURLProvider {
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
     override fun getURLClickCount(
-        context: Context,
+        queue: VolleyQueue,
         url: URL,
         callback: (clicks: Int?) -> Unit,
     ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$apiURL/${Uri.encode(url.shortURL)}"
         Log.d(tag, "start request: $url")
-        RequestQueueSingleton.getInstance(context).addToRequestQueue(
+        queue.add(
             JsonObjectRequest(
                 Request.Method.GET,
                 requestURL,
@@ -203,7 +203,7 @@ sealed class Owovc : ShortURLProvider {
             )
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -235,7 +235,7 @@ sealed class Owovc : ShortURLProvider {
             )
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -267,7 +267,7 @@ sealed class Owovc : ShortURLProvider {
             )
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -299,7 +299,7 @@ sealed class Owovc : ShortURLProvider {
             )
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,

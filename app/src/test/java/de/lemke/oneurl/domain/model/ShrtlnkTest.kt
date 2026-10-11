@@ -22,58 +22,36 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.Header
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.params
+import de.lemke.oneurl.data.parseError
+import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-// Request#parseNetworkResponse/#parseNetworkError are protected - only Volley's own RequestQueue
-// normally calls them. Tests stand in for the queue, so they reach them via reflection instead of
-// a real round-trip.
-private fun Request<*>.callParseNetworkResponse(response: NetworkResponse?): Response<*> {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
-    method.isAccessible = true
-    return method.invoke(this, response) as Response<*>
-}
-
-private fun Request<*>.callParseNetworkError(volleyError: VolleyError?): VolleyError {
-    val method = Request::class.java.getDeclaredMethod("parseNetworkError", VolleyError::class.java)
-    method.isAccessible = true
-    return method.invoke(this, volleyError) as VolleyError
-}
-
-// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
-// Tests reach it via reflection to assert what the request actually sends.
-private fun Request<*>.paramsViaReflection(): Map<*, *>? {
-    val method = Request::class.java.getDeclaredMethod("getParams")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>?
-}
-
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class ShrtlnkTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
 
     @Test
     fun `parseNetworkResponse succeeds when the redirect header contains a key`() {
         var result: String? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
         val networkResponse =
             NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
 
-        val response = req.callParseNetworkResponse(networkResponse)
+        val response = req.parseResponse(networkResponse)
 
         result shouldBe "https://www.shrtlnk.dev/h1aja4"
         response.isSuccess shouldBe true
@@ -83,9 +61,9 @@ class ShrtlnkTest {
     @Test
     fun `parseNetworkResponse fails with Unknown when the network response is null`() {
         var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        val response = req.callParseNetworkResponse(null)
+        val response = req.parseResponse(null)
 
         error shouldBe GenerateURLError.Unknown()
         response.isSuccess shouldBe false
@@ -94,10 +72,10 @@ class ShrtlnkTest {
     @Test
     fun `parseNetworkResponse fails with Unknown when the redirect header is missing`() {
         var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
         val networkResponse = NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("Server", "Vercel")))
 
-        val response = req.callParseNetworkResponse(networkResponse)
+        val response = req.parseResponse(networkResponse)
 
         error shouldBe GenerateURLError.Unknown()
         response.isSuccess shouldBe false
@@ -106,10 +84,10 @@ class ShrtlnkTest {
     @Test
     fun `parseNetworkError maps NoConnectionError to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
         val volleyError = NoConnectionError()
 
-        val returned = req.callParseNetworkError(volleyError)
+        val returned = req.parseError(volleyError)
 
         error shouldBe GenerateURLError.ServiceOffline
         returned shouldBe volleyError
@@ -118,10 +96,10 @@ class ShrtlnkTest {
     @Test
     fun `parseNetworkError maps any other error to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
         val volleyError = VolleyError("no network")
 
-        val returned = req.callParseNetworkError(volleyError)
+        val returned = req.parseError(volleyError)
 
         error shouldBe GenerateURLError.Unknown()
         returned shouldBe volleyError
@@ -130,9 +108,9 @@ class ShrtlnkTest {
     @Test
     fun `parseNetworkError maps a null error to Unknown and returns a fallback error`() {
         var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        val returned = req.callParseNetworkError(null)
+        val returned = req.parseError(null)
 
         error shouldBe GenerateURLError.Unknown()
         returned.message shouldBe "unknown error"
@@ -140,19 +118,19 @@ class ShrtlnkTest {
 
     @Test
     fun `getParams returns the long url param`() {
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.paramsViaReflection() shouldBe mapOf("url" to longURL)
+        req.params() shouldBe mapOf("url" to longURL)
     }
 
     @Test
     fun `parseNetworkResponse fails with Unknown when the success callback throws`() {
         var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(context, longURL, "", { throw IllegalStateException("boom") }, { error = it })
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { throw IllegalStateException("boom") }, { error = it })
         val networkResponse =
             NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
 
-        val response = req.callParseNetworkResponse(networkResponse)
+        val response = req.parseResponse(networkResponse)
 
         error shouldBe GenerateURLError.Unknown()
         response.isSuccess shouldBe false

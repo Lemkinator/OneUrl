@@ -17,52 +17,25 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
-import android.content.Context
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class TinyurlTest {
-    private val context = mockk<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `sanitizeLongURL encodes ampersands and trims`() {
@@ -72,9 +45,9 @@ class TinyurlTest {
     @Test
     fun `succeeds with the trimmed short url when the response starts with https`() {
         var result: String? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("https://tinyurl.com/abc ")
+        req.deliverResponse("https://tinyurl.com/abc ")
 
         result shouldBe "https://tinyurl.com/abc"
     }
@@ -82,9 +55,9 @@ class TinyurlTest {
     @Test
     fun `succeeds with the trimmed short url when the response starts with http`() {
         var result: String? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("http://tinyurl.com/abc ")
+        req.deliverResponse("http://tinyurl.com/abc ")
 
         result shouldBe "http://tinyurl.com/abc"
     }
@@ -92,9 +65,9 @@ class TinyurlTest {
     @Test
     fun `fails with Custom when the response does not look like a tinyurl link`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("Error")
+        req.deliverResponse("Error")
 
         error shouldBe GenerateURLError.Custom(200, "Error")
     }
@@ -102,7 +75,7 @@ class TinyurlTest {
     @Test
     fun `offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -112,7 +85,7 @@ class TinyurlTest {
     @Test
     fun `error with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -122,7 +95,7 @@ class TinyurlTest {
     @Test
     fun `error with a blank body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
 
@@ -132,7 +105,7 @@ class TinyurlTest {
     @Test
     fun `error with a null body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(503, null, false, 0L, emptyList())))
 
@@ -142,7 +115,7 @@ class TinyurlTest {
     @Test
     fun `422 with a blank alias maps to InvalidURL`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(422, "bad url".toByteArray(), false, 0L, emptyList())))
 
@@ -152,7 +125,7 @@ class TinyurlTest {
     @Test
     fun `400 with a non-blank alias maps to InvalidURLOrAlias`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(400, "bad request".toByteArray(), false, 0L, emptyList())))
 
@@ -162,7 +135,7 @@ class TinyurlTest {
     @Test
     fun `an unrecognized status code falls back to Custom`() {
         var error: GenerateURLError? = null
-        val req = Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
@@ -180,7 +153,7 @@ class TinyurlTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Tinyurl.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }

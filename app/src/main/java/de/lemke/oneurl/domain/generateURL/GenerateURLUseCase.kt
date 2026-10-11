@@ -25,6 +25,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.VolleyQueue
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
@@ -39,6 +40,7 @@ import kotlinx.coroutines.withContext
 class GenerateURLUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val checkURLSafety: CheckURLSafetyUseCase,
+    private val queue: VolleyQueue,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
     // Guard clauses are interleaved with onProgress() calls that must fire in order; collapsing
@@ -68,19 +70,19 @@ class GenerateURLUseCase @Inject constructor(
             )
         }
         onProgress(R.string.generating_url)
-        return provider.createShortURL(context, normalizedURL, alias)
+        return provider.createShortURL(queue, normalizedURL, alias)
     }
 }
 
 private suspend fun ShortURLProvider.createShortURL(
-    context: Context,
+    queue: VolleyQueue,
     longURL: String,
     alias: String,
 ): GenerateURLResult =
     suspendCancellableCoroutine { cont ->
         val req =
             getCreateRequest(
-                context,
+                queue,
                 longURL,
                 alias,
                 successCallback = { shortURL ->
@@ -90,6 +92,6 @@ private suspend fun ShortURLProvider.createShortURL(
                     if (cont.isActive) cont.resume(GenerateURLResult.Failure(error))
                 },
             )
-        RequestQueueSingleton.getInstance(context).addToRequestQueue(req)
+        queue.add(req)
         cont.invokeOnCancellation { req.cancel() }
     }

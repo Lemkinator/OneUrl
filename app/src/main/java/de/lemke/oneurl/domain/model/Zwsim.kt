@@ -24,6 +24,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
@@ -68,7 +69,7 @@ object Zwsim : ShortURLProvider {
 
     @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,

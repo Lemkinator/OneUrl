@@ -25,7 +25,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -125,14 +125,14 @@ object Ulvis : ShortURLProvider {
         )
 
     override fun getURLClickCount(
-        context: Context,
+        queue: VolleyQueue,
         url: URL,
         callback: (clicks: Int?) -> Unit,
     ) {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$baseURL/API/read/get?id=${url.alias}"
         Log.d(tag, "start request: $requestURL")
-        RequestQueueSingleton.getInstance(context).addToRequestQueue(
+        queue.add(
             JsonObjectRequest(
                 Request.Method.POST,
                 requestURL,
@@ -157,7 +157,7 @@ object Ulvis : ShortURLProvider {
     }
 
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,

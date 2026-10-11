@@ -17,11 +17,12 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
-import android.content.Context
+import com.android.volley.NetworkResponse
 import com.android.volley.Request
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,7 +34,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class UnknownTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val unknown = Unknown()
 
     @Test
@@ -45,16 +46,16 @@ class UnknownTest {
     fun `getCreateRequest always reports Unknown and never succeeds`() {
         var error: GenerateURLError? = null
 
-        unknown.getCreateRequest(context, "https://example.com", "alias", { fail("unexpected success") }, { error = it })
+        unknown.getCreateRequest(queue, "https://example.com", "alias", { fail("unexpected success") }, { error = it })
 
         error shouldBe GenerateURLError.Unknown()
     }
 
     @Test
     fun `getCreateRequest returns a request whose network response parses to null`() {
-        val req = unknown.getCreateRequest(context, "https://example.com", "alias", {}, {})
+        val req = unknown.getCreateRequest(queue, "https://example.com", "alias", {}, {})
 
-        val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", com.android.volley.NetworkResponse::class.java)
+        val method = Request::class.java.getDeclaredMethod("parseNetworkResponse", NetworkResponse::class.java)
         method.isAccessible = true
 
         method.invoke(req, null) shouldBe null
@@ -63,11 +64,9 @@ class UnknownTest {
     @Test
     fun `getCreateRequest returns a request whose deliverResponse is a no-op`() {
         var errorCount = 0
-        val req = unknown.getCreateRequest(context, "https://example.com", "alias", { fail("unexpected success") }, { errorCount++ })
+        val req = unknown.getCreateRequest(queue, "https://example.com", "alias", { fail("unexpected success") }, { errorCount++ })
 
-        val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-        method.isAccessible = true
-        method.invoke(req, "anything")
+        req.deliverResponse("anything")
 
         errorCount shouldBe 1
     }

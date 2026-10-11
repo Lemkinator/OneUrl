@@ -21,36 +21,20 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
 import java.time.ZonedDateTime
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverJSONResponse(response: JSONObject) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
 
 private fun testURL(shortURL: String) =
     URL(
@@ -68,21 +52,9 @@ private fun testURL(shortURL: String) =
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class UlvisTest {
-    private val context = mockk<Context>()
+    private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `isAliasValid accepts letters and digits and rejects everything else`() {
@@ -117,9 +89,9 @@ class UlvisTest {
     @Test
     fun `create request succeeds with the short url from the response`() {
         var result: String? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "example12", { result = it }, { fail("unexpected error: $it") })
+        val req = Ulvis.getCreateRequest(queue, longURL, "example12", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverJSONResponse(JSONObject().put("data", JSONObject().put("url", " https://ulvis.net/example12 ")))
+        req.deliverResponse(JSONObject().put("data", JSONObject().put("url", " https://ulvis.net/example12 ")))
 
         result shouldBe "https://ulvis.net/example12"
     }
@@ -127,9 +99,9 @@ class UlvisTest {
     @Test
     fun `create request custom-taken status maps to AliasAlreadyExists`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "example12", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "example12", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("data", JSONObject().put("status", "custom-taken")))
+        req.deliverResponse(JSONObject().put("data", JSONObject().put("status", "custom-taken")))
 
         error shouldBe GenerateURLError.AliasAlreadyExists
     }
@@ -144,9 +116,9 @@ class UlvisTest {
             )
         cases.forEach { (code, expected) ->
             var error: GenerateURLError? = null
-            val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+            val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-            req.deliverJSONResponse(JSONObject().put("error", JSONObject().put("code", code).put("msg", "some message")))
+            req.deliverResponse(JSONObject().put("error", JSONObject().put("code", code).put("msg", "some message")))
 
             error shouldBe expected
         }
@@ -155,9 +127,9 @@ class UlvisTest {
     @Test
     fun `create request falls back to Custom when the error code is unrecognized but a message is present`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("error", JSONObject().put("code", 5).put("msg", "custom name too long")))
+        req.deliverResponse(JSONObject().put("error", JSONObject().put("code", 5).put("msg", "custom name too long")))
 
         error shouldBe GenerateURLError.Custom(5, "custom name too long")
     }
@@ -165,9 +137,9 @@ class UlvisTest {
     @Test
     fun `create request falls back to Unknown when the error code is unrecognized and no message is present`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("error", JSONObject().put("code", 5)))
+        req.deliverResponse(JSONObject().put("error", JSONObject().put("code", 5)))
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -175,9 +147,9 @@ class UlvisTest {
     @Test
     fun `create request falls back to Unknown when the response has no data and no error`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject())
+        req.deliverResponse(JSONObject())
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -185,9 +157,9 @@ class UlvisTest {
     @Test
     fun `create request falls back to Unknown when the error object has no code`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("error", JSONObject().put("msg", "something went wrong")))
+        req.deliverResponse(JSONObject().put("error", JSONObject().put("msg", "something went wrong")))
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -195,9 +167,9 @@ class UlvisTest {
     @Test
     fun `create request falls back to Unknown when the error code cannot be parsed as a number`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("error", JSONObject().put("code", "not-a-number")))
+        req.deliverResponse(JSONObject().put("error", JSONObject().put("code", "not-a-number")))
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -205,9 +177,9 @@ class UlvisTest {
     @Test
     fun `create request falls back to Unknown when data status is neither custom-taken nor a usable url`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverJSONResponse(JSONObject().put("data", JSONObject().put("status", "queued")))
+        req.deliverResponse(JSONObject().put("data", JSONObject().put("status", "queued")))
 
         error shouldBe GenerateURLError.Unknown(200)
     }
@@ -215,7 +187,7 @@ class UlvisTest {
     @Test
     fun `create request with a null error body maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
-        val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
@@ -236,7 +208,7 @@ class UlvisTest {
             )
         cases.forEach { (volleyError, expected) ->
             var error: GenerateURLError? = null
-            val req = Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
+            val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
             req.deliverError(volleyError)
 
@@ -247,11 +219,9 @@ class UlvisTest {
     @Test
     fun `getURLClickCount returns the hit count`() {
         var clicks: Int? = -1
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
 
-        Ulvis.getURLClickCount(context, testURL("https://ulvis.net/example1")) { clicks = it }
-        slot.captured.deliverJSONResponse(JSONObject().put("data", JSONObject().put("hits", "5")))
+        Ulvis.getURLClickCount(queue, testURL("https://ulvis.net/example1")) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject().put("data", JSONObject().put("hits", "5")))
 
         clicks shouldBe 5
     }
@@ -259,11 +229,9 @@ class UlvisTest {
     @Test
     fun `getURLClickCount returns null when the response has no data object`() {
         var clicks: Int? = -1
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
 
-        Ulvis.getURLClickCount(context, testURL("https://ulvis.net/example1")) { clicks = it }
-        slot.captured.deliverJSONResponse(JSONObject())
+        Ulvis.getURLClickCount(queue, testURL("https://ulvis.net/example1")) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject())
 
         clicks shouldBe null
     }
@@ -271,11 +239,9 @@ class UlvisTest {
     @Test
     fun `getURLClickCount returns null on a network error`() {
         var clicks: Int? = -1
-        val slot = slot<JsonObjectRequest>()
-        every { requestQueue.addToRequestQueue(capture(slot)) } returns Unit
 
-        Ulvis.getURLClickCount(context, testURL("https://ulvis.net/example1")) { clicks = it }
-        slot.captured.deliverError(VolleyError("no network"))
+        Ulvis.getURLClickCount(queue, testURL("https://ulvis.net/example1")) { clicks = it }
+        queue.added.single().deliverError(VolleyError("no network"))
 
         clicks shouldBe null
     }
@@ -285,7 +251,7 @@ class UlvisTest {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
         val req =
-            Ulvis.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }

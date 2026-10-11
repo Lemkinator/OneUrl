@@ -18,6 +18,9 @@ package de.lemke.oneurl.domain.model
 
 import android.content.Context
 import com.android.volley.Request
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.VolleyQueue
+import de.lemke.oneurl.domain.testUrl
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
@@ -30,7 +33,7 @@ private class MinimalProvider : ShortURLProvider {
     override val baseURL = "https://minimal.example"
 
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -45,7 +48,7 @@ private class ProviderWithLinks : ShortURLProvider {
     override val termsURL = "https://withlinks.example/terms"
 
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -91,7 +94,7 @@ class ShortURLProviderDefaultsTest : ShouldSpec(
 
         should("getURLClickCount defaults to reporting null clicks") {
             var clicks: Int? = -1
-            provider.getURLClickCount(mockk(), mockk(), { clicks = it })
+            provider.getURLClickCount(FakeVolleyQueue(), testUrl("https://minimal.example/abc"), { clicks = it })
 
             clicks.shouldBeNull()
         }

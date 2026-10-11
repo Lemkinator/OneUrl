@@ -23,6 +23,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.VolleyQueue
 
 /*
 https://tinyurl.com/app
@@ -67,7 +68,7 @@ object Tinyurl : ShortURLProvider {
 
     @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,

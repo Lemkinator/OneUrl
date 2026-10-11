@@ -22,7 +22,7 @@ import com.android.volley.toolbox.StringRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.VolleyQueue
 import de.lemke.oneurl.domain.model.UrlhausResult
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -32,6 +32,7 @@ import org.json.JSONObject
 
 class CheckURLSafetyUseCase @Inject constructor(
     @param:ApplicationContext private val context: Context,
+    private val queue: VolleyQueue,
 ) {
     private val tag = "CheckURLSafetyUseCase"
 
@@ -59,7 +60,7 @@ class CheckURLSafetyUseCase @Inject constructor(
 
                     override fun getHeaders() = mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
                 }
-            RequestQueueSingleton.getInstance(context).addToRequestQueue(req)
+            queue.add(req)
             cont.invokeOnCancellation { req.cancel() }
         }
 

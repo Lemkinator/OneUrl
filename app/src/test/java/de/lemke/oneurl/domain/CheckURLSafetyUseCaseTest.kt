@@ -20,54 +20,24 @@ import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.headers
+import de.lemke.oneurl.data.params
 import de.lemke.oneurl.domain.model.UrlhausResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.Runs
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-// Request#getParams()/getHeaders() are protected - only Volley's own network dispatcher normally
-// calls them. Tests reach them via reflection to assert what the request actually sends.
-private fun Request<*>.paramsViaReflection(): Map<*, *>? {
-    val method = Request::class.java.getDeclaredMethod("getParams")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>?
-}
-
-private fun Request<*>.headersViaReflection(): Map<*, *> {
-    val method = Request::class.java.getDeclaredMethod("getHeaders")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
@@ -76,23 +46,12 @@ private fun Request<*>.headersViaReflection(): Map<*, *> {
 @Config(application = Application::class, sdk = [36])
 class CheckURLSafetyUseCaseTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>()
-    private val checkURLSafety = CheckURLSafetyUseCase(context)
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
+    private val queue = FakeVolleyQueue()
+    private val checkURLSafety = CheckURLSafetyUseCase(context, queue)
 
     private fun respond(json: String) {
-        every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-            firstArg<StringRequest>().deliverStringResponse(json)
+        queue.onAdd = {
+            it.deliverResponse(json)
         }
     }
 
@@ -123,8 +82,8 @@ class CheckURLSafetyUseCaseTest {
     @Test
     fun `returns Ok on a network error`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                firstArg<StringRequest>().deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
+            queue.onAdd = {
+                it.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
             }
 
             checkURLSafety("example.com") shouldBe UrlhausResult.Ok
@@ -205,24 +164,22 @@ class CheckURLSafetyUseCaseTest {
     @Test
     fun `sends the url as a param and the auth key as a header`() =
         runTest {
-            val requestSlot = slot<StringRequest>()
-            every { requestQueue.addToRequestQueue(capture(requestSlot)) } answers {
-                requestSlot.captured.deliverStringResponse("""{"query_status":"ok"}""")
+            queue.onAdd = {
+                it.deliverResponse("""{"query_status":"ok"}""")
             }
 
             checkURLSafety("example.com")
 
-            requestSlot.captured.paramsViaReflection() shouldBe mapOf("url" to "example.com")
-            requestSlot.captured.headersViaReflection() shouldBe mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
+            queue.added.single().params() shouldBe mapOf("url" to "example.com")
+            queue.added.single().headers() shouldBe mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
         }
 
     @Test
     fun `ignores a response delivered after the continuation already resumed`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                val request = firstArg<StringRequest>()
-                request.deliverStringResponse("""{"query_status":"ok"}""")
-                request.deliverStringResponse("""{"query_status":"ok"}""")
+            queue.onAdd = { request ->
+                request.deliverResponse("""{"query_status":"ok"}""")
+                request.deliverResponse("""{"query_status":"ok"}""")
             }
 
             checkURLSafety("example.com") shouldBe UrlhausResult.Ok
@@ -231,8 +188,7 @@ class CheckURLSafetyUseCaseTest {
     @Test
     fun `ignores a network error delivered after the continuation already resumed`() =
         runTest {
-            every { requestQueue.addToRequestQueue(any<StringRequest>()) } answers {
-                val request = firstArg<StringRequest>()
+            queue.onAdd = { request ->
                 val error = VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList()))
                 request.deliverError(error)
                 request.deliverError(error)
@@ -244,14 +200,11 @@ class CheckURLSafetyUseCaseTest {
     @Test
     fun `cancelling the coroutine cancels the underlying request`() =
         runTest {
-            val requestSlot = slot<StringRequest>()
-            every { requestQueue.addToRequestQueue(capture(requestSlot)) } just Runs
-
             val job = launch { checkURLSafety("example.com") }
             runCurrent()
             job.cancel()
             runCurrent()
 
-            requestSlot.captured.isCanceled shouldBe true
+            queue.added.single().isCanceled shouldBe true
         }
 }

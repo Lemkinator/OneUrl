@@ -16,7 +16,7 @@
 
 package de.lemke.oneurl.domain
 
-import android.content.Context
+import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
@@ -25,13 +25,13 @@ import io.mockk.mockk
 
 class GetVisitCountUseCaseTest : ShouldSpec(
     {
-        val context = mockk<Context>()
-        val getVisitCount = GetVisitCountUseCase(context)
+        val queue = FakeVolleyQueue()
+        val getVisitCount = GetVisitCountUseCase(queue)
 
         should("return the click count reported by the url's provider") {
             val provider = mockk<ShortURLProvider>()
             val url = testUrl(shortURL = "https://short.url/abc", provider = provider)
-            every { provider.getURLClickCount(context, url, any()) } answers { thirdArg<(Int?) -> Unit>().invoke(42) }
+            every { provider.getURLClickCount(queue, url, any()) } answers { thirdArg<(Int?) -> Unit>().invoke(42) }
 
             getVisitCount(url) shouldBe 42
         }
@@ -39,7 +39,7 @@ class GetVisitCountUseCaseTest : ShouldSpec(
         should("return null when the provider reports no count") {
             val provider = mockk<ShortURLProvider>()
             val url = testUrl(shortURL = "https://short.url/abc", provider = provider)
-            every { provider.getURLClickCount(context, url, any()) } answers { thirdArg<(Int?) -> Unit>().invoke(null) }
+            every { provider.getURLClickCount(queue, url, any()) } answers { thirdArg<(Int?) -> Unit>().invoke(null) }
 
             getVisitCount(url) shouldBe null
         }

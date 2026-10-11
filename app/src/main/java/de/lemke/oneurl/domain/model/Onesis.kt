@@ -23,6 +23,7 @@ import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.VolleyQueue
 
 /*
 https://1s.is/
@@ -74,7 +75,7 @@ object Onesis : ShortURLProvider {
 
     @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,

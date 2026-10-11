@@ -21,61 +21,26 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.R
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
+import de.lemke.oneurl.data.params
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.slot
-import io.mockk.unmockkObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
-
-// Request#getParams() is protected - only Volley's own network dispatcher normally calls it.
-// Tests reach it via reflection to assert what the request actually sends.
-private fun Request<*>.paramsViaReflection(): Map<*, *>? {
-    val method = Request::class.java.getDeclaredMethod("getParams")
-    method.isAccessible = true
-    return method.invoke(this) as Map<*, *>?
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class GgTest {
-    private val context = mockk<Context>()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `alias validity follows the allowed character set`() {
@@ -87,9 +52,9 @@ class GgTest {
     @Test
     fun `check response reporting a duplicate path fails with AliasAlreadyExists`() {
         var error: GenerateURLError? = null
-        val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Gg.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("Link with this path already exists. Choose another path.")
+        req.deliverResponse("Link with this path already exists. Choose another path.")
 
         error shouldBe GenerateURLError.AliasAlreadyExists
     }
@@ -97,12 +62,10 @@ class GgTest {
     @Test
     fun `check response without a duplicate falls through and creates the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("ok")
-        innerReq.captured.deliverStringResponse("https://gg.gg/abc")
+        req.deliverResponse("ok")
+        queue.added.single().deliverResponse("https://gg.gg/abc")
 
         result shouldBe "https://gg.gg/abc"
     }
@@ -110,12 +73,10 @@ class GgTest {
     @Test
     fun `check error falls through and creates the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
         req.deliverError(VolleyError("no network"))
-        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+        queue.added.single().deliverResponse("https://gg.gg/random")
 
         result shouldBe "https://gg.gg/random"
     }
@@ -123,12 +84,10 @@ class GgTest {
     @Test
     fun `create response equal to the root url fails with Unknown redirect code`() {
         var error: GenerateURLError? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverStringResponse("https://gg.gg/")
+        queue.added.single().deliverResponse("https://gg.gg/")
 
         error shouldBe GenerateURLError.Unknown(2001)
     }
@@ -136,12 +95,10 @@ class GgTest {
     @Test
     fun `create response not ending with a non-blank alias fails with Unknown mismatch code`() {
         var error: GenerateURLError? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverStringResponse("https://gg.gg/other")
+        queue.added.single().deliverResponse("https://gg.gg/other")
 
         error shouldBe GenerateURLError.Unknown(2002)
     }
@@ -149,12 +106,10 @@ class GgTest {
     @Test
     fun `create response succeeds for a blank alias regardless of the returned path`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+        queue.added.single().deliverResponse("https://gg.gg/random")
 
         result shouldBe "https://gg.gg/random"
     }
@@ -162,12 +117,10 @@ class GgTest {
     @Test
     fun `create error offline maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverError(NoConnectionError())
+        queue.added.single().deliverError(NoConnectionError())
 
         error shouldBe GenerateURLError.ServiceOffline
     }
@@ -175,12 +128,10 @@ class GgTest {
     @Test
     fun `create error with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverError(VolleyError("no network"))
+        queue.added.single().deliverError(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
     }
@@ -188,12 +139,10 @@ class GgTest {
     @Test
     fun `create error with a status code maps to Unknown with that code`() {
         var error: GenerateURLError? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
+        queue.added.single().deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
@@ -201,12 +150,10 @@ class GgTest {
     @Test
     fun `create error with a null response body maps to Unknown with that status code`() {
         var error: GenerateURLError? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { fail("unexpected success") }, { error = it })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        queue.added.single().deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
@@ -214,16 +161,15 @@ class GgTest {
     @Test
     fun `check response handling that throws still falls back to creating the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
         var enqueueCount = 0
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } answers {
+        queue.onAdd = {
             enqueueCount++
             if (enqueueCount == 1) throw IllegalStateException("boom")
         }
-        val req = Gg.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("ok")
-        innerReq.captured.deliverStringResponse("https://gg.gg/abc")
+        req.deliverResponse("ok")
+        queue.added.last().deliverResponse("https://gg.gg/abc")
 
         result shouldBe "https://gg.gg/abc"
     }
@@ -231,16 +177,15 @@ class GgTest {
     @Test
     fun `check error handling that throws still falls back to creating the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
         var enqueueCount = 0
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } answers {
+        queue.onAdd = {
             enqueueCount++
             if (enqueueCount == 1) throw IllegalStateException("boom")
         }
-        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
         req.deliverError(VolleyError("no network"))
-        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+        queue.added.last().deliverResponse("https://gg.gg/random")
 
         result shouldBe "https://gg.gg/random"
     }
@@ -248,12 +193,10 @@ class GgTest {
     @Test
     fun `create response success callback that throws is caught and reported as unexpected response`() {
         var error: GenerateURLError? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { throw IllegalStateException("boom") }, { error = it })
-        req.deliverStringResponse("ok")
+        val req = Gg.getCreateRequest(queue, longURL, "", { throw IllegalStateException("boom") }, { error = it })
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+        queue.added.single().deliverResponse("https://gg.gg/random")
 
         error shouldBe GenerateURLError.Unknown(2009)
     }
@@ -262,16 +205,14 @@ class GgTest {
     fun `create error callback that throws once is caught and reported as unknown`() {
         var error: GenerateURLError? = null
         var errorCallbackCount = 0
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
         val req =
-            Gg.getCreateRequest(context, longURL, "", { fail("unexpected success") }) {
+            Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
                 if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
             }
-        req.deliverStringResponse("ok")
+        req.deliverResponse("ok")
 
-        innerReq.captured.deliverError(VolleyError("no network"))
+        queue.added.single().deliverError(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
     }
@@ -300,12 +241,10 @@ class GgTest {
     @Test
     fun `check error with a status code still falls through and creates the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
         req.deliverError(VolleyError(NetworkResponse(500, "body".toByteArray(), false, 0L, emptyList())))
-        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+        queue.added.single().deliverResponse("https://gg.gg/random")
 
         result shouldBe "https://gg.gg/random"
     }
@@ -313,31 +252,27 @@ class GgTest {
     @Test
     fun `check error with a null response body still falls through and creates the alias`() {
         var result: String? = null
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "", { result = it }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
         req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
-        innerReq.captured.deliverStringResponse("https://gg.gg/random")
+        queue.added.single().deliverResponse("https://gg.gg/random")
 
         result shouldBe "https://gg.gg/random"
     }
 
     @Test
     fun `check request getParams returns the long url and custom path params`() {
-        val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.paramsViaReflection() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
+        req.params() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
     }
 
     @Test
     fun `create request getParams returns the long url and custom path params`() {
-        val innerReq = slot<StringRequest>()
-        every { requestQueue.addToRequestQueue(capture(innerReq)) } returns Unit
-        val req = Gg.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
+        val req = Gg.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("ok")
+        req.deliverResponse("ok")
 
-        innerReq.captured.paramsViaReflection() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
+        queue.added.single().params() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
     }
 }

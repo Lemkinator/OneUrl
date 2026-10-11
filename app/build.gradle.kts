@@ -209,6 +209,7 @@ dependencies {
     testImplementation(libs.konsist)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit4)
+    testRuntimeOnly(libs.apache.httpcore)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.vintage.engine)

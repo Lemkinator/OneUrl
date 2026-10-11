@@ -17,59 +17,32 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
-import android.content.Context
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.VolleyError
-import de.lemke.oneurl.domain.generateURL.RequestQueueSingleton
+import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-// Request#deliverResponse(T) is protected - only Volley's own RequestQueue can normally trigger
-// it. Tests stand in for the queue, so they reach it via reflection instead of a real round-trip.
-private fun Request<*>.deliverStringResponse(response: String) {
-    val method = Request::class.java.getDeclaredMethod("deliverResponse", Any::class.java)
-    method.isAccessible = true
-    method.invoke(this, response)
-}
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class T1pTest {
-    private val context = mockk<Context>()
-    private val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
+    private val queue = FakeVolleyQueue()
     private val longURL = "https://example.com"
-
-    @Before
-    fun setup() {
-        mockkObject(RequestQueueSingleton.Companion)
-        every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-    }
-
-    @After
-    fun tearDown() {
-        unmockkObject(RequestQueueSingleton.Companion)
-    }
 
     @Test
     fun `create request succeeds when the response contains a shorturl`() {
         var result: String? = null
-        val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+        val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverStringResponse("""{"status":"ok","shorturl":{"url":"https://t1p.de/014q"}}""")
+        req.deliverResponse("""{"status":"ok","shorturl":{"url":"https://t1p.de/014q"}}""")
 
         result shouldBe "https://t1p.de/014q"
     }
@@ -77,9 +50,9 @@ class T1pTest {
     @Test
     fun `create request fails with Unknown when shorturl is missing from the response`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("""{"status":"ok"}""")
+        req.deliverResponse("""{"status":"ok"}""")
 
         error shouldBe GenerateURLError.Unknown()
     }
@@ -87,9 +60,9 @@ class T1pTest {
     @Test
     fun `create request fails with ServiceTemporarilyUnavailable when the response is not valid json`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverStringResponse("not json")
+        req.deliverResponse("not json")
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://t1p.de")
     }
@@ -97,7 +70,7 @@ class T1pTest {
     @Test
     fun `error offline maps to ServiceOffline`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(NoConnectionError())
 
@@ -107,7 +80,7 @@ class T1pTest {
     @Test
     fun `error with no status code maps to Unknown`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError("no network"))
 
@@ -117,7 +90,7 @@ class T1pTest {
     @Test
     fun `error with blank body maps to Unknown with status code`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
@@ -136,7 +109,7 @@ class T1pTest {
             )
         cases.forEach { (statusCode, expected) ->
             var error: GenerateURLError? = null
-            val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+            val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
             req.deliverError(VolleyError(NetworkResponse(statusCode, "body".toByteArray(), false, 0L, emptyList())))
 
@@ -147,7 +120,7 @@ class T1pTest {
     @Test
     fun `error falls back to Custom for an unrecognized status code`() {
         var error: GenerateURLError? = null
-        val req = Kurzelinks.T1p.getCreateRequest(context, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val req = Kurzelinks.T1p.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 

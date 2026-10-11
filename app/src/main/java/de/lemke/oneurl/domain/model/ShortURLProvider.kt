@@ -22,6 +22,7 @@ import android.util.Log
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
 import com.android.volley.Response
+import de.lemke.oneurl.data.VolleyQueue
 import java.util.Locale
 import de.lemke.commonutils.R as commonutilsR
 
@@ -123,7 +124,7 @@ class Unknown : ShortURLProvider {
     override val baseURL = "https://www.leonard-lemke.com/apps/oneurl"
 
     override fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
@@ -163,7 +164,7 @@ interface ShortURLProvider {
     fun getAnalyticsURL(alias: String): String? = null
 
     fun getURLClickCount(
-        context: Context,
+        queue: VolleyQueue,
         url: URL,
         callback: (clicks: Int?) -> Unit,
     ) = callback(null)
@@ -171,7 +172,7 @@ interface ShortURLProvider {
     fun sanitizeLongURL(url: String): String = url.trim()
 
     fun getCreateRequest(
-        context: Context,
+        queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,

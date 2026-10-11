@@ -24,6 +24,7 @@ import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import com.android.volley.Request
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.domain.CheckURLSafetyUseCase
 import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
@@ -35,8 +36,6 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -65,17 +64,8 @@ class GenerateURLUseCaseTest : ShouldSpec(
     {
         val context = mockk<Context>()
         val checkURLSafety = mockk<CheckURLSafetyUseCase>()
-        val requestQueue = mockk<RequestQueueSingleton>(relaxed = true)
-        val generateURL = GenerateURLUseCase(context, checkURLSafety, Dispatchers.Unconfined)
-
-        beforeTest {
-            mockkObject(RequestQueueSingleton.Companion)
-            every { RequestQueueSingleton.getInstance(context) } returns requestQueue
-        }
-
-        afterTest {
-            unmockkObject(RequestQueueSingleton.Companion)
-        }
+        val queue = FakeVolleyQueue()
+        val generateURL = GenerateURLUseCase(context, checkURLSafety, queue, Dispatchers.Unconfined)
 
         should("fail with NoInternet when there is no active network") {
             every { context.getSystemService(CONNECTIVITY_SERVICE) } returns connectivityManager(hasNetwork = false)
@@ -119,7 +109,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
-                    every { getCreateRequest(context, "https://example.com", "alias", any(), any()) } answers {
+                    every { getCreateRequest(queue, "https://example.com", "alias", any(), any()) } answers {
                         arg<(String) -> Unit>(3).invoke("https://short.url/xyz")
                         mockk<Request<Any>>(relaxed = true)
                     }
@@ -142,7 +132,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
-                    every { getCreateRequest(context, any(), any(), any(), any()) } answers {
+                    every { getCreateRequest(queue, any(), any(), any(), any()) } answers {
                         arg<(GenerateURLError) -> Unit>(4).invoke(GenerateURLError.RateLimitExceeded)
                         mockk<Request<Any>>(relaxed = true)
                     }
@@ -158,7 +148,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
-                    every { getCreateRequest(context, any(), any(), any(), any()) } answers {
+                    every { getCreateRequest(queue, any(), any(), any(), any()) } answers {
                         arg<(String) -> Unit>(3).invoke("https://short.url/first")
                         arg<(String) -> Unit>(3).invoke("https://short.url/second")
                         mockk<Request<Any>>(relaxed = true)
@@ -175,7 +165,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
             coEvery { checkURLSafety(any()) } returns UrlhausResult.Ok
             val provider =
                 mockk<ShortURLProvider> {
-                    every { getCreateRequest(context, any(), any(), any(), any()) } answers {
+                    every { getCreateRequest(queue, any(), any(), any(), any()) } answers {
                         arg<(GenerateURLError) -> Unit>(4).invoke(GenerateURLError.RateLimitExceeded)
                         arg<(GenerateURLError) -> Unit>(4).invoke(GenerateURLError.NoInternet)
                         mockk<Request<Any>>(relaxed = true)
@@ -193,7 +183,7 @@ class GenerateURLUseCaseTest : ShouldSpec(
             val createdRequest = mockk<Request<Any>>(relaxed = true)
             val provider =
                 mockk<ShortURLProvider> {
-                    every { getCreateRequest(context, any(), any(), any(), any()) } returns createdRequest
+                    every { getCreateRequest(queue, any(), any(), any(), any()) } returns createdRequest
                 }
 
             runTest {

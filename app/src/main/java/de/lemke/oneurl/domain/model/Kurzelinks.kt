@@ -24,6 +24,7 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.commonutils.ui.utils.withoutHttps
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONException
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
@@ -187,7 +188,7 @@ sealed class Kurzelinks : ShortURLProvider {
         override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -203,7 +204,7 @@ sealed class Kurzelinks : ShortURLProvider {
         override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -219,7 +220,7 @@ sealed class Kurzelinks : ShortURLProvider {
         override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
@@ -235,7 +236,7 @@ sealed class Kurzelinks : ShortURLProvider {
         override val termsURL = "$baseURL/nutzungsbedingungen"
 
         override fun getCreateRequest(
-            context: Context,
+            queue: VolleyQueue,
             longURL: String,
             alias: String,
             successCallback: (shortURL: String) -> Unit,
