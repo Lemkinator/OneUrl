@@ -24,7 +24,6 @@ import android.text.style.UnderlineSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.animation.AccelerateDecelerateInterpolator
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -34,6 +33,7 @@ import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.SingleLaunchResultLauncher
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
@@ -71,7 +71,7 @@ class URLActivity : AppCompatActivity() {
     private lateinit var searchHighlighter: SearchHighlighter
     private var lastBoundShortURL: String? = null
     private var lastBoundQrCode: Bitmap? = null
-    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
+    private val exportQRCodeResultLauncher: SingleLaunchResultLauncher<Intent> =
         registerForSingleLaunchResult(StartActivityForResult()) { viewModel.onDocumentPicked(it.toDocumentPick()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {

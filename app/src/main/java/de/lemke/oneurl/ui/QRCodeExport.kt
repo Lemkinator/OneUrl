@@ -23,10 +23,11 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
+import de.lemke.commonutils.ui.utils.LaunchOutcome
+import de.lemke.commonutils.ui.utils.SingleLaunchResultLauncher
 import de.lemke.commonutils.ui.utils.copyToClipboard
 import de.lemke.commonutils.ui.utils.exportBitmap
 import de.lemke.commonutils.ui.utils.quickShareBitmap
@@ -156,22 +157,22 @@ internal fun ActivityResult.toDocumentPick(): DocumentPick {
 
 /**
  * Starts what [result] asks for: the document picker through [picker], a share, a copy or a toast.
- * @return true once [result] is handled; a share that starts nothing stays unhandled.
+ * @return true once [result] is handled; a launch the latch drops stays unhandled.
  */
 internal fun Context.launchQRCodeExport(
     result: QRCodeExport.Result,
-    picker: ActivityResultLauncher<Intent>,
+    picker: SingleLaunchResultLauncher<Intent>,
 ): Boolean =
     when (result) {
         is QRCodeExport.OpenPicker -> {
-            true.also { exportBitmap(result.fileName, picker) }
+            exportBitmap(result.fileName, picker).isSettled
         }
 
         is QRCodeExport.Share -> {
             when (result.target) {
                 ShareTarget.SHARE_SHEET -> shareBitmap(result.file)
                 ShareTarget.QUICK_SHARE -> quickShareBitmap(result.file)
-            }
+            }.isSettled
         }
 
         is QRCodeExport.SaveFinished -> {
@@ -186,3 +187,10 @@ internal fun Context.launchQRCodeExport(
             true.also { toast(commonutilsR.string.commonutils_error_share_content_not_supported_on_device) }
         }
     }
+
+private val LaunchOutcome.isSettled: Boolean
+    get() =
+        when (this) {
+            LaunchOutcome.Started, LaunchOutcome.Failed -> true
+            LaunchOutcome.Dropped -> false
+        }

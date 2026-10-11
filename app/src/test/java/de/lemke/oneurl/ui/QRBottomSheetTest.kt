@@ -33,6 +33,7 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.testing.BindValue
@@ -43,6 +44,7 @@ import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
@@ -103,22 +105,34 @@ class QRBottomSheetTest {
 
     private fun MainActivity.qrBottomSheet(): QRBottomSheet = supportFragmentManager.findFragmentByTag("qr") as QRBottomSheet
 
+    private fun QRBottomSheet.exportState(): QRCodeExport = ViewModelProvider(this)[QRBottomSheetViewModel::class.java].export.value
+
+    private fun withQrBottomSheetScenario(
+        shortURL: String = "https://short.url/qr",
+        qrCode: Bitmap = freshQrBitmap(),
+        saveLocation: SaveLocation = SaveLocation.CUSTOM,
+        block: (ActivityScenario<MainActivity>) -> Unit,
+    ) {
+        qrCodeCache[shortURL] = qrCode
+        settings.imageSaveLocation = saveLocation
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                createQRBottomSheet(shortURL).show(activity.supportFragmentManager, "qr")
+                activity.supportFragmentManager.executePendingTransactions()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            block(scenario)
+        }
+    }
+
     private fun withQrBottomSheet(
         shortURL: String = "https://short.url/qr",
         qrCode: Bitmap = freshQrBitmap(),
         saveLocation: SaveLocation = SaveLocation.CUSTOM,
         block: (MainActivity, QRBottomSheet) -> Unit,
     ) {
-        qrCodeCache[shortURL] = qrCode
-        settings.imageSaveLocation = saveLocation
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                val sheet = createQRBottomSheet(shortURL)
-                sheet.show(activity.supportFragmentManager, "qr")
-                activity.supportFragmentManager.executePendingTransactions()
-                shadowOf(Looper.getMainLooper()).idle()
-                block(activity, sheet)
-            }
+        withQrBottomSheetScenario(shortURL, qrCode, saveLocation) { scenario ->
+            scenario.onActivity { activity -> block(activity, activity.qrBottomSheet()) }
         }
     }
 
@@ -212,18 +226,56 @@ class QRBottomSheetTest {
     }
 
     @Test
-    fun `share that no app can receive shows the share error toast and stays unhandled`() {
-        withQrBottomSheet { activity, sheet ->
-            shadowOf(activity.application).checkActivities(true)
+    fun `share that no app can receive shows the share error toast once and returns to Idle`() {
+        withQrBottomSheetScenario { scenario ->
+            shadowOf(ApplicationProvider.getApplicationContext<HiltTestApplication>()).checkActivities(true)
+            scenario.onActivity { activity ->
+                activity
+                    .qrBottomSheet()
+                    .requireView()
+                    .findViewById<View>(R.id.shareButton)
+                    .performClick()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Error: Sharing content is not supported on your device."
 
-            sheet.requireView().findViewById<View>(R.id.shareButton).performClick()
+            scenario.returnFromLaunchedScreen()
             shadowOf(Looper.getMainLooper()).idle()
 
-            shadowOf(activity).nextStartedActivity shouldBe null
-            ShadowToast.getTextOfLatestToast() shouldBe
-                activity.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
-            val export = ViewModelProvider(sheet)[QRBottomSheetViewModel::class.java].export.value
-            (export is QRCodeExport.Share).shouldBeTrue()
+            ShadowToast.shownToastCount() shouldBe 1
+            scenario.onActivity { activity ->
+                shadowOf(activity).nextStartedActivity shouldBe null
+                File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
+                activity.qrBottomSheet().exportState() shouldBe QRCodeExport.Idle
+            }
+        }
+    }
+
+    @Test
+    fun `save picker launch that the latch drops stays pending and opens the picker on the next resume`() {
+        withQrBottomSheetScenario { scenario ->
+            scenario.onActivity { activity ->
+                activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
+                ViewModelProvider(activity.qrBottomSheet())[QRBottomSheetViewModel::class.java].onSave()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                val shadowActivity = shadowOf(activity)
+                shadowActivity.nextStartedActivityForResult.intent.component
+                    ?.className shouldBe HelpActivity::class.java.name
+                shadowActivity.nextStartedActivityForResult shouldBe null
+                activity.qrBottomSheet().exportState() shouldBe QRCodeExport.OpenPicker("https://short.url/qr")
+            }
+
+            scenario.returnFromLaunchedScreen()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            scenario.onActivity { activity ->
+                shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
+                activity.qrBottomSheet().exportState() shouldBe QRCodeExport.Idle
+            }
+            ShadowToast.shownToastCount() shouldBe 0
         }
     }
 

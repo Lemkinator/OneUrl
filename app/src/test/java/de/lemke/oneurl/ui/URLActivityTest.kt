@@ -271,17 +271,25 @@ class URLActivityTest {
     }
 
     @Test
-    fun `qr share that no app can receive shows the share error toast and stays unhandled`() {
-        withUrlActivity { activity ->
-            shadowOf(activity.application).checkActivities(true)
+    fun `qr share that no app can receive shows the share error toast once and returns to Idle`() {
+        withUrlScenario { scenario ->
+            shadowOf(ApplicationProvider.getApplicationContext<HiltTestApplication>()).checkActivities(true)
+            scenario.onActivity { activity ->
+                activity.findViewById<android.view.View>(R.id.url_qr_share_button).performClick()
+            }
+            awaitMainIdle()
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Error: Sharing content is not supported on your device."
 
-            activity.findViewById<android.view.View>(R.id.url_qr_share_button).performClick()
+            scenario.returnFromLaunchedScreen()
             awaitMainIdle()
 
-            shadowOf(activity).nextStartedActivity shouldBe null
-            ShadowToast.getTextOfLatestToast() shouldBe
-                activity.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
-            (activity.exportState() is QRCodeExport.Share).shouldBeTrue()
+            ShadowToast.shownToastCount() shouldBe 1
+            scenario.onActivity { activity ->
+                shadowOf(activity).nextStartedActivity shouldBe null
+                File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
+                activity.exportState() shouldBe QRCodeExport.Idle
+            }
         }
     }
 

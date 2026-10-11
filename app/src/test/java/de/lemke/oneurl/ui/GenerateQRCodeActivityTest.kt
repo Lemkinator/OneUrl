@@ -38,11 +38,13 @@ import androidx.appcompat.widget.SeslSeekBar
 import androidx.lifecycle.ViewModelProvider
 import androidx.picker3.app.SeslColorPickerDialog
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeExporter
@@ -116,18 +118,26 @@ class GenerateQRCodeActivityTest {
     }
 
     @Test
-    fun `share that no app can receive shows the share error toast and stays unhandled`() {
-        withActivity { activity ->
-            shadowOf(activity.application).checkActivities(true)
+    fun `share that no app can receive shows the share error toast once and returns to Idle`() {
+        ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            shadowOf(ApplicationProvider.getApplicationContext<HiltTestApplication>()).checkActivities(true)
+            scenario.onActivity { activity ->
+                activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            ShadowToast.shownToastCount() shouldBe 1
+            ShadowToast.getTextOfLatestToast() shouldBe "Error: Sharing content is not supported on your device."
 
-            activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
+            scenario.returnFromLaunchedScreen()
             shadowOf(Looper.getMainLooper()).idle()
 
-            shadowOf(activity).nextStartedActivity shouldBe null
-            ShadowToast.getTextOfLatestToast() shouldBe
-                activity.getString(commonutilsR.string.commonutils_error_share_content_not_supported_on_device)
-            val export = ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value
-            (export is QRCodeExport.Share).shouldBeTrue()
+            ShadowToast.shownToastCount() shouldBe 1
+            scenario.onActivity { activity ->
+                shadowOf(activity).nextStartedActivity shouldBe null
+                File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value shouldBe QRCodeExport.Idle
+            }
         }
     }
 
@@ -155,6 +165,35 @@ class GenerateQRCodeActivityTest {
             val shadowActivity = shadowOf(activity)
             shadowActivity.nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
             shadowActivity.nextStartedActivityForResult shouldBe null
+        }
+    }
+
+    @Test
+    fun `save-as-image picker launch that the latch drops stays pending and opens the picker on the next resume`() {
+        ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].onSave()
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                val shadowActivity = shadowOf(activity)
+                shadowActivity.nextStartedActivityForResult.intent.component
+                    ?.className shouldBe HelpActivity::class.java.name
+                shadowActivity.nextStartedActivityForResult shouldBe null
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java]
+                    .export.value shouldBe QRCodeExport.OpenPicker("https://example.com")
+            }
+
+            scenario.returnFromLaunchedScreen()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            scenario.onActivity { activity ->
+                shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value shouldBe QRCodeExport.Idle
+            }
+            ShadowToast.shownToastCount() shouldBe 0
         }
     }
 

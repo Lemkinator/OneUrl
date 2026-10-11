@@ -17,22 +17,30 @@
 package de.lemke.oneurl.ui
 
 import android.content.Intent
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityOptionsCompat
+import de.lemke.commonutils.ui.utils.SingleLaunchResultLauncher
 
-/** Records every launched [Intent] instead of starting an activity. */
-internal class RecordingActivityResultLauncher : ActivityResultLauncher<Intent>() {
+/** Records every admitted [Intent] instead of starting an activity. */
+internal class RecordingActivityResultLauncher : SingleLaunchResultLauncher<Intent>() {
     val launched = mutableListOf<Intent>()
+
+    /** Whether the launch latch admits the next launch. */
+    var admits = true
+
+    /** Thrown by every launch while set, as the system does when no activity can handle the intent. */
+    var failure: RuntimeException? = null
 
     override val contract: ActivityResultContract<Intent, *> = ActivityResultContracts.StartActivityForResult()
 
-    override fun launch(
+    override fun tryLaunch(
         input: Intent,
         options: ActivityOptionsCompat?,
-    ) {
-        launched += input
+    ): Boolean {
+        failure?.let { throw it }
+        if (admits) launched += input
+        return admits
     }
 
     override fun unregister() = Unit
