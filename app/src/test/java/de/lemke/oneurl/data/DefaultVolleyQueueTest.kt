@@ -19,6 +19,8 @@ package de.lemke.oneurl.data
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.Cache
+import com.android.volley.CacheDispatcher
+import com.android.volley.NetworkDispatcher
 import com.android.volley.Request
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.StringRequest
@@ -59,9 +61,10 @@ class DefaultVolleyQueueTest {
         volleyCache().put(url, entry)
     }
 
-    @Test
-    fun `add delivers the response Volley serves for the request`() {
-        cacheResponse("cached body")
+    private fun dispatcherThreads() =
+        Thread.getAllStackTraces().keys.filterTo(HashSet()) { it is CacheDispatcher || it is NetworkDispatcher }
+
+    private fun deliverCachedResponse(): String? {
         var delivered: String? = null
         val deliveredLatch = CountDownLatch(1)
 
@@ -73,7 +76,26 @@ class DefaultVolleyQueueTest {
         )
 
         deliveredLatch.await(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe true
-        delivered shouldBe "cached body"
+        return delivered
+    }
+
+    @Test
+    fun `add delivers the response Volley serves for the request`() {
+        cacheResponse("cached body")
+
+        deliverCachedResponse() shouldBe "cached body"
+    }
+
+    @Test
+    fun `stop on an unused queue starts no dispatcher threads and a later add still delivers`() {
+        cacheResponse("cached body")
+        val dispatchersBefore = dispatcherThreads()
+
+        queue.stop()
+
+        (dispatcherThreads() - dispatchersBefore).size shouldBe 0
+        deliverCachedResponse() shouldBe "cached body"
+        (dispatcherThreads() - dispatchersBefore).size shouldBe 5
     }
 
     @Test
