@@ -133,6 +133,18 @@ class DefaultShortURLClientTest {
         }
 
     @Test
+    fun `create keeps the first failure of a provider that succeeds afterwards`() =
+        runTest {
+            val provider =
+                TestProvider(answer = { success, error ->
+                    error(GenerateURLError.RateLimitExceeded)
+                    success("https://test.example/late")
+                })
+
+            client.create(provider, "https://example.com", "") shouldBe GenerateURLResult.Failure(GenerateURLError.RateLimitExceeded)
+        }
+
+    @Test
     fun `cancelling create cancels the queued request`() =
         runTest {
             val job = launch { client.create(TestProvider(), "https://example.com", "") }
