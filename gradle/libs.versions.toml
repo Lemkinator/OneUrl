@@ -80,7 +80,6 @@ kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest"
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 oneui-design = { module = "io.github.tribalfs:oneui-design", version.ref = "oneui-design" }
 oneui-icons = { module = "io.github.oneuiproject:icons", version.ref = "oneui-icons" }
 profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
