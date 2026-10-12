@@ -22,9 +22,9 @@ import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import de.lemke.commonutils.di.ApplicationScope
 import de.lemke.commonutils.freshTestPreferences
 import de.lemke.oneurl.data.UserSettings
-import de.lemke.oneurl.di.ApplicationScope
 import de.lemke.oneurl.di.SettingsProvideModule
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope

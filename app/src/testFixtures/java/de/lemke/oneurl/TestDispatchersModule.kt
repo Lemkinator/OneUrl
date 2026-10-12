@@ -20,9 +20,9 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import de.lemke.commonutils.di.ApplicationScope
 import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.di.IoDispatcher
-import de.lemke.oneurl.di.ApplicationScope
 import de.lemke.oneurl.di.DispatchersModule
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
