@@ -21,11 +21,13 @@ import android.graphics.Bitmap
 import android.net.Uri
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.commonutils.data.SaveLocation
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
 import de.lemke.commonutils.ui.utils.DocumentPick
 import de.lemke.commonutils.ui.utils.FakeBitmapExporter
 import de.lemke.commonutils.ui.utils.FakeBitmapExporter.Call
+import de.lemke.commonutils.ui.utils.ShareTarget
 import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.UserSettings
@@ -271,7 +273,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.onSave()
 
             exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, "https://example.com"))
-            viewModel.export.value shouldBe QRCodeExport.OpenPicker("https://example.com")
+            viewModel.export.value shouldBe BitmapExport.OpenPicker("https://example.com")
         }
 
         should("onCopy holds the clip of the current QR code") {
@@ -282,7 +284,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.onCopy()
 
             exporter.calls shouldBe listOf(Call.CreateClip(qrCode))
-            viewModel.export.value shouldBe QRCodeExport.Copy(clip)
+            viewModel.export.value shouldBe BitmapExport.Copy(clip)
         }
 
         should("onShare holds the share file of the current QR code for the share sheet") {
@@ -293,7 +295,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.onShare()
 
             exporter.calls shouldBe listOf(Call.CreateShareFile(qrCode))
-            viewModel.export.value shouldBe QRCodeExport.Share(file, ShareTarget.SHARE_SHEET)
+            viewModel.export.value shouldBe BitmapExport.Share(file, ShareTarget.SHARE_SHEET)
         }
 
         should("onDocumentPicked writes the current QR code into the created document") {
@@ -303,7 +305,7 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
+            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
         }
 
         should("onExportHandled returns the export to Idle") {
@@ -311,9 +313,9 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             val viewModel = newViewModel()
             viewModel.onSave()
 
-            viewModel.onExportHandled(QRCodeExport.OpenPicker("https://example.com"))
+            viewModel.onExportHandled(BitmapExport.OpenPicker("https://example.com"))
 
-            viewModel.export.value shouldBe QRCodeExport.Idle
+            viewModel.export.value shouldBe BitmapExport.Idle
         }
     },
 )

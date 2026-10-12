@@ -29,8 +29,10 @@ import androidx.lifecycle.Lifecycle.State.RESUMED
 import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.bindColorSwatch
 import de.lemke.commonutils.ui.utils.collectState
+import de.lemke.commonutils.ui.utils.launchBitmapExport
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
 import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
@@ -79,7 +81,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val enabled = viewModel.export.value != QRCodeExport.Running
+        val enabled = viewModel.export.value != BitmapExport.Running
         menu.findItem(R.id.menu_item_qr_save_as_image).isEnabled = enabled
         menu.findItem(R.id.menu_item_qr_share).isEnabled = enabled
         return super.onPrepareOptionsMenu(menu)
@@ -113,12 +115,12 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             }
         }
 
-    private fun onExport(export: QRCodeExport) {
-        if (export is QRCodeExport.Result && launchQRCodeExport(export, exportQRCodeResultLauncher)) viewModel.onExportHandled(export)
+    private fun onExport(export: BitmapExport) {
+        if (export is BitmapExport.Result && launchBitmapExport(export, exportQRCodeResultLauncher)) viewModel.onExportHandled(export)
     }
 
-    private fun renderExportControls(export: QRCodeExport) {
-        binding.qrCode.isClickable = export != QRCodeExport.Running
+    private fun renderExportControls(export: BitmapExport) {
+        binding.qrCode.isClickable = export != BitmapExport.Running
         invalidateOptionsMenu()
     }
 

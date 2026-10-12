@@ -33,9 +33,11 @@ import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.SingleLaunchResultLauncher
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
+import de.lemke.commonutils.ui.utils.launchBitmapExport
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
@@ -191,7 +193,7 @@ class URLActivity : AppCompatActivity() {
 
     private fun renderQrControls() {
         val hasQrCode = viewModel.state.value.qrCode != null
-        val exportIdle = viewModel.export.value != QRCodeExport.Running
+        val exportIdle = viewModel.export.value != BitmapExport.Running
         binding.urlQrImageview.isEnabled = hasQrCode
         binding.urlQrImageview.isLongClickable = exportIdle
         binding.urlQrSaveButton.isEnabled = hasQrCode && exportIdle
@@ -209,8 +211,8 @@ class URLActivity : AppCompatActivity() {
         return true
     }
 
-    private fun onExport(export: QRCodeExport) {
-        if (export is QRCodeExport.Result && launchQRCodeExport(export, exportQRCodeResultLauncher)) viewModel.onExportHandled(export)
+    private fun onExport(export: BitmapExport) {
+        if (export is BitmapExport.Result && launchBitmapExport(export, exportQRCodeResultLauncher)) viewModel.onExportHandled(export)
     }
 
     private fun handleBnvItemSelected(

@@ -44,6 +44,7 @@ import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.oneurl.HiltTestRule
@@ -105,7 +106,7 @@ class QRBottomSheetTest {
 
     private fun MainActivity.qrBottomSheet(): QRBottomSheet = supportFragmentManager.findFragmentByTag("qr") as QRBottomSheet
 
-    private fun QRBottomSheet.exportState(): QRCodeExport = ViewModelProvider(this)[QRBottomSheetViewModel::class.java].export.value
+    private fun QRBottomSheet.exportState(): BitmapExport = ViewModelProvider(this)[QRBottomSheetViewModel::class.java].export.value
 
     private fun withQrBottomSheetScenario(
         shortURL: String = "https://short.url/qr",
@@ -247,7 +248,7 @@ class QRBottomSheetTest {
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivity shouldBe null
                 File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
-                activity.qrBottomSheet().exportState() shouldBe QRCodeExport.Idle
+                activity.qrBottomSheet().exportState() shouldBe BitmapExport.Idle
             }
         }
     }
@@ -265,7 +266,7 @@ class QRBottomSheetTest {
                 shadowActivity.nextStartedActivityForResult.intent.component
                     ?.className shouldBe HelpActivity::class.java.name
                 shadowActivity.nextStartedActivityForResult shouldBe null
-                activity.qrBottomSheet().exportState() shouldBe QRCodeExport.OpenPicker("https://short.url/qr")
+                activity.qrBottomSheet().exportState() shouldBe BitmapExport.OpenPicker("https://short.url/qr")
             }
 
             scenario.returnFromLaunchedScreen()
@@ -273,7 +274,7 @@ class QRBottomSheetTest {
 
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
-                activity.qrBottomSheet().exportState() shouldBe QRCodeExport.Idle
+                activity.qrBottomSheet().exportState() shouldBe BitmapExport.Idle
             }
             ShadowToast.shownToastCount() shouldBe 0
         }

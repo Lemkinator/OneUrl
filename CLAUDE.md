@@ -80,9 +80,9 @@ through `CheckURLSafetyUseCase` over `UrlhausClient`, and creates through `Short
 URLViewModel, GenerateQRCodeViewModel, QRBottomSheetViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
 than calling use cases directly.
 
-**QR code export** — `GenerateQRCodeViewModel`, `URLViewModel` and `QRBottomSheetViewModel` each compose a `QRCodeExportStateHolder`
-(`ui/QRCodeExport.kt`), which runs save, copy, share and the document-picker write through the common-utils `BitmapExporter` and
-exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` is the one screen-side reaction to a result.
+**QR code export** — `GenerateQRCodeViewModel`, `URLViewModel` and `QRBottomSheetViewModel` each compose a common-utils
+`BitmapExportStateHolder`, which runs save, copy, share and the document-picker write through the common-utils `BitmapExporter` and
+exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` is the one screen-side reaction to a result.
 `GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss.
 
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
@@ -90,7 +90,7 @@ exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` 
 `enabled`.
 
 **DI** — `di/` holds the `SingletonComponent` Hilt modules: `PersistenceModule` (Room DB, `URLDao`), `SettingsModule.kt`
-(`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (`@DefaultDispatcher`, `@IoDispatcher`, `@ApplicationScope`),
+(`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (includes the common-utils `CommonUtilsCoroutinesModule`: `@DefaultDispatcher`, `@IoDispatcher`, `@MainDispatcher`, `@ApplicationScope`),
 `ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (binds `VolleyQueue`,
 `NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`) and
 `BitmapExporterModule` (provides the common-utils `DefaultBitmapExporter`; screen tests uninstall it to bind an exporter on a pausable

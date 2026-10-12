@@ -23,11 +23,13 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.commonutils.data.SaveLocation
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
 import de.lemke.commonutils.ui.utils.DocumentPick
 import de.lemke.commonutils.ui.utils.FakeBitmapExporter
 import de.lemke.commonutils.ui.utils.FakeBitmapExporter.Call
+import de.lemke.commonutils.ui.utils.ShareTarget
 import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.FakeShortURLClient
@@ -244,7 +246,7 @@ class URLViewModelTest : ShouldSpec(
             viewModel.onShareQRCode()
 
             exporter.calls shouldBe emptyList()
-            viewModel.export.value shouldBe QRCodeExport.Idle
+            viewModel.export.value shouldBe BitmapExport.Idle
         }
 
         should("onSaveQRCode exports nothing when the URL does not exist") {
@@ -253,7 +255,7 @@ class URLViewModelTest : ShouldSpec(
             viewModel.onSaveQRCode()
 
             exporter.calls shouldBe emptyList()
-            viewModel.export.value shouldBe QRCodeExport.Idle
+            viewModel.export.value shouldBe BitmapExport.Idle
         }
 
         should("onSaveQRCode writes the QR code under the short URL to the image save location and holds OpenPicker") {
@@ -262,7 +264,7 @@ class URLViewModelTest : ShouldSpec(
             viewModel.onSaveQRCode()
 
             exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, "https://short.url/x"))
-            viewModel.export.value shouldBe QRCodeExport.OpenPicker("https://short.url/x")
+            viewModel.export.value shouldBe BitmapExport.OpenPicker("https://short.url/x")
         }
 
         should("onCopyQRCode holds the clip of the QR code") {
@@ -273,7 +275,7 @@ class URLViewModelTest : ShouldSpec(
             viewModel.onCopyQRCode()
 
             exporter.calls shouldBe listOf(Call.CreateClip(qrCode))
-            viewModel.export.value shouldBe QRCodeExport.Copy(clip)
+            viewModel.export.value shouldBe BitmapExport.Copy(clip)
         }
 
         should("onShareQRCode holds the share file of the QR code for the share sheet") {
@@ -284,7 +286,7 @@ class URLViewModelTest : ShouldSpec(
             viewModel.onShareQRCode()
 
             exporter.calls shouldBe listOf(Call.CreateShareFile(qrCode))
-            viewModel.export.value shouldBe QRCodeExport.Share(file, ShareTarget.SHARE_SHEET)
+            viewModel.export.value shouldBe BitmapExport.Share(file, ShareTarget.SHARE_SHEET)
         }
 
         should("onDocumentPicked writes the QR code into the created document") {
@@ -294,7 +296,7 @@ class URLViewModelTest : ShouldSpec(
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
+            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
         }
 
         should("onDocumentPicked during the QR code load deletes the created document and holds WriteFailed") {
@@ -307,7 +309,7 @@ class URLViewModelTest : ShouldSpec(
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
             exporter.deletedDocuments shouldBe listOf(uri)
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
+            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.WriteFailed)
         }
 
         should("onExportHandled returns the export to Idle") {
@@ -315,9 +317,9 @@ class URLViewModelTest : ShouldSpec(
             val viewModel = newViewModel()
             viewModel.onShareQRCode()
 
-            viewModel.onExportHandled(QRCodeExport.ShareFailed)
+            viewModel.onExportHandled(BitmapExport.ShareFailed)
 
-            viewModel.export.value shouldBe QRCodeExport.Idle
+            viewModel.export.value shouldBe BitmapExport.Idle
         }
     },
 )

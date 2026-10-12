@@ -40,6 +40,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.HiltTestRule
@@ -266,7 +267,7 @@ class URLActivityTest {
                 .none { it is QRBottomSheet }
                 .shouldBeTrue()
             activity.getSystemService(ClipboardManager::class.java).primaryClip shouldBe null
-            activity.exportState() shouldBe QRCodeExport.Idle
+            activity.exportState() shouldBe BitmapExport.Idle
         }
     }
 
@@ -288,7 +289,7 @@ class URLActivityTest {
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivity shouldBe null
                 File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
-                activity.exportState() shouldBe QRCodeExport.Idle
+                activity.exportState() shouldBe BitmapExport.Idle
             }
         }
     }
@@ -861,5 +862,5 @@ class URLActivityTest {
 
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
 
-    private fun URLActivity.exportState(): QRCodeExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
+    private fun URLActivity.exportState(): BitmapExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
 }

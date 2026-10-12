@@ -44,6 +44,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.oneurl.HiltTestRule
@@ -136,7 +137,7 @@ class GenerateQRCodeActivityTest {
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivity shouldBe null
                 File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
-                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value shouldBe QRCodeExport.Idle
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value shouldBe BitmapExport.Idle
             }
         }
     }
@@ -183,7 +184,7 @@ class GenerateQRCodeActivityTest {
                     ?.className shouldBe HelpActivity::class.java.name
                 shadowActivity.nextStartedActivityForResult shouldBe null
                 ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java]
-                    .export.value shouldBe QRCodeExport.OpenPicker("https://example.com")
+                    .export.value shouldBe BitmapExport.OpenPicker("https://example.com")
             }
 
             scenario.returnFromLaunchedScreen()
@@ -191,7 +192,7 @@ class GenerateQRCodeActivityTest {
 
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
-                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value shouldBe QRCodeExport.Idle
+                ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value shouldBe BitmapExport.Idle
             }
             ShadowToast.shownToastCount() shouldBe 0
         }

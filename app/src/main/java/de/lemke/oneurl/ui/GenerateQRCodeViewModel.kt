@@ -20,8 +20,11 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.commonutils.ui.utils.BitmapExport
+import de.lemke.commonutils.ui.utils.BitmapExportStateHolder
 import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.DocumentPick
+import de.lemke.commonutils.ui.utils.ShareTarget
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.model.QRCodeStyle
@@ -40,10 +43,10 @@ class GenerateQRCodeViewModel @Inject constructor(
     private val generateQRCode: GenerateQRCodeUseCase,
     exporter: BitmapExporter,
 ) : ViewModel() {
-    private val qrCodeExport = QRCodeExportStateHolder(viewModelScope, exporter)
+    private val qrCodeExport = BitmapExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<QrUiState>
         field = MutableStateFlow(initialState())
-    val export: StateFlow<QRCodeExport> = qrCodeExport.state
+    val export: StateFlow<BitmapExport> = qrCodeExport.state
     private var urlSaveJob: Job? = null
     private var sizeSaveJob: Job? = null
 
@@ -129,7 +132,7 @@ class GenerateQRCodeViewModel @Inject constructor(
         qrCodeExport.share(state.value.qrCode, ShareTarget.SHARE_SHEET)
     }
 
-    fun onExportHandled(result: QRCodeExport.Result) {
+    fun onExportHandled(result: BitmapExport.Result) {
         qrCodeExport.onHandled(result)
     }
 
