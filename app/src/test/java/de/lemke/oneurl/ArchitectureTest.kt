@@ -18,6 +18,7 @@ package de.lemke.oneurl
 
 import com.lemonappdev.konsist.api.KoModifier
 import com.lemonappdev.konsist.api.Konsist
+import com.lemonappdev.konsist.api.declaration.KoClassDeclaration
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
 import com.lemonappdev.konsist.api.ext.list.withPackage
 import com.lemonappdev.konsist.api.verify.assertFalse
@@ -122,6 +123,9 @@ class ArchitectureTest : ShouldSpec() {
                 "val events: kotlinx.coroutines.channels.SendChannel<Int> = TODO()",
                 "val events: ReceiveChannel<Int> = TODO()",
                 "val events: Channel<Int> = TODO()",
+                "val events: List<kotlinx.coroutines.flow.SharedFlow<Int>> = emptyList()",
+                "val events: Map<String, Channel<Int>> = emptyMap()",
+                "fun events(): List<ReceiveChannel<Int>> = emptyList()",
                 "val events: StateFlow<Int>\n        field = kotlinx.coroutines.flow.MutableSharedFlow<Int>()",
                 "val events by lazy { kotlinx.coroutines.channels.Channel<Int>() }",
                 "val label = \"\" + Channel<Int>()",
@@ -138,6 +142,22 @@ class ArchitectureTest : ShouldSpec() {
             BANNED_EVENT_IMPORTS.forEach { banned ->
                 withClue(banned) { usesEventStreams("import $banned\nclass ProbeViewModel : ViewModel()\n") shouldBe true }
             }
+        }
+        should("ViewModel detection follows indirect parents") {
+            val dir = tempdir()
+            dir.resolve("Probe.kt").writeText(
+                """
+                abstract class BaseScreenModel : ViewModel()
+                abstract class MidScreenModel : BaseScreenModel()
+                class LeafScreenModel : MidScreenModel()
+                class Plain
+                """.trimIndent(),
+            )
+            Konsist
+                .scopeFromExternalDirectory(dir.absolutePath)
+                .classes()
+                .associate { it.name to it.extendsViewModel() } shouldBe
+                mapOf("BaseScreenModel" to true, "MidScreenModel" to true, "LeafScreenModel" to true, "Plain" to false)
         }
         should("HiltViewModel classes use Inject constructor") {
             codeScope
@@ -171,10 +191,13 @@ private val BANNED_CHANNEL_TYPES = setOf("Channel", "SendChannel", "ReceiveChann
 private val EVENT_STREAM_CALL =
     Regex("""\b(Channel|MutableSharedFlow)\s*(<[^(){};=]*?>)?\s*\(|\.(shareIn|receiveAsFlow|consumeAsFlow)\s*\(""")
 
+private val TYPE_NAME = Regex("""[\w.]+""")
+
 private val COMMENT_OR_STRING = Regex(""""{3}.*?"{3}|"(?:\\.|[^"\\\n])*"|/\*.*?\*/|//[^\n]*""", RegexOption.DOT_MATCHES_ALL)
 
-private fun KoFileDeclaration.declaresViewModel(): Boolean =
-    classes().any { koClass -> koClass.hasParent { it.name in VIEW_MODEL_BASE_CLASSES } }
+private fun KoClassDeclaration.extendsViewModel(): Boolean = hasParentWithName(VIEW_MODEL_BASE_CLASSES, indirectParents = true)
+
+private fun KoFileDeclaration.declaresViewModel(): Boolean = classes().any { it.extendsViewModel() }
 
 private fun KoFileDeclaration.usesEventStreams(): Boolean =
     hasImport { import ->
@@ -186,13 +209,10 @@ private fun KoFileDeclaration.usesEventStreams(): Boolean =
         path in BANNED_EVENT_IMPORTS || path.endsWith("SharedFlow")
     } ||
         declaredTypes().any { type ->
-            val name =
-                type
-                    .substringBefore('<')
-                    .removeSuffix("?")
-                    .trim()
-                    .substringAfterLast('.')
-            name in BANNED_CHANNEL_TYPES || name.endsWith("SharedFlow")
+            TYPE_NAME.findAll(type).any { match ->
+                val name = match.value.substringAfterLast('.')
+                name in BANNED_CHANNEL_TYPES || name.endsWith("SharedFlow")
+            }
         } ||
         EVENT_STREAM_CALL.containsMatchIn(text.replace(COMMENT_OR_STRING, ""))
 
