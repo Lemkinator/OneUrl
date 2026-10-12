@@ -23,6 +23,7 @@ import dagger.hilt.testing.TestInstallIn
 import de.lemke.commonutils.di.ApplicationScope
 import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.di.IoDispatcher
+import de.lemke.commonutils.di.MainDispatcher
 import de.lemke.oneurl.di.DispatchersModule
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -44,6 +45,10 @@ object TestDispatchersModule {
     @Provides
     @IoDispatcher
     fun provideIo(): CoroutineDispatcher = Dispatchers.Main
+
+    @Provides
+    @MainDispatcher
+    fun provideMain(): CoroutineDispatcher = Dispatchers.Main
 
     @Provides
     @Singleton

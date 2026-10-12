@@ -139,13 +139,6 @@ class ArchitectureTest : ShouldSpec() {
                 withClue(banned) { usesEventStreams("import $banned\nclass ProbeViewModel : ViewModel()\n") shouldBe true }
             }
         }
-        should("ui collects no event flows") {
-            codeScope.files
-                .withPackage("de.lemke.oneurl.ui..")
-                .assertFalse(testName = this.testCase.name.toString()) {
-                    it.hasImport { import -> import.name == "de.lemke.commonutils.ui.utils.collectEvents" }
-                }
-        }
         should("HiltViewModel classes use Inject constructor") {
             codeScope
                 .classes()

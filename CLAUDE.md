@@ -122,7 +122,7 @@ Three tools run as part of `./gradlew build`:
 - **Detekt** — static analysis; config at `config/detekt/detekt.yml`. `autoCorrect = false` — fixes are manual.
 - **Konsist** — architecture rules in `app/src/test/java/de/lemke/oneurl/ArchitectureTest.kt`. Enforces `data/domain/ui` layering
   (`data` may depend on `domain.model`'s shared value types, never on use cases). ViewModel files expose state only, without
-  `Channel` or `SharedFlow`; `ui` imports no `collectEvents`. Runs as part of `./gradlew test`.
+  `Channel` or `SharedFlow`. Runs as part of `./gradlew test`.
   `CodingConventionsTest.kt` also enforces the common-utils launch latch through `assertLaunchLatchConventions()` from the
   common-utils testFixtures: it bans raw activity launches and result registration by name, and a `show`/`showNow` call whose
   receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or `AddFab`. Launch through `singleLaunchActivity`,

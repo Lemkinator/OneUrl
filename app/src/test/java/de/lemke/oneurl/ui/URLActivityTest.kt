@@ -339,6 +339,10 @@ class URLActivityTest {
             }
             awaitMainIdle()
             scenario.onActivity { activity ->
+                val shadowActivity = shadowOf(activity)
+                shadowActivity.nextStartedActivityForResult.intent.component
+                    ?.className shouldBe HelpActivity::class.java.name
+                shadowActivity.nextStartedActivityForResult shouldBe null
                 activity.exportState() shouldBe BitmapExport.OpenPicker(seededUrl.shortURL)
             }
 
@@ -349,6 +353,7 @@ class URLActivityTest {
                 shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
                 activity.exportState() shouldBe BitmapExport.Idle
             }
+            ShadowToast.shownToastCount() shouldBe 0
         }
     }
 
