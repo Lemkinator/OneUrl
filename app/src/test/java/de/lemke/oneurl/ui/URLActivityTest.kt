@@ -42,6 +42,7 @@ import dagger.hilt.android.testing.UninstallModules
 import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
+import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
@@ -326,6 +327,28 @@ class URLActivityTest {
             val shadowActivity = shadowOf(activity)
             shadowActivity.nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
             shadowActivity.nextStartedActivityForResult shouldBe null
+        }
+    }
+
+    @Test
+    fun `qr save picker launch that the latch drops stays pending and opens the picker on the next resume`() {
+        withUrlScenario { scenario ->
+            scenario.onActivity { activity ->
+                activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
+                ViewModelProvider(activity)[URLViewModel::class.java].onSaveQRCode()
+            }
+            awaitMainIdle()
+            scenario.onActivity { activity ->
+                activity.exportState() shouldBe BitmapExport.OpenPicker(seededUrl.shortURL)
+            }
+
+            scenario.returnFromLaunchedScreen()
+            awaitMainIdle()
+
+            scenario.onActivity { activity ->
+                shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
+                activity.exportState() shouldBe BitmapExport.Idle
+            }
         }
     }
 
