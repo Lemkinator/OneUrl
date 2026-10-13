@@ -39,12 +39,20 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.PausableDispatcher
+import de.lemke.commonutils.RecordingDocumentsProvider
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.commonutils.cacheFileOf
+import de.lemke.commonutils.cacheWriteUriPattern
+import de.lemke.commonutils.hasPngSignature
+import de.lemke.commonutils.idleMainLooper
+import de.lemke.commonutils.receivePickerResult
+import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.urlEncode
-import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.QRCodeCache
@@ -225,12 +233,12 @@ class URLActivityTest {
     fun `long-clicking the qr imageview copies it to the clipboard`() {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_imageview).performLongClick().shouldBeTrue()
-            awaitMainIdle()
+            idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
             val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip!!
             val uri = clip.getItemAt(0).uri
-            uri.toString() shouldMatch activity.qrCodeContentUriPattern("clipboard", "QRCode.png")
+            uri.toString() shouldMatch activity.cacheWriteUriPattern("qrCodes", "clipboard", "QRCode.png")
             clip.description.getMimeType(0) shouldBe "image/png"
             activity.contentResolver.getType(uri) shouldBe "image/png"
         }
@@ -245,7 +253,7 @@ class URLActivityTest {
 
             qrImageView.performLongClick().shouldBeTrue()
             qrImageView.performLongClick().shouldBeTrue()
-            awaitMainIdle()
+            idleMainLooper()
 
             clipChanges shouldBe 1
             ShadowToast.shownToastCount() shouldBe 1
@@ -262,7 +270,7 @@ class URLActivityTest {
             qrImageView.hasOnLongClickListeners().shouldBeTrue()
             qrImageView.performLongClick().shouldBeFalse()
             activity.supportFragmentManager.executePendingTransactions()
-            awaitMainIdle()
+            idleMainLooper()
 
             activity.supportFragmentManager.fragments
                 .none { it is QRBottomSheet }
@@ -279,12 +287,12 @@ class URLActivityTest {
             scenario.onActivity { activity ->
                 activity.findViewById<android.view.View>(R.id.url_qr_share_button).performClick()
             }
-            awaitMainIdle()
+            idleMainLooper()
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Error: Sharing content is not supported on your device."
 
             scenario.returnFromLaunchedScreen()
-            awaitMainIdle()
+            idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
             scenario.onActivity { activity ->
@@ -302,14 +310,14 @@ class URLActivityTest {
 
             shareButton.performClick()
             shareButton.performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
             val chooser = shadowActivity.nextStartedActivity
             chooser.action shouldBe Intent.ACTION_CHOOSER
             val shareIntent = chooser.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
             shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java).toString() shouldMatch
-                activity.qrCodeContentUriPattern("share", "QRCode.png")
+                activity.cacheWriteUriPattern("qrCodes", "share", "QRCode.png")
             shadowActivity.nextStartedActivity shouldBe null
             File(activity.cacheDir, "share").walk().count { it.isFile } shouldBe 1
         }
@@ -322,7 +330,7 @@ class URLActivityTest {
 
             saveButton.performClick()
             saveButton.performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
             shadowActivity.nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
@@ -337,7 +345,7 @@ class URLActivityTest {
                 activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
                 ViewModelProvider(activity)[URLViewModel::class.java].onSaveQRCode()
             }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val shadowActivity = shadowOf(activity)
                 shadowActivity.nextStartedActivityForResult.intent.component
@@ -347,7 +355,7 @@ class URLActivityTest {
             }
 
             scenario.returnFromLaunchedScreen()
-            awaitMainIdle()
+            idleMainLooper()
 
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
@@ -364,7 +372,7 @@ class URLActivityTest {
             scenario.onActivity { activity ->
                 activity.findViewById<android.view.View>(R.id.url_qr_share_button).performClick()
             }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.findViewById<android.view.View>(R.id.url_qr_save_button).isEnabled.shouldBeFalse()
                 activity.findViewById<android.view.View>(R.id.url_qr_share_button).isEnabled.shouldBeFalse()
@@ -372,11 +380,11 @@ class URLActivityTest {
 
                 activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_add_to_fav
             }
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(seededUrl.shortURL)?.favorite } shouldBe true
 
             ioDispatcher.resume()
-            awaitMainIdle()
+            idleMainLooper()
 
             scenario.onActivity { activity ->
                 activity.findViewById<android.view.View>(R.id.url_qr_save_button).isEnabled.shouldBeTrue()
@@ -391,7 +399,7 @@ class URLActivityTest {
     fun `clicking the qr save button launches the export picker`() {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
             val startedForResult = shadowOf(activity).peekNextStartedActivityForResult()
             startedForResult shouldNotBe null
@@ -403,7 +411,7 @@ class URLActivityTest {
     fun `export result OK saves the last bound qr bitmap`() {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
-            awaitMainIdle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
@@ -414,7 +422,7 @@ class URLActivityTest {
                 RESULT_OK,
                 Intent().apply { data = Uri.fromFile(exportFile) },
             )
-            awaitMainIdle()
+            idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
             exportFile.length() shouldBeGreaterThan 0L
@@ -425,12 +433,12 @@ class URLActivityTest {
     fun `export result cancelled does not save and shows no toast`() {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
-            awaitMainIdle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
-            awaitMainIdle()
+            idleMainLooper()
 
             ShadowToast.getLatestToast() shouldBe null
         }
@@ -441,10 +449,10 @@ class URLActivityTest {
         val document = createPickedDocument()
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
-            activity.receiveDocumentPickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
-            awaitMainIdle()
+            activity.receivePickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
+            idleMainLooper()
 
             document.length() shouldBe 0L
             ShadowToast.shownToastCount() shouldBe 0
@@ -453,15 +461,16 @@ class URLActivityTest {
 
     @Test
     fun `export write that the document provider refuses deletes the document and shows the creating-file error toast`() {
-        val provider = readOnlyDocumentProvider()
+        val provider = RecordingDocumentsProvider.create(ApplicationProvider.getApplicationContext()).apply { readOnly = true }
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
-            activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(provider.uri))
-            awaitMainIdle()
+            activity.receivePickerResult(RESULT_OK, Intent().setData(provider.uri))
+            idleMainLooper()
 
-            provider.document.exists().shouldBeFalse()
+            provider.file.exists().shouldBeFalse()
+            provider.deleted shouldBe listOf(provider.uri)
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Error creating file"
         }
@@ -474,19 +483,19 @@ class URLActivityTest {
             scenario.onActivity { activity ->
                 activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
             }
-            awaitMainIdle()
+            idleMainLooper()
             ioDispatcher.pause()
             scenario.onActivity { activity ->
-                activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
+                activity.receivePickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
             }
-            awaitMainIdle()
+            idleMainLooper()
             document.length() shouldBe 0L
 
             scenario.recreate()
             ioDispatcher.resume()
-            awaitMainIdle()
+            idleMainLooper()
 
-            document.readBytes().take(PNG_SIGNATURE.size) shouldBe PNG_SIGNATURE
+            document.hasPngSignature().shouldBeTrue()
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Image saved"
         }
@@ -496,12 +505,12 @@ class URLActivityTest {
     fun `export result OK without a destination uri shows the creating-file error toast`() {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
-            awaitMainIdle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
-            awaitMainIdle()
+            idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
@@ -622,13 +631,13 @@ class URLActivityTest {
     fun `urlVisitsRefreshButton click shows the refreshed visit count`() {
         shortURLClient.visitCounts[seededUrl.shortURL] = 1
         withUrlActivity { activity ->
-            awaitMainIdle()
+            idleMainLooper()
             val visits = activity.findViewById<android.widget.TextView>(R.id.url_visits_textview)
             visits.text.toString() shouldBe "1"
             shortURLClient.visitCounts[seededUrl.shortURL] = 7
 
             activity.findViewById<android.view.View>(R.id.url_visits_refresh_button).performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
             visits.text.toString() shouldBe "7"
             val button = activity.findViewById<android.view.View>(R.id.url_visits_refresh_button)
@@ -643,7 +652,7 @@ class URLActivityTest {
         runBlocking { urlRepository.addURL(url) }
 
         withUrlActivity(shortURL = url.shortURL) { activity ->
-            awaitMainIdle()
+            idleMainLooper()
             activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeFalse()
             activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeFalse()
         }
@@ -656,7 +665,7 @@ class URLActivityTest {
         shortURLClient.visitCounts[url.shortURL] = 42
 
         withUrlActivity(shortURL = url.shortURL) { activity ->
-            awaitMainIdle()
+            idleMainLooper()
             activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeTrue()
             activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeTrue()
             activity.findViewById<android.widget.TextView>(R.id.url_visits_textview).text.toString() shouldBe "42"
@@ -754,7 +763,7 @@ class URLActivityTest {
     fun `bnv add-to-fav item toggles favorite from false to true`() {
         withUrlActivity { activity ->
             activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_add_to_fav
-            awaitMainIdle()
+            idleMainLooper()
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL)?.favorite } shouldBe true
         }
@@ -767,7 +776,7 @@ class URLActivityTest {
 
         withUrlActivity(shortURL = favUrl.shortURL) { activity ->
             activity.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_remove_from_fav
-            awaitMainIdle()
+            idleMainLooper()
 
             runBlocking { urlRepository.getURL(favUrl.shortURL)?.favorite } shouldBe false
         }
@@ -781,7 +790,7 @@ class URLActivityTest {
             val dialog = ShadowDialog.getLatestDialog() as? AlertDialog
             dialog shouldNotBe null
             dialog!!.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
             activity.isFinishing.shouldBeTrue()
@@ -796,7 +805,7 @@ class URLActivityTest {
             val dialog = ShadowDialog.getLatestDialog() as? AlertDialog
             dialog shouldNotBe null
             dialog!!.getButton(DialogInterface.BUTTON_NEGATIVE).performClick()
-            awaitMainIdle()
+            idleMainLooper()
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldNotBe null
             activity.isFinishing.shouldBeFalse()
@@ -811,12 +820,12 @@ class URLActivityTest {
             }
             scenario.moveToState(Lifecycle.State.STARTED)
             (ShadowDialog.getLatestDialog() as AlertDialog).getButton(DialogInterface.BUTTON_POSITIVE).performClick()
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
             scenario.onActivity { it.isFinishing.shouldBeFalse() }
 
             scenario.moveToState(Lifecycle.State.RESUMED)
-            awaitMainIdle()
+            idleMainLooper()
 
             scenario.onActivity { it.isFinishing.shouldBeTrue() }
         }
@@ -831,18 +840,18 @@ class URLActivityTest {
                 .putExtra(KEY_SHORTURL, seededUrl.shortURL)
         val controller = Robolectric.buildActivity(URLActivity::class.java, intent).setup()
         try {
-            awaitMainIdle()
+            idleMainLooper()
             val stopped = controller.get()
             stopped.findViewById<BottomNavigationView>(R.id.url_bnv).selectedItemId = R.id.url_bnv_delete
             controller.pause().stop()
             (ShadowDialog.getLatestDialog() as AlertDialog).getButton(DialogInterface.BUTTON_POSITIVE).performClick()
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
             stopped.isFinishing.shouldBeFalse()
             stopped.exitState() shouldBe UrlDetailExit.Deleted
 
             controller.recreate()
-            awaitMainIdle()
+            idleMainLooper()
 
             val recreated = controller.get()
             recreated shouldNotBe stopped
@@ -872,7 +881,7 @@ class URLActivityTest {
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
                 .putExtra(KEY_SHORTURL, shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             block(scenario)
         }
     }
@@ -882,10 +891,6 @@ class URLActivityTest {
         block: (URLActivity) -> Unit,
     ) {
         withUrlScenario(shortURL) { scenario -> scenario.onActivity(block) }
-    }
-
-    private fun awaitMainIdle() {
-        shadowOf(Looper.getMainLooper()).idle()
     }
 
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value

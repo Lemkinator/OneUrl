@@ -28,9 +28,11 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.awaitMainLooperUntil
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
@@ -210,12 +212,7 @@ class URLAdapterTest {
             adapter.submitList(listOf(testUrl("https://short.url/new"), testUrl("https://short.url/old"))) {
                 positionAtCommit = adapter.positionOf("https://short.url/new")
             }
-            repeat(AWAIT_COMMIT_ATTEMPTS) {
-                if (positionAtCommit == null) {
-                    Thread.sleep(AWAIT_COMMIT_STEP_MS)
-                    shadowOf(Looper.getMainLooper()).idle()
-                }
-            }
+            awaitMainLooperUntil { positionAtCommit != null }
             positionAtCommit shouldBe 0
         }
     }
@@ -408,10 +405,5 @@ class URLAdapterTest {
         ) {
             changeCount++
         }
-    }
-
-    private companion object {
-        const val AWAIT_COMMIT_ATTEMPTS = 200
-        const val AWAIT_COMMIT_STEP_MS = 10L
     }
 }

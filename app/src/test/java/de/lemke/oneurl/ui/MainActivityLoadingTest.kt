@@ -20,10 +20,11 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.idleMainLooper
 import de.lemke.commonutils.ui.widget.NoEntryView
-import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeURLRepository
 import de.lemke.oneurl.data.URLRepository
@@ -78,7 +79,7 @@ class MainActivityLoadingTest {
                 .start()
                 .resume()
         try {
-            awaitMainIdle()
+            idleMainLooper()
             val noEntryView = controller.get().findViewById<NoEntryView>(R.id.noEntryView)
             noEntryView.text shouldBe "No results found"
         } finally {

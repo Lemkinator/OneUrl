@@ -43,11 +43,19 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.PausableDispatcher
+import de.lemke.commonutils.RecordingDocumentsProvider
 import de.lemke.commonutils.ShadowFileProvider
+import de.lemke.commonutils.cacheFileOf
+import de.lemke.commonutils.cacheWriteUriPattern
+import de.lemke.commonutils.hasPngSignature
+import de.lemke.commonutils.idleMainLooper
+import de.lemke.commonutils.receivePickerResult
+import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
-import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.di.BitmapExporterModule
@@ -106,14 +114,14 @@ class GenerateQRCodeActivityTest {
     fun `onOptionsItemSelected handles share and starts the chooser with the qr code uri`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.action shouldBe Intent.ACTION_CHOOSER
             val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
             val stream = shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)!!
-            stream.toString() shouldMatch activity.qrCodeContentUriPattern("share", "QRCode.png")
-            activity.cacheFile(stream).length() shouldBeGreaterThan 0L
+            stream.toString() shouldMatch activity.cacheWriteUriPattern("qrCodes", "share", "QRCode.png")
+            activity.cacheFileOf(stream).length() shouldBeGreaterThan 0L
             (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
         }
     }
@@ -121,17 +129,17 @@ class GenerateQRCodeActivityTest {
     @Test
     fun `share that no app can receive shows the share error toast once and returns to Idle`() {
         ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             shadowOf(ApplicationProvider.getApplicationContext<HiltTestApplication>()).checkActivities(true)
             scenario.onActivity { activity ->
                 activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Error: Sharing content is not supported on your device."
 
             scenario.returnFromLaunchedScreen()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
             scenario.onActivity { activity ->
@@ -147,7 +155,7 @@ class GenerateQRCodeActivityTest {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
             shadowActivity.nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
@@ -161,7 +169,7 @@ class GenerateQRCodeActivityTest {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
             shadowActivity.nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
@@ -172,12 +180,12 @@ class GenerateQRCodeActivityTest {
     @Test
     fun `save-as-image picker launch that the latch drops stays pending and opens the picker on the next resume`() {
         ActivityScenario.launch(GenerateQRCodeActivity::class.java).use { scenario ->
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
                 ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].onSave()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val shadowActivity = shadowOf(activity)
                 shadowActivity.nextStartedActivityForResult.intent.component
@@ -188,7 +196,7 @@ class GenerateQRCodeActivityTest {
             }
 
             scenario.returnFromLaunchedScreen()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
@@ -209,7 +217,7 @@ class GenerateQRCodeActivityTest {
     fun `export result OK with a qr code saves the bitmap`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
             // A fake content:// uri has no registered provider under Robolectric, so openOutputStream
@@ -221,7 +229,7 @@ class GenerateQRCodeActivityTest {
                 RESULT_OK,
                 Intent().apply { data = Uri.fromFile(exportFile) },
             )
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
             BitmapFactory.decodeFile(exportFile.path) shouldNotBe null
@@ -232,12 +240,12 @@ class GenerateQRCodeActivityTest {
     fun `export result OK without a destination uri shows the creating-file error toast`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
@@ -248,12 +256,12 @@ class GenerateQRCodeActivityTest {
     fun `export result other than OK does not save`() {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.getLatestToast() shouldBe null
         }
@@ -264,10 +272,10 @@ class GenerateQRCodeActivityTest {
         val document = createPickedDocument()
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
-            activity.receiveDocumentPickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
-            shadowOf(Looper.getMainLooper()).idle()
+            activity.receivePickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
+            idleMainLooper()
 
             document.length() shouldBe 0L
             ShadowToast.shownToastCount() shouldBe 0
@@ -276,15 +284,16 @@ class GenerateQRCodeActivityTest {
 
     @Test
     fun `export write that the document provider refuses deletes the document and shows the creating-file error toast`() {
-        val provider = readOnlyDocumentProvider()
+        val provider = RecordingDocumentsProvider.create(ApplicationProvider.getApplicationContext()).apply { readOnly = true }
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
-            activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(provider.uri))
-            shadowOf(Looper.getMainLooper()).idle()
+            activity.receivePickerResult(RESULT_OK, Intent().setData(provider.uri))
+            idleMainLooper()
 
-            provider.document.exists().shouldBeFalse()
+            provider.file.exists().shouldBeFalse()
+            provider.deleted shouldBe listOf(provider.uri)
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Error creating file"
         }
@@ -297,19 +306,19 @@ class GenerateQRCodeActivityTest {
             scenario.onActivity { activity ->
                 activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image)).shouldBeTrue()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             ioDispatcher.pause()
             scenario.onActivity { activity ->
-                activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
+                activity.receivePickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             document.length() shouldBe 0L
 
             scenario.recreate()
             ioDispatcher.resume()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
-            document.readBytes().take(PNG_SIGNATURE.size) shouldBe PNG_SIGNATURE
+            document.hasPngSignature().shouldBeTrue()
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Image saved"
         }
@@ -322,7 +331,7 @@ class GenerateQRCodeActivityTest {
             scenario.onActivity { activity ->
                 activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_share)).shouldBeTrue()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.findViewById<View>(R.id.qr_code).isClickable.shouldBeFalse()
                 activity.preparedExportMenuItemsEnabled() shouldBe listOf(false, false)
@@ -334,7 +343,7 @@ class GenerateQRCodeActivityTest {
             }
 
             ioDispatcher.resume()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             scenario.onActivity { activity ->
                 activity.findViewById<View>(R.id.qr_code).isClickable.shouldBeTrue()
@@ -348,12 +357,12 @@ class GenerateQRCodeActivityTest {
     fun `clicking the qr code image copies it to the clipboard`() {
         withActivity { activity ->
             activity.findViewById<View>(R.id.qr_code).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_copied_to_clipboard)
             val clip = activity.getSystemService(ClipboardManager::class.java).primaryClip!!
             val uri = clip.getItemAt(0).uri
-            uri.toString() shouldMatch activity.qrCodeContentUriPattern("clipboard", "QRCode.png")
+            uri.toString() shouldMatch activity.cacheWriteUriPattern("qrCodes", "clipboard", "QRCode.png")
             clip.description.label shouldBe "QR Code"
             clip.description.getMimeType(0) shouldBe "image/png"
             activity.contentResolver.getType(uri) shouldBe "image/png"
@@ -369,7 +378,7 @@ class GenerateQRCodeActivityTest {
 
             qrCode.performClick()
             qrCode.performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             clipChanges shouldBe 1
             ShadowToast.shownToastCount() shouldBe 1
@@ -436,7 +445,7 @@ class GenerateQRCodeActivityTest {
             urlField.setSelection(3)
 
             activity.findViewById<CompoundButton>(R.id.icon_checkbox).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             urlField.selectionStart shouldBe 3
             urlField.selectionEnd shouldBe 3
@@ -502,7 +511,7 @@ class GenerateQRCodeActivityTest {
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
             // AlertController dispatches the button's DialogInterface.OnClickListener through a
             // Handler message rather than calling it inline from performClick().
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             userSettings.qrRecentBackgroundColors.first() shouldBe 0x336699
         }
@@ -517,7 +526,7 @@ class GenerateQRCodeActivityTest {
 
             dialog.setNewColor(0x998877)
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             userSettings.qrRecentForegroundColors.first() shouldBe 0x998877
         }
@@ -576,7 +585,7 @@ class GenerateQRCodeActivityTest {
 
             dialog.setNewColor(0xFF336699.toInt())
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             backgroundButton.backgroundTintList?.defaultColor shouldBe 0xFF336699.toInt()
             backgroundButton.currentTextColor shouldBe Color.WHITE
@@ -592,7 +601,7 @@ class GenerateQRCodeActivityTest {
 
             dialog.setNewColor(0xFFEEEEEE.toInt())
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             foregroundButton.backgroundTintList?.defaultColor shouldBe 0xFFEEEEEE.toInt()
             foregroundButton.currentTextColor shouldBe Color.BLACK

@@ -27,7 +27,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.awaitMainLooperUntil
+import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.model.Dagd
@@ -72,14 +74,14 @@ class ProviderActivityTest {
                 .putExtra(ProviderActivity.KEY_SELECT_PROVIDER, true)
         ActivityScenario.launch<ProviderActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
                 activity
                     .findViewById<RecyclerView>(R.id.provider_list)
                     .findViewHolderForAdapterPosition(0)!!
                     .itemView
                     .performClick()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.isFinishing.shouldBeTrue() }
         }
     }
@@ -88,13 +90,13 @@ class ProviderActivityTest {
     fun `clicking a provider item outside select mode shows the provider info bottom sheet`() {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
                 activity
                     .findViewById<RecyclerView>(R.id.provider_list)
                     .findViewHolderForAdapterPosition(0)!!
                     .itemView
                     .performClick()
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
                 activity.supportFragmentManager.findFragmentByTag(ProviderInfoBottomSheet::class.java.simpleName) shouldNotBe null
             }
         }
@@ -103,7 +105,7 @@ class ProviderActivityTest {
     @Test
     fun `double tap on a provider item outside select mode shows one provider info bottom sheet`() {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val itemView =
                     activity
@@ -113,7 +115,7 @@ class ProviderActivityTest {
                 itemView.performClick()
                 itemView.performClick()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.supportFragmentManager.fragments.count { it is ProviderInfoBottomSheet } shouldBe 1
             }
@@ -123,7 +125,7 @@ class ProviderActivityTest {
     @Test
     fun `a provider info request shows one bottom sheet that a recreation does not show again`() {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity
                     .findViewById<RecyclerView>(R.id.provider_list)
@@ -131,9 +133,9 @@ class ProviderActivityTest {
                     .itemView
                     .performClick()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.recreate()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.supportFragmentManager.fragments.count { it is ProviderInfoBottomSheet } shouldBe 1
                 ViewModelProvider(activity)[ProviderViewModel::class.java].navigation.value shouldBe ProviderNavigation.None
@@ -146,7 +148,7 @@ class ProviderActivityTest {
     fun `the list scrolls to the selected provider and reports the scroll done`() {
         userSettings.selectedShortURLProvider = Spoome.Emoji
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val layoutManager = activity.findViewById<RecyclerView>(R.id.provider_list).layoutManager as LinearLayoutManager
                 layoutManager.findFirstVisibleItemPosition() shouldBeGreaterThan 0
@@ -171,7 +173,7 @@ class ProviderActivityTest {
     fun `submitting the list without is gd removes its row and changes no other row`() {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
                 val recycler = activity.findViewById<RecyclerView>(R.id.provider_list)
                 val adapter = recycler.adapter as ProviderActivity.ProviderAdapter
                 val events = mutableListOf<String>()
@@ -197,7 +199,7 @@ class ProviderActivityTest {
 
                 adapter.submitList(updated)
                 awaitCurrentList(adapter, updated)
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
 
                 events shouldBe listOf("removed 1 1")
                 recycler
@@ -215,17 +217,13 @@ class ProviderActivityTest {
         adapter: ProviderActivity.ProviderAdapter,
         expected: List<ShortURLProvider>,
     ) {
-        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
-        while (adapter.currentList != expected && System.nanoTime() < deadline) {
-            Thread.sleep(10)
-            shadowOf(Looper.getMainLooper()).idle()
-        }
+        awaitMainLooperUntil { adapter.currentList == expected }
     }
 
     private fun assertFirstRowInfoDescription(expected: String) {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
                 val row =
                     activity
                         .findViewById<RecyclerView>(R.id.provider_list)

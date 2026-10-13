@@ -40,14 +40,22 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.PausableDispatcher
+import de.lemke.commonutils.RecordingDocumentsProvider
 import de.lemke.commonutils.ShadowFileProvider
 import de.lemke.commonutils.bypassOobe
+import de.lemke.commonutils.cacheFileOf
+import de.lemke.commonutils.cacheWriteUriPattern
 import de.lemke.commonutils.data.SaveLocation
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.hasPngSignature
+import de.lemke.commonutils.idleMainLooper
+import de.lemke.commonutils.receivePickerResult
+import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
-import de.lemke.oneurl.HiltTestRule
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.di.BitmapExporterModule
@@ -121,7 +129,7 @@ class QRBottomSheetTest {
                 createQRBottomSheet(shortURL).show(activity.supportFragmentManager, "qr")
                 activity.supportFragmentManager.executePendingTransactions()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             block(scenario)
         }
     }
@@ -179,7 +187,7 @@ class QRBottomSheetTest {
                 val sheet = createQRBottomSheet("https://short.url/quick-share")
                 sheet.show(activity.supportFragmentManager, "qr-quick-share")
                 activity.supportFragmentManager.executePendingTransactions()
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
 
                 sheet
                     .requireView()
@@ -197,14 +205,14 @@ class QRBottomSheetTest {
                 val sheet = QRBottomSheet()
                 sheet.show(activity.supportFragmentManager, "qr-empty")
                 activity.supportFragmentManager.executePendingTransactions()
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
 
                 val view = sheet.requireView()
                 view.findViewById<TextView>(R.id.title).text.toString() shouldBe ""
                 val buttons = listOf(R.id.saveButton, R.id.shareButton, R.id.quickShareButton).map { view.findViewById<View>(it) }
                 buttons.map { it.isEnabled } shouldBe listOf(false, false, false)
                 view.findViewById<View>(R.id.saveButton).performClick()
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
                 shadowOf(activity).nextStartedActivityForResult shouldBe null
             }
         }
@@ -214,14 +222,14 @@ class QRBottomSheetTest {
     fun `share button click starts the share chooser`() {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.shareButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.action shouldBe Intent.ACTION_CHOOSER
             val shareIntent = startedIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
             val stream = shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)!!
-            stream.toString() shouldMatch activity.qrCodeContentUriPattern("share", "QRCode.png")
-            activity.cacheFile(stream).length() shouldBeGreaterThan 0L
+            stream.toString() shouldMatch activity.cacheWriteUriPattern("qrCodes", "share", "QRCode.png")
+            activity.cacheFileOf(stream).length() shouldBeGreaterThan 0L
             (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
         }
     }
@@ -237,12 +245,12 @@ class QRBottomSheetTest {
                     .findViewById<View>(R.id.shareButton)
                     .performClick()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Error: Sharing content is not supported on your device."
 
             scenario.returnFromLaunchedScreen()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
             scenario.onActivity { activity ->
@@ -260,7 +268,7 @@ class QRBottomSheetTest {
                 activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
                 ViewModelProvider(activity.qrBottomSheet())[QRBottomSheetViewModel::class.java].onSave()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val shadowActivity = shadowOf(activity)
                 shadowActivity.nextStartedActivityForResult.intent.component
@@ -270,7 +278,7 @@ class QRBottomSheetTest {
             }
 
             scenario.returnFromLaunchedScreen()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             scenario.onActivity { activity ->
                 shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
@@ -287,7 +295,7 @@ class QRBottomSheetTest {
 
             shareButton.performClick()
             shareButton.performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
             shadowActivity.nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
@@ -302,14 +310,14 @@ class QRBottomSheetTest {
 
             quickShareButton.performClick()
             quickShareButton.performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
             val sendIntent = shadowActivity.nextStartedActivity
             sendIntent.action shouldBe Intent.ACTION_SEND
             sendIntent.type shouldBe "image/png"
             sendIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java).toString() shouldMatch
-                activity.qrCodeContentUriPattern("share", "QRCode.png")
+                activity.cacheWriteUriPattern("qrCodes", "share", "QRCode.png")
             shadowActivity.nextStartedActivity shouldBe null
         }
     }
@@ -318,7 +326,7 @@ class QRBottomSheetTest {
     fun `save button click launches the export picker`() {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val startedForResult = shadowOf(activity).peekNextStartedActivityForResult()
             startedForResult shouldNotBe null
@@ -333,7 +341,7 @@ class QRBottomSheetTest {
 
             saveButton.performClick()
             saveButton.performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles()?.size shouldBe 1
             ShadowToast.shownToastCount() shouldBe 1
@@ -345,7 +353,7 @@ class QRBottomSheetTest {
     fun `export result OK saves the bound qr bitmap`() {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
             // A real, writable file:// uri - a fake content:// uri has no registered provider under
@@ -357,7 +365,7 @@ class QRBottomSheetTest {
                 RESULT_OK,
                 Intent().apply { data = Uri.fromFile(exportFile) },
             )
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
             exportFile.length() shouldBeGreaterThan 0L
@@ -368,12 +376,12 @@ class QRBottomSheetTest {
     fun `export result cancelled does not save and shows no toast`() {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.getLatestToast() shouldBe null
         }
@@ -384,10 +392,10 @@ class QRBottomSheetTest {
         val document = createPickedDocument()
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
-            activity.receiveDocumentPickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
-            shadowOf(Looper.getMainLooper()).idle()
+            activity.receivePickerResult(RESULT_FIRST_USER, Intent().setData(Uri.fromFile(document)))
+            idleMainLooper()
 
             document.length() shouldBe 0L
             ShadowToast.shownToastCount() shouldBe 0
@@ -396,15 +404,16 @@ class QRBottomSheetTest {
 
     @Test
     fun `export write that the document provider refuses deletes the document and shows the creating-file error toast`() {
-        val provider = readOnlyDocumentProvider()
+        val provider = RecordingDocumentsProvider.create(ApplicationProvider.getApplicationContext()).apply { readOnly = true }
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
-            activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(provider.uri))
-            shadowOf(Looper.getMainLooper()).idle()
+            activity.receivePickerResult(RESULT_OK, Intent().setData(provider.uri))
+            idleMainLooper()
 
-            provider.document.exists().shouldBeFalse()
+            provider.file.exists().shouldBeFalse()
+            provider.deleted shouldBe listOf(provider.uri)
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Error creating file"
         }
@@ -419,26 +428,26 @@ class QRBottomSheetTest {
             scenario.onActivity { activity ->
                 createQRBottomSheet("https://short.url/qr").show(activity.supportFragmentManager, "qr")
                 activity.supportFragmentManager.executePendingTransactions()
-                shadowOf(Looper.getMainLooper()).idle()
+                idleMainLooper()
                 activity
                     .qrBottomSheet()
                     .requireView()
                     .findViewById<View>(R.id.saveButton)
                     .performClick()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             ioDispatcher.pause()
             scenario.onActivity { activity ->
-                activity.receiveDocumentPickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
+                activity.receivePickerResult(RESULT_OK, Intent().setData(Uri.fromFile(document)))
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             document.length() shouldBe 0L
 
             scenario.recreate()
             ioDispatcher.resume()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
-            document.readBytes().take(PNG_SIGNATURE.size) shouldBe PNG_SIGNATURE
+            document.hasPngSignature().shouldBeTrue()
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe "Image saved"
             scenario.onActivity { activity -> activity.qrBottomSheet().isAdded.shouldBeTrue() }
@@ -453,11 +462,11 @@ class QRBottomSheetTest {
             ioDispatcher.pause()
 
             view.findViewById<View>(R.id.shareButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             buttons.map { it.isEnabled } shouldBe listOf(false, false, false)
             ioDispatcher.resume()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             buttons.map { it.isEnabled } shouldBe listOf(true, true, true)
             shadowOf(activity).nextStartedActivity.action shouldBe Intent.ACTION_CHOOSER
         }
@@ -467,12 +476,12 @@ class QRBottomSheetTest {
     fun `export result OK without a destination uri shows the creating-file error toast`() {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             val shadowActivity = shadowOf(activity)
             val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)

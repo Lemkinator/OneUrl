@@ -21,7 +21,7 @@ import android.view.View
 import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.oneurl.R
 import io.kotest.matchers.shouldBe
 import org.junit.Before

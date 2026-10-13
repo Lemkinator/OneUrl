@@ -23,6 +23,7 @@ import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.oneurl.data.database.AppDatabase
 import de.lemke.oneurl.data.database.URLDao
 import de.lemke.oneurl.di.PersistenceModule
@@ -43,7 +44,7 @@ object TestPersistenceModule {
             .setQueryExecutor(Executor { it.run() })
             .setTransactionExecutor(Executor { it.run() })
             .build()
-            .also { HiltTestRule.closeAfterTest(AutoCloseable(it::close)) }
+            .let { database -> HiltTestRule.closeAfterTest(database, AppDatabase::close) }
 
     @Provides
     fun provideURLDao(database: AppDatabase): URLDao = database.urlDao()
