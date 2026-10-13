@@ -45,4 +45,10 @@ class DatabaseClosingTest {
         database.openHelper.writableDatabase
         database.isOpen shouldBe true
     }
+
+    @Test
+    fun `builds no database to close when the test never injects`() {
+        val registrationsBefore = HiltTestRule.registrations
+        HiltTestRule.closeAfterTest(AutoCloseable { HiltTestRule.registrations shouldBe registrationsBefore + 1 })
+    }
 }

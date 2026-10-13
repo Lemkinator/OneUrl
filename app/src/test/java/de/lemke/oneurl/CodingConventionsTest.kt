@@ -31,7 +31,7 @@ class CodingConventionsTest : ShouldSpec() {
             codeScope.assertLaunchLatchConventions(extraShowReceivers = setOf("AddFab"))
         }
         should("hilt tests declare exactly one outermost HiltTestRule and no raw HiltAndroidRule") {
-            Konsist.scopeFromTest().assertHiltTestRuleConventions()
+            Konsist.scopeFromTest().assertHiltTestRuleConventions(requireCloseRuleOnPlainHiltApplicationTests = true)
         }
         should("class bodies follow the declaration order") {
             codeScope.assertClassBodyOrder()
