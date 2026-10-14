@@ -20,6 +20,7 @@ import androidx.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dagger.hilt.android.testing.HiltAndroidTest
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.ShortURLClient
 import de.lemke.oneurl.data.UserSettings

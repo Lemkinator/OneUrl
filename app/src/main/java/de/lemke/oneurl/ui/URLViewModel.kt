@@ -22,7 +22,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import de.lemke.oneurl.data.QRCodeExporter
+import de.lemke.commonutils.ui.utils.BitmapExport
+import de.lemke.commonutils.ui.utils.BitmapExportStateHolder
+import de.lemke.commonutils.ui.utils.BitmapExporter
+import de.lemke.commonutils.ui.utils.DocumentPick
+import de.lemke.commonutils.ui.utils.ShareTarget
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.DeleteURLUseCase
 import de.lemke.oneurl.domain.GetQRCodeUseCase
@@ -47,12 +51,12 @@ class URLViewModel @Inject constructor(
     private val getVisitCount: GetVisitCountUseCase,
     private val getQRCode: GetQRCodeUseCase,
     private val userSettings: UserSettings,
-    exporter: QRCodeExporter,
+    exporter: BitmapExporter,
 ) : ViewModel() {
-    private val qrCodeExport = QRCodeExportStateHolder(viewModelScope, exporter)
+    private val qrCodeExport = BitmapExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<UrlDetailUiState>
         field = MutableStateFlow(UrlDetailUiState())
-    val export: StateFlow<QRCodeExport> = qrCodeExport.state
+    val export: StateFlow<BitmapExport> = qrCodeExport.state
 
     val exit: StateFlow<UrlDetailExit>
         field = MutableStateFlow<UrlDetailExit>(UrlDetailExit.None)
@@ -126,7 +130,7 @@ class URLViewModel @Inject constructor(
         qrCodeExport.share(qrCode, ShareTarget.SHARE_SHEET)
     }
 
-    fun onExportHandled(result: QRCodeExport.Result) {
+    fun onExportHandled(result: BitmapExport.Result) {
         qrCodeExport.onHandled(result)
     }
 

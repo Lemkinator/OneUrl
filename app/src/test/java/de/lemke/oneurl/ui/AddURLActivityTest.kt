@@ -29,7 +29,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeNetworkMonitor
 import de.lemke.oneurl.data.FakePageTitleFetcher
@@ -180,7 +181,7 @@ class AddURLActivityTest {
             aliasField.setText("user-typed-alias")
 
             userSettings.selectedShortURLProvider = Murl
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             aliasField.text.toString() shouldBe "user-typed-alias"
         }
@@ -280,7 +281,7 @@ class AddURLActivityTest {
             urlField.setText("https://example.com")
             aliasField.setText("")
             submit()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             activity.findViewById<View>(R.id.addUrlFooterProgress).isVisible.shouldBeTrue()
             activity.findViewById<View>(R.id.addUrlFooterButton).isVisible.shouldBeFalse()
@@ -290,7 +291,7 @@ class AddURLActivityTest {
             activity.findViewById<View>(R.id.providerSelection).isEnabled.shouldBeFalse()
 
             pending.complete(Unit)
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             activity.findViewById<View>(R.id.addUrlFooterButton).isVisible.shouldBeTrue()
             activity.findViewById<View>(R.id.addUrlFooterProgress).isVisible.shouldBeFalse()
@@ -307,14 +308,14 @@ class AddURLActivityTest {
             urlField.setText("https://example.com")
             aliasField.setText("")
             submit()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val dialog = ShadowDialog.getLatestDialog() as? AlertDialog
             dialog shouldNotBe null
             dialog!!.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
             // AlertController dispatches the button's DialogInterface.OnClickListener through a
             // Handler message rather than calling it inline from performClick().
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.getStringExtra(KEY_SHORTURL) shouldBe existing.shortURL
@@ -329,7 +330,7 @@ class AddURLActivityTest {
             urlField.setText("https://example.com")
             aliasField.setText("")
             submit()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val dialog = ShadowDialog.getLatestDialog() as? AlertDialog
             dialog shouldNotBe null
@@ -348,9 +349,9 @@ class AddURLActivityTest {
             urlField.setText("https://example.com")
             aliasField.setText("")
             submit()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             submit()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowDialog.getShownDialogs().size shouldBe 1
             ShadowDialog.getLatestDialog().isShowing.shouldBeTrue()
@@ -365,7 +366,7 @@ class AddURLActivityTest {
             urlField.setText("https://example.com")
             aliasField.setText("")
             submit()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             val clipboard = activity.getSystemService(ClipboardManager::class.java)
             clipboard.primaryClip
@@ -384,7 +385,7 @@ class AddURLActivityTest {
             urlField.setText("https://example.com")
             aliasField.setText("")
             submit()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe "URL added"
             activity.isFinishing.shouldBeTrue()
@@ -404,15 +405,15 @@ class AddURLActivityTest {
             }
             scenario.moveToState(Lifecycle.State.STARTED)
             pending.complete(Unit)
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             ShadowDialog.getShownDialogs().size shouldBe 0
 
             scenario.moveToState(Lifecycle.State.RESUMED)
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             ShadowDialog.getShownDialogs().size shouldBe 1
 
             scenario.recreate()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             ShadowDialog.getShownDialogs().size shouldBe 1
         }
     }

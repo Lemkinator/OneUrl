@@ -22,7 +22,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -30,10 +29,14 @@ import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.ui.utils.BitmapExport
+import de.lemke.commonutils.ui.utils.SingleLaunchResultLauncher
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.isSamsungQuickShareAvailable
+import de.lemke.commonutils.ui.utils.launchBitmapExport
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
+import de.lemke.commonutils.ui.utils.toDocumentPick
 import de.lemke.oneurl.databinding.ViewQrBottomsheetBinding
 import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 
@@ -41,7 +44,7 @@ import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 class QRBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewQrBottomsheetBinding
     private val viewModel: QRBottomSheetViewModel by viewModels()
-    private val exportQRCodeResultLauncher: ActivityResultLauncher<Intent> =
+    private val exportQRCodeResultLauncher: SingleLaunchResultLauncher<Intent> =
         registerForSingleLaunchResult(StartActivityForResult()) { viewModel.onDocumentPicked(it.toDocumentPick()) }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
@@ -79,14 +82,14 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
     }
 
     private fun renderExportControls() {
-        val enabled = viewModel.state.value.qrCode != null && viewModel.export.value != QRCodeExport.Running
+        val enabled = viewModel.state.value.qrCode != null && viewModel.export.value != BitmapExport.Running
         binding.quickShareButton.isEnabled = enabled
         binding.shareButton.isEnabled = enabled
         binding.saveButton.isEnabled = enabled
     }
 
-    private fun onExport(export: QRCodeExport) {
-        if (export is QRCodeExport.Result && requireContext().launchQRCodeExport(export, exportQRCodeResultLauncher)) {
+    private fun onExport(export: BitmapExport) {
+        if (export is BitmapExport.Result && requireContext().launchBitmapExport(export, exportQRCodeResultLauncher)) {
             viewModel.onExportHandled(export)
         }
     }

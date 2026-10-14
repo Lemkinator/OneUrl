@@ -22,7 +22,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.model.Dagd
 import javax.inject.Inject

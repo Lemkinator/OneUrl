@@ -27,9 +27,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import dagger.hilt.android.testing.HiltAndroidTest
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.isSettled
+import de.lemke.commonutils.waitUntil
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
@@ -85,7 +87,7 @@ class MainActivityTest {
                 scenario.waitUntil { viewModelUrlCount() == LONG_LIST_SIZE + 1 }
                 scenario.moveToState(Lifecycle.State.RESUMED)
                 scenario.waitUntil { urlList().adapter?.itemCount == LONG_LIST_SIZE + 1 }
-                scenario.waitUntil { urlList().isSettled() }
+                scenario.waitUntil { urlList().isSettled }
                 scenario.onActivity { activity ->
                     (activity.urlList().layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() shouldBe 0
                     (activity.urlList().findViewHolderForAdapterPosition(0) as URLAdapter.ViewHolder?)
@@ -98,23 +100,9 @@ class MainActivityTest {
 
     private fun MainActivity.urlList(): RecyclerView = findViewById(R.id.urlList)
 
-    private fun RecyclerView.isSettled(): Boolean =
-        layoutManager?.isSmoothScrolling == false && scrollState == RecyclerView.SCROLL_STATE_IDLE
-
     private fun MainActivity.viewModelUrlCount(): Int =
         ViewModelProvider(this)[MainViewModel::class.java]
             .state.value.urls.size
-
-    private fun ActivityScenario<MainActivity>.waitUntil(condition: MainActivity.() -> Boolean) {
-        repeat(WAIT_ATTEMPTS) {
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-            var met = false
-            onActivity { met = it.condition() }
-            if (met) return
-            Thread.sleep(WAIT_STEP_MS)
-        }
-        error("condition not met within ${WAIT_ATTEMPTS * WAIT_STEP_MS} ms")
-    }
 
     private fun testUrl(shortURL: String) =
         URL(
@@ -129,7 +117,5 @@ class MainActivityTest {
 
     private companion object {
         const val LONG_LIST_SIZE = 30
-        const val WAIT_ATTEMPTS = 500
-        const val WAIT_STEP_MS = 10L
     }
 }

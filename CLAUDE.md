@@ -69,7 +69,7 @@ Clean Architecture with three layers:
 **`data/`** — `URLRepository` is an interface; `DefaultURLRepository` implements it over Room. `UserSettings` wraps SharedPreferences,
 bound as `SettingsRepository`. All DB entities live in `data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
 Framework and network work sits behind interfaces with a `Default*` implementation: `QRCodeRenderer` (OneUI `QrEncoder`),
-`QRCodeExporter`, `VolleyQueue` (the app's one Volley `RequestQueue`), and the three network clients built on it: `UrlhausClient`,
+`VolleyQueue` (the app's one Volley `RequestQueue`), and the three network clients built on it: `UrlhausClient`,
 `PageTitleFetcher` and `ShortURLClient` (create a short URL, read its visit count). `NetworkMonitor` reads validated connectivity.
 
 **`domain/`** — Use cases (`*UseCase.kt`), each doing one thing, injected by Hilt. `GenerateURLUseCase` is the core flow: checks internet →
@@ -80,9 +80,9 @@ through `CheckURLSafetyUseCase` over `UrlhausClient`, and creates through `Short
 URLViewModel, GenerateQRCodeViewModel, QRBottomSheetViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
 than calling use cases directly.
 
-**QR code export** — `GenerateQRCodeViewModel`, `URLViewModel` and `QRBottomSheetViewModel` each compose a `QRCodeExportStateHolder`
-(`ui/QRCodeExport.kt`), which runs save, copy, share and the document-picker write through the `data/QRCodeExporter` source and
-exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` is the one screen-side reaction to a result.
+**QR code export** — `GenerateQRCodeViewModel`, `URLViewModel` and `QRBottomSheetViewModel` each compose a common-utils
+`BitmapExportStateHolder`, which runs save, copy, share and the document-picker write through the common-utils `BitmapExporter` and
+exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` is the one screen-side reaction to a result.
 `GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss.
 
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
@@ -90,10 +90,11 @@ exposes them as `export: StateFlow<QRCodeExport>`. `Context.launchQRCodeExport` 
 `enabled`.
 
 **DI** — `di/` holds the `SingletonComponent` Hilt modules: `PersistenceModule` (Room DB, `URLDao`), `SettingsModule.kt`
-(`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (`@DefaultDispatcher`, `@IoDispatcher`, `@ApplicationScope`),
+(`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (includes the common-utils `CommonUtilsCoroutinesModule`: `@DefaultDispatcher`, `@IoDispatcher`, `@MainDispatcher`, `@ApplicationScope`),
 `ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (binds `VolleyQueue`,
 `NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`) and
-`QRCodeExporterModule` (binds `DefaultQRCodeExporter`; screen tests uninstall it to bind an exporter on a pausable IO dispatcher).
+`BitmapExporterModule` (provides the common-utils `DefaultBitmapExporter`; screen tests uninstall it to bind an exporter on a pausable
+IO dispatcher).
 
 **Test doubles** — `testFixtures` holds the `@TestInstallIn` modules that every Hilt test, local or instrumented, loads:
 `TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule` and `TestNetworkModule`. `TestNetworkModule` binds the singleton
@@ -120,15 +121,19 @@ Three tools run as part of `./gradlew build`:
   `./gradlew spotlessApply`.
 - **Detekt** — static analysis; config at `config/detekt/detekt.yml`. `autoCorrect = false` — fixes are manual.
 - **Konsist** — architecture rules in `app/src/test/java/de/lemke/oneurl/ArchitectureTest.kt`. Enforces `data/domain/ui` layering
-  (`data` may depend on `domain.model`'s shared value types, never on use cases). Runs as part of `./gradlew test`.
+  (`data` may depend on `domain.model`'s shared value types, never on use cases). ViewModel files expose state only, without
+  `Channel` or `SharedFlow`. Runs as part of `./gradlew test`.
   `CodingConventionsTest.kt` also enforces the common-utils launch latch through `assertLaunchLatchConventions()` from the
   common-utils testFixtures: it bans raw activity launches and result registration by name, and a `show`/`showNow` call whose
   receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or `AddFab`. Launch through `singleLaunchActivity`,
   `transformToActivity` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
   `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunch`); show dialogs with `showOnce(tag)`.
-  It also requires every `@HiltAndroidTest` to declare exactly one `@get:Rule(order = 0) val hiltRule = HiltTestRule(this)`
-  (testFixtures), ordered before every other rule, and no raw `HiltAndroidRule`. `HiltTestRule` runs `HiltAndroidRule`, exposes `inject()`, and closes
-  each in-memory `AppDatabase` the test built.
+  The Konsist rules come from the common-utils testFixtures: `ArchitectureTest.kt` calls `assertArchitecture`, and
+  `CodingConventionsTest.kt` also calls `assertClassBodyOrder`, `assertNoCommonUtilsTypeExtensions` and
+  `assertHiltTestRuleConventions`. The last requires every `@HiltAndroidTest` to declare exactly one
+  `@get:Rule(order = 0) val hiltRule = HiltTestRule(this)` (common-utils testFixtures), ordered before every other rule,
+  and no raw `HiltAndroidRule`. `HiltTestRule` runs `HiltAndroidRule`, exposes `inject()`, and closes every resource
+  registered with `closeAfterTest`, such as each in-memory `AppDatabase` the test built.
 
 **Pre-commit hook** — blocks commits with formatting violations. Opt in once per clone:
 

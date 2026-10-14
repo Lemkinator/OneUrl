@@ -25,7 +25,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.idleMainLooper
+import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Shareaholic
@@ -150,7 +152,7 @@ class ProviderInfoBottomSheetTest {
                 activity.showProviderInfoBottomSheet(Dagd).shouldBeTrue()
                 activity.showProviderInfoBottomSheet(Tinyurl).shouldBeFalse()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.providerInfoBottomSheet().requireArguments().getString(ProviderInfoBottomSheet.KEY_PROVIDER) shouldBe Dagd.name
             }
@@ -164,7 +166,7 @@ class ProviderInfoBottomSheetTest {
                 activity.showProviderInfoBottomSheet(Dagd)
                 activity.supportFragmentManager.executePendingTransactions()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val fragment = activity.supportFragmentManager.findFragmentByTag(ProviderInfoBottomSheet::class.java.simpleName)
                 fragment.shouldNotBeNull()
@@ -180,7 +182,7 @@ class ProviderInfoBottomSheetTest {
                 showProviderInfoBottomSheet(activity.supportFragmentManager, VgdIsgd.Vgd)
                 activity.supportFragmentManager.executePendingTransactions()
             }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val fragment =
                     activity.supportFragmentManager.fragments
@@ -225,7 +227,7 @@ class ProviderInfoBottomSheetTest {
     ) {
         ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.showProviderInfoBottomSheet(provider) }
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             block(scenario)
         }
     }

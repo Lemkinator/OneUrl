@@ -17,37 +17,10 @@
 package de.lemke.oneurl.di
 
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import de.lemke.commonutils.di.DefaultDispatcher
-import de.lemke.commonutils.di.IoDispatcher
-import javax.inject.Qualifier
-import javax.inject.Singleton
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import de.lemke.commonutils.di.CommonUtilsCoroutinesModule
 
-@Retention(AnnotationRetention.RUNTIME)
-@Qualifier
-annotation class ApplicationScope
-
-@Module
+@Module(includes = [CommonUtilsCoroutinesModule::class])
 @InstallIn(SingletonComponent::class)
-object DispatchersModule {
-    @Provides
-    @DefaultDispatcher
-    fun provideDefault(): CoroutineDispatcher = Dispatchers.Default
-
-    @Provides
-    @IoDispatcher
-    fun provideIo(): CoroutineDispatcher = Dispatchers.IO
-
-    @Provides
-    @Singleton
-    @ApplicationScope
-    fun provideApplicationScope(
-        @DefaultDispatcher dispatcher: CoroutineDispatcher,
-    ): CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher)
-}
+interface DispatchersModule

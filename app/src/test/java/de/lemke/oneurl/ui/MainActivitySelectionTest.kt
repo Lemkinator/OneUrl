@@ -29,9 +29,10 @@ import androidx.test.core.app.ActivityScenario
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
@@ -73,9 +74,9 @@ class MainActivitySelectionTest {
     fun `onClickItem without action mode opens URLActivity for that url`() {
         val url = urlRepository.seedUrl("https://da.gd/openme1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.firstItemView().performClick() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val started = shadowOf(activity).nextStartedActivity
                 started.component?.className shouldBe URLActivity::class.java.name
@@ -88,12 +89,12 @@ class MainActivitySelectionTest {
     fun `double tap on a row opens one URLActivity`() {
         urlRepository.seedUrl("https://da.gd/opentwice1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.firstItemView().performClick()
                 activity.firstItemView().performClick()
             }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val shadowActivity = shadowOf(activity)
                 shadowActivity.nextStartedActivity.component?.className shouldBe URLActivity::class.java.name
@@ -106,17 +107,17 @@ class MainActivitySelectionTest {
     fun `onClickItem and onLongClickItem toggle selection while in action mode`() {
         urlRepository.seedUrl("https://da.gd/select1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.findViewById<View>(R.id.addFab).isVisible.shouldBeFalse() }
             scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.firstItemView().performClick() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.firstItemSelected().shouldBeTrue() }
             scenario.onActivity { activity -> activity.firstItemView().performClick() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.firstItemSelected().shouldBeFalse() }
         }
     }
@@ -125,9 +126,9 @@ class MainActivitySelectionTest {
     fun `onClickItemFavorite toggles the favorite flag via the view model`() {
         val url = urlRepository.seedUrl("https://da.gd/fav1", favorite = false)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.firstItemView().findViewById<View>(R.id.listItemFav).performClick() }
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe true
         }
     }
@@ -136,9 +137,9 @@ class MainActivitySelectionTest {
     fun `configureItemSwipeAnimator swipe start adds the item to favorites`() {
         val url = urlRepository.seedUrl("https://da.gd/swipestart1", favorite = false)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.swipeFirstItem(ItemTouchHelper.START) }
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe true
         }
     }
@@ -147,9 +148,9 @@ class MainActivitySelectionTest {
     fun `configureItemSwipeAnimator swipe end removes the item from favorites`() {
         val url = urlRepository.seedUrl("https://da.gd/swipeend1", favorite = true)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.swipeFirstItem(ItemTouchHelper.END) }
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe false
         }
     }
@@ -159,14 +160,14 @@ class MainActivitySelectionTest {
         urlRepository.seedUrl("https://da.gd/selectall1")
         urlRepository.seedUrl("https://da.gd/selectall2")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.selectAllView().performClick() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.itemsSelected() shouldBe listOf(true, true) }
             scenario.onActivity { activity -> activity.selectAllView().performClick() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.itemsSelected() shouldBe listOf(false, false) }
         }
     }
@@ -175,11 +176,11 @@ class MainActivitySelectionTest {
     fun `launchActionMode onEnd while not in search mode leaves the fab shown`() {
         urlRepository.seedUrl("https://da.gd/endaction1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.longClickFirstItem() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).endActionMode() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.findViewById<View>(R.id.addFab).isVisible.shouldBeTrue() }
         }
     }
@@ -188,11 +189,11 @@ class MainActivitySelectionTest {
     fun `launchActionMode onSelectMenuItem delete removes the selected urls`() {
         val url = urlRepository.seedUrl("https://da.gd/delete1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.clickActionModeMenuItem(R.id.menu_item_delete) }
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(url.shortURL) } shouldBe null
         }
     }
@@ -201,11 +202,11 @@ class MainActivitySelectionTest {
     fun `launchActionMode onSelectMenuItem add-to-favorites favorites the selected urls`() {
         val url = urlRepository.seedUrl("https://da.gd/bulkfav1", favorite = false)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.clickActionModeMenuItem(R.id.menu_item_add_to_favorites) }
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe true
         }
     }
@@ -214,11 +215,11 @@ class MainActivitySelectionTest {
     fun `launchActionMode onSelectMenuItem remove-from-favorites unfavorites the selected urls`() {
         val url = urlRepository.seedUrl("https://da.gd/bulkunfav1", favorite = true)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.clickActionModeMenuItem(R.id.menu_item_remove_from_favorites) }
-            awaitMainIdle()
+            idleMainLooper()
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe false
         }
     }
@@ -227,9 +228,9 @@ class MainActivitySelectionTest {
     fun `launchActionMode onSelectMenuItem unmapped item is not handled and action mode stays open`() {
         urlRepository.seedUrl("https://da.gd/unmappedaction1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val menu =
                     activity
@@ -239,7 +240,7 @@ class MainActivitySelectionTest {
                 menu.add(Menu.NONE, UNMAPPED_ACTION_ITEM_ID, Menu.NONE, "unmapped")
                 menu.performIdentifierAction(UNMAPPED_ACTION_ITEM_ID, 0)
             }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).isActionMode.shouldBeTrue()
             }
@@ -250,14 +251,14 @@ class MainActivitySelectionTest {
     fun `block multi-selection outside action mode starts it via onBlockActionMode`() {
         urlRepository.seedUrl("https://da.gd/blockselect1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 val recycler = activity.findViewById<RecyclerView>(R.id.urlList)
                 val listener = checkNotNull(recycler.seslGetOnMultiSelectedListener())
                 listener.onMultiSelectStart(1, 1)
                 listener.onMultiSelectStop(1, 1)
             }
-            awaitMainIdle()
+            idleMainLooper()
             scenario.onActivity { activity ->
                 activity.findViewById<NavDrawerLayout>(R.id.drawerLayout).isActionMode.shouldBeTrue()
             }
@@ -303,9 +304,9 @@ class MainActivitySelectionTest {
 
     private fun MainActivity.selectFirstItemInActionMode() {
         longClickFirstItem()
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
         firstItemView().performClick()
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
     }
 
     private fun MainActivity.clickActionModeMenuItem(

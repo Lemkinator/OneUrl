@@ -21,15 +21,19 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import de.lemke.commonutils.data.FakeSharedPreferences
 import de.lemke.commonutils.data.SaveLocation
+import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapSaveResult
 import de.lemke.commonutils.ui.utils.BitmapShareFile
+import de.lemke.commonutils.ui.utils.DocumentPick
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter
+import de.lemke.commonutils.ui.utils.FakeBitmapExporter.Call
+import de.lemke.commonutils.ui.utils.ShareTarget
 import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.domain.GetQRCodeUseCase
-import de.lemke.oneurl.ui.FakeQRCodeExporter.Call
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -47,7 +51,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         val shortURL = "https://short.url/x"
         lateinit var userSettings: UserSettings
         lateinit var renderer: FakeQRCodeRenderer
-        lateinit var exporter: FakeQRCodeExporter
+        lateinit var exporter: FakeBitmapExporter
 
         fun newViewModel(
             savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf(QRBottomSheet.KEY_SHORT_URL to shortURL)),
@@ -62,7 +66,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         beforeEach {
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
             renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
-            exporter = FakeQRCodeExporter()
+            exporter = FakeBitmapExporter()
         }
 
         should("init takes the short URL from the saved state and loads its QR code") {
@@ -94,25 +98,16 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             viewModel.onQuickShare()
 
             exporter.calls shouldBe emptyList()
-            viewModel.export.value shouldBe QRCodeExport.Idle
+            viewModel.export.value shouldBe BitmapExport.Idle
         }
 
-        should("onSave writes the QR code under the short URL to the image save location") {
+        should("onSave writes the QR code under the short URL to the image save location and holds OpenPicker") {
             val viewModel = newViewModel()
 
             viewModel.onSave()
 
             exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, shortURL))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.DOWNLOADS))
-        }
-
-        should("onSave holds OpenPicker with the short URL as file name when the location needs the picker") {
-            exporter.directoryResult = BitmapSaveResult.NeedsPicker
-            val viewModel = newViewModel()
-
-            viewModel.onSave()
-
-            viewModel.export.value shouldBe QRCodeExport.OpenPicker(shortURL)
+            viewModel.export.value shouldBe BitmapExport.OpenPicker(shortURL)
         }
 
         should("onShare holds the share file of the QR code for the share sheet") {
@@ -123,7 +118,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             viewModel.onShare()
 
             exporter.calls shouldBe listOf(Call.CreateShareFile(qrCode))
-            viewModel.export.value shouldBe QRCodeExport.Share(file, ShareTarget.SHARE_SHEET)
+            viewModel.export.value shouldBe BitmapExport.Share(file, ShareTarget.SHARE_SHEET)
         }
 
         should("onQuickShare holds the share file of the QR code for Quick Share") {
@@ -134,7 +129,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             viewModel.onQuickShare()
 
             exporter.calls shouldBe listOf(Call.CreateShareFile(qrCode))
-            viewModel.export.value shouldBe QRCodeExport.Share(file, ShareTarget.QUICK_SHARE)
+            viewModel.export.value shouldBe BitmapExport.Share(file, ShareTarget.QUICK_SHARE)
         }
 
         should("onDocumentPicked writes the QR code into the created document") {
@@ -144,7 +139,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
+            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
         }
 
         should("onDocumentPicked during the QR code load deletes the created document and holds WriteFailed") {
@@ -157,7 +152,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
             exporter.deletedDocuments shouldBe listOf(uri)
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
+            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.WriteFailed)
         }
 
         should("onDocumentPicked without a short URL deletes the created document and holds WriteFailed") {
@@ -168,16 +163,16 @@ class QRBottomSheetViewModelTest : ShouldSpec(
 
             exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
             exporter.deletedDocuments shouldBe listOf(uri)
-            viewModel.export.value shouldBe QRCodeExport.SaveFinished(BitmapSaveResult.WriteFailed)
+            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.WriteFailed)
         }
 
         should("onExportHandled returns the export to Idle") {
             val viewModel = newViewModel()
             viewModel.onShare()
 
-            viewModel.onExportHandled(QRCodeExport.ShareFailed)
+            viewModel.onExportHandled(BitmapExport.ShareFailed)
 
-            viewModel.export.value shouldBe QRCodeExport.Idle
+            viewModel.export.value shouldBe BitmapExport.Idle
         }
     },
 )

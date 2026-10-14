@@ -27,7 +27,8 @@ import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
@@ -91,7 +92,7 @@ class URLActivityScreenshotTest {
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
                 .putExtra(KEY_SHORTURL, seededUrl.shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
             assertQrLoaded(scenario)
             onView(isRoot()).captureRoboImage(fileName)
         }

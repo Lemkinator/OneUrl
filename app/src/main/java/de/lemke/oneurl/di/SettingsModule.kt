@@ -25,6 +25,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import de.lemke.commonutils.data.SettingsRepository
+import de.lemke.commonutils.di.ApplicationScope
 import de.lemke.oneurl.data.UserSettings
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope

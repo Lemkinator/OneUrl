@@ -28,6 +28,7 @@ import android.provider.Settings
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
+import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.GenerateURLError
 import io.kotest.assertions.withClue
@@ -60,7 +61,7 @@ class AddURLErrorDialogsTest {
     ): AlertDialog =
         AlertDialog.Builder(context).apply { configureFor(error) }.create().apply {
             show()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
         }
 
     private class ThrowingStartActivityContext(base: Context) : ContextWrapper(base) {
@@ -69,8 +70,6 @@ class AddURLErrorDialogsTest {
             options: Bundle?,
         ): Unit = throw ActivityNotFoundException("no settings app")
     }
-
-    private fun idleMainLooper() = shadowOf(Looper.getMainLooper()).idle()
 
     private fun AlertDialog.messageText(): String? = findViewById<TextView>(android.R.id.message)?.text?.toString()
 

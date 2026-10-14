@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import android.os.Looper
 import android.os.SystemClock
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -31,12 +30,7 @@ import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
 import kotlinx.coroutines.runBlocking
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.fakes.RoboMenuItem
-
-internal fun awaitMainIdle() {
-    shadowOf(Looper.getMainLooper()).idle()
-}
 
 internal fun menuItem(itemId: Int): MenuItem = RoboMenuItem(itemId)
 

@@ -23,7 +23,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import dagger.hilt.android.testing.HiltAndroidTest
-import de.lemke.oneurl.HiltTestRule
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
