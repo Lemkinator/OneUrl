@@ -172,7 +172,7 @@ class GenerateQRCodeActivityTest {
             idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
-            shadowActivity.nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
+            shadowActivity.nextStartedActivityForResult.intent.shouldBePngPicker()
             shadowActivity.nextStartedActivityForResult shouldBe null
         }
     }
@@ -199,7 +199,7 @@ class GenerateQRCodeActivityTest {
             idleMainLooper()
 
             scenario.onActivity { activity ->
-                shadowOf(activity).nextStartedActivityForResult.intent.action shouldBe Intent.ACTION_CREATE_DOCUMENT
+                shadowOf(activity).nextStartedActivityForResult.intent.shouldBePngPicker()
                 ViewModelProvider(activity)[GenerateQRCodeViewModel::class.java].export.value shouldBe BitmapExport.Idle
             }
             ShadowToast.shownToastCount() shouldBe 0
@@ -620,4 +620,10 @@ class GenerateQRCodeActivityTest {
         onPrepareOptionsMenu(menu)
         return listOf(R.id.menu_item_qr_save_as_image, R.id.menu_item_qr_share).map { menu.findItem(it).isEnabled }
     }
+}
+
+private fun Intent.shouldBePngPicker() {
+    action shouldBe Intent.ACTION_CREATE_DOCUMENT
+    type shouldBe "image/png"
+    getStringExtra(Intent.EXTRA_TITLE)!! shouldMatch Regex("example_com_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.png")
 }
