@@ -218,17 +218,11 @@ class GenerateQRCodeActivityTest {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
             // A fake content:// uri has no registered provider under Robolectric, so openOutputStream
             // throws and the write never happens; a real file:// uri is actually writable.
             val exportFile = File(activity.cacheDir, "export.png").also { it.createNewFile() }
 
-            shadowActivity.receiveResult(
-                startedForResult.intent,
-                RESULT_OK,
-                Intent().apply { data = Uri.fromFile(exportFile) },
-            )
+            activity.receivePickerResult(RESULT_OK, Intent().apply { data = Uri.fromFile(exportFile) })
             idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
@@ -241,10 +235,8 @@ class GenerateQRCodeActivityTest {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
-            shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+            activity.receivePickerResult(RESULT_OK, Intent())
             idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
@@ -257,10 +249,8 @@ class GenerateQRCodeActivityTest {
         withActivity { activity ->
             activity.onOptionsItemSelected(menuItem(R.id.menu_item_qr_save_as_image))
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
-            shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
+            activity.receivePickerResult(RESULT_CANCELED, null)
             idleMainLooper()
 
             ShadowToast.getLatestToast() shouldBe null

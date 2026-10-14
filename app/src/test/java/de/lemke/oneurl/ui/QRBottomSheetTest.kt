@@ -354,17 +354,11 @@ class QRBottomSheetTest {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
             // A real, writable file:// uri - a fake content:// uri has no registered provider under
             // Robolectric, so openOutputStream throws and the write never actually happens.
             val exportFile = File(activity.cacheDir, "export.png").also { it.createNewFile() }
 
-            shadowActivity.receiveResult(
-                startedForResult.intent,
-                RESULT_OK,
-                Intent().apply { data = Uri.fromFile(exportFile) },
-            )
+            activity.receivePickerResult(RESULT_OK, Intent().apply { data = Uri.fromFile(exportFile) })
             idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
@@ -377,10 +371,8 @@ class QRBottomSheetTest {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
-            shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
+            activity.receivePickerResult(RESULT_CANCELED, null)
             idleMainLooper()
 
             ShadowToast.getLatestToast() shouldBe null
@@ -477,10 +469,8 @@ class QRBottomSheetTest {
         withQrBottomSheet { activity, sheet ->
             sheet.requireView().findViewById<View>(R.id.saveButton).performClick()
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
-            shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+            activity.receivePickerResult(RESULT_OK, Intent())
             idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1

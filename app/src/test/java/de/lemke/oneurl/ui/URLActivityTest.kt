@@ -412,16 +412,10 @@ class URLActivityTest {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
             val exportFile = File(activity.cacheDir, "export.png").also { it.createNewFile() }
 
-            shadowActivity.receiveResult(
-                startedForResult.intent,
-                RESULT_OK,
-                Intent().apply { data = Uri.fromFile(exportFile) },
-            )
+            activity.receivePickerResult(RESULT_OK, Intent().apply { data = Uri.fromFile(exportFile) })
             idleMainLooper()
 
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_image_saved)
@@ -434,10 +428,8 @@ class URLActivityTest {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
-            shadowActivity.receiveResult(startedForResult.intent, RESULT_CANCELED, null)
+            activity.receivePickerResult(RESULT_CANCELED, null)
             idleMainLooper()
 
             ShadowToast.getLatestToast() shouldBe null
@@ -506,10 +498,8 @@ class URLActivityTest {
         withUrlActivity { activity ->
             activity.findViewById<android.view.View>(R.id.url_qr_save_button).performClick()
             idleMainLooper()
-            val shadowActivity = shadowOf(activity)
-            val startedForResult = shadowActivity.peekNextStartedActivityForResult()!!
 
-            shadowActivity.receiveResult(startedForResult.intent, RESULT_OK, Intent())
+            activity.receivePickerResult(RESULT_OK, Intent())
             idleMainLooper()
 
             ShadowToast.shownToastCount() shouldBe 1
