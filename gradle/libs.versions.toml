@@ -8,7 +8,7 @@ targetSdk = "37"
 #noinspection UnusedVersionCatalogEntry
 jvmTarget = "21"
 
-aboutlibraries = "15.2.0"
+aboutlibraries = "15.3.0"
 agp = "9.4.1"
 androidx-collection = "1.7.0"
 apache-httpcore = "4.4.16"
