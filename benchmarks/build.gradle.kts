@@ -18,6 +18,7 @@ plugins {
     alias(libs.plugins.android.test)
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.spotless)
 }
 
 android {
@@ -51,6 +52,16 @@ baselineProfile {
     managedDevices.clear()
     managedDevices += "pixel9Api35"
     useConnectedDevices = false
+}
+
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        licenseHeaderFile(rootProject.file("config/spotless/apache-2.0.kt"))
+        ktlint(libs.versions.ktlint.get())
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 detekt {
