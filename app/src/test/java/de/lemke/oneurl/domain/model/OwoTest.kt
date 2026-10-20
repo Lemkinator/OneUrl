@@ -176,4 +176,14 @@ class OwoTest {
         Owovc.Owo.sanitizeLongURL("example.com") shouldBe "https://example.com"
         Owovc.Owo.sanitizeLongURL("https://example.com ") shouldBe "https://example.com"
     }
+
+    @Test
+    fun `create request with a JSON null id maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Owovc.Owo.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"id":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }

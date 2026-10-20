@@ -66,6 +66,46 @@ class VgdTest {
     }
 
     @Test
+    fun `errorcode 1 with a JSON null errormessage maps to InvalidURL`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"1","errormessage":null}"""))
+
+        error shouldBe GenerateURLError.InvalidURL
+    }
+
+    @Test
+    fun `unrecognized errorcode with a JSON null errormessage maps to Custom with the code and no text`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"9","errormessage":null}"""))
+
+        error shouldBe GenerateURLError.Custom(9, "")
+    }
+
+    @Test
+    fun `unrecognized non-numeric errorcode without an errormessage maps to Custom with the HTTP status and no text`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"x"}"""))
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "")
+    }
+
+    @Test
+    fun `unrecognized errorcode with an errormessage maps to Custom with the message and the code`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"9","errormessage":"odd"}"""))
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "odd (9)")
+    }
+
+    @Test
     fun `error ServiceOffline on NoConnectionError`() {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
@@ -97,5 +137,15 @@ class VgdTest {
     @Test
     fun `getAnalyticsURL builds a stats url on the v_gd domain`() {
         VgdIsgd.Vgd.getAnalyticsURL("abc") shouldBe "https://v.gd/stats.php?url=abc"
+    }
+
+    @Test
+    fun `create request with a JSON null shorturl maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"shorturl":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
     }
 }

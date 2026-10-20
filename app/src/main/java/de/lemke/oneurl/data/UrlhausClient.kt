@@ -23,6 +23,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.domain.model.UrlhausResult
+import de.lemke.oneurl.domain.model.optStringOrNull
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -137,6 +138,3 @@ class DefaultUrlhausClient @Inject constructor(
             else -> context.getString(R.string.error_urlhaus_default)
         }
 }
-
-// Android's optString returns the text "null" for a JSON null value.
-private fun JSONObject.optStringOrNull(name: String): String? = if (isNull(name)) null else optString(name).ifBlank { null }

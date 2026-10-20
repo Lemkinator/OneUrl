@@ -152,8 +152,8 @@ sealed class Spoome : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
         Log.d(tag, "response: $response")
-        if (response.has("short_url")) {
-            val shortURL = response.getString("short_url").trim()
+        val shortURL = response.optStringOrNull("short_url")?.trim()
+        if (shortURL != null) {
             Log.d(tag, "shortURL: $shortURL")
             successCallback(shortURL)
         } else {
@@ -191,11 +191,11 @@ sealed class Spoome : ShortURLProvider {
             }
 
             response?.has("AliasError") == true -> {
-                handleAliasError(response.optString("AliasError"), statusCode, errorCallback)
+                handleAliasError(response.optStringOrNull("AliasError").orEmpty(), statusCode, errorCallback)
             }
 
             response?.has("EmojiError") == true -> {
-                handleEmojiError(response.optString("EmojiError"), statusCode, errorCallback)
+                handleEmojiError(response.optStringOrNull("EmojiError").orEmpty(), statusCode, errorCallback)
             }
 
             statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {

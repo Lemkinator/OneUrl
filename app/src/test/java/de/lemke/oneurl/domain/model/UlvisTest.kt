@@ -135,13 +135,13 @@ class UlvisTest {
     }
 
     @Test
-    fun `create request falls back to Unknown when the error code is unrecognized and no message is present`() {
+    fun `create request falls back to Custom with the code and no text when the error code is unrecognized and no message is present`() {
         var error: GenerateURLError? = null
         val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverResponse(JSONObject().put("error", JSONObject().put("code", 5)))
 
-        error shouldBe GenerateURLError.Unknown(200)
+        error shouldBe GenerateURLError.Custom(5, "")
     }
 
     @Test
@@ -152,6 +152,26 @@ class UlvisTest {
         req.deliverResponse(JSONObject())
 
         error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `create request falls back to Unknown when the data url and status are JSON null`() {
+        var error: GenerateURLError? = null
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"data":{"url":null,"status":null}}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `create request falls back to Custom with the code and no text when the error msg is JSON null`() {
+        var error: GenerateURLError? = null
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"error":{"code":5,"msg":null}}"""))
+
+        error shouldBe GenerateURLError.Custom(5, "")
     }
 
     @Test

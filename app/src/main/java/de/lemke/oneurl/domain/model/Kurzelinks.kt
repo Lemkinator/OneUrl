@@ -95,7 +95,7 @@ sealed class Kurzelinks : ShortURLProvider {
             { response ->
                 Log.d(tag, "response: $response")
                 try {
-                    val shortURL = JSONObject(response).optJSONObject("shorturl")?.optString("url")
+                    val shortURL = JSONObject(response).optJSONObject("shorturl")?.optStringOrNull("url")
                     if (shortURL == null) {
                         Log.e(tag, "error: shortURL not found")
                         errorCallback(GenerateURLError.Unknown())

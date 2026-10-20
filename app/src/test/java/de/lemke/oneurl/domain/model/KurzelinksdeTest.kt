@@ -67,6 +67,16 @@ class KurzelinksdeTest {
     }
 
     @Test
+    fun `create request fails with Unknown when the shorturl url is JSON null`() {
+        var error: GenerateURLError? = null
+        val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("""{"status":"ok","shorturl":{"url":null}}""")
+
+        error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
     fun `reply that is not JSON maps to ServiceTemporarilyUnavailable`() {
         var error: GenerateURLError? = null
         val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })

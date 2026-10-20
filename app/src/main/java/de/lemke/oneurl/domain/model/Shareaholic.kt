@@ -88,8 +88,8 @@ object Shareaholic : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
         Log.d(tag, "response: $response")
-        if (response.has("data")) {
-            val shortURL = response.getString("data").trim()
+        val shortURL = response.optStringOrNull("data")?.trim()
+        if (shortURL != null) {
             Log.d(tag, "shortURL: $shortURL")
             successCallback(shortURL)
             return
@@ -144,7 +144,7 @@ object Shareaholic : ShortURLProvider {
     ) {
         val firstError = response.optJSONArray("errors")?.optJSONObject(0)
         Log.e(tag, "first error: $firstError")
-        when (firstError?.optString("code")) {
+        when (firstError?.optStringOrNull("code")) {
             "100" -> {
                 errorCallback(GenerateURLError.Unknown(SHAREAHOLIC_ERROR_MISSING_API_KEY))
             }
@@ -176,8 +176,9 @@ object Shareaholic : ShortURLProvider {
 
             // 429	rate_limit_exceeded
             else -> {
-                if (firstError?.has("detail") == true) {
-                    errorCallback(GenerateURLError.Custom(statusCode, firstError.optString("detail")))
+                val detail = firstError?.optStringOrNull("detail")
+                if (detail != null) {
+                    errorCallback(GenerateURLError.Custom(statusCode, detail))
                 } else {
                     errorCallback(GenerateURLError.Unknown(statusCode))
                 }

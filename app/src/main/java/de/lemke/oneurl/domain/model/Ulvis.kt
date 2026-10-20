@@ -185,26 +185,26 @@ object Ulvis : ShortURLProvider {
             Log.d(tag, "response: $response")
             val error = response.optJSONObject("error")
             val data = response.optJSONObject("data")
-            val shortURL = data?.optString("url")?.trim()
+            val shortURL = data?.optStringOrNull("url")?.trim()
             Log.d(tag, "shortURL: $shortURL")
-            val status = data?.optString("status")
+            val status = data?.optStringOrNull("status")
             when {
                 status == "custom-taken" -> {
                     errorCallback(GenerateURLError.AliasAlreadyExists)
                 }
 
-                !shortURL.isNullOrBlank() -> {
+                shortURL != null -> {
                     successCallback(shortURL)
                 }
 
                 error != null && error.has("code") -> {
                     val code = error.getInt("code")
+                    val message = error.optStringOrNull("msg")
                     when {
                         code == 0 -> errorCallback(GenerateURLError.DomainNotAllowed)
                         code == 1 -> errorCallback(GenerateURLError.InvalidURL)
                         code == 2 -> errorCallback(GenerateURLError.InvalidAlias)
-                        error.has("msg") -> errorCallback(GenerateURLError.Custom(code, error.optString("msg")))
-                        else -> errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
+                        else -> errorCallback(GenerateURLError.Custom(code, message.orEmpty()))
                     }
                 }
 

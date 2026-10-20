@@ -20,6 +20,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.commonutils.data.withRecentColor
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExportStateHolder
 import de.lemke.commonutils.ui.utils.BitmapExporter
@@ -92,24 +93,14 @@ class GenerateQRCodeViewModel @Inject constructor(
     }
 
     fun setForegroundColor(color: Int) {
-        val recentColors =
-            state.value.recentForegroundColors
-                .toMutableList()
-                .also { it.add(0, color) }
-                .distinct()
-                .take(6)
+        val recentColors = state.value.recentForegroundColors.withRecentColor(color)
         state.update { it.copy(style = it.style.copy(foregroundColor = color), recentForegroundColors = recentColors) }
         userSettings.qrRecentForegroundColors = recentColors
         regenerate()
     }
 
     fun setBackgroundColor(color: Int) {
-        val recentColors =
-            state.value.recentBackgroundColors
-                .toMutableList()
-                .also { it.add(0, color) }
-                .distinct()
-                .take(6)
+        val recentColors = state.value.recentBackgroundColors.withRecentColor(color)
         state.update { it.copy(style = it.style.copy(backgroundColor = color), recentBackgroundColors = recentColors) }
         userSettings.qrRecentBackgroundColors = recentColors
         regenerate()

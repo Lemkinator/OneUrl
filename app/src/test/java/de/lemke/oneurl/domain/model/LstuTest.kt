@@ -251,4 +251,14 @@ class LstuTest {
         retryPolicy.currentRetryCount shouldBe 0
         (retryPolicy as DefaultRetryPolicy).backoffMultiplier shouldBe DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
     }
+
+    @Test
+    fun `create request with JSON null short and msg maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse("""{"success":true,"short":null,"msg":null}""")
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }

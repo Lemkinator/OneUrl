@@ -115,18 +115,20 @@ object Oneptco : ShortURLProvider {
     ) {
         try {
             Log.d(tag, "response: $response")
+            val message = response.optStringOrNull("message")
+            val short = response.optStringOrNull("short")
             when {
-                !response.has("message") -> {
+                message == null -> {
                     Log.e(tag, "error: no message")
                     errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
 
-                response.getString("message") != "Added!" -> {
-                    Log.e(tag, "error: ${response.getString("message")}")
-                    errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, response.getString("message")))
+                message != "Added!" -> {
+                    Log.e(tag, "error: $message")
+                    errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, message))
                 }
 
-                !response.has("short") -> {
+                short == null -> {
                     Log.e(tag, "error: no short")
                     errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
@@ -137,7 +139,7 @@ object Oneptco : ShortURLProvider {
                 }
 
                 else -> {
-                    val shortURL = "$baseURL/${response.getString("short").trim()}"
+                    val shortURL = "$baseURL/${short.trim()}"
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
                 }

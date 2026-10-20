@@ -162,6 +162,16 @@ class TlyDefaultTest {
     }
 
     @Test
+    fun `error Unknown with status code when the message is JSON null`() {
+        var error: GenerateURLError? = null
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(422, """{"message":null}""".toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(422)
+    }
+
+    @Test
     fun `error InvalidURL when message mentions the long url field is required`() {
         var error: GenerateURLError? = null
         val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
@@ -234,5 +244,15 @@ class TlyDefaultTest {
 
         title shouldBe realContext.getString(commonutilsR.string.commonutils_info)
         info shouldBe realContext.getString(R.string.tly_info)
+    }
+
+    @Test
+    fun `create request with a JSON null short_url maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"short_url":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
     }
 }

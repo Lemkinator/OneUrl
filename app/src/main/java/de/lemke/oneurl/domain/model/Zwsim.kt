@@ -67,6 +67,31 @@ object Zwsim : ShortURLProvider {
             context.getString(R.string.zwsim_zws),
         )
 
+    private fun handleResponse(
+        tag: String,
+        response: JSONObject,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ) {
+        Log.d(tag, "response: $response")
+        val short = response.optStringOrNull("short")
+        val url = response.optStringOrNull("url")
+        when {
+            short != null -> {
+                successCallback("https://zws.im/$short")
+            }
+
+            url != null -> {
+                successCallback(url)
+            }
+
+            else -> {
+                Log.e(tag, "error, response does not contain short url")
+                errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
+            }
+        }
+    }
+
     @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         queue: VolleyQueue,
@@ -81,23 +106,7 @@ object Zwsim : ShortURLProvider {
             Request.Method.POST,
             apiURL,
             JSONObject(mapOf("url" to longURL)),
-            { response ->
-                Log.d(tag, "response: $response")
-                when {
-                    response.has("short") -> {
-                        successCallback("https://zws.im/${response.getString("short")}")
-                    }
-
-                    response.has("url") -> {
-                        successCallback(response.getString("url"))
-                    }
-
-                    else -> {
-                        Log.e(tag, "error, response does not contain short url")
-                        errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
-                    }
-                }
-            },
+            { response -> handleResponse(tag, response, successCallback, errorCallback) },
             { error ->
                 // Broad catch is intentional: this runs in a Volley callback on the main thread; an
                 // escaping exception here would crash the whole app.

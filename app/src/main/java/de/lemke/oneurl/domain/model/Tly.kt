@@ -125,8 +125,8 @@ sealed class Tly : ShortURLProvider {
             ),
             { response ->
                 Log.d(tag, "response: $response")
-                if (response.has("short_url")) {
-                    val shortURL = response.getString("short_url").trim()
+                val shortURL = response.optStringOrNull("short_url")?.trim()
+                if (shortURL != null) {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
                 } else {
@@ -158,7 +158,7 @@ sealed class Tly : ShortURLProvider {
             val networkResponse = error.networkResponse
             val statusCode = networkResponse?.statusCode
             val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            val message = data?.takeIf { it.isNotBlank() }?.let { runCatching { JSONObject(it).optString("message") }.getOrNull() }
+            val message = data?.takeIf { it.isNotBlank() }?.let { runCatching { JSONObject(it).optStringOrNull("message") }.getOrNull() }
             Log.e(tag, "$statusCode: message: ${error.message} data: $data")
             Log.e(tag, "response message: $message")
             when {
