@@ -281,7 +281,7 @@ class QRBottomSheetTest {
             idleMainLooper()
 
             scenario.onActivity { activity ->
-                shadowOf(activity).nextStartedActivityForResult.intent.shouldBePngPicker()
+                shadowOf(activity).nextStartedActivityForResult.intent.shouldBePngPicker("short_url_qr")
                 activity.qrBottomSheet().exportState() shouldBe BitmapExport.Idle
             }
             ShadowToast.shownToastCount() shouldBe 0
@@ -330,7 +330,7 @@ class QRBottomSheetTest {
 
             val startedForResult = shadowOf(activity).peekNextStartedActivityForResult()
             startedForResult shouldNotBe null
-            startedForResult.intent.shouldBePngPicker()
+            startedForResult.intent.shouldBePngPicker("short_url_qr")
         }
     }
 
@@ -477,10 +477,4 @@ class QRBottomSheetTest {
             ShadowToast.getTextOfLatestToast() shouldBe activity.getString(commonutilsR.string.commonutils_error_creating_file)
         }
     }
-}
-
-private fun Intent.shouldBePngPicker() {
-    action shouldBe Intent.ACTION_CREATE_DOCUMENT
-    type shouldBe "image/png"
-    getStringExtra(Intent.EXTRA_TITLE)!! shouldMatch Regex("short_url_qr_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.png")
 }

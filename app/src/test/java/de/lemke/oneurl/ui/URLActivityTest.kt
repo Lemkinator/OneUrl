@@ -333,7 +333,7 @@ class URLActivityTest {
             idleMainLooper()
 
             val shadowActivity = shadowOf(activity)
-            shadowActivity.nextStartedActivityForResult.intent.shouldBePngPicker()
+            shadowActivity.nextStartedActivityForResult.intent.shouldBePngPicker("da_gd_seeded1")
             shadowActivity.nextStartedActivityForResult shouldBe null
         }
     }
@@ -358,7 +358,7 @@ class URLActivityTest {
             idleMainLooper()
 
             scenario.onActivity { activity ->
-                shadowOf(activity).nextStartedActivityForResult.intent.shouldBePngPicker()
+                shadowOf(activity).nextStartedActivityForResult.intent.shouldBePngPicker("da_gd_seeded1")
                 activity.exportState() shouldBe BitmapExport.Idle
             }
             ShadowToast.shownToastCount() shouldBe 0
@@ -403,7 +403,7 @@ class URLActivityTest {
 
             val startedForResult = shadowOf(activity).peekNextStartedActivityForResult()
             startedForResult shouldNotBe null
-            startedForResult.intent.shouldBePngPicker()
+            startedForResult.intent.shouldBePngPicker("da_gd_seeded1")
         }
     }
 
@@ -886,10 +886,4 @@ class URLActivityTest {
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
 
     private fun URLActivity.exportState(): BitmapExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
-}
-
-private fun Intent.shouldBePngPicker() {
-    action shouldBe Intent.ACTION_CREATE_DOCUMENT
-    type shouldBe "image/png"
-    getStringExtra(Intent.EXTRA_TITLE)!! shouldMatch Regex("da_gd_seeded1_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.png")
 }
