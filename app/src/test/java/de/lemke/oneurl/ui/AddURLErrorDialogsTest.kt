@@ -291,6 +291,14 @@ class AddURLErrorDialogsTest {
     }
 
     @Test
+    fun `configureFor Custom with an empty message keeps the code in the title and shows the fallback text`() {
+        val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 5, customMessage = ""))
+
+        dialog.titleText() shouldBe "Error (code 5)"
+        dialog.messageText() shouldBe withProviderHint(UNKNOWN_MESSAGE)
+    }
+
+    @Test
     fun `configureFor Unknown without a status code shows the generic unknown error`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Unknown())
 

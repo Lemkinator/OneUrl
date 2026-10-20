@@ -76,13 +76,33 @@ class VgdTest {
     }
 
     @Test
-    fun `unrecognized errorcode with a JSON null errormessage maps to Custom with only the code`() {
+    fun `unrecognized errorcode with a JSON null errormessage maps to Custom with the code and no text`() {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverResponse(JSONObject("""{"errorcode":"9","errormessage":null}"""))
 
-        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, " (9)")
+        error shouldBe GenerateURLError.Custom(9, "")
+    }
+
+    @Test
+    fun `unrecognized non-numeric errorcode without an errormessage maps to Custom with the HTTP status and no text`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"x"}"""))
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "")
+    }
+
+    @Test
+    fun `unrecognized errorcode with an errormessage maps to Custom with the message and the code`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"9","errormessage":"odd"}"""))
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "odd (9)")
     }
 
     @Test
