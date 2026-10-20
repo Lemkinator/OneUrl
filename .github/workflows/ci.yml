@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: detekt-report
-          path: app/build/reports/detekt/
+          path: '**/build/reports/detekt/'
 
   lint:
     runs-on: ubuntu-26.04
