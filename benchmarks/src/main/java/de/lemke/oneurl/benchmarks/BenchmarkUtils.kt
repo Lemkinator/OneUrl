@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.lemke.oneurl.benchmarks
 
 import androidx.benchmark.macro.MacrobenchmarkScope
@@ -23,15 +24,14 @@ import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 
 const val PACKAGE_NAME = "de.lemke.oneurl"
-private const val GESTURE_MARGIN_DIVISOR = 5
 const val TIMEOUT_MS = 5_000L
+private const val GESTURE_MARGIN_DIVISOR = 5
 
 // Must match de.lemke.commonutils.ui.utils.EXTRA_SKIP_ONBOARDING — cannot import from test module.
 // Pinned by app/src/test/.../BenchmarkOnboardingKeyTest.kt.
 const val EXTRA_SKIP_ONBOARDING = "commonUtilsSkipOnboarding"
 
-fun MacrobenchmarkScope.startActivityAndSkipOnboarding() =
-    startActivityAndWait { it.putExtra(EXTRA_SKIP_ONBOARDING, true) }
+fun MacrobenchmarkScope.startActivityAndSkipOnboarding() = startActivityAndWait { it.putExtra(EXTRA_SKIP_ONBOARDING, true) }
 
 fun UiDevice.flingElementDownUp(element: UiObject2) {
     element.setGestureMargin(displayWidth / GESTURE_MARGIN_DIVISOR)
@@ -40,7 +40,10 @@ fun UiDevice.flingElementDownUp(element: UiObject2) {
     element.fling(Direction.UP)
 }
 
-fun UiDevice.waitAndFindObject(selector: BySelector, timeout: Long): UiObject2 =
+fun UiDevice.waitAndFindObject(
+    selector: BySelector,
+    timeout: Long,
+): UiObject2 =
     checkNotNull(wait(Until.findObject(selector), timeout)) {
         "Element not found on screen in ${timeout}ms (selector=$selector)"
     }
