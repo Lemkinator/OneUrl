@@ -125,8 +125,8 @@ object L4f : ShortURLProvider {
         try {
             Log.d(tag, "response: $response")
             val error = response.optBoolean("error")
-            val message = response.optString("message")
-            val shortURL = response.optJSONObject("data")?.optString("shorturl")
+            val message = response.optStringOrNull("message").orEmpty()
+            val shortURL = response.optJSONObject("data")?.optStringOrNull("shorturl")
             Log.d(tag, "error: $error message: $message shortURL: $shortURL")
             when {
                 !error && shortURL != null && (alias.isBlank() || shortURL == "$baseURL/$alias") -> {

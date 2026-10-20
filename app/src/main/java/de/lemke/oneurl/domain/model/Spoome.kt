@@ -191,11 +191,11 @@ sealed class Spoome : ShortURLProvider {
             }
 
             response?.has("AliasError") == true -> {
-                handleAliasError(response.optString("AliasError"), statusCode, errorCallback)
+                handleAliasError(response.optStringOrNull("AliasError").orEmpty(), statusCode, errorCallback)
             }
 
             response?.has("EmojiError") == true -> {
-                handleEmojiError(response.optString("EmojiError"), statusCode, errorCallback)
+                handleEmojiError(response.optStringOrNull("EmojiError").orEmpty(), statusCode, errorCallback)
             }
 
             statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {

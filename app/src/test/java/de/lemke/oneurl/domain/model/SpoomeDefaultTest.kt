@@ -137,6 +137,17 @@ class SpoomeDefaultTest {
     }
 
     @Test
+    fun `error body with a JSON null AliasError falls back to Custom with an empty message`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val body = """{"AliasError":null}"""
+
+        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Custom(400, "")
+    }
+
+    @Test
     fun `error body with an invalid AliasError maps to InvalidAlias`() {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })

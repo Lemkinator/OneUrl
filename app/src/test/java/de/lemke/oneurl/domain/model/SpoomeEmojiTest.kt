@@ -64,6 +64,17 @@ class SpoomeEmojiTest {
     }
 
     @Test
+    fun `error body with a JSON null EmojiError falls back to Custom with an empty message`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { fail("unexpected success") }, { error = it })
+        val body = """{"EmojiError":null}"""
+
+        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Custom(400, "")
+    }
+
+    @Test
     fun `error body with an invalid EmojiError maps to InvalidAlias`() {
         var error: GenerateURLError? = null
         val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { fail("unexpected success") }, { error = it })

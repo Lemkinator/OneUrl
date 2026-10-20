@@ -207,6 +207,17 @@ class TnyimTest {
     }
 
     @Test
+    fun `getURLClickCount resolves to null when the clicks field is JSON null`() {
+        var clicks: Int? = -1
+        val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
+
+        Tnyim.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject("""{"link":{"clicks":null}}"""))
+
+        clicks shouldBe null
+    }
+
+    @Test
     fun `getURLClickCount resolves to null when the link field is missing`() {
         var clicks: Int? = -1
         val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())

@@ -79,7 +79,7 @@ sealed class VgdIsgd : ShortURLProvider {
         Log.d(tag, "response: $response")
         if (response.has("errorcode")) {
             Log.e(tag, "errorcode: ${response.getString("errorcode")}")
-            Log.e(tag, "errormessage: ${response.optString("errormessage")}")
+            Log.e(tag, "errormessage: ${response.optStringOrNull("errormessage").orEmpty()}")
             /*
             Error code 1 - there was a problem with the original long URL provided.
             Please specify a URL to shorten.                                            //should not happen, checked before
@@ -95,7 +95,7 @@ sealed class VgdIsgd : ShortURLProvider {
              */
             when (response.getString("errorcode")) {
                 "1" -> {
-                    if (response.optString("errormessage").contains("blacklist", ignoreCase = true)) {
+                    if (response.optStringOrNull("errormessage").orEmpty().contains("blacklist", ignoreCase = true)) {
                         errorCallback(GenerateURLError.BlacklistedURL())
                     } else {
                         errorCallback(GenerateURLError.InvalidURL)
@@ -118,7 +118,7 @@ sealed class VgdIsgd : ShortURLProvider {
                     errorCallback(
                         GenerateURLError.Custom(
                             HttpStatusCode.OK,
-                            response.optString("errormessage") + " (${response.getString("errorcode")})",
+                            response.optStringOrNull("errormessage").orEmpty() + " (${response.getString("errorcode")})",
                         ),
                     )
                 }

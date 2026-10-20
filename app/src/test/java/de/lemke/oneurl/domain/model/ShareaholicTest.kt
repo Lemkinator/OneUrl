@@ -213,6 +213,28 @@ class ShareaholicTest {
     }
 
     @Test
+    fun `create request with a JSON null detail maps to Unknown with the status code`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+        val body = """{"errors":[{"code":"999","detail":null}]}"""
+
+        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Unknown(400)
+    }
+
+    @Test
+    fun `create request with a JSON null code and a detail maps to Custom`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+        val body = """{"errors":[{"code":null,"detail":"something broke"}]}"""
+
+        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Custom(400, "something broke")
+    }
+
+    @Test
     fun `create request with an empty errors array maps to Unknown with the status code`() {
         var error: GenerateURLError? = null
         val req = Shareaholic.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })

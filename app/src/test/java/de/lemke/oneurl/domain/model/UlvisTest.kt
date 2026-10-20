@@ -155,6 +155,26 @@ class UlvisTest {
     }
 
     @Test
+    fun `create request falls back to Unknown when the data url and status are JSON null`() {
+        var error: GenerateURLError? = null
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"data":{"url":null,"status":null}}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `create request falls back to Unknown when the error msg is JSON null`() {
+        var error: GenerateURLError? = null
+        val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"error":{"code":5,"msg":null}}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
     fun `create request falls back to Unknown when the error object has no code`() {
         var error: GenerateURLError? = null
         val req = Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })

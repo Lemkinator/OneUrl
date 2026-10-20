@@ -173,7 +173,7 @@ object Tnyim : ShortURLProvider {
                     // escaping exception here would crash the whole app.
                     try {
                         Log.d(tag, "response: $response")
-                        val visitCount = response.optJSONObject("link")?.optString("clicks")?.toIntOrNull()
+                        val visitCount = response.optJSONObject("link")?.optStringOrNull("clicks")?.toIntOrNull()
                         Log.d(tag, "visitCount: $visitCount")
                         callback(visitCount)
                     } catch (e: Exception) {

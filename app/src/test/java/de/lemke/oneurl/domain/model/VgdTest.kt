@@ -66,6 +66,26 @@ class VgdTest {
     }
 
     @Test
+    fun `errorcode 1 with a JSON null errormessage maps to InvalidURL`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"1","errormessage":null}"""))
+
+        error shouldBe GenerateURLError.InvalidURL
+    }
+
+    @Test
+    fun `unrecognized errorcode with a JSON null errormessage maps to Custom with only the code`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"errorcode":"9","errormessage":null}"""))
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, " (9)")
+    }
+
+    @Test
     fun `error ServiceOffline on NoConnectionError`() {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })

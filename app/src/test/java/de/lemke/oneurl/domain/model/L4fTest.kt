@@ -108,6 +108,16 @@ class L4fTest {
     }
 
     @Test
+    fun `response with JSON null message and shorturl falls back to Custom with an empty message`() {
+        var error: GenerateURLError? = null
+        val req = L4f.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"error":false,"message":null,"data":{"shorturl":null}}"""))
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "")
+    }
+
+    @Test
     fun `network error offline maps to ServiceOffline`() {
         var error: GenerateURLError? = null
         val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
