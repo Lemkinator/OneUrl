@@ -204,8 +204,7 @@ object Ulvis : ShortURLProvider {
                         code == 0 -> errorCallback(GenerateURLError.DomainNotAllowed)
                         code == 1 -> errorCallback(GenerateURLError.InvalidURL)
                         code == 2 -> errorCallback(GenerateURLError.InvalidAlias)
-                        message != null -> errorCallback(GenerateURLError.Custom(code, message))
-                        else -> errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
+                        else -> errorCallback(GenerateURLError.Custom(code, message.orEmpty()))
                     }
                 }
 
