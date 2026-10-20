@@ -17,6 +17,7 @@
 plugins {
     alias(libs.plugins.android.test)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -50,4 +51,21 @@ baselineProfile {
     managedDevices.clear()
     managedDevices += "pixel9Api35"
     useConnectedDevices = false
+}
+
+detekt {
+    toolVersion = libs.versions.detekt.get()
+    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+    source.setFrom(layout.projectDirectory.dir("src"))
+    buildUponDefaultConfig = true
+    parallel = true
+    autoCorrect = false
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    jvmTarget = libs.versions.jvmTarget.get()
+    reports {
+        html.required.set(true)
+        sarif.required.set(true)
+    }
 }

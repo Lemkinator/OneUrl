@@ -22,6 +22,7 @@ import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,7 +48,7 @@ class ScrollBenchmark {
             setupBlock = {
                 pressHome()
                 startActivityAndSkipOnboarding()
-                device.swipe(5, device.displayHeight / 2, device.displayWidth / 2, device.displayHeight / 2, 15)
+                device.openDrawer()
                 device.waitAndFindObject(
                     By.res(PACKAGE_NAME, "navigationView").hasDescendant(By.clazz("android.widget.TextView")),
                     TIMEOUT_MS,
@@ -58,3 +59,8 @@ class ScrollBenchmark {
             device.flingElementDownUp(nav)
         }
 }
+
+private const val DRAWER_SWIPE_START_X = 5
+private const val DRAWER_SWIPE_STEPS = 15
+
+private fun UiDevice.openDrawer() = swipe(DRAWER_SWIPE_START_X, displayHeight / 2, displayWidth / 2, displayHeight / 2, DRAWER_SWIPE_STEPS)

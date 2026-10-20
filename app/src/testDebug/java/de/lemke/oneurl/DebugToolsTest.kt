@@ -30,7 +30,7 @@ import org.robolectric.annotation.Config
 @Config(application = Application::class, sdk = [36])
 class DebugToolsTest {
     @Test
-    fun openLeakCanary_startsActivity() {
+    fun opensLeakCanaryActivity() {
         val app = ApplicationProvider.getApplicationContext<Application>()
         if (!AppWatcher.isInstalled) {
             AppWatcher.manualInstall(app)
