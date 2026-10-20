@@ -73,6 +73,17 @@ class ZwsimTest {
     }
 
     @Test
+    fun `create request succeeds when short consists only of invisible characters`() {
+        var result: String? = null
+        val short = "\u200B\u200C"
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverResponse(JSONObject(mapOf("short" to short)))
+
+        result shouldBe "https://zws.im/$short"
+    }
+
+    @Test
     fun `create request succeeds using the url field when short is absent`() {
         var result: String? = null
         val req = Zwsim.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })

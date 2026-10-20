@@ -249,6 +249,7 @@ spotless {
 detekt {
     toolVersion = libs.versions.detekt.get()
     config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+    source.setFrom(layout.projectDirectory.dir("src"))
     buildUponDefaultConfig = true
     parallel = true
     autoCorrect = false
