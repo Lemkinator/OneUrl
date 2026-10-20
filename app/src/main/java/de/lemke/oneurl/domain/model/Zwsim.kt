@@ -83,19 +83,12 @@ object Zwsim : ShortURLProvider {
             JSONObject(mapOf("url" to longURL)),
             { response ->
                 Log.d(tag, "response: $response")
-                when {
-                    response.has("short") -> {
-                        successCallback("https://zws.im/${response.getString("short")}")
-                    }
-
-                    response.has("url") -> {
-                        successCallback(response.getString("url"))
-                    }
-
-                    else -> {
-                        Log.e(tag, "error, response does not contain short url")
-                        errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
-                    }
+                val shortURL = response.optStringOrNull("short")?.let { "https://zws.im/$it" } ?: response.optStringOrNull("url")
+                if (shortURL != null) {
+                    successCallback(shortURL)
+                } else {
+                    Log.e(tag, "error, response does not contain short url")
+                    errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
             },
             { error ->

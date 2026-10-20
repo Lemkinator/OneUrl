@@ -302,4 +302,14 @@ class SpoomeDefaultTest {
 
         clicks shouldBe null
     }
+
+    @Test
+    fun `create request with a JSON null short_url maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"short_url":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }

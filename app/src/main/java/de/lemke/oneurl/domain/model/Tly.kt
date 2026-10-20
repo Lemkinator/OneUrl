@@ -125,8 +125,8 @@ sealed class Tly : ShortURLProvider {
             ),
             { response ->
                 Log.d(tag, "response: $response")
-                if (response.has("short_url")) {
-                    val shortURL = response.getString("short_url").trim()
+                val shortURL = response.optStringOrNull("short_url")?.trim()
+                if (shortURL != null) {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
                 } else {

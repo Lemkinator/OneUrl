@@ -138,4 +138,14 @@ class VgdTest {
     fun `getAnalyticsURL builds a stats url on the v_gd domain`() {
         VgdIsgd.Vgd.getAnalyticsURL("abc") shouldBe "https://v.gd/stats.php?url=abc"
     }
+
+    @Test
+    fun `create request with a JSON null shorturl maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = VgdIsgd.Vgd.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"shorturl":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }

@@ -88,8 +88,8 @@ object Shareaholic : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
         Log.d(tag, "response: $response")
-        if (response.has("data")) {
-            val shortURL = response.getString("data").trim()
+        val shortURL = response.optStringOrNull("data")?.trim()
+        if (shortURL != null) {
             Log.d(tag, "shortURL: $shortURL")
             successCallback(shortURL)
             return

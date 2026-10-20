@@ -133,8 +133,8 @@ sealed class Owovc : ShortURLProvider {
             ),
             { response ->
                 Log.d(tag, "response: $response")
-                if (response.has("id")) {
-                    val shortURL = response.getString("id").trim()
+                val shortURL = response.optStringOrNull("id")?.trim()
+                if (shortURL != null) {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
                 } else {

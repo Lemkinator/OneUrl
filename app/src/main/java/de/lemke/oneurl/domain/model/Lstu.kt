@@ -150,9 +150,10 @@ object Lstu : ShortURLProvider {
                 try {
                     Log.d(tag, "response: $response")
                     val json = JSONObject(response)
+                    val shortURL = json.optStringOrNull("short")
+                    val message = json.optStringOrNull("msg")
                     when {
-                        json.optBoolean("success") && json.has("short") -> {
-                            val shortURL = json.getString("short")
+                        json.optBoolean("success") && shortURL != null -> {
                             Log.d(tag, "shortURL: $shortURL")
                             if (alias.isEmpty() || shortURL.endsWith("/$alias")) {
                                 successCallback(shortURL)
@@ -161,8 +162,8 @@ object Lstu : ShortURLProvider {
                             }
                         }
 
-                        json.has("msg") -> {
-                            errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, json.getString("msg")))
+                        message != null -> {
+                            errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, message))
                         }
 
                         else -> {

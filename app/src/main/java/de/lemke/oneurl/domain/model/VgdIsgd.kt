@@ -128,12 +128,12 @@ sealed class VgdIsgd : ShortURLProvider {
             }
             return
         }
-        if (!response.has("shorturl")) {
+        val shortURL = response.optStringOrNull("shorturl")?.trim()
+        if (shortURL == null) {
             Log.e(tag, "error, response does not contain shorturl, response: $response")
             errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
             return
         }
-        val shortURL = response.getString("shorturl").trim()
         Log.d(tag, "shortURL: $shortURL")
         successCallback(shortURL)
     }

@@ -207,8 +207,8 @@ object Tnyim : ShortURLProvider {
                 try {
                     Log.d(tag, "response: $response")
                     val json = JSONObject(response)
-                    if (json.has("shorturl")) {
-                        val shortURL = json.getString("shorturl").trim()
+                    val shortURL = json.optStringOrNull("shorturl")?.trim()
+                    if (shortURL != null) {
                         Log.d(tag, "shortURL: $shortURL")
                         if (alias.isBlank() || shortURL == "$baseURL/$alias") {
                             successCallback(shortURL)

@@ -255,4 +255,14 @@ class ShareaholicTest {
 
         error shouldBe GenerateURLError.Unknown(400)
     }
+
+    @Test
+    fun `create request with a JSON null data maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Shareaholic.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"data":null}"""))
+
+        error shouldBe GenerateURLError.Unknown()
+    }
 }

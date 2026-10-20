@@ -279,4 +279,14 @@ class TnyimTest {
         retryPolicy.currentRetryCount shouldBe 0
         retryPolicy.backoffMultiplier shouldBe DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
     }
+
+    @Test
+    fun `create request with a JSON null shorturl maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse("""{"shorturl":null}""")
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }

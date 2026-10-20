@@ -261,4 +261,24 @@ class OneptcoTest {
         retryPolicy.currentRetryCount shouldBe 0
         retryPolicy.backoffMultiplier shouldBe DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
     }
+
+    @Test
+    fun `create request with a JSON null short maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"message":"Added!","short":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `create request with a JSON null message maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"message":null,"short":"ajodd"}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }

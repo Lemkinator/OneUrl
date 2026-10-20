@@ -245,4 +245,14 @@ class TlyDefaultTest {
         title shouldBe realContext.getString(commonutilsR.string.commonutils_info)
         info shouldBe realContext.getString(R.string.tly_info)
     }
+
+    @Test
+    fun `create request with a JSON null short_url maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"short_url":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }

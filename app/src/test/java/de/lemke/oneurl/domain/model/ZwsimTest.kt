@@ -206,4 +206,14 @@ class ZwsimTest {
 
         error shouldBe GenerateURLError.Unknown()
     }
+
+    @Test
+    fun `create request with JSON null short and url maps to Unknown`() {
+        var error: GenerateURLError? = null
+        val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success: $it") }, { error = it })
+
+        req.deliverResponse(JSONObject("""{"short":null,"url":null}"""))
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
 }
