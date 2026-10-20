@@ -109,6 +109,14 @@ class UserSettingsTest {
     }
 
     @Test
+    fun `stored colors beyond six read as the six most recent`() {
+        settings.qrRecentForegroundColors = listOf(1, 2, 3, 4, 5, 6, 7, 8)
+        settings.qrRecentBackgroundColors = listOf(8, 7, 6, 5, 4, 3, 2, 1)
+        reload().qrRecentForegroundColors shouldBe listOf(1, 2, 3, 4, 5, 6)
+        reload().qrRecentBackgroundColors shouldBe listOf(8, 7, 6, 5, 4, 3)
+    }
+
+    @Test
     fun `empty stored colors read as the defaults`() {
         settings.qrRecentForegroundColors = emptyList()
         settings.qrRecentBackgroundColors = emptyList()

@@ -51,10 +51,10 @@ class UserSettings(
     var qrURL: String by preferences.delegates.string("")
 
     /** Recently used QR code background colors, most recent first. */
-    var qrRecentBackgroundColors: List<Int> by preferences.delegates.intList(listOf(DEFAULT_QR_BACKGROUND_COLOR))
+    var qrRecentBackgroundColors: List<Int> by preferences.delegates.recentColors(DEFAULT_QR_BACKGROUND_COLOR)
 
     /** Recently used QR code foreground colors, most recent first. */
-    var qrRecentForegroundColors: List<Int> by preferences.delegates.intList(listOf(DEFAULT_QR_FOREGROUND_COLOR))
+    var qrRecentForegroundColors: List<Int> by preferences.delegates.recentColors(DEFAULT_QR_FOREGROUND_COLOR)
 
     /** The QR code export size in pixels. */
     var qrSize: Int by preferences.delegates.int(DEFAULT_QR_SIZE)

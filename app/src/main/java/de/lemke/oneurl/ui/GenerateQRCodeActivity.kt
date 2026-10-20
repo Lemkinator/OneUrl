@@ -26,7 +26,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SeslSeekBar
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Lifecycle.State.RESUMED
-import androidx.picker3.app.SeslColorPickerDialog
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.ui.utils.BitmapExport
@@ -38,7 +37,7 @@ import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
 import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.commonutils.ui.utils.setWindowTransparent
-import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.showColorPickerOnce
 import de.lemke.commonutils.ui.utils.singleLaunchMenuItem
 import de.lemke.commonutils.ui.utils.toDocumentPick
 import de.lemke.oneurl.R
@@ -197,7 +196,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     private fun initColorButtons() {
         binding.colorButtonBackground.onSingleLaunchClick {
             val state = viewModel.state.value
-            showColorPicker(
+            showColorPickerOnce(
                 BACKGROUND_COLOR_PICKER_TAG,
                 state.style.backgroundColor,
                 state.recentBackgroundColors,
@@ -206,24 +205,13 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         }
         binding.colorButtonForeground.onSingleLaunchClick {
             val state = viewModel.state.value
-            showColorPicker(
+            showColorPickerOnce(
                 FOREGROUND_COLOR_PICKER_TAG,
                 state.style.foregroundColor,
                 state.recentForegroundColors,
                 viewModel::setForegroundColor,
             )
         }
-    }
-
-    private fun showColorPicker(
-        tag: String,
-        currentColor: Int,
-        recentColors: List<Int>,
-        onColorPicked: (Int) -> Unit,
-    ) {
-        SeslColorPickerDialog(this, onColorPicked, currentColor, recentColors.toIntArray(), true)
-            .apply { setTransparencyControlEnabled(true) }
-            .showOnce(tag)
     }
 
     companion object {
