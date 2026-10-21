@@ -271,7 +271,7 @@ class MainActivity :
                 R.id.help_dest -> findViewById<View>(R.id.help_dest).transformToActivity(HelpActivity::class.java)
                 R.id.about_app_dest -> findViewById<View>(R.id.about_app_dest).transformToActivity(CommonUtilsAboutActivity::class.java)
                 R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(CommonUtilsAboutMeActivity::class.java)
-                R.id.leaks_dest -> openLeakCanary(this)
+                R.id.leaks_dest -> openLeakCanary()
                 R.id.settings_dest -> findViewById<View>(R.id.settings_dest).transformToActivity(CommonUtilsSettingsActivity::class.java)
                 else -> return@onSingleLaunchItemSelected false
             }

@@ -20,6 +20,6 @@ import android.content.Context
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import leakcanary.LeakCanary
 
-fun openLeakCanary(context: Context) {
-    context.singleLaunchActivity(LeakCanary.newLeakDisplayActivityIntent())
+fun Context.openLeakCanary() {
+    singleLaunchActivity(LeakCanary.newLeakDisplayActivityIntent())
 }

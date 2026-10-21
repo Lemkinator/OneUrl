@@ -23,10 +23,19 @@ plugins {
 
 android {
     namespace = "de.lemke.oneurl.benchmarks"
-    compileSdk =
-        libs.versions.compileSdk
-            .get()
-            .toInt()
+    compileSdk {
+        version =
+            release(
+                libs.versions.compileSdk
+                    .get()
+                    .toInt(),
+            ) {
+                minorApiLevel =
+                    libs.versions.compileSdkMinor
+                        .get()
+                        .toInt()
+            }
+    }
     defaultConfig {
         minSdk = 28
         targetSdk =
