@@ -84,8 +84,6 @@ object Murl : ShortURLProvider {
                     // Broad catch is intentional: this runs in a Volley callback on the main thread; an
                     // escaping exception here would crash the whole app.
                     try {
-                        // Log.d(tag, "response: $response")
-                        // <span class="mu-mc count-480357" title="Views">1</span>
                         val clicks = response.substringAfter("\" title=\"Views\">").substringBefore("</span>").toIntOrNull()
                         Log.d(tag, response.substringAfter("entry-date").substringBefore("entry-links"))
                         Log.d(tag, "clicks: $clicks")

@@ -100,7 +100,7 @@ object Oneptco : ShortURLProvider {
         ) {
             override fun getRetryPolicy() =
                 DefaultRetryPolicy(
-                    REQUEST_TIMEOUT_MS, // set timeout to 20 seconds
+                    REQUEST_TIMEOUT_MS,
                     DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
                 )

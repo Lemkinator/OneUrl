@@ -79,7 +79,6 @@ import org.robolectric.shadows.ShadowDialog
 import org.robolectric.shadows.ShadowToast
 import de.lemke.commonutils.R as commonutilsR
 
-// sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])

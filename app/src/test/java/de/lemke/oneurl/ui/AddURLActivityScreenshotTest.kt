@@ -34,8 +34,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-// sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
 // selectedShortURLProvider is pinned to Dagd rather than left at ShortURLProviderCompanion.default
 // (rendered as providerTitle text) so this screenshot stays stable if the real provider list's
 // first enabled entry changes.

@@ -79,8 +79,6 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowToast
 import de.lemke.commonutils.R as commonutilsR
 
-// sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
 // isSamsungQuickShareAvailable() checks for the "com.samsung.android.app.sharelive" package via
 // PackageManager; Robolectric's default shadow PackageManager never has it installed, so
 // quickShareButton stays at its XML default (gone) in every test here.

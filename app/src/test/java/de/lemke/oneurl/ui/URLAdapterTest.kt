@@ -57,8 +57,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-// sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
 // Constructed directly (not via Hilt) so generateQRCode renders through a fake; MainActivity only supplies
 // a themed Context/LayoutInflater to inflate listview_item.xml and stays on an empty list of its
 // own.

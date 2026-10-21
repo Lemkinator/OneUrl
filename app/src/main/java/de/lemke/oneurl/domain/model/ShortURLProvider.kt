@@ -71,11 +71,11 @@ object ShortURLProviderCompanion {
             Kurzelinks.Ogy,
             Lstu,
             Tinube,
-            Ulvis, // disabled
+            Ulvis,
             Tinyurl,
-            Onesis, // disabled
+            Onesis,
             Gg,
-            L4f, // disabled
+            L4f,
             Oneptco,
             Tnyim,
             Shareaholic,
@@ -84,17 +84,17 @@ object ShortURLProviderCompanion {
             Tly.Ibitly,
             Tly.Twtrto,
             Tly.Jpegly,
-            Tly.Rebrandly, // disabled
-            Tly.Bitly, // disabled
-            Shrtlnk, // disabled
-            Shorturlat, // disabled
+            Tly.Rebrandly,
+            Tly.Bitly,
+            Shrtlnk,
+            Shorturlat,
             Zwsim,
             Spoome.Default,
             Spoome.Emoji,
-            Owovc.Owo, // disabled
-            Owovc.Zws, // disabled
-            Owovc.Sketchy, // disabled
-            Owovc.Gay, // disabled
+            Owovc.Owo,
+            Owovc.Zws,
+            Owovc.Sketchy,
+            Owovc.Gay,
         )
 
     // Follows the locale at process start; a locale change applies on the next app restart only.

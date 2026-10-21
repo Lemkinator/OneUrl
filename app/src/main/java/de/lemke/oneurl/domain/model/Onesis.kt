@@ -87,7 +87,6 @@ object Onesis : ShortURLProvider {
             Method.POST,
             apiURL,
             { response ->
-                // Log.d(tag, "response: $response")
                 val responseAlias =
                     response
                         .split("<span id=\"shortlink-url\"")
