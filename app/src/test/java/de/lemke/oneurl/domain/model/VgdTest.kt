@@ -31,7 +31,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
-// crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
+// crash under the default unit-test "not mocked" stub jar.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class VgdTest {

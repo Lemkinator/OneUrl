@@ -63,11 +63,6 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
 import org.robolectric.shadows.ShadowToast
 
-// VgdIsgd.Vgd (minAliasLength=5, maxAliasLength=30) is used rather than ShortURLProviderCompanion.default
-// so both the "too short" and "too long" alias branches are reachable — several providers (including
-// Dagd) have minAliasLength=0, making "too short" dead code for them. Tinyurl would also fit the length
-// bounds but has enabled=false (API retired), so getIfEnabledOrDefault() silently falls back to the
-// default provider and the assignment in setup() would have no effect.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])

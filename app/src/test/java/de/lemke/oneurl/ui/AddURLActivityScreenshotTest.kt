@@ -34,9 +34,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-// selectedShortURLProvider is pinned to Dagd rather than left at ShortURLProviderCompanion.default
-// (rendered as providerTitle text) so this screenshot stays stable if the real provider list's
-// first enabled entry changes.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36])
