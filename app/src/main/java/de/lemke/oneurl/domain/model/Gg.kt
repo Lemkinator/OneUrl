@@ -85,8 +85,7 @@ object Gg : ShortURLProvider {
             Method.POST,
             apiURLCheck,
             { response ->
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
+                // An exception escaping a Volley callback on the main thread crashes the app.
                 try {
                     Log.d(tag, "response: $response")
                     if (response.contains("Link with this path already exist", true)) {
@@ -104,8 +103,7 @@ object Gg : ShortURLProvider {
                 }
             },
             { error ->
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
+                // An exception escaping a Volley callback on the main thread crashes the app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse
@@ -140,8 +138,7 @@ object Gg : ShortURLProvider {
             Method.POST,
             apiURL,
             { response ->
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
+                // An exception escaping a Volley callback on the main thread crashes the app.
                 try {
                     Log.d(tag, "response: $response")
                     when {
@@ -163,8 +160,7 @@ object Gg : ShortURLProvider {
                 }
             },
             { error ->
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
+                // An exception escaping a Volley callback on the main thread crashes the app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse

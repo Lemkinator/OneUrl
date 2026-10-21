@@ -79,8 +79,7 @@ object Shrtlnk : ShortURLProvider {
         ) {
             override fun getParams() = mutableMapOf("url" to longURL)
 
-            // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-            // escaping exception here would crash the whole app.
+            // An exception escaping a Volley callback on the main thread crashes the app.
             @Suppress("TooGenericExceptionCaught")
             override fun parseNetworkResponse(response: NetworkResponse?): Response<String> =
                 try {

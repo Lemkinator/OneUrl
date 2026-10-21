@@ -120,8 +120,7 @@ object L4f : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-        // escaping exception here would crash the whole app.
+        // An exception escaping a Volley callback on the main thread crashes the app.
         try {
             Log.d(tag, "response: $response")
             val error = response.optBoolean("error")
@@ -169,8 +168,7 @@ object L4f : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-        // escaping exception here would crash the whole app.
+        // An exception escaping a Volley callback on the main thread crashes the app.
         try {
             Log.e(tag, "error: $error")
             val networkResponse = error.networkResponse
