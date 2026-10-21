@@ -37,7 +37,6 @@ object PersistenceModule {
     ): AppDatabase =
         Room
             .databaseBuilder(context, AppDatabase::class.java, "app")
-            // .createFromAsset("databases/app-v1.db")
             .build()
 
     @Provides

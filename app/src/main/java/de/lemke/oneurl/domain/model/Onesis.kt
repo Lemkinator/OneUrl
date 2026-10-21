@@ -87,7 +87,6 @@ object Onesis : ShortURLProvider {
             Method.POST,
             apiURL,
             { response ->
-                // Log.d(tag, "response: $response")
                 val responseAlias =
                     response
                         .split("<span id=\"shortlink-url\"")
@@ -133,8 +132,7 @@ object Onesis : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-        // escaping exception here would crash the whole app.
+        // An exception escaping a Volley callback on the main thread crashes the app.
         try {
             Log.e(tag, "error: $error")
             val networkResponse = error.networkResponse

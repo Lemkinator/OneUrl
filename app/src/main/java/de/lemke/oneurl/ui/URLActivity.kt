@@ -32,8 +32,8 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.skydoves.bundler.bundleValue
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.ui.utils.BitmapExport
+import de.lemke.commonutils.ui.utils.InAppReview
 import de.lemke.commonutils.ui.utils.SingleLaunchResultLauncher
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.copyToClipboard
@@ -45,7 +45,6 @@ import de.lemke.commonutils.ui.utils.registerForSingleLaunchResult
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.commonutils.ui.utils.setWindowTransparent
 import de.lemke.commonutils.ui.utils.shareText
-import de.lemke.commonutils.ui.utils.showInAppReviewOrFinish
 import de.lemke.commonutils.ui.utils.showOnce
 import de.lemke.commonutils.ui.utils.singleLaunch
 import de.lemke.commonutils.ui.utils.singleLaunchMenuItem
@@ -67,7 +66,7 @@ import dev.oneuiproject.oneui.design.R as designR
 @AndroidEntryPoint
 class URLActivity : AppCompatActivity() {
     @Inject
-    lateinit var settings: SettingsRepository
+    lateinit var inAppReview: InAppReview
 
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
@@ -174,7 +173,7 @@ class URLActivity : AppCompatActivity() {
             .findItem(R.id.url_bnv_analytics)
             ?.isVisible = url.shortURLProvider.getAnalyticsURL(url.alias) != null
         binding.urlBnv.setOnItemSelectedListener { item -> handleBnvItemSelected(item, url) }
-        setCustomBackAnimation(binding.root, inAppReview = settings)
+        setCustomBackAnimation(binding.root, inAppReview = inAppReview)
     }
 
     private fun initQrControls() {
@@ -294,7 +293,7 @@ class URLActivity : AppCompatActivity() {
             }
 
             UrlDetailExit.Deleted -> {
-                showInAppReviewOrFinish(settings)
+                inAppReview.showOrFinish(this)
             }
         }
         viewModel.onExitHandled(reason)

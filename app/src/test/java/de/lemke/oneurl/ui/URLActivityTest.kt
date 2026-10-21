@@ -51,6 +51,7 @@ import de.lemke.commonutils.receivePickerResult
 import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
+import de.lemke.commonutils.ui.utils.FakeInAppReview
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.R
@@ -85,7 +86,6 @@ import org.robolectric.shadows.ShadowDialog
 import org.robolectric.shadows.ShadowToast
 import de.lemke.commonutils.R as commonutilsR
 
-// sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [36], shadows = [ShadowFileProvider::class])
@@ -109,6 +109,9 @@ class URLActivityTest {
     @Inject
     lateinit var shortURLClient: FakeShortURLClient
 
+    @Inject
+    lateinit var inAppReview: FakeInAppReview
+
     private lateinit var seededUrl: URL
 
     @Before
@@ -125,6 +128,15 @@ class URLActivityTest {
                 added = ZonedDateTime.parse("2024-01-15T10:30:00Z"),
             )
         runBlocking { urlRepository.addURL(seededUrl) }
+    }
+
+    @Test
+    fun `back press shows the in-app review or finishes`() {
+        withUrlActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+
+            inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(activity))
+        }
     }
 
     @Test
@@ -783,7 +795,7 @@ class URLActivityTest {
             idleMainLooper()
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
-            activity.isFinishing.shouldBeTrue()
+            inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(activity))
         }
     }
 
@@ -799,6 +811,7 @@ class URLActivityTest {
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldNotBe null
             activity.isFinishing.shouldBeFalse()
+            inAppReview.calls shouldBe emptyList()
         }
     }
 
@@ -846,7 +859,7 @@ class URLActivityTest {
             val recreated = controller.get()
             recreated shouldNotBe stopped
             stopped.isFinishing.shouldBeFalse()
-            recreated.isFinishing.shouldBeTrue()
+            inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(recreated))
             recreated.exitState() shouldBe UrlDetailExit.None
             ShadowToast.shownToastCount() shouldBe 0
         } finally {

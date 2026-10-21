@@ -86,18 +86,18 @@ exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` 
 `GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss.
 
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
-`ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers marked `//disabled` are instantiated but filtered out of
+`ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers with `enabled = false` are instantiated but filtered out of
 `enabled`.
 
 **DI** — `di/` holds the `SingletonComponent` Hilt modules: `PersistenceModule` (Room DB, `URLDao`), `SettingsModule.kt`
 (`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (includes the common-utils `CommonUtilsCoroutinesModule`: `@DefaultDispatcher`, `@IoDispatcher`, `@MainDispatcher`, `@ApplicationScope`),
 `ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (binds `VolleyQueue`,
-`NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`) and
+`NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`),
 `BitmapExporterModule` (provides the common-utils `DefaultBitmapExporter`; screen tests uninstall it to bind an exporter on a pausable
-IO dispatcher).
+IO dispatcher) and `InAppReviewModule` (binds the common-utils `PlayInAppReview` as `InAppReview`).
 
 **Test doubles** — `testFixtures` holds the `@TestInstallIn` modules that every Hilt test, local or instrumented, loads:
-`TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule` and `TestNetworkModule`. `TestNetworkModule` binds the singleton
+`TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule`, `TestInAppReviewModule` (a singleton `FakeInAppReview`) and `TestNetworkModule`. `TestNetworkModule` binds the singleton
 fakes `FakeNetworkMonitor`, `FakeUrlhausClient`, `FakePageTitleFetcher` and `FakeShortURLClient`, so no Hilt test reaches the network;
 a test injects a fake to set its answers. ViewModel and use-case tests run real use cases over fakes such as `FakeURLRepository`,
 `FakeQRCodeRenderer` and `FakeVolleyQueue`. `URLRepositoryContract` runs against both `DefaultURLRepository` and `FakeURLRepository`.

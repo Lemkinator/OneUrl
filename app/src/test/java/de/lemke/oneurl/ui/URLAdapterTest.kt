@@ -57,11 +57,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-// sdk = [36]: Robolectric 4.16.1 max supported SDK; bump when 4.17+ adds SDK 37.
-//
-// Constructed directly (not via Hilt) so generateQRCode renders through a fake; MainActivity only supplies
-// a themed Context/LayoutInflater to inflate listview_item.xml and stays on an empty list of its
-// own.
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -176,10 +171,7 @@ class URLAdapterTest {
         }
     }
 
-    // AppCompatResources deliberately returns a fresh, non-cached instance for vector drawables
-    // (to keep per-instance tinting safe), so comparing against an independently-loaded reference
-    // drawable's constantState never matches - instead confirm the icon actually changes when the
-    // same holder is rebound with the opposite favorite state.
+    // AppCompatResources returns a fresh, non-cached instance for vector drawables, so constantState never matches.
     @Test
     fun `bind swaps the favorite icon between favorite and non-favorite states`() {
         withAdapter { adapter, holder ->

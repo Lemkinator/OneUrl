@@ -116,14 +116,8 @@ sealed class VgdIsgd : ShortURLProvider {
 
                 else -> {
                     val code = response.getString("errorcode")
-                    val message = response.optStringOrNull("errormessage")
-                    errorCallback(
-                        if (message == null) {
-                            GenerateURLError.Custom(code.toIntOrNull() ?: HttpStatusCode.OK, "")
-                        } else {
-                            GenerateURLError.Custom(HttpStatusCode.OK, "$message ($code)")
-                        },
-                    )
+                    val message = response.optStringOrNull("errormessage").orEmpty()
+                    errorCallback(GenerateURLError.Custom(code.toIntOrNull() ?: HttpStatusCode.OK, message))
                 }
             }
             return
@@ -144,8 +138,7 @@ sealed class VgdIsgd : ShortURLProvider {
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-        // escaping exception here would crash the whole app.
+        // An exception escaping a Volley callback on the main thread crashes the app.
         try {
             Log.e(tag, "error: $error")
             val networkResponse = error.networkResponse

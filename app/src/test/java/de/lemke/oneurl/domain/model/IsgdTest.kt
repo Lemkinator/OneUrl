@@ -32,7 +32,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
-// crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
+// crash under the default unit-test "not mocked" stub jar.
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class IsgdTest {
@@ -85,7 +85,7 @@ class IsgdTest {
                     GenerateURLError.ServiceTemporarilyUnavailable(
                         VgdIsgd.Isgd.baseURL,
                     ),
-                """{"errorcode":"9","errormessage":"weird error"}""" to GenerateURLError.Custom(HttpStatusCode.OK, "weird error (9)"),
+                """{"errorcode":"9","errormessage":"weird error"}""" to GenerateURLError.Custom(9, "weird error"),
             )
         cases.forEach { (json, expected) ->
             var error: GenerateURLError? = null

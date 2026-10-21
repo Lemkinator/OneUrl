@@ -38,7 +38,6 @@ class ObserveURLsUseCase @Inject constructor(
     ): Flow<List<URL>> =
         searchQuery
             .flatMapLatest { query ->
-                // observe search query
                 if (query != null) {
                     if (query.isBlank()) {
                         urlRepository.observeURLs().map { emptyList() }
@@ -49,7 +48,6 @@ class ObserveURLsUseCase @Inject constructor(
                     }
                 } else {
                     filterFavorite.flatMapLatest { filterFavorite ->
-                        // observe favorite filter
                         if (filterFavorite) {
                             urlRepository.observeURLs().map { urls ->
                                 urls.filter { url -> url.favorite }

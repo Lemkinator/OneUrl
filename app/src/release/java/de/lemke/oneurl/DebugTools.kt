@@ -18,6 +18,4 @@ package de.lemke.oneurl
 
 import android.content.Context
 
-// context is unused here but required to match the debug source-set's openLeakCanary(context) signature.
-@Suppress("UnusedParameter")
-fun openLeakCanary(context: Context) = Unit
+fun Context.openLeakCanary() = Unit

@@ -38,8 +38,7 @@ class DefaultPageTitleFetcher @Inject constructor(
                     url,
                     { response ->
                         if (!cont.isActive) return@StringRequest
-                        // Broad catch is intentional: Volley delivers this callback on the main thread, so an
-                        // unexpected exception here must not escape and crash the whole app.
+                        // An exception escaping a Volley callback on the main thread crashes the app.
                         try {
                             val title =
                                 Regex("<title[^>]*>(.*?)</title>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))

@@ -27,8 +27,7 @@ const val PACKAGE_NAME = "de.lemke.oneurl"
 const val TIMEOUT_MS = 5_000L
 private const val GESTURE_MARGIN_DIVISOR = 5
 
-// Must match de.lemke.commonutils.ui.utils.EXTRA_SKIP_ONBOARDING — cannot import from test module.
-// Pinned by app/src/test/.../BenchmarkOnboardingKeyTest.kt.
+// common-utils' SESL forks clash with this module's AOSP AndroidX.
 const val EXTRA_SKIP_ONBOARDING = "commonUtilsSkipOnboarding"
 
 fun MacrobenchmarkScope.startActivityAndSkipOnboarding() = startActivityAndWait { it.putExtra(EXTRA_SKIP_ONBOARDING, true) }

@@ -176,8 +176,7 @@ object Lstu : ShortURLProvider {
                 }
             },
             { error ->
-                // Broad catch is intentional: this runs in a Volley callback on the main thread; an
-                // escaping exception here would crash the whole app.
+                // An exception escaping a Volley callback on the main thread crashes the app.
                 try {
                     Log.e(tag, "error: $error")
                     val networkResponse = error.networkResponse
@@ -199,7 +198,7 @@ object Lstu : ShortURLProvider {
 
             override fun getRetryPolicy() =
                 DefaultRetryPolicy(
-                    REQUEST_TIMEOUT_MS, // set timeout to 10 seconds
+                    REQUEST_TIMEOUT_MS,
                     DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
                 )
