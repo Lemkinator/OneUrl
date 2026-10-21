@@ -116,14 +116,8 @@ sealed class VgdIsgd : ShortURLProvider {
 
                 else -> {
                     val code = response.getString("errorcode")
-                    val message = response.optStringOrNull("errormessage")
-                    errorCallback(
-                        if (message == null) {
-                            GenerateURLError.Custom(code.toIntOrNull() ?: HttpStatusCode.OK, "")
-                        } else {
-                            GenerateURLError.Custom(HttpStatusCode.OK, "$message ($code)")
-                        },
-                    )
+                    val message = response.optStringOrNull("errormessage").orEmpty()
+                    errorCallback(GenerateURLError.Custom(code.toIntOrNull() ?: HttpStatusCode.OK, message))
                 }
             }
             return

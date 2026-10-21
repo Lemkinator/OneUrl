@@ -85,7 +85,7 @@ class IsgdTest {
                     GenerateURLError.ServiceTemporarilyUnavailable(
                         VgdIsgd.Isgd.baseURL,
                     ),
-                """{"errorcode":"9","errormessage":"weird error"}""" to GenerateURLError.Custom(HttpStatusCode.OK, "weird error (9)"),
+                """{"errorcode":"9","errormessage":"weird error"}""" to GenerateURLError.Custom(9, "weird error"),
             )
         cases.forEach { (json, expected) ->
             var error: GenerateURLError? = null
