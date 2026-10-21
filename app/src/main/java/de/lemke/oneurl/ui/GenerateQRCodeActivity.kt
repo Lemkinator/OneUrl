@@ -109,8 +109,6 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             if (!isInitialized) {
                 isInitialized = true
                 initControls(state)
-                setCustomBackAnimation(binding.root, inAppReview = inAppReview)
-                binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
             }
         }
 
@@ -128,6 +126,8 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
         initSizeControls(initialState)
         initToggles(initialState)
         initColorButtons()
+        setCustomBackAnimation(binding.root, inAppReview = inAppReview)
+        binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this)
     }
 
     private fun initUrlField(initialState: QrUiState) {

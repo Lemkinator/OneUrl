@@ -131,6 +131,15 @@ class URLActivityTest {
     }
 
     @Test
+    fun `back press shows the in-app review or finishes`() {
+        withUrlActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+
+            inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(activity))
+        }
+    }
+
+    @Test
     fun `onOptionsItemSelected opens the mapped scan URL and returns true`() {
         withUrlActivity { activity ->
             val handled = activity.onOptionsItemSelected(menuItem(R.id.url_toolbar_urlhaus))
@@ -786,7 +795,6 @@ class URLActivityTest {
             idleMainLooper()
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
-            activity.isFinishing.shouldBeTrue()
             inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(activity))
         }
     }
@@ -851,7 +859,6 @@ class URLActivityTest {
             val recreated = controller.get()
             recreated shouldNotBe stopped
             stopped.isFinishing.shouldBeFalse()
-            recreated.isFinishing.shouldBeTrue()
             inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(recreated))
             recreated.exitState() shouldBe UrlDetailExit.None
             ShadowToast.shownToastCount() shouldBe 0

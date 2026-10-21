@@ -55,6 +55,7 @@ import de.lemke.commonutils.receivePickerResult
 import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
+import de.lemke.commonutils.ui.utils.FakeInAppReview
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
@@ -96,10 +97,22 @@ class GenerateQRCodeActivityTest {
     @Inject
     lateinit var userSettings: UserSettings
 
+    @Inject
+    lateinit var inAppReview: FakeInAppReview
+
     @Before
     fun setup() {
         hiltRule.inject()
         userSettings.qrURL = "https://example.com"
+    }
+
+    @Test
+    fun `back press shows the in-app review or finishes`() {
+        withActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+
+            inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(activity))
+        }
     }
 
     @Test
