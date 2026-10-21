@@ -27,8 +27,8 @@ import androidx.appcompat.widget.SeslSeekBar
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Lifecycle.State.RESUMED
 import dagger.hilt.android.AndroidEntryPoint
-import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.ui.utils.BitmapExport
+import de.lemke.commonutils.ui.utils.InAppReview
 import de.lemke.commonutils.ui.utils.bindColorSwatch
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.launchBitmapExport
@@ -54,7 +54,7 @@ private const val MAX_SIZE = 1024
 @AndroidEntryPoint
 class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwareYTranslator() {
     @Inject
-    lateinit var settings: SettingsRepository
+    lateinit var inAppReview: InAppReview
 
     private lateinit var binding: ActivityGenerateQrCodeBinding
     private val viewModel: GenerateQRCodeViewModel by viewModels()
@@ -109,7 +109,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
             if (!isInitialized) {
                 isInitialized = true
                 initControls(state)
-                setCustomBackAnimation(binding.root, inAppReview = settings)
+                setCustomBackAnimation(binding.root, inAppReview = inAppReview)
                 binding.qrCode.translateYWithAppBar(binding.toolbarLayout.appBarLayout, this@GenerateQRCodeActivity)
             }
         }

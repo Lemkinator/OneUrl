@@ -51,6 +51,7 @@ import de.lemke.commonutils.receivePickerResult
 import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.commonutils.ui.utils.BitmapExport
 import de.lemke.commonutils.ui.utils.BitmapExporter
+import de.lemke.commonutils.ui.utils.FakeInAppReview
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.oneurl.R
@@ -108,6 +109,9 @@ class URLActivityTest {
 
     @Inject
     lateinit var shortURLClient: FakeShortURLClient
+
+    @Inject
+    lateinit var inAppReview: FakeInAppReview
 
     private lateinit var seededUrl: URL
 
@@ -784,6 +788,7 @@ class URLActivityTest {
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldBe null
             activity.isFinishing.shouldBeTrue()
+            inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(activity))
         }
     }
 
@@ -799,6 +804,7 @@ class URLActivityTest {
 
             runBlocking { urlRepository.getURL(seededUrl.shortURL) } shouldNotBe null
             activity.isFinishing.shouldBeFalse()
+            inAppReview.calls shouldBe emptyList()
         }
     }
 
@@ -847,6 +853,7 @@ class URLActivityTest {
             recreated shouldNotBe stopped
             stopped.isFinishing.shouldBeFalse()
             recreated.isFinishing.shouldBeTrue()
+            inAppReview.calls shouldBe listOf(FakeInAppReview.Call.ShowOrFinish(recreated))
             recreated.exitState() shouldBe UrlDetailExit.None
             ShadowToast.shownToastCount() shouldBe 0
         } finally {
