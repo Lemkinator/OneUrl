@@ -135,7 +135,7 @@ class URLViewModel @Inject constructor(
     }
 
     fun onExitHandled(reason: UrlDetailExit.Reason) {
-        exit.update { if (it == reason) UrlDetailExit.None else it }
+        exit.compareAndSet(reason, UrlDetailExit.None)
     }
 
     companion object {

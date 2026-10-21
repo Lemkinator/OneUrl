@@ -144,7 +144,7 @@ class AddURLViewModel @Inject constructor(
     }
 
     fun onOutcomeHandled(result: AddUrlOutcome.Result) {
-        outcome.update { if (it == result) AddUrlOutcome.None else it }
+        outcome.compareAndSet(result, AddUrlOutcome.None)
     }
 
     private fun complete(result: AddUrlOutcome.Result) {

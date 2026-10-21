@@ -66,7 +66,7 @@ class ProviderViewModel @Inject constructor(
     }
 
     fun onNavigationHandled(request: ProviderNavigation.Request) {
-        navigation.update { if (it == request) ProviderNavigation.None else it }
+        navigation.compareAndSet(request, ProviderNavigation.None)
     }
 }
 
