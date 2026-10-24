@@ -26,7 +26,7 @@ import androidx.core.view.descendants
 import androidx.recyclerview.widget.RecyclerView
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
 import kotlinx.coroutines.runBlocking
@@ -60,7 +60,7 @@ internal fun urlFixture(
 ) = URL(
     shortURL = shortURL,
     longURL = "https://example.com/${shortURL.substringAfterLast('/')}",
-    shortURLProvider = ShortURLProviderCompanion.default,
+    shortURLProvider = Dagd,
     favorite = favorite,
     title = "title",
     description = "description",

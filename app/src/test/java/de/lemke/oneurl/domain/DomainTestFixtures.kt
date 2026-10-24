@@ -16,15 +16,15 @@
 
 package de.lemke.oneurl.domain
 
+import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
 
 internal fun testUrl(
     shortURL: String,
     longURL: String = "https://example.com",
-    provider: ShortURLProvider = ShortURLProviderCompanion.default,
+    provider: ShortURLProvider = Dagd,
     favorite: Boolean = false,
     title: String = "title",
     description: String = "description",
