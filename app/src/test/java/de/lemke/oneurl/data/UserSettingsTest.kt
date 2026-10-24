@@ -23,7 +23,9 @@ import de.lemke.commonutils.freshTestPreferences
 import de.lemke.oneurl.data.UserSettings.Companion.DEFAULT_QR_BACKGROUND_COLOR
 import de.lemke.oneurl.data.UserSettings.Companion.DEFAULT_QR_FOREGROUND_COLOR
 import de.lemke.oneurl.data.UserSettings.Companion.DEFAULT_QR_SIZE
+import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.VgdIsgd
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
@@ -55,7 +57,7 @@ class UserSettingsTest {
 
     @Test
     fun `defaults on fresh store`() {
-        settings.selectedShortURLProvider shouldBe ShortURLProviderCompanion.default
+        settings.selectedShortURLProvider shouldBe VgdIsgd.Isgd
         settings.lastAlias shouldBe ""
         settings.lastURL shouldBe ""
         settings.lastDescription shouldBe ""
@@ -165,6 +167,12 @@ class UserSettingsTest {
         val nonDefault = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
         settings.selectedShortURLProvider = nonDefault
         reload().selectedShortURLProvider shouldBe nonDefault
+    }
+
+    @Test
+    fun `selectedShortURLProvider keeps a previously picked da_gd`() {
+        prefs.edit().putString("selectedShortURLProvider", "da.gd").apply()
+        reload().selectedShortURLProvider shouldBe Dagd
     }
 
     @Test

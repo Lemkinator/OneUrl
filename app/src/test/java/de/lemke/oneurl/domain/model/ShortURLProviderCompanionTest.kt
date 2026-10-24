@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain.model
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
@@ -71,7 +72,7 @@ class ShortURLProviderCompanionTest : ShouldSpec(
 
         should("default is is.gd and is enabled") {
             ShortURLProviderCompanion.default shouldBe VgdIsgd.Isgd
-            (ShortURLProviderCompanion.default in ShortURLProviderCompanion.enabled).shouldBeTrue()
+            ShortURLProviderCompanion.enabled shouldContain ShortURLProviderCompanion.default
         }
 
         should("getIfEnabledOrDefault returns the given provider when it is enabled") {
