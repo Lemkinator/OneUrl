@@ -42,7 +42,7 @@ class ProviderViewModel @Inject constructor(
     init {
         val selectMode = savedStateHandle.get<Boolean>(ProviderActivity.KEY_SELECT_PROVIDER) == true
         val currentSelected = userSettings.selectedShortURLProvider
-        val position = enabledProviders.indexOf(currentSelected).takeIf { it >= 0 }
+        val position = enabledProviders.indexOf(currentSelected).takeIf { selectMode && it >= 0 }
         state.update {
             it.copy(providers = enabledProviders, selectMode = selectMode, currentSelected = currentSelected, scrollToPosition = position)
         }

@@ -144,15 +144,31 @@ class ProviderActivityTest {
 
     @Test
     @Config(qualifiers = "w360dp-h240dp")
-    fun `the list scrolls to the selected provider and reports the scroll done`() {
+    fun `the list in select mode scrolls to the selected provider and reports the scroll done`() {
         userSettings.selectedShortURLProvider = Spoome.Emoji
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        val intent =
+            Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java)
+                .putExtra(ProviderActivity.KEY_SELECT_PROVIDER, true)
+        ActivityScenario.launch<ProviderActivity>(intent).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
                 val layoutManager = activity.findViewById<RecyclerView>(R.id.provider_list).layoutManager as LinearLayoutManager
                 layoutManager.findFirstVisibleItemPosition() shouldBeGreaterThan 0
                 layoutManager.findLastVisibleItemPosition() shouldBe 5
                 ViewModelProvider(activity)[ProviderViewModel::class.java].state.value.scrollToPosition shouldBe null
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w360dp-h240dp")
+    fun `the list outside select mode starts at the top`() {
+        userSettings.selectedShortURLProvider = Spoome.Emoji
+        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val layoutManager = activity.findViewById<RecyclerView>(R.id.provider_list).layoutManager as LinearLayoutManager
+                layoutManager.findFirstVisibleItemPosition() shouldBe 0
             }
         }
     }
