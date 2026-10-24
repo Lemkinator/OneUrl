@@ -16,16 +16,11 @@
 
 package de.lemke.oneurl.di
 
-import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import de.lemke.commonutils.ui.utils.InAppReview
-import de.lemke.commonutils.ui.utils.PlayInAppReview
+import de.lemke.commonutils.di.CommonUtilsInAppReviewModule
 
-@Module
+@Module(includes = [CommonUtilsInAppReviewModule::class])
 @InstallIn(SingletonComponent::class)
-abstract class InAppReviewModule {
-    @Binds
-    abstract fun bindInAppReview(review: PlayInAppReview): InAppReview
-}
+interface InAppReviewModule
