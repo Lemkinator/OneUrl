@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain.model
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
@@ -46,7 +47,7 @@ class ShortURLProviderCompanionTest : ShouldSpec(
 
                     ShortURLProviderCompanion.all shouldBeSameInstanceAs all
                     ShortURLProviderCompanion.enabled shouldBeSameInstanceAs enabled
-                    ShortURLProviderCompanion.default shouldBe Dagd
+                    ShortURLProviderCompanion.default shouldBe VgdIsgd.Isgd
                     ShortURLProviderCompanion.fromStringOrDefault("kurzelinks.de") shouldBe kurzelinks
                 }
             } finally {
@@ -66,12 +67,12 @@ class ShortURLProviderCompanionTest : ShouldSpec(
 
             providers.filterIsInstance<Kurzelinks>() shouldBe emptyList()
             providers.size shouldBe 29
-            providers.take(4) shouldBe listOf(Dagd, VgdIsgd.Isgd, VgdIsgd.Vgd, Lstu)
+            providers.take(4) shouldBe listOf(VgdIsgd.Isgd, VgdIsgd.Vgd, Dagd, Lstu)
         }
 
-        should("default is the first enabled provider") {
-            ShortURLProviderCompanion.default shouldBe ShortURLProviderCompanion.enabled.first()
-            ShortURLProviderCompanion.default.enabled.shouldBeTrue()
+        should("default is is.gd and is enabled") {
+            ShortURLProviderCompanion.default shouldBe VgdIsgd.Isgd
+            ShortURLProviderCompanion.enabled shouldContain ShortURLProviderCompanion.default
         }
 
         should("getIfEnabledOrDefault returns the given provider when it is enabled") {
@@ -118,7 +119,7 @@ class ShortURLProviderCompanionTest : ShouldSpec(
         }
 
         should("fromStringOrDefault returns default for a disabled provider name") {
-            ShortURLProviderCompanion.fromStringOrDefault("ulvis.net") shouldBe Dagd
+            ShortURLProviderCompanion.fromStringOrDefault("ulvis.net") shouldBe VgdIsgd.Isgd
         }
     },
 )

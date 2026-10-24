@@ -30,7 +30,7 @@ import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -122,7 +122,7 @@ class MainActivityScreenshotTest {
     ) = URL(
         shortURL = shortURL,
         longURL = "https://example.com/${title.lowercase().replace(' ', '-')}",
-        shortURLProvider = ShortURLProviderCompanion.default,
+        shortURLProvider = Dagd,
         favorite = favorite,
         title = title,
         description = description,

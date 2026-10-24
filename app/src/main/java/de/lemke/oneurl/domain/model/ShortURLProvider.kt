@@ -62,9 +62,9 @@ https://sor.bz/
 object ShortURLProviderCompanion {
     private val provider: List<ShortURLProvider> =
         listOf(
-            Dagd,
             VgdIsgd.Isgd,
             VgdIsgd.Vgd,
+            Dagd,
             Kurzelinks.Kurzelinksde,
             Kurzelinks.Ocn,
             Kurzelinks.T1p,
@@ -106,7 +106,7 @@ object ShortURLProviderCompanion {
     internal fun providersFor(locale: Locale): List<ShortURLProvider> =
         if (locale.language == "de") provider else provider.filter { it !is Kurzelinks }
 
-    val default: ShortURLProvider = enabled.first()
+    val default: ShortURLProvider = VgdIsgd.Isgd
 
     fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
         if (shortURLProvider in enabled) shortURLProvider ?: default else default

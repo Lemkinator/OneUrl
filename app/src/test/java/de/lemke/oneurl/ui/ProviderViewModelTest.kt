@@ -63,20 +63,27 @@ class ProviderViewModelTest : ShouldSpec(
                 .shouldBeTrue()
         }
 
-        should("init holds the selected provider's real index in the enabled list as the scroll target") {
-            val provider = ShortURLProviderCompanion.enabled.last()
-            userSettings.selectedShortURLProvider = provider
-            val expectedIndex = ShortURLProviderCompanion.enabled.indexOf(provider)
+        should("init in select mode holds the selected provider's index in the enabled list as the scroll target") {
+            userSettings.selectedShortURLProvider = Dagd
+
+            val viewModel = newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)))
+
+            viewModel.state.value.scrollToPosition shouldBe 2
+        }
+
+        should("init outside select mode holds no scroll target") {
+            userSettings.selectedShortURLProvider = ShortURLProviderCompanion.enabled.last()
 
             val viewModel = newViewModel()
 
-            viewModel.state.value.scrollToPosition shouldBe expectedIndex
+            viewModel.state.value.scrollToPosition shouldBe null
         }
 
         should("init holds no scroll target when the selected provider is not in the enabled list") {
             userSettings.selectedShortURLProvider = Dagd
 
-            val viewModel = newViewModel(providers = listOf(VgdIsgd.Isgd, VgdIsgd.Vgd))
+            val viewModel =
+                newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)), listOf(VgdIsgd.Isgd, VgdIsgd.Vgd))
 
             viewModel.state.value.scrollToPosition shouldBe null
         }
