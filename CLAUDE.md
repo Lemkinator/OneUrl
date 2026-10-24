@@ -94,7 +94,7 @@ exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` 
 `ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (binds `VolleyQueue`,
 `NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`),
 `BitmapExporterModule` (provides the common-utils `DefaultBitmapExporter`; screen tests uninstall it to bind an exporter on a pausable
-IO dispatcher) and `InAppReviewModule` (binds the common-utils `PlayInAppReview` as `InAppReview`).
+IO dispatcher) and `InAppReviewModule` (includes the common-utils `CommonUtilsInAppReviewModule`, which binds `PlayInAppReview` as `InAppReview`).
 
 **Test doubles** — `testFixtures` holds the `@TestInstallIn` modules that every Hilt test, local or instrumented, loads:
 `TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule`, `TestInAppReviewModule` (a singleton `FakeInAppReview`) and `TestNetworkModule`. `TestNetworkModule` binds the singleton
