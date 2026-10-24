@@ -160,6 +160,8 @@ jobs:
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Set up GMD system image
+        uses: ./.github/actions/gmd-system-image
       - name: Check runner
         # /dev/kvm may legitimately be absent here; that's what this step is diagnosing.
         run: |

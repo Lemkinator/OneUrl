@@ -1,0 +1,29 @@
+name: GMD image cache
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/actions/gmd-system-image/action.yml
+      - .github/workflows/gmd-image-cache.yml
+      - gradle/libs.versions.toml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  warm:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Cache GMD system image
+        uses: ./.github/actions/gmd-system-image
