@@ -135,6 +135,12 @@ Three tools run as part of `./gradlew build`:
   and no raw `HiltAndroidRule`. `HiltTestRule` runs `HiltAndroidRule`, exposes `inject()`, and closes every resource
   registered with `closeAfterTest`, such as each in-memory `AppDatabase` the test built.
 
+**Dependency analysis** — `./gradlew buildHealth` runs in the `check-formatting` CI job. It fails on unused
+dependencies, incorrect configurations and unused annotation processors; other advice warns. The `dependencyAnalysis {}`
+block in the root `build.gradle.kts` holds the facade bundles. Each bundle names its primary and only the transitive
+internals the report lists, so it never masks a declared artifact. Report:
+`build/reports/dependency-analysis/build-health-report.txt`.
+
 **Pre-commit hook** — blocks commits with formatting violations. Opt in once per clone:
 
 ```bash
@@ -149,7 +155,7 @@ after touching `libs.versions.toml` or a dependency block.
 **After any change** — run the full local CI suite before declaring work done:
 
 ```bash
-./gradlew spotlessCheck detekt lintDebug testDebugUnitTest koverVerifyDebug koverHtmlReportDebug verifyRoborazziDebug pixel9Api35DebugAndroidTest assembleRelease
+./gradlew spotlessCheck detekt buildHealth lintDebug testDebugUnitTest koverVerifyDebug koverHtmlReportDebug verifyRoborazziDebug pixel9Api35DebugAndroidTest assembleRelease
 ```
 
 If `spotlessCheck` fails, fix with `./gradlew spotlessApply` then re-run. If a screenshot golden mismatch is expected
