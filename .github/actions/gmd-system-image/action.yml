@@ -1,0 +1,85 @@
+name: GMD system image
+description: >-
+  Restores the GMD system image and the emulator from the Actions cache, or installs them
+  with retries, so a corrupt or truncated download from dl.google.com doesn't fail the GMD setup task.
+  Only runs on the default branch save the cache, because PR-scoped entries are unreadable to other PRs.
+
+inputs:
+  api-level:
+    description: API level of the managed device
+    default: '35'
+  source:
+    description: System image source as named in the SDK package (default, google_apis, ...)
+    default: default
+  abi:
+    description: ABI of the managed device
+    default: x86_64
+
+runs:
+  using: composite
+  steps:
+    # The inputs must match the pixel9Api35 device in the root build.gradle.kts. The runner image
+    # ships no emulator, and GMD setup fails on a restored image without it.
+    - name: Resolve SDK paths
+      id: sdk
+      shell: bash
+      env:
+        PACKAGE: system-images;android-${{ inputs.api-level }};${{ inputs.source }};${{ inputs.abi }}
+        KEY_PREFIX: gmd-system-image-android-${{ inputs.api-level }}-${{ inputs.source }}-${{ inputs.abi }}
+      run: |
+        agp=$(sed -nE 's/^agp[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' gradle/libs.versions.toml | head -n1)
+        [ -n "$agp" ] || { echo "::error::agp version not found in gradle/libs.versions.toml"; exit 1; }
+        {
+          echo "package=$PACKAGE"
+          echo "image=$ANDROID_HOME/$(echo "$PACKAGE" | tr ';' '/')"
+          echo "emulator=$ANDROID_HOME/emulator"
+          echo "key=$KEY_PREFIX-agp-$agp"
+        } >> "$GITHUB_OUTPUT"
+    - name: Restore system image and emulator
+      id: cache
+      uses: actions/cache/restore@v6
+      with:
+        path: |
+          ${{ steps.sdk.outputs.image }}
+          ${{ steps.sdk.outputs.emulator }}
+        key: ${{ steps.sdk.outputs.key }}
+    - name: Check restored files
+      id: restored
+      shell: bash
+      env:
+        IMAGE_PATH: ${{ steps.sdk.outputs.image }}
+        EMULATOR_PATH: ${{ steps.sdk.outputs.emulator }}
+        CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+      run: |
+        if [ "$CACHE_HIT" = true ] \
+          && [ -f "$IMAGE_PATH/package.xml" ] && [ -f "$EMULATOR_PATH/package.xml" ]; then
+          echo "complete=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "complete=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Install system image and emulator
+      if: steps.restored.outputs.complete != 'true'
+      shell: bash
+      env:
+        PACKAGE: ${{ steps.sdk.outputs.package }}
+        IMAGE_PATH: ${{ steps.sdk.outputs.image }}
+        EMULATOR_PATH: ${{ steps.sdk.outputs.emulator }}
+      run: |
+        sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+        for attempt in 1 2 3; do
+          "$sdkmanager" --install "$PACKAGE" emulator < /dev/null \
+            && [ -f "$IMAGE_PATH/package.xml" ] && [ -f "$EMULATOR_PATH/package.xml" ] && exit 0
+          echo "::warning::SDK install attempt $attempt failed"
+          [ "$attempt" -lt 3 ] && sleep $((attempt * 15))
+        done
+        echo "::error::SDK install failed after 3 attempts"
+        exit 1
+    # Pull request and merge queue refs cannot share cache entries.
+    - name: Save system image and emulator
+      if: steps.restored.outputs.complete != 'true' && github.ref == 'refs/heads/main'
+      uses: actions/cache/save@v6
+      with:
+        path: |
+          ${{ steps.sdk.outputs.image }}
+          ${{ steps.sdk.outputs.emulator }}
+        key: ${{ steps.sdk.outputs.key }}

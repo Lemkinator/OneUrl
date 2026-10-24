@@ -32,6 +32,8 @@ jobs:
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Set up GMD system image
+        uses: ./.github/actions/gmd-system-image
       # automaticGenerationDuringBuild is unconditional for the release variant, so assembleRelease
       # itself is what exercises the real generator end to end - this is the same command the
       # release workflow runs, making this job an early-warning rehearsal for it.

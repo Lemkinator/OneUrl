@@ -70,6 +70,10 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Set up GMD system image
+        if: steps.version_info.outputs.changed == 'true'
+        uses: ./.github/actions/gmd-system-image
+
       - name: Setup GMD
         if: steps.version_info.outputs.changed == 'true'
         run: chmod +x ./gradlew && ./gradlew :benchmarks:pixel9Api35Setup -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
