@@ -37,6 +37,8 @@ Invalid URL.
 URL is too long.
 You are adding URLs too fast, please slow down.
 Enter your URL.
+URL is not responding. (the long URL does not answer, e.g. a 404 page)
+429 Too Many Requests (Cloudflare HTML page)
 
  */
 object Murl : ShortURLProvider {
@@ -142,7 +144,7 @@ object Murl : ShortURLProvider {
 
             else -> {
                 Log.e(tag, "error, response does not start with https://murl.com/, response: $response")
-                errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
+                errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, response))
             }
         }
     }
@@ -164,6 +166,7 @@ object Murl : ShortURLProvider {
             when {
                 error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                 statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> errorCallback(GenerateURLError.RateLimitExceeded)
                 statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
                 data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                 data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)

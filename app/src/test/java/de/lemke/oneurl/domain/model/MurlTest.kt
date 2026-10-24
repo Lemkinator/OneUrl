@@ -68,13 +68,53 @@ class MurlTest {
     }
 
     @Test
-    fun `create request falls back to Unknown for an unrecognized response`() {
+    fun `create request maps too many requests to RateLimitExceeded`() {
+        var error: GenerateURLError? = null
+        val req = Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverError(VolleyError(NetworkResponse(429, "<html>".toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.RateLimitExceeded
+    }
+
+    @Test
+    fun `create request passes murl's not-responding text on as a Custom error`() {
+        var error: GenerateURLError? = null
+        val req = Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("URL is not responding")
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "URL is not responding")
+    }
+
+    @Test
+    fun `create request passes an unrecognized response on as a Custom error`() {
         var error: GenerateURLError? = null
         val req = Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.deliverResponse("something unexpected")
 
-        error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "something unexpected")
+    }
+
+    @Test
+    fun `create request passes an unrecognized HTML response on unchanged`() {
+        var error: GenerateURLError? = null
+        val req = Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("<html><body>Maintenance</body></html>")
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "<html><body>Maintenance</body></html>")
+    }
+
+    @Test
+    fun `create request passes an empty response on as a Custom error`() {
+        var error: GenerateURLError? = null
+        val req = Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("")
+
+        error shouldBe GenerateURLError.Custom(HttpStatusCode.OK, "")
     }
 
     @Test
