@@ -43,6 +43,53 @@ spotless {
     }
 }
 
+dependencyAnalysis {
+    issues {
+        all {
+            onUnusedDependencies { severity("fail") }
+            onIncorrectConfiguration { severity("fail") }
+            onUnusedAnnotationProcessors { severity("fail") }
+            onUsedTransitiveDependencies {
+                severity("warn")
+                exclude("com.google.guava:guava")
+            }
+            onRuntimeOnly { severity("warn") }
+            onCompileOnly { severity("warn") }
+            onRedundantPlugins { severity("warn") }
+            onDuplicateClassWarnings { severity("warn") }
+        }
+    }
+    structure {
+        bundle("hilt") {
+            primary(libs.hilt.android)
+            includeDependency("com.google.dagger:dagger")
+            includeDependency("com.google.dagger:hilt-core")
+            includeDependency("javax.inject:javax.inject")
+        }
+        bundle("oneui") {
+            primary(libs.oneui.design)
+            include("^sesl[.].*")
+        }
+        bundle("leakcanary") {
+            primary(libs.leakcanary)
+            includeDependency("com.squareup.leakcanary:leakcanary-android-core")
+            includeDependency("com.squareup.leakcanary:leakcanary-object-watcher-android-core")
+        }
+        bundle("kotest") {
+            primary(libs.kotest.runner.junit5)
+            include("^io[.]kotest:kotest-(assertions-shared|common|framework-engine|runner-junit5)(-jvm|-android)?$")
+        }
+        bundle("mockk") {
+            primary(libs.mockk)
+            include("^io[.]mockk:mockk(-core|-dsl)?(-jvm)?$")
+        }
+        bundle("robolectric") {
+            primary(libs.robolectric)
+            include("^org[.]robolectric:(annotations|shadows-framework)$")
+        }
+    }
+}
+
 /**
  * Converts a camelCase or mixedCase string to ENV_VAR_STYLE (uppercase with underscores).
  * Example: githubAccessToken -> GITHUB_ACCESS_TOKEN

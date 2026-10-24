@@ -26,6 +26,7 @@ plugins {
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.detekt)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.kover)
     alias(libs.plugins.android.junit)
     alias(libs.plugins.baselineprofile)
