@@ -180,6 +180,15 @@ class AddURLErrorDialogsTest {
     }
 
     @Test
+    fun `configureFor Custom shows the generic message instead of an HTML body under status 200`() {
+        val body = "<html><body>Maintenance</body></html>"
+        val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 200, customMessage = body))
+
+        dialog.titleText() shouldBe "Error (HTTP 200)"
+        dialog.messageText() shouldBe withProviderHint(UNKNOWN_MESSAGE)
+    }
+
+    @Test
     fun `configureFor Custom shows the status message instead of a JSON object body`() {
         val dialog = dialogFor(themedActivity(), GenerateURLError.Custom(statusCode = 400, customMessage = """{"error":"invalid_url"}"""))
 

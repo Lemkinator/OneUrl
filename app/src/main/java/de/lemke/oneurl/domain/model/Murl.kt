@@ -142,10 +142,6 @@ object Murl : ShortURLProvider {
                 errorCallback(GenerateURLError.RateLimitExceeded)
             }
 
-            response.contains("URL is not responding", true) -> {
-                errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, response.trim()))
-            }
-
             else -> {
                 Log.e(tag, "error, response does not start with https://murl.com/, response: $response")
                 errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, response))
