@@ -14,7 +14,7 @@ permissions:
 jobs:
   check-formatting:
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -29,8 +29,8 @@ jobs:
           java-version: '25.0.4+101.0.LTS'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Run formatting checks
-        run: chmod +x ./gradlew && ./gradlew spotlessCheck detekt --stacktrace
+      - name: Run formatting and dependency checks
+        run: chmod +x ./gradlew && ./gradlew spotlessCheck detekt buildHealth --continue --stacktrace
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
@@ -40,6 +40,12 @@ jobs:
         with:
           name: detekt-report
           path: '**/build/reports/detekt/'
+      - name: Upload dependency analysis report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-analysis-report
+          path: build/reports/dependency-analysis/build-health-report.txt
 
   lint:
     runs-on: ubuntu-26.04
