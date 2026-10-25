@@ -19,6 +19,7 @@ plugins {
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.detekt)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.dependency.analysis)
 }
 
 android {
