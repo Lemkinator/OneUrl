@@ -23,13 +23,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
- * Keeps [urls] in memory, newest first, with the replace-on-add and update-in-place rules of [DefaultURLRepository].
+ * Keeps [urls] in memory, latest `added` first and the newer insert first among equals, with the replace-on-add and update-in-place rules of [DefaultURLRepository].
  * Like Room, [observeURLs] emits after every write that touches a row, even when the rows stay equal.
  */
 internal class FakeURLRepository(
     urls: List<URL> = emptyList(),
 ) : URLRepository {
-    private val rows = MutableSharedFlow<List<URL>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply { tryEmit(urls) }
+    private val rows =
+        MutableSharedFlow<List<URL>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
+            tryEmit(urls.newestAddedFirst())
+        }
     val urls: List<URL> get() = rows.replayCache.single()
 
     override fun observeURLs(): Flow<List<URL>> = rows
@@ -42,7 +45,7 @@ internal class FakeURLRepository(
     ): List<URL> = urls.filter { it.shortURLProvider.name == provider.name && it.longURL == longURL }
 
     override suspend fun addURL(url: URL) {
-        rows.emit(listOf(url) + urls.filterNot { it.shortURL == url.shortURL })
+        rows.emit((listOf(url) + urls.filterNot { it.shortURL == url.shortURL }).newestAddedFirst())
     }
 
     override suspend fun updateURL(url: URL) = updateURLs(listOf(url))

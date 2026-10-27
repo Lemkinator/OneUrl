@@ -25,7 +25,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Stores the shortened URLs; lists return the newest URL first. */
+/** Stores the shortened URLs; lists return the URL with the latest `added` instant first, the newer insert first among equals. */
 interface URLRepository {
     fun observeURLs(): Flow<List<URL>>
 
@@ -52,7 +52,7 @@ interface URLRepository {
 class DefaultURLRepository @Inject constructor(
     private val urlDao: URLDao,
 ) : URLRepository {
-    override fun observeURLs(): Flow<List<URL>> = urlDao.observeAll().map { it.map(::urlFromDb) }
+    override fun observeURLs(): Flow<List<URL>> = urlDao.observeAll().map { rows -> rows.map(::urlFromDb).newestAddedFirst() }
 
     override suspend fun getURL(shortURL: String): URL? = urlDao.getURL(shortURL)?.let(::urlFromDb)
 
@@ -71,3 +71,5 @@ class DefaultURLRepository @Inject constructor(
 
     override suspend fun deleteURLs(urls: List<URL>) = urlDao.delete(urls.map(::urlToDb))
 }
+
+internal fun List<URL>.newestAddedFirst(): List<URL> = sortedByDescending { it.added.toInstant() }

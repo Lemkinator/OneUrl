@@ -63,6 +63,47 @@ abstract class URLRepositoryContract {
         }
 
     @Test
+    fun `observeURLs lists the newest added first, whatever the insert order`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val oldest = url("https://da.gd/oldest", added = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val middle = url("https://da.gd/middle", added = ZonedDateTime.of(2024, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val newest = url("https://da.gd/newest", added = ZonedDateTime.of(2024, 12, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+
+            repository.addURL(middle)
+            repository.addURL(newest)
+            repository.addURL(oldest)
+
+            repository.stored() shouldBe listOf(newest, middle, oldest)
+        }
+
+    @Test
+    fun `observeURLs compares added as instants across offsets`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val earlier = url("https://da.gd/earlier", added = ZonedDateTime.parse("2026-10-27T10:00+02:00"))
+            val later = url("https://da.gd/later", added = ZonedDateTime.parse("2026-10-27T09:30+01:00"))
+
+            repository.addURL(later)
+            repository.addURL(earlier)
+
+            repository.stored() shouldBe listOf(later, earlier)
+        }
+
+    @Test
+    fun `observeURLs keeps the newer insert first for equal added instants`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val utc = url("https://da.gd/utc", added = ZonedDateTime.parse("2026-10-27T09:00Z"))
+            val offset = url("https://da.gd/offset", added = ZonedDateTime.parse("2026-10-27T10:00+01:00"))
+
+            repository.addURL(utc)
+            repository.addURL(offset)
+
+            repository.stored() shouldBe listOf(offset, utc)
+        }
+
+    @Test
     fun `getURL by short url returns the stored url or null`() =
         runTest(dispatcher) {
             val repository = createRepository()
@@ -246,6 +287,7 @@ abstract class URLRepositoryContract {
             shortURL: String,
             longURL: String = LONG_URL,
             provider: ShortURLProvider = Dagd,
+            added: ZonedDateTime = ZonedDateTime.of(2024, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC),
         ) = URL(
             shortURL = shortURL,
             longURL = longURL,
@@ -253,7 +295,7 @@ abstract class URLRepositoryContract {
             favorite = false,
             title = "title",
             description = "description",
-            added = ZonedDateTime.of(2024, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC),
+            added = added,
         )
     }
 }
