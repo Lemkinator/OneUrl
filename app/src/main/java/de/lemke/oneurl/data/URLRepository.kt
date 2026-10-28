@@ -21,6 +21,7 @@ import de.lemke.oneurl.data.database.urlFromDb
 import de.lemke.oneurl.data.database.urlToDb
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.URL
+import java.time.chrono.ChronoZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -59,7 +60,7 @@ class DefaultURLRepository @Inject constructor(
     override suspend fun getURL(
         provider: ShortURLProvider,
         longURL: String,
-    ): List<URL> = urlDao.getURL(provider.name, longURL).map(::urlFromDb)
+    ): List<URL> = urlDao.getURL(provider.name, longURL).map(::urlFromDb).newestAddedFirst()
 
     override suspend fun addURL(url: URL) = urlDao.insert(urlToDb(url))
 
@@ -72,6 +73,6 @@ class DefaultURLRepository @Inject constructor(
     override suspend fun deleteURLs(urls: List<URL>) = urlDao.delete(urls.map(::urlToDb))
 }
 
-private val newestAddedFirstOrder = compareByDescending<URL> { it.added.toEpochSecond() }.thenByDescending { it.added.nano }
+internal val newestAddedFirstOrder: Comparator<URL> = compareByDescending(ChronoZonedDateTime.timeLineOrder()) { it.added }
 
 internal fun List<URL>.newestAddedFirst(): List<URL> = sortedWith(newestAddedFirstOrder)
