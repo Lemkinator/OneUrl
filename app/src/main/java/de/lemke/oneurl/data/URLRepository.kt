@@ -36,7 +36,7 @@ interface URLRepository {
         longURL: String,
     ): List<URL>
 
-    /** Stores [url]; a stored URL with the same short URL is replaced, and [url] becomes the newest. */
+    /** Stores [url]; a stored URL with the same short URL is replaced, and [url] lists first among URLs with an equal `added` instant. */
     suspend fun addURL(url: URL)
 
     /** Replaces the stored URL with the short URL of [url] in place; stores nothing for an unknown short URL. */
@@ -72,4 +72,6 @@ class DefaultURLRepository @Inject constructor(
     override suspend fun deleteURLs(urls: List<URL>) = urlDao.delete(urls.map(::urlToDb))
 }
 
-internal fun List<URL>.newestAddedFirst(): List<URL> = sortedByDescending { it.added.toInstant() }
+private val newestAddedFirstOrder = compareByDescending<URL> { it.added.toEpochSecond() }.thenByDescending { it.added.nano }
+
+internal fun List<URL>.newestAddedFirst(): List<URL> = sortedWith(newestAddedFirstOrder)

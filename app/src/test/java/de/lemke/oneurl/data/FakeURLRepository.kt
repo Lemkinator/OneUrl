@@ -53,7 +53,7 @@ internal class FakeURLRepository(
     override suspend fun updateURLs(urls: List<URL>) {
         val updates = urls.associateBy { it.shortURL }
         val stored = this.urls
-        if (stored.any { it.shortURL in updates }) rows.emit(stored.map { updates[it.shortURL] ?: it })
+        if (stored.any { it.shortURL in updates }) rows.emit(stored.map { updates[it.shortURL] ?: it }.newestAddedFirst())
     }
 
     override suspend fun deleteURL(url: URL) = deleteURLs(listOf(url))
