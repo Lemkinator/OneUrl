@@ -23,7 +23,7 @@ import com.android.volley.ParseError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
-import de.lemke.commonutils.ui.utils.urlEncodeAmpersand
+import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.VolleyQueue
@@ -32,60 +32,41 @@ import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
 
 /*
-https://spoo.me/api
+https://spoo.me/docs/api-reference/url-shortening/create-shortened-url.md
 example:
-https://spoo.me/ {url: "https://example.com"}
+POST https://spoo.me/api/v1/shorten {"long_url": "https://example.com", "alias": "abc"}
+No API key. Anonymous limit: 20 requests per minute and 200 per day.
 
-Spoo.me API has a rate limit of 5 requests per minute, 50 requests per hour and 500 requests per day for the POST /, POST /emoji endpoints.
-If you exceed this limit, you will receive a 429 status code in response to your requests.
-
-response:
+response (201):
 {
-    "short_url": "https://spoo.me/NSPBXZ"
+    "alias": "abc",
+    "short_url": "https://spoo.me/abc",
+    "long_url": "https://example.com"
 }
 
-Errors:
-UrlError	    400	The request does not contain the long URL or contains an invalid url.
-            The url must contain a valid protocol like https, http and must follow rfc-1034 & rfc-2727
-AliasError	    400	The User requested Alias is invalid or already taken.
-            The alias must be alphanumeric & must be under 15 chars, anything beyond 15 chars would be stripped by the API
-PasswordError	400	The user entered password must be atleast 8 characters long, must contain atleast a letter and a number
-            and a special character either '@' or '.' and cannot be consecutive.
-MaxClicksError	400	The user entered max-clicks is not a positive integer.
+Errors ({"error", "code", "field"}):
+400/422 field "long_url"  {"error":"URL is not allowed or invalid","code":"validation_error","field":"long_url"}
+400/422 field "alias"     {"error":"alias: Value error, alphanumeric alias must be 3-16 characters",
+                          "code":"validation_error","field":"alias"}
+409                       {"error":"Alias is already in use","code":"conflict"}
+429                       rate limit exceeded
 
-{
-    "AliasError": "Invalid Alias",
-    "alias": "ö"
-}
-{
-    "UrlError": "Invalid URL, URL must have a valid protocol and must follow rfc_1034 & rfc_2728 patterns"
-}
+Emoji links are created with an emoji-only alias. Only the legacy POST /emoji generates random emoji,
+so the emoji provider uses it when no alias is given. It answers with an http:// short link and
+{"UrlError": "..."} for an invalid URL. Legacy limit: 5 per minute and 50 per day.
 
-emoji:
-Errors:
-UrlError	    400	The request does not contain the long URL or contains an invalid url.
-            The url must contain a valid protocol like https, http and must follow rfc-1034 & rfc-2727
-EmojiError	    400	The User requested Emoji sequence is invalid or already taken.
-            The emoji sequence must contain only emojies, no other character is allowed.
-PasswordError	400	The user entered password must be atleast 8 characters long, must contain atleast a letter and a number
-            and a special character either '@' or '.' and cannot be consecutive.
-MaxClicksError	400	The user entered max-clicks is not a positive integer.
-{
-  "EmojiError": "Invalid emoji"
-}
-{
-  "EmojiError": "Emoji already exists"
-}
-
-
+Click count: GET https://spoo.me/api/v1/public/stats/{alias}
+{"stats": {"summary": {"total_clicks": 0}}}
+Reads links created by either API generation, unlike the legacy POST /stats/{alias}.
  */
 sealed class Spoome : ShortURLProvider {
     final override val group = "spoo.me, spoo.me (emoji)"
     final override val baseURL = "https://spoo.me"
+    final override val apiURL = "$baseURL/api/v1/shorten"
 
     override fun getAnalyticsURL(alias: String) = "$baseURL/stats/$alias"
 
-    override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
+    override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
     override fun getURLClickCount(
         queue: VolleyQueue,
@@ -93,17 +74,17 @@ sealed class Spoome : ShortURLProvider {
         callback: (clicks: Int?) -> Unit,
     ) {
         val tag = "GetURLVisitCount_$name"
-        val requestURL = getAnalyticsURL(url.alias)
+        val requestURL = "$baseURL/api/v1/public/stats/${url.alias.urlEncode()}"
         Log.d(tag, "start request: $url")
         queue.add(
             JsonObjectRequest(
-                Request.Method.POST,
+                Request.Method.GET,
                 requestURL,
                 null,
                 { response ->
                     try {
                         Log.d(tag, "response: $response")
-                        val clicks = response.getInt("total-clicks")
+                        val clicks = response.getJSONObject("stats").getJSONObject("summary").getInt("total_clicks")
                         Log.d(tag, "clicks: $clicks")
                         callback(clicks)
                     } catch (e: JSONException) {
@@ -126,18 +107,23 @@ sealed class Spoome : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
+        val body = JSONObject().put("long_url", longURL)
+        if (alias.isNotBlank()) body.put("alias", alias)
+        return createRequest(apiURL, body, successCallback, errorCallback)
+    }
+
+    protected fun createRequest(
+        requestURL: String,
+        body: JSONObject?,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ): JsonObjectRequest {
         val tag = "SpoomeCreateRequest_$name"
-        val url =
-            if (this is Default) {
-                "$apiURL?alias=$alias&url=$longURL"
-            } else {
-                "$apiURL?emojies=$alias&url=$longURL"
-            }
-        Log.d(tag, "start request: $url")
+        Log.d(tag, "start request: $requestURL")
         return object : JsonObjectRequest(
             Method.POST,
-            url,
-            null,
+            requestURL,
+            body,
             { response -> handleResponse(tag, response, successCallback, errorCallback) },
             { error -> handleError(tag, error, errorCallback) },
         ) {
@@ -155,7 +141,7 @@ sealed class Spoome : ShortURLProvider {
         val shortURL = response.optStringOrNull("short_url")?.trim()
         if (shortURL != null) {
             Log.d(tag, "shortURL: $shortURL")
-            successCallback(shortURL)
+            successCallback("https://" + shortURL.removePrefix("http://").removePrefix("https://"))
         } else {
             Log.e(tag, "error: response does not contain short_url")
             errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
@@ -186,20 +172,20 @@ sealed class Spoome : ShortURLProvider {
                 errorCallback(GenerateURLError.Unknown())
             }
 
-            response?.has("UrlError") == true -> {
+            statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
+                errorCallback(GenerateURLError.RateLimitExceeded)
+            }
+
+            statusCode == HttpStatusCode.CONFLICT -> {
+                errorCallback(GenerateURLError.AliasAlreadyExists)
+            }
+
+            response?.has("UrlError") == true || response?.optString("field") == "long_url" -> {
                 errorCallback(GenerateURLError.InvalidURL)
             }
 
-            response?.has("AliasError") == true -> {
-                handleAliasError(response.optStringOrNull("AliasError").orEmpty(), statusCode, errorCallback)
-            }
-
-            response?.has("EmojiError") == true -> {
-                handleEmojiError(response.optStringOrNull("EmojiError").orEmpty(), statusCode, errorCallback)
-            }
-
-            statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
-                errorCallback(GenerateURLError.RateLimitExceeded)
+            response?.optString("field") == "alias" -> {
+                errorCallback(GenerateURLError.InvalidAlias)
             }
 
             data.isNullOrBlank() || response == null -> {
@@ -212,30 +198,6 @@ sealed class Spoome : ShortURLProvider {
         }
     }
 
-    private fun handleAliasError(
-        aliasError: String,
-        statusCode: Int,
-        errorCallback: (error: GenerateURLError) -> Unit,
-    ) {
-        when {
-            aliasError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
-            aliasError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
-            else -> errorCallback(GenerateURLError.Custom(statusCode, aliasError))
-        }
-    }
-
-    private fun handleEmojiError(
-        emojiError: String,
-        statusCode: Int,
-        errorCallback: (error: GenerateURLError) -> Unit,
-    ) {
-        when {
-            emojiError.contains("already exists", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
-            emojiError.contains("invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
-            else -> errorCallback(GenerateURLError.Custom(statusCode, emojiError))
-        }
-    }
-
     private companion object {
         const val MAX_ALIAS_LENGTH_DEFAULT = 15
         const val MAX_ALIAS_LENGTH_EMOJI = 30 // returns invalid alias if more than 30
@@ -243,7 +205,6 @@ sealed class Spoome : ShortURLProvider {
 
     object Default : Spoome() {
         override val name = "spoo.me"
-        override val apiURL = "https://spoo.me/"
         override val aliasConfig =
             object : AliasConfig {
                 override val minAliasLength = 0
@@ -275,7 +236,6 @@ sealed class Spoome : ShortURLProvider {
 
     object Emoji : Spoome() {
         override val name = "spoo.me (emoji)"
-        override val apiURL = "https://spoo.me/emoji"
         override val aliasConfig =
             object : AliasConfig {
                 override val minAliasLength = 0
@@ -284,6 +244,19 @@ sealed class Spoome : ShortURLProvider {
 
                 // one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
                 override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+"))
+            }
+
+        override fun getCreateRequest(
+            queue: VolleyQueue,
+            longURL: String,
+            alias: String,
+            successCallback: (shortURL: String) -> Unit,
+            errorCallback: (error: GenerateURLError) -> Unit,
+        ): JsonObjectRequest =
+            if (alias.isBlank()) {
+                createRequest("$baseURL/emoji?url=${longURL.urlEncode()}", null, successCallback, errorCallback)
+            } else {
+                super.getCreateRequest(queue, longURL, alias, successCallback, errorCallback)
             }
 
         override fun getTipsCardTitleAndInfo(context: Context) =

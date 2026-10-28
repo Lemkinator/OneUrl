@@ -20,6 +20,7 @@ import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
+import com.android.volley.Request
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
@@ -43,57 +44,77 @@ class SpoomeEmojiTest {
     private val longURL = "https://example.com"
 
     @Test
-    fun `succeeds with the trimmed short url when the response contains one`() {
-        var result: String? = null
-        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { result = it }, { fail("unexpected error: $it") })
+    fun `create request with an alias posts it as JSON to the v1 endpoint`() {
+        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀😁", { }, { fail("unexpected error") })
 
-        req.deliverResponse(JSONObject().put("short_url", " https://spoo.me/emoji/abc "))
-
-        result shouldBe "https://spoo.me/emoji/abc"
+        req.method shouldBe Request.Method.POST
+        req.url shouldBe "https://spoo.me/api/v1/shorten"
+        val body = JSONObject(String(req.body, Charsets.UTF_8))
+        body.getString("long_url") shouldBe longURL
+        body.getString("alias") shouldBe "😀😁"
     }
 
     @Test
-    fun `error body with an already-exists EmojiError maps to AliasAlreadyExists`() {
+    fun `create request without an alias uses the legacy emoji endpoint`() {
+        val req = Spoome.Emoji.getCreateRequest(queue, "https://example.com?a=1&b=2", "", { }, { fail("unexpected error") })
+
+        req.method shouldBe Request.Method.POST
+        req.url shouldBe "https://spoo.me/emoji?url=https%3A%2F%2Fexample.com%3Fa%3D1%26b%3D2"
+        req.body shouldBe null
+        req.headers["Accept"] shouldBe "application/json"
+    }
+
+    @Test
+    fun `legacy emoji response with an http short url succeeds with the https one`() {
+        var result: String? = null
+        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverResponse(JSONObject("""{"short_url":"http://spoo.me/🏹🕝🕙","domain":"spoo.me","original_url":"https://example.com"}"""))
+
+        result shouldBe "https://spoo.me/🏹🕝🕙"
+    }
+
+    @Test
+    fun `legacy emoji UrlError body maps to InvalidURL`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { fail("unexpected success") }, { error = it })
-        val body = """{"EmojiError":"Emoji already exists"}"""
+        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+        val body = """{"UrlError":"Invalid URL, URL must have a valid protocol"}"""
 
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.InvalidURL
+    }
+
+    @Test
+    fun `succeeds with the short url when the response contains one`() {
+        var result: String? = null
+        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverResponse(JSONObject().put("short_url", " https://spoo.me/😀 "))
+
+        result shouldBe "https://spoo.me/😀"
+    }
+
+    @Test
+    fun `409 status maps to AliasAlreadyExists`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { fail("unexpected success") }, { error = it })
+        val body = """{"error":"Alias is already in use","code":"conflict"}"""
+
+        req.deliverError(VolleyError(NetworkResponse(409, body.toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.AliasAlreadyExists
     }
 
     @Test
-    fun `error body with a JSON null EmojiError falls back to Custom with an empty message`() {
+    fun `error body for field alias maps to InvalidAlias`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { fail("unexpected success") }, { error = it })
-        val body = """{"EmojiError":null}"""
-
-        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
-
-        error shouldBe GenerateURLError.Custom(400, "")
-    }
-
-    @Test
-    fun `error body with an invalid EmojiError maps to InvalidAlias`() {
-        var error: GenerateURLError? = null
-        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { fail("unexpected success") }, { error = it })
-        val body = """{"EmojiError":"Invalid emoji"}"""
+        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "a😀", { fail("unexpected success") }, { error = it })
+        val body = """{"error":"emoji alias must be 1-15 emoji","code":"validation_error","field":"alias"}"""
 
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.InvalidAlias
-    }
-
-    @Test
-    fun `error body with an unrecognized EmojiError falls back to Custom`() {
-        var error: GenerateURLError? = null
-        val req = Spoome.Emoji.getCreateRequest(queue, longURL, "😀", { fail("unexpected success") }, { error = it })
-        val body = """{"EmojiError":"something else entirely"}"""
-
-        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
-
-        error shouldBe GenerateURLError.Custom(400, "something else entirely")
     }
 
     @Test
