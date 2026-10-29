@@ -207,7 +207,7 @@ class ProviderInfoBottomSheetTest {
         withBottomSheet(Tly.Default) { fragment ->
             viewOf<View>(fragment, R.id.providerBottomSheetTlyKey).isVisible.shouldBeTrue()
             viewOf<TextView>(fragment, R.id.providerBottomSheetTlyKeyInfo).text.toString() shouldBe
-                "A key needs a T.LY plan with API access"
+                "You can add your own API key. It needs a T.LY plan with API access."
         }
     }
 
