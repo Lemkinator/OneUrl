@@ -50,7 +50,7 @@
     <string name="zwsim_zws">The URL shortener \"zws.im\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"zws.im/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard zws.im page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
     <string name="tly_info">This URL shortener utilizes multiple domains for the same service, meaning it may generate short URLs with different domain names (e.g., tinyurl.com). Therefore, use this service with caution.</string>
     <string name="tly_key_info">A key needs a T.LY plan with API access</string>
-    <string name="tly_key_hint">T.LY key (optional)</string>
+    <string name="tly_key_hint">T.LY key (Optional)</string>
     <string name="tly_key_get">Get a key from T.LY</string>
     <string name="shorturlat_info">The URL shortener shorturl.at does not offer an API and is therefore not as reliable as other providers in this app. In addition, links with less than one click per month are deactivated. Therefore, use this service with caution.</string>
 
