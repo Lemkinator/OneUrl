@@ -16,9 +16,11 @@
 
 package de.lemke.oneurl.data
 
+import com.android.volley.Request
 import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.URL
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -62,8 +64,31 @@ class DefaultShortURLClient @Inject constructor(
 
     override suspend fun visitCount(url: URL): Int? =
         suspendCancellableCoroutine { continuation ->
-            url.shortURLProvider.getURLClickCount(queue, url) { count ->
+            val requests = CancelableQueue(queue)
+            url.shortURLProvider.getURLClickCount(requests, url) { count ->
                 if (continuation.isActive) continuation.resume(count)
             }
+            continuation.invokeOnCancellation { requests.cancelAll() }
         }
+}
+
+/** Forwards to [delegate] and remembers the requests, because a provider hands back no handle to cancel its count request. */
+private class CancelableQueue(
+    private val delegate: VolleyQueue,
+) : VolleyQueue by delegate {
+    private val requests = ConcurrentLinkedQueue<Request<*>>()
+
+    @Volatile
+    private var canceled = false
+
+    override fun add(request: Request<*>) {
+        requests += request
+        if (canceled) request.cancel()
+        delegate.add(request)
+    }
+
+    fun cancelAll() {
+        canceled = true
+        requests.forEach { it.cancel() }
+    }
 }

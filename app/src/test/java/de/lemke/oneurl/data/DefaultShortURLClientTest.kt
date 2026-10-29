@@ -45,7 +45,7 @@ class DefaultShortURLClientTest {
     /** Answers each create request through [answer] and each visit count through [visitCount]. */
     private class TestProvider(
         private val answer: (success: (String) -> Unit, error: (GenerateURLError) -> Unit) -> Unit = { _, _ -> },
-        private val visitCount: ((Int?) -> Unit) -> Unit = {},
+        private val visitCount: (VolleyQueue, (Int?) -> Unit) -> Unit = { _, _ -> },
     ) : ShortURLProvider {
         override val name = "test"
         override val baseURL = "https://test.example"
@@ -67,7 +67,7 @@ class DefaultShortURLClientTest {
             queue: VolleyQueue,
             url: URL,
             callback: (clicks: Int?) -> Unit,
-        ) = visitCount(callback)
+        ) = visitCount(queue, callback)
     }
 
     private fun url(provider: ShortURLProvider) =
@@ -159,24 +159,57 @@ class DefaultShortURLClientTest {
     @Test
     fun `visitCount returns the count the provider reports`() =
         runTest {
-            client.visitCount(url(TestProvider(visitCount = { it(42) }))) shouldBe 42
+            client.visitCount(url(TestProvider(visitCount = { _, report -> report(42) }))) shouldBe 42
         }
 
     @Test
     fun `visitCount returns null when the provider reports no count`() =
         runTest {
-            client.visitCount(url(TestProvider(visitCount = { it(null) }))) shouldBe null
+            client.visitCount(url(TestProvider(visitCount = { _, report -> report(null) }))) shouldBe null
         }
 
     @Test
     fun `visitCount keeps the first count of a provider that reports twice`() =
         runTest {
             val provider =
-                TestProvider(visitCount = {
-                    it(1)
-                    it(2)
+                TestProvider(visitCount = { _, report ->
+                    report(1)
+                    report(2)
                 })
 
             client.visitCount(url(provider)) shouldBe 1
+        }
+
+    @Test
+    fun `cancelling visitCount cancels the queued request`() =
+        runTest {
+            val request = StringRequest(Request.Method.GET, "https://test.example/stats", {}, {})
+            val provider = TestProvider(visitCount = { queue, _ -> queue.add(request) })
+            val job = launch { client.visitCount(url(provider)) }
+            runCurrent()
+            queue.added.single() shouldBe request
+            request.isCanceled shouldBe false
+
+            job.cancel()
+            runCurrent()
+
+            request.isCanceled shouldBe true
+        }
+
+    @Test
+    fun `a request queued after visitCount was canceled is canceled at once`() =
+        runTest {
+            lateinit var providerQueue: VolleyQueue
+            val provider = TestProvider(visitCount = { queue, _ -> providerQueue = queue })
+            val job = launch { client.visitCount(url(provider)) }
+            runCurrent()
+            job.cancel()
+            runCurrent()
+            val late = StringRequest(Request.Method.GET, "https://test.example/late", {}, {})
+
+            providerQueue.add(late)
+
+            late.isCanceled shouldBe true
+            queue.added.single() shouldBe late
         }
 }
