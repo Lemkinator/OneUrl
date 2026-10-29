@@ -109,6 +109,7 @@
     <string name="error_with_code">Fehler (Code %1$d)</string>
     <string name="error_request_rejected">Der Anbieter hat die Anfrage abgelehnt.</string>
     <string name="error_access_refused">Der Anbieter hat den Zugriff verweigert.</string>
+    <string name="error_tly_key_rejected">Dein T.LY-Schlüssel funktioniert nicht. Prüfe ihn oder entferne ihn.</string>
     <string name="error_provider_cannot_handle_requests">Dieser Anbieter kann gerade keine Anfragen bearbeiten. Möglicherweise ist er offline oder wurde eingestellt.</string>
     <string name="error_try_another_provider">Falls das Problem weiterhin besteht, wähle einen anderen Anbieter.</string>
 

@@ -22,6 +22,8 @@ import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.Tly
+import de.lemke.oneurl.domain.model.TlyApiKey
 import de.lemke.oneurl.domain.model.URL
 import io.kotest.matchers.shouldBe
 import java.time.ZoneOffset
@@ -30,6 +32,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.json.JSONObject
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -40,7 +43,8 @@ import org.robolectric.annotation.Config
 @Config(application = Application::class, sdk = [36])
 class DefaultShortURLClientTest {
     private val queue = FakeVolleyQueue()
-    private val client = DefaultShortURLClient(queue)
+    private val tlyKeys = FakeTlyKeyStore()
+    private val client = DefaultShortURLClient(queue, tlyKeys)
 
     /** Answers each create request through [answer] and each visit count through [visitCount]. */
     private class TestProvider(
@@ -142,6 +146,28 @@ class DefaultShortURLClientTest {
                 })
 
             client.create(provider, "https://example.com", "") shouldBe GenerateURLResult.Failure(GenerateURLError.RateLimitExceeded)
+        }
+
+    @Test
+    fun `create sends a t_ly link without an account while no key is stored`() =
+        runTest {
+            queue.onAdd = { it.deliverResponse(JSONObject("""{"short_url":"https://t.ly/abc"}""")) }
+
+            client.create(Tly.Default, "https://example.com", "") shouldBe GenerateURLResult.Success("https://t.ly/abc")
+
+            queue.added.single().url shouldBe "https://t.ly/api/v1/link/shorten"
+        }
+
+    @Test
+    fun `create sends a t_ly link under the stored key`() =
+        runTest {
+            tlyKeys.apiKey = TlyApiKey.ofOrNull("secret")
+            queue.onAdd = { it.deliverResponse(JSONObject("""{"short_url":"https://t.ly/abc"}""")) }
+
+            client.create(Tly.Ibitly, "https://example.com", "") shouldBe GenerateURLResult.Success("https://t.ly/abc")
+
+            queue.added.single().url shouldBe "https://api.t.ly/api/v1/link/shorten"
+            queue.added.single().headers()["authorization"] shouldBe "Bearer secret"
         }
 
     @Test

@@ -81,6 +81,7 @@ private fun simpleErrorMessageRes(error: GenerateURLError): Int =
         GenerateURLError.ServiceOffline -> R.string.error_service_offline
         GenerateURLError.RateLimitExceeded -> R.string.error_rate_limit_exceeded
         GenerateURLError.DomainNotAllowed -> R.string.error_domain_not_allowed
+        GenerateURLError.TlyKeyRejected -> R.string.error_tly_key_rejected
         else -> commonutilsR.string.commonutils_error_unknown
     }
 

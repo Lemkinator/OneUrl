@@ -17,8 +17,10 @@
 package de.lemke.oneurl.data
 
 import com.android.volley.Request
+import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.Tly
 import de.lemke.oneurl.domain.model.URL
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
@@ -39,28 +41,30 @@ interface ShortURLClient {
 
 class DefaultShortURLClient @Inject constructor(
     private val queue: VolleyQueue,
+    private val tlyKeys: TlyKeyStore,
 ) : ShortURLClient {
     override suspend fun create(
         provider: ShortURLProvider,
         longURL: String,
         alias: String,
-    ): GenerateURLResult =
-        suspendCancellableCoroutine { continuation ->
+    ): GenerateURLResult {
+        val tlyKey = if (provider is Tly) tlyKeys.get() else null
+        return suspendCancellableCoroutine { continuation ->
+            val onSuccess = { shortURL: String ->
+                if (continuation.isActive) continuation.resume(GenerateURLResult.Success(shortURL))
+            }
+            val onError = { error: GenerateURLError ->
+                if (continuation.isActive) continuation.resume(GenerateURLResult.Failure(error))
+            }
             val request =
-                provider.getCreateRequest(
-                    queue,
-                    longURL,
-                    alias,
-                    successCallback = { shortURL ->
-                        if (continuation.isActive) continuation.resume(GenerateURLResult.Success(shortURL))
-                    },
-                    errorCallback = { error ->
-                        if (continuation.isActive) continuation.resume(GenerateURLResult.Failure(error))
-                    },
-                )
+                when (provider) {
+                    is Tly -> provider.getTlyCreateRequest(tlyKey, longURL, onSuccess, onError)
+                    else -> provider.getCreateRequest(queue, longURL, alias, onSuccess, onError)
+                }
             queue.add(request)
             continuation.invokeOnCancellation { request.cancel() }
         }
+    }
 
     override suspend fun visitCount(url: URL): Int? =
         suspendCancellableCoroutine { continuation ->
