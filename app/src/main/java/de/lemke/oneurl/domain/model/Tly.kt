@@ -83,6 +83,9 @@ errors:
   "message": "T.LY account and API key required to create additional short links."
 }
  */
+private const val KEYED_API_URL = "https://api.t.ly/api/v1/link/shorten"
+private val KEY_REJECTED_STATUS_CODES = setOf(HttpStatusCode.UNAUTHORIZED, HttpStatusCode.PAYMENT_REQUIRED, HttpStatusCode.FORBIDDEN)
+
 sealed class Tly : ShortURLProvider {
     abstract val domain: String
     final override val group = "t.ly [experimental]"
@@ -204,11 +207,6 @@ sealed class Tly : ShortURLProvider {
             !keyed && message.contains("T.LY account and API key", true) -> GenerateURLError.RateLimitExceeded
             else -> GenerateURLError.Custom(statusCode, message)
         }
-    }
-
-    private companion object {
-        const val KEYED_API_URL = "https://api.t.ly/api/v1/link/shorten"
-        val KEY_REJECTED_STATUS_CODES = setOf(HttpStatusCode.UNAUTHORIZED, HttpStatusCode.PAYMENT_REQUIRED, HttpStatusCode.FORBIDDEN)
     }
 
     object Default : Tly() {

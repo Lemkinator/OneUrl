@@ -17,12 +17,18 @@
 package de.lemke.oneurl.data
 
 import de.lemke.oneurl.domain.model.TlyApiKey
+import kotlinx.coroutines.CompletableDeferred
 
-/** Holds the key in memory. */
+/** Holds the key in memory; [get] waits for [gate] while one is set. */
 class FakeTlyKeyStore(
     var apiKey: TlyApiKey? = null,
 ) : TlyKeyStore {
-    override suspend fun get(): TlyApiKey? = apiKey
+    var gate: CompletableDeferred<Unit>? = null
+
+    override suspend fun get(): TlyApiKey? {
+        gate?.await()
+        return apiKey
+    }
 
     override suspend fun set(apiKey: TlyApiKey?) {
         this.apiKey = apiKey

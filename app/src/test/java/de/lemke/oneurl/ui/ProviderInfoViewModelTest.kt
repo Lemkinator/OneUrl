@@ -20,9 +20,21 @@ import de.lemke.oneurl.data.FakeTlyKeyStore
 import de.lemke.oneurl.domain.model.TlyApiKey
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CompletableDeferred
 
 class ProviderInfoViewModelTest : ShouldSpec(
     {
+        should("hold no key text until the stored key is read") {
+            val store = FakeTlyKeyStore(TlyApiKey.ofOrNull("abc123"))
+            store.gate = CompletableDeferred()
+            val viewModel = ProviderInfoViewModel(store)
+
+            viewModel.tlyKey.value shouldBe null
+
+            store.gate?.complete(Unit)
+            viewModel.tlyKey.value shouldBe "abc123"
+        }
+
         should("show an empty text when no key is stored") {
             ProviderInfoViewModel(FakeTlyKeyStore()).tlyKey.value shouldBe ""
         }

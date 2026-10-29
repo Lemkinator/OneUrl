@@ -35,7 +35,7 @@ class ProviderInfoViewModel @Inject constructor(
         field = MutableStateFlow<String?>(null)
 
     init {
-        viewModelScope.launch { tlyKey.value = tlyKeys.get()?.token.orEmpty() }
+        viewModelScope.launch { tlyKey.value = tlyKeys.get()?.token ?: "" }
     }
 
     fun onTlyKeyChanged(text: String) {
