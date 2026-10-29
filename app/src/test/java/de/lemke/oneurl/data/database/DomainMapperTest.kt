@@ -67,6 +67,21 @@ class DomainMapperTest : ShouldSpec(
             urlFromDb(urlDb).shortURLProvider.shouldBeInstanceOf<Unknown>()
         }
 
+        should("a stored twtr.to link keeps its provider through a save") {
+            val urlDb =
+                URLDb(
+                    shortURL = "https://t.ly/abc",
+                    longURL = "https://example.com",
+                    shortURLProvider = "t.ly (twtr.to)",
+                    favorite = false,
+                    title = "",
+                    description = "",
+                    added = added,
+                )
+
+            urlToDb(urlFromDb(urlDb)) shouldBe urlDb
+        }
+
         should("urlToDb maps every field and stores the provider's name") {
             val provider = ShortURLProviderCompanion.default
             val url =

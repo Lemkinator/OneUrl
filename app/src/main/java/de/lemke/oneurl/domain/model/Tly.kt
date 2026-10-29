@@ -200,18 +200,6 @@ sealed class Tly : ShortURLProvider {
         ): JsonObjectRequest = getTlyCreateRequest("ibit.ly", longURL, successCallback, errorCallback)
     }
 
-    object Twtrto : Tly() {
-        override val name = "t.ly (twtr.to)"
-
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest("twtr.to", longURL, successCallback, errorCallback)
-    }
-
     object Jpegly : Tly() {
         override val name = "t.ly (jpeg.ly)"
 
