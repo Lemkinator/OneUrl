@@ -19,6 +19,8 @@ package de.lemke.oneurl.domain.model
 /** A T.LY API key, trimmed and never blank. */
 @JvmInline
 value class TlyApiKey private constructor(val token: String) {
+    override fun toString() = "TlyApiKey(****)"
+
     companion object {
         /** The key for [text], or null when [text] is blank. */
         fun ofOrNull(text: String): TlyApiKey? = text.trim().takeIf { it.isNotEmpty() }?.let(::TlyApiKey)

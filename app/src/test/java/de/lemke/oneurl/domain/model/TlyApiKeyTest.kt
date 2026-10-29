@@ -39,4 +39,9 @@ class TlyApiKeyTest {
     fun `ofOrNull returns null for a blank text`() {
         TlyApiKey.ofOrNull(" \t\n") shouldBe null
     }
+
+    @Test
+    fun `toString hides the token`() {
+        TlyApiKey.ofOrNull("abc123").toString() shouldBe "TlyApiKey(****)"
+    }
 }
