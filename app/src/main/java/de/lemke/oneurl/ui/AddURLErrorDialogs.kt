@@ -35,19 +35,6 @@ private const val MIN_HTTP_STATUS = 100
 private const val MAX_HTTP_STATUS = 599
 private val HTTP_STATUS_RANGE = MIN_HTTP_STATUS..MAX_HTTP_STATUS
 private val SERVER_ERROR_RANGE = HttpStatusCode.INTERNAL_SERVER_ERROR..MAX_HTTP_STATUS
-private val MESSAGE_RES_BY_ERROR =
-    mapOf(
-        GenerateURLError.AliasAlreadyExists to R.string.error_alias_already_exists,
-        GenerateURLError.URLExistsWithDifferentAlias to R.string.error_url_already_exists_with_different_alias,
-        GenerateURLError.InvalidURL to R.string.error_invalid_url,
-        GenerateURLError.InvalidAlias to R.string.error_invalid_alias,
-        GenerateURLError.InvalidURLOrAlias to R.string.error_invalid_url_or_alias,
-        GenerateURLError.InternalServerError to R.string.error_internal_server_error,
-        GenerateURLError.ServiceOffline to R.string.error_service_offline,
-        GenerateURLError.RateLimitExceeded to R.string.error_rate_limit_exceeded,
-        GenerateURLError.DomainNotAllowed to R.string.error_domain_not_allowed,
-        GenerateURLError.TlyKeyRejected to R.string.error_tly_key_rejected,
-    )
 
 internal fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
     when (error) {
@@ -73,23 +60,30 @@ internal fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
 
         GenerateURLError.RateLimitExceeded, GenerateURLError.InternalServerError -> {
             setTitle(commonutilsR.string.commonutils_error)
-            setProviderErrorMessage(this.context.getString(MESSAGE_RES_BY_ERROR.getValue(error)))
+            setProviderErrorMessage(this.context.getString(simpleErrorMessageRes(error)))
         }
 
-        GenerateURLError.AliasAlreadyExists,
-        GenerateURLError.URLExistsWithDifferentAlias,
-        GenerateURLError.InvalidURL,
-        GenerateURLError.InvalidAlias,
-        GenerateURLError.InvalidURLOrAlias,
-        GenerateURLError.ServiceOffline,
-        GenerateURLError.DomainNotAllowed,
-        GenerateURLError.TlyKeyRejected,
-        -> {
+        else -> {
             setTitle(commonutilsR.string.commonutils_error)
-            setMessage(MESSAGE_RES_BY_ERROR.getValue(error))
+            setMessage(simpleErrorMessageRes(error))
         }
     }
 }
+
+private fun simpleErrorMessageRes(error: GenerateURLError): Int =
+    when (error) {
+        GenerateURLError.AliasAlreadyExists -> R.string.error_alias_already_exists
+        GenerateURLError.URLExistsWithDifferentAlias -> R.string.error_url_already_exists_with_different_alias
+        GenerateURLError.InvalidURL -> R.string.error_invalid_url
+        GenerateURLError.InvalidAlias -> R.string.error_invalid_alias
+        GenerateURLError.InvalidURLOrAlias -> R.string.error_invalid_url_or_alias
+        GenerateURLError.InternalServerError -> R.string.error_internal_server_error
+        GenerateURLError.ServiceOffline -> R.string.error_service_offline
+        GenerateURLError.RateLimitExceeded -> R.string.error_rate_limit_exceeded
+        GenerateURLError.DomainNotAllowed -> R.string.error_domain_not_allowed
+        GenerateURLError.TlyKeyRejected -> R.string.error_tly_key_rejected
+        else -> commonutilsR.string.commonutils_error_unknown
+    }
 
 private fun AlertDialog.Builder.configureNoInternet() {
     setTitle(R.string.no_internet)
