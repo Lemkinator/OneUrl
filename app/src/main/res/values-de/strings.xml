@@ -76,6 +76,7 @@
     <string name="visits_last_3_months">"Klicks (letzte 3 Monate): "</string>
     <string name="shorten_url">URL verkürzen (OneURL)</string>
     <string name="copy_shortened_url">Verkürzte URL kopieren</string>
+    <string name="refresh">Aktualisieren</string>
     <string name="copy_to_clipboard_hint">Lange drücken, um URLs oder QR-Codes in die Zwischenablage zu kopieren.</string>
     <string name="no_urls">Keine URLs</string>
     <string name="no_favorite_urls">Keine Favoriten</string>
