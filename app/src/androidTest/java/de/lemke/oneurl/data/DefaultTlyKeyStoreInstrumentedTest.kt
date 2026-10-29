@@ -39,7 +39,7 @@ class DefaultTlyKeyStoreInstrumentedTest {
     @Before
     fun createStore() {
         directory.deleteRecursively()
-        store = DefaultTlyKeyStore(KSafe(context, fileName = "tlykeytest", baseDir = directory))
+        store = DefaultTlyKeyStore(KSafe(context, fileName = "tlykeytest${System.nanoTime()}", baseDir = directory))
     }
 
     @After
