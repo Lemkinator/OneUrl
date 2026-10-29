@@ -188,6 +188,7 @@ dependencies {
     implementation(libs.coroutines.core)
     runtimeOnly(libs.coroutines.android)
     implementation(libs.volley)
+    implementation(libs.ksafe)
     implementation(libs.room.runtime)
     implementation(libs.hilt.android)
     ksp(libs.room.compiler)
