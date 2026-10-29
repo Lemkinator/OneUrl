@@ -68,13 +68,12 @@ sealed class Spoome : ShortURLProvider {
     final override val baseURL = "https://spoo.me"
     final override val apiURL = "$baseURL/api/v1/shorten"
 
+    final override val clickCountPeriod = ClickCountPeriod.Last90Days
     protected open val generatedAliasType: String? = null
 
     override fun getAnalyticsURL(alias: String) = "$baseURL/stats/$alias"
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
-
-    override val clickCountPeriod = ClickCountPeriod.Last90Days
 
     override fun getURLClickCount(
         queue: VolleyQueue,
