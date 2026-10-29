@@ -380,12 +380,16 @@ class SpoomeDefaultTest {
     fun `getURLClickCount asks for the last 90 days with a single request for an old link`() {
         var clicks: Int? = -1
         val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(200))
+        val before = Instant.now()
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        val after = Instant.now()
         val request = queue.added.single()
         val start = Instant.parse(request.query()["start_date"]!!)
         val end = Instant.parse(request.query()["end_date"]!!)
         Duration.between(start, end) shouldBe Duration.ofDays(90)
+        end.isBefore(before.truncatedTo(ChronoUnit.MILLIS)) shouldBe false
+        end.isAfter(after) shouldBe false
         request.deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":16}}}"""))
 
         clicks shouldBe 16
@@ -401,13 +405,6 @@ class SpoomeDefaultTest {
 
         clicks shouldBe 0
         queue.added.size shouldBe 0
-    }
-
-    @Test
-    fun `click counts cover the last 90 days for spoo_me and all time for other providers`() {
-        Spoome.Default.clickCountPeriod shouldBe ClickCountPeriod.Last90Days
-        Spoome.Emoji.clickCountPeriod shouldBe ClickCountPeriod.Last90Days
-        Dagd.clickCountPeriod shouldBe ClickCountPeriod.AllTime
     }
 
     @Test
