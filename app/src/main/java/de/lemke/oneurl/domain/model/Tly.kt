@@ -84,7 +84,6 @@ errors:
 }
  */
 private const val KEYED_API_URL = "https://api.t.ly/api/v1/link/shorten"
-private val KEY_REJECTED_STATUS_CODES = setOf(HttpStatusCode.UNAUTHORIZED, HttpStatusCode.PAYMENT_REQUIRED, HttpStatusCode.FORBIDDEN)
 
 sealed class Tly : ShortURLProvider {
     abstract val domain: String
@@ -200,7 +199,7 @@ sealed class Tly : ShortURLProvider {
             error is NoConnectionError -> GenerateURLError.ServiceOffline
             error is ParseError -> GenerateURLError.ServiceTemporarilyUnavailable(baseURL)
             statusCode == null -> GenerateURLError.Unknown()
-            keyed && statusCode in KEY_REJECTED_STATUS_CODES -> GenerateURLError.TlyKeyRejected
+            keyed && statusCode == HttpStatusCode.UNAUTHORIZED -> GenerateURLError.TlyKeyRejected
             statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> GenerateURLError.ServiceTemporarilyUnavailable(baseURL)
             data.isNullOrBlank() || message.isNullOrBlank() -> GenerateURLError.Unknown(statusCode)
             message.contains("long url field is required", true) -> GenerateURLError.InvalidURL

@@ -107,10 +107,16 @@ class TlyKeyedTest {
     }
 
     @Test
-    fun `a rejected key is reported for 401, 402 and 403`() {
-        listOf(401, 402, 403).forEach { statusCode ->
-            errorOf(statusCode, """{"message":"API key is not valid."}""") shouldBe GenerateURLError.TlyKeyRejected
-        }
+    fun `a keyed 401 is a rejected key`() {
+        errorOf(401, """{"message":"Unauthenticated."}""") shouldBe GenerateURLError.TlyKeyRejected
+    }
+
+    @Test
+    fun `a keyed 402 and 403 show the message of T_LY`() {
+        errorOf(403, """{"message":"Invalid request please contact support@t.ly"}""") shouldBe
+            GenerateURLError.Custom(403, "Invalid request please contact support@t.ly")
+        errorOf(402, """{"message":"The current team needs an active subscription."}""") shouldBe
+            GenerateURLError.Custom(402, "The current team needs an active subscription.")
     }
 
     @Test
