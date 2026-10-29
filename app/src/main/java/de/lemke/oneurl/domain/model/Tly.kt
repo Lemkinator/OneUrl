@@ -25,7 +25,6 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONObject
-import de.lemke.commonutils.R as commonutilsR
 
 /*
 login required (also for alias), but:
@@ -99,12 +98,6 @@ sealed class Tly : ShortURLProvider {
                 context.getString(R.string.tly_key_title),
                 context.getString(R.string.tly_key_info),
             ),
-        )
-
-    override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? =
-        Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.tly_info),
         )
 
     final override fun getCreateRequest(
