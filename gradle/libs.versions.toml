@@ -32,6 +32,7 @@ konsist = "0.18.1"
 kotest = "6.2.6"
 kotlin = "2.4.21"
 kover = "0.9.11"
+ksafe = "3.3.0"
 ksp = "2.3.12"
 # Used via spotless { kotlin { ktlint(libs.versions.ktlint.get()) } } — version-only ref, no library/plugin alias
 #noinspection UnusedVersionCatalogEntry
@@ -73,6 +74,7 @@ junit4 = { module = "junit:junit", version.ref = "junit4" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+ksafe = { module = "eu.anifantakis:ksafe", version.ref = "ksafe" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 oneui-design = { module = "io.github.tribalfs:oneui-design", version.ref = "oneui-design" }

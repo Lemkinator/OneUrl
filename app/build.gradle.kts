@@ -188,6 +188,7 @@ dependencies {
     implementation(libs.coroutines.core)
     runtimeOnly(libs.coroutines.android)
     implementation(libs.volley)
+    implementation(libs.ksafe)
     implementation(libs.room.runtime)
     implementation(libs.hilt.android)
     ksp(libs.room.compiler)
@@ -201,6 +202,9 @@ dependencies {
 
     testFixturesImplementation(libs.room.runtime)
     testFixturesImplementation(libs.hilt.android.testing)
+    testFixturesImplementation(libs.junit4)
+    testFixturesImplementation(libs.kotest.assertions.core)
+    testFixturesImplementation(libs.coroutines.test)
     testFixturesImplementation(testFixtures(libs.common.utils))
     kspTestFixtures(libs.hilt.compiler)
 

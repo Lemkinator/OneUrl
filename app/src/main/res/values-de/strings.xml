@@ -45,6 +45,9 @@
     <string name="owovc_gay">Der URL-Verkürzer \"owo.vc (gay)\" verwendet anstößige und sexistische Wörter und kann für unangemessene oder beleidigende Inhalte stehen. Sei dir bewusst, dass die erstellten Links möglicherweise sexis tische Begriffe enthalten und von anderen als beleidigend und respektlos empfunden werden könnten. Sei respektvoll und verantwortungsbewusst bei der Verwendung dieses Dienstes.</string>
     <string name="zwsim_zws">Der URL-Verkürzer \"zws.im (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"zws.im/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von zws.im anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
     <string name="tly_info">Dieser URL-Shortener verwendet mehrere Domains für denselben Dienst, was bedeutet, dass er Kurz-URLs mit unterschiedlichen Domainnamen (z.B. tinyurl.com) erstellen kann. Nutze diesen Dienst daher mit Vorsicht.</string>
+    <string name="tly_key_info">Ein Schlüssel braucht einen T.LY-Tarif mit API-Zugang</string>
+    <string name="tly_key_hint">T.LY-Schlüssel (Optional)</string>
+    <string name="tly_key_get">Schlüssel bei T.LY holen</string>
     <string name="shorturlat_info">Der URL-Verkürzer shorturl.at bietet keine Schnittstelle und ist daher nicht so zuverlässig wie andere Anbieter in dieser App. Darüber hinaus werden Links mit weniger als einem Klick pro Monat deaktiviert. Nutze diesen Dienst daher mit Vorsicht.</string>
 
     <!--Settings-->
@@ -109,6 +112,7 @@
     <string name="error_with_code">Fehler (Code %1$d)</string>
     <string name="error_request_rejected">Der Anbieter hat die Anfrage abgelehnt.</string>
     <string name="error_access_refused">Der Anbieter hat den Zugriff verweigert.</string>
+    <string name="error_tly_key_rejected">Dein T.LY-Schlüssel funktioniert nicht. Prüfe ihn oder entferne ihn.</string>
     <string name="error_provider_cannot_handle_requests">Dieser Anbieter kann gerade keine Anfragen bearbeiten. Möglicherweise ist er offline oder wurde eingestellt.</string>
     <string name="error_try_another_provider">Falls das Problem weiterhin besteht, wähle einen anderen Anbieter.</string>
 

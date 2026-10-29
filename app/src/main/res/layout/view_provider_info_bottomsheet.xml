@@ -15,6 +15,7 @@
     limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -141,6 +142,54 @@
                 android:layout_marginBottom="12dp"
                 android:textSize="18sp"
                 android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/providerBottomSheetTlyKey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/providerBottomSheetTlyKeyInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/tly_key_info"
+                    android:textSize="18sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:hint="@string/tly_key_hint"
+                    app:endIconMode="password_toggle"
+                    app:hintTextColor="@color/commonutils_secondary_text_icon_color_themed">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/providerBottomSheetTlyKeyInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:enabled="false"
+                        android:importantForAutofill="no"
+                        android:inputType="textPassword"
+                        android:maxLines="1"
+                        android:saveEnabled="false" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/providerBottomSheetTlyKeyLink"
+                    style="@style/ButtonStyle.Transparent.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:drawableStart="@drawable/ic_oui_info_outline"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/tly_key_get" />
+
+            </LinearLayout>
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/providerBottomSheetInfoButton1"
