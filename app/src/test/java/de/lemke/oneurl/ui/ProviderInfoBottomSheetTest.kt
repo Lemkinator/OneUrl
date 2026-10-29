@@ -51,6 +51,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowToast
 
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -236,6 +237,19 @@ class ProviderInfoBottomSheetTest {
             keyInputOf(fragment).setText("")
             idleMainLooper()
             tlyKeys.apiKey shouldBe null
+        }
+    }
+
+    @Test
+    fun `a key the store cannot save shows the error toast and keeps the typed text`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            tlyKeys.failing = true
+
+            keyInputOf(fragment).setText("abc123")
+            idleMainLooper()
+
+            ShadowToast.getTextOfLatestToast() shouldBe "Error"
+            keyInputOf(fragment).text.toString() shouldBe "abc123"
         }
     }
 

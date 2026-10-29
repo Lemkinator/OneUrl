@@ -63,6 +63,29 @@ class ProviderInfoViewModelTest : ShouldSpec(
             store.apiKey shouldBe null
         }
 
+        should("report a failed write until it is handled") {
+            val store = FakeTlyKeyStore()
+            store.failing = true
+            val viewModel = ProviderInfoViewModel(store)
+            viewModel.tlyKeySaveFailed.value shouldBe false
+
+            viewModel.onTlyKeyChanged("abc123")
+
+            viewModel.tlyKeySaveFailed.value shouldBe true
+            viewModel.tlyKey.value shouldBe "abc123"
+
+            viewModel.onTlyKeySaveFailedHandled()
+
+            viewModel.tlyKeySaveFailed.value shouldBe false
+        }
+
+        should("show an empty text when the store cannot be read") {
+            val store = FakeTlyKeyStore(TlyApiKey.ofOrNull("abc123"))
+            store.failing = true
+
+            ProviderInfoViewModel(store).tlyKey.value shouldBe ""
+        }
+
         should("write nothing when the text is the one already shown") {
             val store = FakeTlyKeyStore(TlyApiKey.ofOrNull("abc123"))
             val viewModel = ProviderInfoViewModel(store)

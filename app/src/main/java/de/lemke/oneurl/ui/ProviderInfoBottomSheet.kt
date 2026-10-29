@@ -36,11 +36,13 @@ import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.toast
 import de.lemke.oneurl.databinding.ViewProviderInfoBottomsheetBinding
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.Tly
 import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
+import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
 class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
@@ -109,6 +111,12 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
         binding.providerBottomSheetTlyKey.isVisible = true
         binding.providerBottomSheetTlyKeyLink.onSingleLaunchClick { openURL(provider.keySettingsURL) }
         binding.providerBottomSheetTlyKeyInput.addTextChangedListener { viewModel.onTlyKeyChanged(it.toString()) }
+        collectState(viewModel.tlyKeySaveFailed) { failed ->
+            if (failed) {
+                requireContext().toast(commonutilsR.string.commonutils_error)
+                viewModel.onTlyKeySaveFailedHandled()
+            }
+        }
         collectState(viewModel.tlyKey) { key ->
             if (key != null) {
                 binding.providerBottomSheetTlyKeyInput.isEnabled = true

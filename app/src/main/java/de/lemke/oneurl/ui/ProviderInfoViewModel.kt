@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lemke.oneurl.data.StoredTlyKey
 import de.lemke.oneurl.data.TlyKeyStore
+import de.lemke.oneurl.data.TlyKeyWrite
 import de.lemke.oneurl.domain.model.TlyApiKey
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +36,10 @@ class ProviderInfoViewModel @Inject constructor(
     val tlyKey: StateFlow<String?>
         field = MutableStateFlow<String?>(null)
 
+    /** True after the store refused a write, until the screen reports it shown. */
+    val tlyKeySaveFailed: StateFlow<Boolean>
+        field = MutableStateFlow(false)
+
     init {
         viewModelScope.launch {
             tlyKey.value =
@@ -48,6 +53,15 @@ class ProviderInfoViewModel @Inject constructor(
     fun onTlyKeyChanged(text: String) {
         if (text == tlyKey.value) return
         tlyKey.value = text
-        viewModelScope.launch { tlyKeys.set(TlyApiKey.ofOrNull(text)) }
+        viewModelScope.launch {
+            when (tlyKeys.set(TlyApiKey.ofOrNull(text))) {
+                TlyKeyWrite.Saved -> Unit
+                TlyKeyWrite.Failed -> tlyKeySaveFailed.value = true
+            }
+        }
+    }
+
+    fun onTlyKeySaveFailedHandled() {
+        tlyKeySaveFailed.value = false
     }
 }
