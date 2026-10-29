@@ -70,7 +70,7 @@ Clean Architecture with three layers:
 bound as `SettingsRepository`. All DB entities live in `data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
 Framework and network work sits behind interfaces with a `Default*` implementation: `QRCodeRenderer` (OneUI `QrEncoder`),
 `VolleyQueue` (the app's one Volley `RequestQueue`), and the three network clients built on it: `UrlhausClient`,
-`PageTitleFetcher` and `ShortURLClient` (create a short URL, read its visit count). `NetworkMonitor` reads validated connectivity.
+`PageTitleFetcher` and `ShortURLClient` (create a short URL, read its visit count). `NetworkMonitor` reads validated connectivity. Click counts come from the provider API only; never store them or derive them from local link data.
 
 **`domain/`** — Use cases (`*UseCase.kt`), each doing one thing, injected by Hilt. `GenerateURLUseCase` is the core flow: checks internet →
 checks URL against URLhaus → delegates to the selected provider's `getCreateRequest()`. It reads connectivity through `NetworkMonitor`, checks
