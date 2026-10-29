@@ -48,7 +48,12 @@ class DefaultShortURLClient @Inject constructor(
         longURL: String,
         alias: String,
     ): GenerateURLResult {
-        val tlyKey = if (provider is Tly) tlyKeys.get() else null
+        val tlyKey =
+            when (val stored = if (provider is Tly) tlyKeys.get() else StoredTlyKey.None) {
+                is StoredTlyKey.Key -> stored.apiKey
+                StoredTlyKey.None -> null
+                StoredTlyKey.Unavailable -> return GenerateURLResult.Failure(GenerateURLError.TlyKeyRejected)
+            }
         return suspendCancellableCoroutine { continuation ->
             val onSuccess = { shortURL: String ->
                 if (continuation.isActive) continuation.resume(GenerateURLResult.Success(shortURL))

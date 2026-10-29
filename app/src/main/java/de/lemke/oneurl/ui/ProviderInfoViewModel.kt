@@ -19,6 +19,7 @@ package de.lemke.oneurl.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.oneurl.data.StoredTlyKey
 import de.lemke.oneurl.data.TlyKeyStore
 import de.lemke.oneurl.domain.model.TlyApiKey
 import javax.inject.Inject
@@ -35,7 +36,13 @@ class ProviderInfoViewModel @Inject constructor(
         field = MutableStateFlow<String?>(null)
 
     init {
-        viewModelScope.launch { tlyKey.value = tlyKeys.get()?.token ?: "" }
+        viewModelScope.launch {
+            tlyKey.value =
+                when (val stored = tlyKeys.get()) {
+                    is StoredTlyKey.Key -> stored.apiKey.token
+                    StoredTlyKey.None, StoredTlyKey.Unavailable -> ""
+                }
+        }
     }
 
     fun onTlyKeyChanged(text: String) {

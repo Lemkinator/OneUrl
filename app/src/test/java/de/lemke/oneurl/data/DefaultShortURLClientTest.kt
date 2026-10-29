@@ -171,6 +171,17 @@ class DefaultShortURLClientTest {
         }
 
     @Test
+    fun `create fails with a rejected key and sends nothing when the key store is unavailable`() =
+        runTest {
+            tlyKeys.apiKey = TlyApiKey.ofOrNull("secret")
+            tlyKeys.failing = true
+
+            client.create(Tly.Default, "https://example.com", "") shouldBe GenerateURLResult.Failure(GenerateURLError.TlyKeyRejected)
+
+            queue.added shouldBe emptyList()
+        }
+
+    @Test
     fun `create sends no authorization with a stored key for a provider that is not T_LY`() =
         runTest {
             tlyKeys.apiKey = TlyApiKey.ofOrNull("secret")

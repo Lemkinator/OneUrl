@@ -25,10 +25,12 @@ import org.junit.Test
 abstract class TlyKeyStoreContract {
     protected abstract fun createStore(): TlyKeyStore
 
+    private fun keyOf(text: String) = StoredTlyKey.Key(requireNotNull(TlyApiKey.ofOrNull(text)))
+
     @Test
     fun getReturnsNullBeforeAKeyWasStored() =
         runTest {
-            createStore().get() shouldBe null
+            createStore().get() shouldBe StoredTlyKey.None
         }
 
     @Test
@@ -38,7 +40,7 @@ abstract class TlyKeyStoreContract {
 
             store.set(TlyApiKey.ofOrNull("abc123"))
 
-            store.get() shouldBe TlyApiKey.ofOrNull("abc123")
+            store.get() shouldBe keyOf("abc123")
         }
 
     @Test
@@ -49,7 +51,7 @@ abstract class TlyKeyStoreContract {
 
             store.set(TlyApiKey.ofOrNull("second"))
 
-            store.get() shouldBe TlyApiKey.ofOrNull("second")
+            store.get() shouldBe keyOf("second")
         }
 
     @Test
@@ -60,6 +62,6 @@ abstract class TlyKeyStoreContract {
 
             store.set(null)
 
-            store.get() shouldBe null
+            store.get() shouldBe StoredTlyKey.None
         }
 }

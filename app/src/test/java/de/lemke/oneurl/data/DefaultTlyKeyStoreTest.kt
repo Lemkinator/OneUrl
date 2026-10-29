@@ -33,11 +33,11 @@ class DefaultTlyKeyStoreTest : TlyKeyStoreContract() {
     override fun createStore(): TlyKeyStore = DefaultTlyKeyStore(secrets)
 
     @Test
-    fun `get returns null for a blank stored text`() =
+    fun `get returns no key for a blank stored text`() =
         runTest {
             secrets.put("tlyApiKey", "  ")
 
-            createStore().get() shouldBe null
+            createStore().get() shouldBe StoredTlyKey.None
         }
 
     @Test
@@ -49,12 +49,12 @@ class DefaultTlyKeyStoreTest : TlyKeyStoreContract() {
         }
 
     @Test
-    fun `get returns null when the secret store fails`() =
+    fun `get reports the store as unavailable when the secret store fails`() =
         runTest {
             secrets.put("tlyApiKey", "abc123")
             secrets.failure = IllegalStateException("keystore unavailable")
 
-            createStore().get() shouldBe null
+            createStore().get() shouldBe StoredTlyKey.Unavailable
         }
 
     @Test
@@ -63,8 +63,8 @@ class DefaultTlyKeyStoreTest : TlyKeyStoreContract() {
             secrets.put("tlyApiKey", "abc123")
             secrets.failure = IllegalStateException("keystore unavailable")
 
-            createStore().set(TlyApiKey.ofOrNull("other"))
-            createStore().set(null)
+            createStore().set(TlyApiKey.ofOrNull("other")) shouldBe TlyKeyWrite.Failed
+            createStore().set(null) shouldBe TlyKeyWrite.Failed
 
             secrets.failure = null
             secrets.stored("tlyApiKey") shouldBe "abc123"
