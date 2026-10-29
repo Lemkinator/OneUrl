@@ -168,7 +168,7 @@ class SpoomeEmojiTest {
     @Test
     fun `getURLClickCount reads the public stats of the percent-encoded emoji alias`() {
         var clicks: Int? = -1
-        val url = URL("https://spoo.me/😀", longURL, Spoome.Emoji, false, "", "", ZonedDateTime.now())
+        val url = URL("https://spoo.me/😀", longURL, Spoome.Emoji, false, "", "", ZonedDateTime.now().minusDays(1))
 
         Spoome.Emoji.getURLClickCount(queue, url) { clicks = it }
         val request = queue.added.single()

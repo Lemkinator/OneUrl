@@ -30,6 +30,7 @@ import de.lemke.oneurl.R
 import de.lemke.oneurl.data.VolleyQueue
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -60,8 +61,8 @@ Emoji links use an emoji-only alias, or "alias_type": "emoji" without alias for 
 
 Click count: GET https://spoo.me/api/v1/public/stats/{alias}?start_date={ISO 8601}&end_date={ISO 8601}
 {"stats": {"summary": {"total_clicks": 0}}}
-Without start_date only the last 7 days count, and a range above 90 days answers 400, so the count sums
-consecutive windows from the creation of the link.
+Without start_date only the last 7 days count, and a range above 90 days answers 400, so the count covers
+the last 90 days at most, or the time since the creation of a younger link.
  */
 sealed class Spoome : ShortURLProvider {
     final override val group = "spoo.me, spoo.me (emoji)"
@@ -74,13 +75,20 @@ sealed class Spoome : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
+    override val clickCountPeriod = ClickCountPeriod.Last90Days
+
     override fun getURLClickCount(
         queue: VolleyQueue,
         url: URL,
         callback: (clicks: Int?) -> Unit,
     ) {
-        val now = Instant.now()
-        countClicks(queue, url, minOf(url.added.toInstant(), now), now, 0, callback)
+        val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+        val created = url.added.toInstant().truncatedTo(ChronoUnit.MILLIS)
+        if (created.isBefore(end)) {
+            requestClicks(queue, url, maxOf(created, end.minus(MAX_STATS_RANGE)), end, callback)
+        } else {
+            callback(0)
+        }
     }
 
     override fun getCreateRequest(
@@ -118,16 +126,14 @@ sealed class Spoome : ShortURLProvider {
         }
     }
 
-    private fun countClicks(
+    private fun requestClicks(
         queue: VolleyQueue,
         url: URL,
-        created: Instant,
+        start: Instant,
         end: Instant,
-        clicksAfter: Int,
         callback: (clicks: Int?) -> Unit,
     ) {
         val tag = "GetURLVisitCount_$name"
-        val start = maxOf(created, end.minus(STATS_WINDOW))
         val requestURL =
             "$baseURL/api/v1/public/stats/${url.alias.urlEncode()}" +
                 "?start_date=${start.toString().urlEncode()}&end_date=${end.toString().urlEncode()}"
@@ -140,13 +146,9 @@ sealed class Spoome : ShortURLProvider {
                 { response ->
                     try {
                         Log.d(tag, "response: $response")
-                        val clicks = clicksAfter + response.getJSONObject("stats").getJSONObject("summary").getInt("total_clicks")
-                        if (start > created) {
-                            countClicks(queue, url, created, start.minusMillis(1), clicks, callback)
-                        } else {
-                            Log.d(tag, "clicks: $clicks")
-                            callback(clicks)
-                        }
+                        val clicks = response.getJSONObject("stats").getJSONObject("summary").getInt("total_clicks")
+                        Log.d(tag, "clicks: $clicks")
+                        callback(clicks)
                     } catch (e: JSONException) {
                         Log.e(tag, "error parsing click count response", e)
                         callback(null)
@@ -237,7 +239,7 @@ sealed class Spoome : ShortURLProvider {
     }
 
     private companion object {
-        val STATS_WINDOW: Duration = Duration.ofDays(89)
+        val MAX_STATS_RANGE: Duration = Duration.ofDays(90)
         const val MIN_ALIAS_LENGTH_DEFAULT = 3
         const val MAX_ALIAS_LENGTH_DEFAULT = 16
         const val MAX_ALIAS_LENGTH_EMOJI = 15

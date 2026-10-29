@@ -77,6 +77,7 @@
     <string name="title_">"Title: "</string>
     <string name="created_">"Created: "</string>
     <string name="visits_">"Visits: "</string>
+    <string name="visits_last_3_months">"Visits (last 3 months): "</string>
     <string name="shorten_url">Shorten URL (OneURL)</string>
     <string name="copy_shortened_url">Copy shortened URL</string>
     <string name="copy_to_clipboard_hint">Long press URLs or QR codes to copy them to the clipboard.</string>

@@ -160,6 +160,8 @@ interface ShortURLProvider {
         get() = null
     val aliasConfig: AliasConfig?
         get() = null
+    val clickCountPeriod: ClickCountPeriod
+        get() = ClickCountPeriod.AllTime
 
     fun getAnalyticsURL(alias: String): String? = null
 

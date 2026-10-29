@@ -276,12 +276,12 @@
                     android:visibility="gone">
 
                     <TextView
+                        android:id="@+id/url_visits_label"
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
-                        android:text="@string/visits_"
                         android:textSize="18sp" />
 
                     <TextView

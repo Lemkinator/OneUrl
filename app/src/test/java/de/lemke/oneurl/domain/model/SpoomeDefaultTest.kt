@@ -29,6 +29,7 @@ import java.net.URLDecoder
 import java.time.Duration
 import java.time.Instant
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import org.json.JSONObject
 import org.junit.Assert.fail
 import org.junit.Test
@@ -353,16 +354,22 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `getURLClickCount reads total_clicks from the public stats since the link was added`() {
+    fun `getURLClickCount reads total_clicks from the public stats since a young link was added`() {
         var clicks: Int? = -1
         val added = ZonedDateTime.now().minusDays(1)
         val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", added)
+        val before = Instant.now()
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        val after = Instant.now()
         val request = queue.added.single()
         request.method shouldBe Request.Method.GET
         request.url.substringBefore("?") shouldBe "https://spoo.me/api/v1/public/stats/abc"
-        request.query()["start_date"] shouldBe added.toInstant().toString()
+        request.query()["start_date"] shouldBe added.toInstant().truncatedTo(ChronoUnit.MILLIS).toString()
+        val end = Instant.parse(request.query()["end_date"]!!)
+        end.isBefore(before.truncatedTo(ChronoUnit.MILLIS)) shouldBe false
+        end.isAfter(after) shouldBe false
+        end shouldBe end.truncatedTo(ChronoUnit.MILLIS)
         request.deliverResponse(JSONObject("""{"generation":"v2","stats":{"summary":{"total_clicks":42,"unique_clicks":40}}}"""))
 
         clicks shouldBe 42
@@ -370,42 +377,43 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `getURLClickCount sums consecutive windows of at most 89 days back to the creation`() {
+    fun `getURLClickCount asks for the last 90 days with a single request for an old link`() {
         var clicks: Int? = -1
-        val added = ZonedDateTime.now().minusDays(200)
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", added)
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(200))
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
-        queue.added[0].deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":10}}}"""))
-        clicks shouldBe -1
-        queue.added[1].deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":5}}}"""))
-        clicks shouldBe -1
-        queue.added[2].deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":1}}}"""))
+        val request = queue.added.single()
+        val start = Instant.parse(request.query()["start_date"]!!)
+        val end = Instant.parse(request.query()["end_date"]!!)
+        Duration.between(start, end) shouldBe Duration.ofDays(90)
+        request.deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":16}}}"""))
 
         clicks shouldBe 16
-        queue.added.size shouldBe 3
-        val windows = queue.added.map { it.query().let { q -> Instant.parse(q["start_date"]!!) to Instant.parse(q["end_date"]!!) } }
-        Duration.between(windows[0].first, windows[0].second) shouldBe Duration.ofDays(89)
-        Duration.between(windows[1].first, windows[1].second) shouldBe Duration.ofDays(89)
-        windows[1].second shouldBe windows[0].first.minusMillis(1)
-        windows[2].second shouldBe windows[1].first.minusMillis(1)
-        windows[2].first shouldBe added.toInstant()
+        queue.added.size shouldBe 1
     }
 
     @Test
-    fun `getURLClickCount asks for an empty window when the link was added in the future`() {
+    fun `getURLClickCount answers 0 without a request when the link was added in the future`() {
+        var clicks: Int? = -1
         val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().plusDays(1))
 
-        Spoome.Default.getURLClickCount(queue, url) { }
+        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
 
-        val query = queue.added.single().query()
-        query["start_date"] shouldBe query["end_date"]
+        clicks shouldBe 0
+        queue.added.size shouldBe 0
+    }
+
+    @Test
+    fun `click counts cover the last 90 days for spoo_me and all time for other providers`() {
+        Spoome.Default.clickCountPeriod shouldBe ClickCountPeriod.Last90Days
+        Spoome.Emoji.clickCountPeriod shouldBe ClickCountPeriod.Last90Days
+        Dagd.clickCountPeriod shouldBe ClickCountPeriod.AllTime
     }
 
     @Test
     fun `getURLClickCount resolves to null when the response has no stats`() {
         var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(1))
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
         queue.added.single().deliverResponse(JSONObject("""{"generation":"v2","link":{}}"""))
@@ -416,7 +424,7 @@ class SpoomeDefaultTest {
     @Test
     fun `getURLClickCount resolves to null when the summary has no total_clicks`() {
         var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(1))
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
         queue.added.single().deliverResponse(JSONObject("""{"stats":{"summary":{}}}"""))
@@ -427,7 +435,7 @@ class SpoomeDefaultTest {
     @Test
     fun `getURLClickCount resolves to null on error`() {
         var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(1))
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
         queue.added.single().deliverError(VolleyError("no network"))

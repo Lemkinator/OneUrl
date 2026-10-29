@@ -267,6 +267,7 @@ class URLActivity : AppCompatActivity() {
         binding.urlVisitsDivider.isVisible = visitCount != null
         binding.urlVisitsLayout.isVisible = visitCount != null
         if (visitCount != null) {
+            binding.urlVisitsLabel.setText(url.shortURLProvider.clickCountPeriod.labelRes)
             binding.urlVisitsTextview.text = NumberFormat.getIntegerInstance(resources.configuration.locales[0]).format(visitCount)
         }
         renderVisitCountRefresh(state.isRefreshingVisits)
