@@ -38,7 +38,7 @@ abstract class TlyKeyStoreContract {
         runTest {
             val store = createStore()
 
-            store.set(TlyApiKey.ofOrNull("abc123"))
+            store.set(TlyApiKey.ofOrNull("abc123")) shouldBe TlyKeyWrite.Saved
 
             store.get() shouldBe keyOf("abc123")
         }
@@ -47,9 +47,9 @@ abstract class TlyKeyStoreContract {
     fun setReplacesTheStoredKey() =
         runTest {
             val store = createStore()
-            store.set(TlyApiKey.ofOrNull("first"))
+            store.set(TlyApiKey.ofOrNull("first")) shouldBe TlyKeyWrite.Saved
 
-            store.set(TlyApiKey.ofOrNull("second"))
+            store.set(TlyApiKey.ofOrNull("second")) shouldBe TlyKeyWrite.Saved
 
             store.get() shouldBe keyOf("second")
         }
@@ -58,9 +58,9 @@ abstract class TlyKeyStoreContract {
     fun setNullRemovesTheStoredKey() =
         runTest {
             val store = createStore()
-            store.set(TlyApiKey.ofOrNull("abc123"))
+            store.set(TlyApiKey.ofOrNull("abc123")) shouldBe TlyKeyWrite.Saved
 
-            store.set(null)
+            store.set(null) shouldBe TlyKeyWrite.Saved
 
             store.get() shouldBe StoredTlyKey.None
         }
