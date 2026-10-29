@@ -24,6 +24,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import de.lemke.oneurl.data.DefaultTlyKeyStore
+import de.lemke.oneurl.data.KSafeSecretStore
+import de.lemke.oneurl.data.SecretStore
 import de.lemke.oneurl.data.TlyKeyStore
 import eu.anifantakis.lib.ksafe.KSafe
 import java.io.File
@@ -32,6 +34,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class SecretsModule {
+    @Binds
+    abstract fun bindSecretStore(store: KSafeSecretStore): SecretStore
+
     @Binds
     abstract fun bindTlyKeyStore(store: DefaultTlyKeyStore): TlyKeyStore
 

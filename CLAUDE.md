@@ -70,7 +70,7 @@ Clean Architecture with three layers:
 bound as `SettingsRepository`. All DB entities live in `data/database/`; `DomainMapper.kt` converts between `URLDb` ↔ `URL` domain model.
 Framework and network work sits behind interfaces with a `Default*` implementation: `QRCodeRenderer` (OneUI `QrEncoder`),
 `VolleyQueue` (the app's one Volley `RequestQueue`), and the three network clients built on it: `UrlhausClient`,
-`PageTitleFetcher` and `ShortURLClient` (create a short URL, read its visit count). `NetworkMonitor` reads validated connectivity. `TlyKeyStore` keeps the user's optional T.LY API key (`DefaultTlyKeyStore` over KSafe, in `noBackupFilesDir`, so the key is not part of any backup); `DefaultShortURLClient` hands it to the T.LY providers only. Click counts come from the provider API only; never store them or derive them from local link data.
+`PageTitleFetcher` and `ShortURLClient` (create a short URL, read its visit count). `NetworkMonitor` reads validated connectivity. `TlyKeyStore` keeps the user's optional T.LY API key (`DefaultTlyKeyStore` over the `SecretStore` interface, whose `KSafeSecretStore` is the only KSafe adapter, in `noBackupFilesDir`, so the key is not part of any backup; a failing store reads as no key); `DefaultShortURLClient` hands it to the T.LY providers only. Click counts come from the provider API only; never store them or derive them from local link data.
 
 **`domain/`** — Use cases (`*UseCase.kt`), each doing one thing, injected by Hilt. `GenerateURLUseCase` is the core flow: checks internet →
 checks URL against URLhaus → delegates to the selected provider's `getCreateRequest()`. It reads connectivity through `NetworkMonitor`, checks
@@ -100,7 +100,7 @@ IO dispatcher) and `InAppReviewModule` (includes the common-utils `CommonUtilsIn
 `TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule`, `TestInAppReviewModule` (a singleton `FakeInAppReview`), `TestSecretsModule` (a singleton `FakeTlyKeyStore`, because the Android Keystore is missing under Robolectric) and `TestNetworkModule`. `TestNetworkModule` binds the singleton
 fakes `FakeNetworkMonitor`, `FakeUrlhausClient`, `FakePageTitleFetcher` and `FakeShortURLClient`, so no Hilt test reaches the network;
 a test injects a fake to set its answers. ViewModel and use-case tests run real use cases over fakes such as `FakeURLRepository`,
-`FakeQRCodeRenderer` and `FakeVolleyQueue`. `URLRepositoryContract` runs against both `DefaultURLRepository` and `FakeURLRepository`.
+`FakeQRCodeRenderer` and `FakeVolleyQueue`. `TlyKeyStoreContract` (testFixtures) runs against `DefaultTlyKeyStore` over a `FakeSecretStore` and, on a device, over `KSafeSecretStore`. `URLRepositoryContract` runs against both `DefaultURLRepository` and `FakeURLRepository`.
 MockK stays only for framework values (`Bitmap`, `Uri`, `ClipData`) and `Log` in plain JVM Kotest specs, which cannot build them.
 
 ## Adding a New URL Provider

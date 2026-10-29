@@ -16,9 +16,13 @@
 
 package de.lemke.oneurl.data
 
+import android.util.Log
 import de.lemke.oneurl.domain.model.TlyApiKey
 import eu.anifantakis.lib.ksafe.KSafe
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.builtins.serializer
 
 /** Keeps the T.LY API key the user entered, if any. */
 interface TlyKeyStore {
@@ -28,16 +32,58 @@ interface TlyKeyStore {
     suspend fun set(apiKey: TlyApiKey?)
 }
 
-class DefaultTlyKeyStore @Inject constructor(
-    private val ksafe: KSafe,
-) : TlyKeyStore {
-    override suspend fun get(): TlyApiKey? = TlyApiKey.ofOrNull(ksafe.get(KEY, ""))
+/** Encrypted string storage behind [DefaultTlyKeyStore]. */
+interface SecretStore {
+    suspend fun get(key: String): String?
 
-    override suspend fun set(apiKey: TlyApiKey?) {
-        if (apiKey == null) ksafe.delete(KEY) else ksafe.put(KEY, apiKey.token)
-    }
+    suspend fun put(
+        key: String,
+        value: String,
+    )
+
+    suspend fun delete(key: String)
+}
+
+class KSafeSecretStore @Inject constructor(
+    private val ksafe: KSafe,
+) : SecretStore {
+    override suspend fun get(key: String): String? = ksafe.get(key, null, String.serializer().nullable)
+
+    override suspend fun put(
+        key: String,
+        value: String,
+    ) = ksafe.put(key, value, String.serializer())
+
+    override suspend fun delete(key: String) = ksafe.delete(key)
+}
+
+/** A failing [SecretStore], such as a broken Android Keystore, reads as no key and drops writes. */
+class DefaultTlyKeyStore @Inject constructor(
+    private val secrets: SecretStore,
+) : TlyKeyStore {
+    override suspend fun get(): TlyApiKey? = attempt(null) { secrets.get(KEY)?.let(TlyApiKey::ofOrNull) }
+
+    override suspend fun set(apiKey: TlyApiKey?) =
+        attempt(Unit) {
+            if (apiKey == null) secrets.delete(KEY) else secrets.put(KEY, apiKey.token)
+        }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun <T> attempt(
+        onFailure: T,
+        block: suspend () -> T,
+    ): T =
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "The T.LY key store failed", e)
+            onFailure
+        }
 
     private companion object {
         const val KEY = "tlyApiKey"
+        const val TAG = "DefaultTlyKeyStore"
     }
 }

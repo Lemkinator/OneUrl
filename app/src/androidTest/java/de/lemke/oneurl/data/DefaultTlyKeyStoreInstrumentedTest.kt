@@ -19,65 +19,24 @@ package de.lemke.oneurl.data
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
-import de.lemke.oneurl.domain.model.TlyApiKey
 import eu.anifantakis.lib.ksafe.KSafe
-import io.kotest.matchers.shouldBe
 import java.io.File
-import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Before
-import org.junit.Test
 import org.junit.runner.RunWith
 
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class DefaultTlyKeyStoreInstrumentedTest {
+class DefaultTlyKeyStoreInstrumentedTest : TlyKeyStoreContract() {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val directory = File(context.cacheDir, "tly-key-store-test")
-    private lateinit var store: DefaultTlyKeyStore
 
-    @Before
-    fun createStore() {
+    override fun createStore(): TlyKeyStore {
         directory.deleteRecursively()
-        store = DefaultTlyKeyStore(KSafe(context, fileName = "tlykeytest${System.nanoTime()}", baseDir = directory))
+        return DefaultTlyKeyStore(KSafeSecretStore(KSafe(context, fileName = "tlykeytest${System.nanoTime()}", baseDir = directory)))
     }
 
     @After
     fun deleteStore() {
         directory.deleteRecursively()
     }
-
-    @Test
-    fun getReturnsNullBeforeAKeyWasStored() =
-        runTest {
-            store.get() shouldBe null
-        }
-
-    @Test
-    fun getReturnsTheStoredKey() =
-        runTest {
-            store.set(TlyApiKey.ofOrNull("abc123"))
-
-            store.get() shouldBe TlyApiKey.ofOrNull("abc123")
-        }
-
-    @Test
-    fun setReplacesTheStoredKey() =
-        runTest {
-            store.set(TlyApiKey.ofOrNull("first"))
-
-            store.set(TlyApiKey.ofOrNull("second"))
-
-            store.get() shouldBe TlyApiKey.ofOrNull("second")
-        }
-
-    @Test
-    fun setNullRemovesTheStoredKey() =
-        runTest {
-            store.set(TlyApiKey.ofOrNull("abc123"))
-
-            store.set(null)
-
-            store.get() shouldBe null
-        }
 }

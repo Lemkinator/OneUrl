@@ -26,13 +26,13 @@ abstract class TlyKeyStoreContract {
     protected abstract fun createStore(): TlyKeyStore
 
     @Test
-    fun `get returns null before a key was stored`() =
+    fun getReturnsNullBeforeAKeyWasStored() =
         runTest {
             createStore().get() shouldBe null
         }
 
     @Test
-    fun `get returns the stored key`() =
+    fun getReturnsTheStoredKey() =
         runTest {
             val store = createStore()
 
@@ -42,7 +42,7 @@ abstract class TlyKeyStoreContract {
         }
 
     @Test
-    fun `set replaces the stored key`() =
+    fun setReplacesTheStoredKey() =
         runTest {
             val store = createStore()
             store.set(TlyApiKey.ofOrNull("first"))
@@ -53,7 +53,7 @@ abstract class TlyKeyStoreContract {
         }
 
     @Test
-    fun `set null removes the stored key`() =
+    fun setNullRemovesTheStoredKey() =
         runTest {
             val store = createStore()
             store.set(TlyApiKey.ofOrNull("abc123"))
