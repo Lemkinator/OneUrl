@@ -295,13 +295,12 @@
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
                         android:textSize="18sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constrainedWidth="true"
+                        app:layout_constraintBaseline_toBaselineOf="@id/url_visits_label"
                         app:layout_constraintEnd_toStartOf="@id/url_visits_refresh_button"
-                        app:layout_constraintStart_toEndOf="@id/url_visits_label"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintStart_toEndOf="@id/url_visits_label" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_visits_refresh_button"

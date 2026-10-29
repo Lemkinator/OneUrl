@@ -103,7 +103,7 @@ class URLActivityScreenshotTest {
         launchAndCapture("src/test/screenshots/url_visits_default.png", url) { activity ->
             val label = activity.findViewById<TextView>(R.id.url_visits_label)
             val count = activity.findViewById<TextView>(R.id.url_visits_textview)
-            assertVisitsRow(activity, "1,234")
+            assertVisitsRow(activity, "1,234", "Refresh")
             label.lineCount shouldBe 1
             val gap = count.left - label.right
             gap shouldBeGreaterThan -1
@@ -120,7 +120,7 @@ class URLActivityScreenshotTest {
         RuntimeEnvironment.setFontScale(2f)
         val url = seedVisitsUrl()
         launchAndCapture("src/test/screenshots/url_visits_large_font_de.png", url) { activity ->
-            assertVisitsRow(activity, "1.234")
+            assertVisitsRow(activity, "1.234", "Aktualisieren")
             activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBeGreaterThan 1
         }
     }
@@ -135,14 +135,18 @@ class URLActivityScreenshotTest {
     private fun assertVisitsRow(
         activity: URLActivity,
         expectedCount: String,
+        expectedRefreshDescription: String,
     ) {
-        val row = activity.findViewById<View>(R.id.url_visits_layout)
         val count = activity.findViewById<TextView>(R.id.url_visits_textview)
         val refresh = activity.findViewById<View>(R.id.url_visits_refresh_button)
         count.text.toString() shouldBe expectedCount
         count.width shouldBeGreaterThan count.paint.measureText(expectedCount).toInt() - 1
-        count.right shouldBeLessThan row.width + 1
+        count.right shouldBeLessThan refresh.left + 1
         refresh.width shouldBeGreaterThan 0
+        refresh.contentDescription.toString() shouldBe expectedRefreshDescription
+        val label = activity.findViewById<TextView>(R.id.url_visits_label)
+        val baselineDiff = (count.top + count.baseline) - (label.top + label.baseline)
+        baselineDiff shouldBe 0
     }
 
     private fun launchAndCapture(
