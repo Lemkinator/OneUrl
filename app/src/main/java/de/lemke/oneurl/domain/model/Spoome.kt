@@ -17,7 +17,6 @@
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
-import android.icu.text.UnicodeSet
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.ParseError
@@ -243,11 +242,6 @@ sealed class Spoome : ShortURLProvider {
         const val MIN_ALIAS_LENGTH_DEFAULT = 3
         const val MAX_ALIAS_LENGTH_DEFAULT = 16
         const val MAX_ALIAS_LENGTH_EMOJI = 15
-
-        // The server rejects flags, ZWJ sequences, skin tones and variation selectors, so only single code points pass.
-        val ACCEPTED_EMOJI: UnicodeSet by lazy {
-            UnicodeSet("[[:Emoji_Presentation:]-[:Emoji_Modifier:]-[:Regional_Indicator:]]").freeze()
-        }
     }
 
     object Default : Spoome() {
@@ -292,7 +286,7 @@ sealed class Spoome : ShortURLProvider {
 
                 override fun aliasLength(alias: String) = alias.codePointCount(0, alias.length)
 
-                override fun isAliasValid(alias: String) = alias.isNotEmpty() && ACCEPTED_EMOJI.containsAll(alias)
+                override fun isAliasValid(alias: String) = alias.isNotEmpty() && AcceptedEmoji.containsAll(alias)
             }
 
         override fun getTipsCardTitleAndInfo(context: Context) =

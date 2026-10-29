@@ -155,6 +155,20 @@ class SpoomeEmojiTest {
     }
 
     @Test
+    @Config(sdk = [26, 36])
+    fun `isAliasValid gives the same answer on every API level`() {
+        val config = Spoome.Emoji.aliasConfig
+
+        config.isAliasValid("😀") shouldBe true
+        config.isAliasValid("🥰") shouldBe true
+        config.isAliasValid("🫠") shouldBe true
+        config.isAliasValid("🫩") shouldBe true
+        config.isAliasValid("🇩🇪") shouldBe false
+        config.isAliasValid("👨‍👩‍👧") shouldBe false
+        config.isAliasValid("👍🏽") shouldBe false
+    }
+
+    @Test
     fun `aliasLength counts emoji instead of UTF-16 characters`() {
         val config = Spoome.Emoji.aliasConfig
 
