@@ -27,6 +27,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @HiltViewModel
 class ProviderInfoViewModel @Inject constructor(
@@ -39,6 +41,8 @@ class ProviderInfoViewModel @Inject constructor(
     /** True after the store refused a write, until the screen reports it shown. */
     val tlyKeySaveFailed: StateFlow<Boolean>
         field = MutableStateFlow(false)
+
+    private val writeLock = Mutex()
 
     init {
         viewModelScope.launch {
@@ -54,7 +58,7 @@ class ProviderInfoViewModel @Inject constructor(
         if (text == tlyKey.value) return
         tlyKey.value = text
         viewModelScope.launch {
-            when (tlyKeys.set(TlyApiKey.ofOrNull(text))) {
+            when (writeLock.withLock { tlyKeys.set(TlyApiKey.ofOrNull(text)) }) {
                 TlyKeyWrite.Saved -> Unit
                 TlyKeyWrite.Failed -> tlyKeySaveFailed.value = true
             }

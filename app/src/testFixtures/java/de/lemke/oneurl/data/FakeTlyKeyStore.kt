@@ -19,11 +19,15 @@ package de.lemke.oneurl.data
 import de.lemke.oneurl.domain.model.TlyApiKey
 import kotlinx.coroutines.CompletableDeferred
 
-/** Holds the key in memory; [get] waits for [gate] while one is set, and both calls fail while [failing] is set. */
+/**
+ * Holds the key in memory; [get] waits for [gate] while one is set, each [set] waits for the next of [setGates] if any
+ * is queued, and both calls fail while [failing] is set.
+ */
 class FakeTlyKeyStore(
     var apiKey: TlyApiKey? = null,
 ) : TlyKeyStore {
     var gate: CompletableDeferred<Unit>? = null
+    val setGates = ArrayDeque<CompletableDeferred<Unit>>()
     var failing = false
 
     override suspend fun get(): StoredTlyKey {
@@ -33,6 +37,7 @@ class FakeTlyKeyStore(
     }
 
     override suspend fun set(apiKey: TlyApiKey?): TlyKeyWrite {
+        setGates.removeFirstOrNull()?.await()
         if (failing) return TlyKeyWrite.Failed
         this.apiKey = apiKey
         return TlyKeyWrite.Saved

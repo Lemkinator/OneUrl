@@ -86,6 +86,23 @@ class ProviderInfoViewModelTest : ShouldSpec(
             ProviderInfoViewModel(store).tlyKey.value shouldBe ""
         }
 
+        should("keep the last typed key when an earlier write finishes later") {
+            val store = FakeTlyKeyStore()
+            val first = CompletableDeferred<Unit>()
+            val second = CompletableDeferred<Unit>()
+            store.setGates.addAll(listOf(first, second))
+            val viewModel = ProviderInfoViewModel(store)
+
+            viewModel.onTlyKeyChanged("abc")
+            viewModel.onTlyKeyChanged("abcd")
+            second.complete(Unit)
+            store.apiKey shouldBe null
+
+            first.complete(Unit)
+
+            store.apiKey shouldBe TlyApiKey.ofOrNull("abcd")
+        }
+
         should("write nothing when the text is the one already shown") {
             val store = FakeTlyKeyStore(TlyApiKey.ofOrNull("abc123"))
             val viewModel = ProviderInfoViewModel(store)
