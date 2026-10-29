@@ -171,6 +171,21 @@ class DefaultShortURLClientTest {
         }
 
     @Test
+    fun `create sends no authorization with a stored key for a provider that is not T_LY`() =
+        runTest {
+            tlyKeys.apiKey = TlyApiKey.ofOrNull("secret")
+            val provider = TestProvider(answer = { success, _ -> success("https://test.example/abc") })
+
+            client.create(provider, "https://example.com", "")
+
+            queue.added
+                .single()
+                .headers()
+                .keys
+                .contains("authorization") shouldBe false
+        }
+
+    @Test
     fun `cancelling create cancels the queued request`() =
         runTest {
             val job = launch { client.create(TestProvider(), "https://example.com", "") }
