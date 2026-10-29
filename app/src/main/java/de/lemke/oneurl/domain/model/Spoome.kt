@@ -17,8 +17,7 @@
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
-import android.icu.lang.UCharacter
-import android.icu.lang.UProperty
+import android.icu.text.UnicodeSet
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.ParseError
@@ -84,6 +83,41 @@ sealed class Spoome : ShortURLProvider {
         countClicks(queue, url, minOf(url.added.toInstant(), now), now, 0, callback)
     }
 
+    override fun getCreateRequest(
+        queue: VolleyQueue,
+        longURL: String,
+        alias: String,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ): JsonObjectRequest {
+        val body = JSONObject().put("long_url", longURL)
+        if (alias.isNotBlank()) {
+            body.put("alias", alias)
+        } else {
+            generatedAliasType?.let { body.put("alias_type", it) }
+        }
+        return createRequest(apiURL, body, successCallback, errorCallback)
+    }
+
+    protected fun createRequest(
+        requestURL: String,
+        body: JSONObject?,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ): JsonObjectRequest {
+        val tag = "SpoomeCreateRequest_$name"
+        Log.d(tag, "start request: $requestURL")
+        return object : JsonObjectRequest(
+            Method.POST,
+            requestURL,
+            body,
+            { response -> handleResponse(tag, response, successCallback, errorCallback) },
+            { error -> handleError(tag, error, errorCallback) },
+        ) {
+            override fun getHeaders() = mapOf("Accept" to "application/json")
+        }
+    }
+
     private fun countClicks(
         queue: VolleyQueue,
         url: URL,
@@ -124,41 +158,6 @@ sealed class Spoome : ShortURLProvider {
                 },
             ),
         )
-    }
-
-    override fun getCreateRequest(
-        queue: VolleyQueue,
-        longURL: String,
-        alias: String,
-        successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit,
-    ): JsonObjectRequest {
-        val body = JSONObject().put("long_url", longURL)
-        if (alias.isNotBlank()) {
-            body.put("alias", alias)
-        } else {
-            generatedAliasType?.let { body.put("alias_type", it) }
-        }
-        return createRequest(apiURL, body, successCallback, errorCallback)
-    }
-
-    protected fun createRequest(
-        requestURL: String,
-        body: JSONObject?,
-        successCallback: (shortURL: String) -> Unit,
-        errorCallback: (error: GenerateURLError) -> Unit,
-    ): JsonObjectRequest {
-        val tag = "SpoomeCreateRequest_$name"
-        Log.d(tag, "start request: $requestURL")
-        return object : JsonObjectRequest(
-            Method.POST,
-            requestURL,
-            body,
-            { response -> handleResponse(tag, response, successCallback, errorCallback) },
-            { error -> handleError(tag, error, errorCallback) },
-        ) {
-            override fun getHeaders() = mapOf("Accept" to "application/json")
-        }
     }
 
     private fun handleResponse(
@@ -242,7 +241,11 @@ sealed class Spoome : ShortURLProvider {
         const val MIN_ALIAS_LENGTH_DEFAULT = 3
         const val MAX_ALIAS_LENGTH_DEFAULT = 16
         const val MAX_ALIAS_LENGTH_EMOJI = 15
-        val REGIONAL_INDICATORS = 0x1F1E6..0x1F1FF
+
+        // The server rejects flags, ZWJ sequences, skin tones and variation selectors, so only single code points pass.
+        val ACCEPTED_EMOJI: UnicodeSet by lazy {
+            UnicodeSet("[[:Emoji_Presentation:]-[:Emoji_Modifier:]-[:Regional_Indicator:]]").freeze()
+        }
     }
 
     object Default : Spoome() {
@@ -287,14 +290,7 @@ sealed class Spoome : ShortURLProvider {
 
                 override fun aliasLength(alias: String) = alias.codePointCount(0, alias.length)
 
-                // The server rejects flags, ZWJ sequences, skin tones and variation selectors, so only single code points pass.
-                override fun isAliasValid(alias: String) =
-                    alias.isNotEmpty() &&
-                        alias.codePoints().allMatch {
-                            UCharacter.hasBinaryProperty(it, UProperty.EMOJI_PRESENTATION) &&
-                                !UCharacter.hasBinaryProperty(it, UProperty.EMOJI_MODIFIER) &&
-                                it !in REGIONAL_INDICATORS
-                        }
+                override fun isAliasValid(alias: String) = alias.isNotEmpty() && ACCEPTED_EMOJI.containsAll(alias)
             }
 
         override fun getTipsCardTitleAndInfo(context: Context) =
