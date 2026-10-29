@@ -19,6 +19,7 @@ package de.lemke.oneurl.ui
 import android.app.Dialog
 import android.os.Bundle
 import android.text.InputFilter
+import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.view.LayoutInflater
 import android.view.View
@@ -166,7 +167,6 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
     }
 }
 
-/** Drops every whitespace character, so a pasted key never holds a line break or tab and the field shows the stored key. */
 private object WhitespaceFilter : InputFilter {
     override fun filter(
         source: CharSequence,
@@ -176,7 +176,10 @@ private object WhitespaceFilter : InputFilter {
         dstart: Int,
         dend: Int,
     ): CharSequence? {
-        val kept = source.subSequence(start, end).filterNot(Char::isWhitespace)
+        val kept = SpannableStringBuilder(source, start, end)
+        for (index in kept.indices.reversed()) {
+            if (kept[index].isWhitespace()) kept.delete(index, index + 1)
+        }
         return if (kept.length == end - start) null else kept
     }
 }

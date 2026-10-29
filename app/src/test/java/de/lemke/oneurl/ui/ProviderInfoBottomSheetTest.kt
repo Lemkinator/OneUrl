@@ -16,7 +16,13 @@
 
 package de.lemke.oneurl.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Looper
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.UnderlineSpan
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
@@ -268,6 +274,50 @@ class ProviderInfoBottomSheetTest {
 
             keyInputOf(fragment).text.toString() shouldBe "abc123"
             tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abc123")
+        }
+    }
+
+    @Test
+    fun `text inserted into a typed key drops its line break and keeps the cursor text`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val input = keyInputOf(fragment)
+            input.setText("abcd")
+
+            input.text!!.insert(2, "x\n")
+            idleMainLooper()
+
+            input.text.toString() shouldBe "abxcd"
+            tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abxcd")
+        }
+    }
+
+    @Test
+    fun `pasting a key with a trailing line break fills the field with the trimmed key`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("key", "abc123\n"))
+            val input = keyInputOf(fragment)
+
+            input.onTextContextMenuItem(android.R.id.paste)
+            idleMainLooper()
+
+            input.text.toString() shouldBe "abc123"
+            tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abc123")
+        }
+    }
+
+    @Test
+    fun `inserted text keeps its spans while whitespace is dropped`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val input = keyInputOf(fragment)
+            val underline = UnderlineSpan()
+            val inserted = SpannableString("ab\ncd").apply { setSpan(underline, 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
+
+            input.text!!.insert(0, inserted)
+
+            input.text.toString() shouldBe "abcd"
+            input.text!!.getSpanStart(underline) shouldBe 0
+            input.text!!.getSpanEnd(underline) shouldBe 4
         }
     }
 
