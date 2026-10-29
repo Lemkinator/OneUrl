@@ -65,10 +65,10 @@ class DefaultShortURLClient @Inject constructor(
     override suspend fun visitCount(url: URL): Int? =
         suspendCancellableCoroutine { continuation ->
             val requests = CancelableQueue(queue)
+            continuation.invokeOnCancellation { requests.cancelAll() }
             url.shortURLProvider.getURLClickCount(requests, url) { count ->
                 if (continuation.isActive) continuation.resume(count)
             }
-            continuation.invokeOnCancellation { requests.cancelAll() }
         }
 }
 
