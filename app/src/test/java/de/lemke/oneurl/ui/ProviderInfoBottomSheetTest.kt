@@ -261,6 +261,17 @@ class ProviderInfoBottomSheetTest {
     }
 
     @Test
+    fun `a pasted key with line breaks and tabs keeps only the key in the field and the store`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            keyInputOf(fragment).setText("abc\n12\t3\r\n")
+            idleMainLooper()
+
+            keyInputOf(fragment).text.toString() shouldBe "abc123"
+            tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abc123")
+        }
+    }
+
+    @Test
     fun `a key the store cannot save shows the error toast and keeps the typed text`() {
         withBottomSheet(Tly.Default) { fragment ->
             tlyKeys.failing = true

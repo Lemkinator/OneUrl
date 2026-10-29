@@ -18,6 +18,8 @@ package de.lemke.oneurl.ui
 
 import android.app.Dialog
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.Spanned
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -110,6 +112,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
     private fun bindTlyKey(provider: Tly) {
         binding.providerBottomSheetTlyKey.isVisible = true
         binding.providerBottomSheetTlyKeyLink.onSingleLaunchClick { openURL(provider.keySettingsURL) }
+        binding.providerBottomSheetTlyKeyInput.filters += WhitespaceFilter
         binding.providerBottomSheetTlyKeyInput.addTextChangedListener { viewModel.onTlyKeyChanged(it.toString()) }
         collectState(viewModel.tlyKeySaveFailed) { failed ->
             if (failed) {
@@ -160,5 +163,20 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
 
         const val KEY_PROVIDER = "key_provider"
         private const val LAST_INFO_CONTENT_INDEX = 3
+    }
+}
+
+/** Drops every whitespace character, so a pasted key never holds a line break or tab and the field shows the stored key. */
+private object WhitespaceFilter : InputFilter {
+    override fun filter(
+        source: CharSequence,
+        start: Int,
+        end: Int,
+        dest: Spanned,
+        dstart: Int,
+        dend: Int,
+    ): CharSequence? {
+        val kept = source.subSequence(start, end).filterNot(Char::isWhitespace)
+        return if (kept.length == end - start) null else kept
     }
 }
