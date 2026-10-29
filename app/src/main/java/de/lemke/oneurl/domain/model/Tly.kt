@@ -31,15 +31,13 @@ import de.lemke.commonutils.R as commonutilsR
 login required (also for alias), but:
 https://t.ly/api/v1/link/shorten
 https://t.ly/api/v1/link/providers
-t.ly, ibit.ly, twtr.to, jpeg.ly, is.gd, rebrand.ly, tinyurl, bit.ly
-t.ly: shows t.ly for valid links (example.com) and tinyurl.com else (example), works also when bit.ly asks for t.ly api key?
-ibit.ly: responds ibit.ly for valid links (example.com) and tinyurl.com else (example)
-twtr.to: responds t.ly for valid links (example.com) and tinyurl.com else (example)
-jpeg.ly: responds jpeg.ly for valid links (example.com) and tinyurl.com else (example)
-is.gd: responds is.gd for valid links (example.com) and tinyurl.com else (example)
-rebrand.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example)
-tinyurl: tinyurl.com
-bit.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example), some requests:
+t.ly, shorturl.ly, ibit.ly, jpeg.ly, is.gd, rebrand.ly, bit.ly
+t.ly: shows t.ly for valid links (example.com), works also when bit.ly asks for t.ly api key?
+ibit.ly: responds ibit.ly for valid links (example.com)
+jpeg.ly: responds jpeg.ly for valid links (example.com)
+is.gd: responds is.gd for valid links (example.com)
+rebrand.ly: responds t.ly for valid links (example.com)
+bit.ly: responds t.ly for valid links (example.com), some requests:
 T.LY account and API key required to create additional short links.
 wtf? :D anyway...
 
