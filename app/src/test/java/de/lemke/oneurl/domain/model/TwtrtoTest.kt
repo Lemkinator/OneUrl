@@ -35,6 +35,18 @@ class TwtrtoTest {
     }
 
     @Test
+    fun `a stored twtr_to name falls back to the default provider`() {
+        ShortURLProviderCompanion.fromStringOrDefault("t.ly (twtr.to)") shouldBe ShortURLProviderCompanion.default
+    }
+
+    @Test
+    fun `keeps the T_LY group and legal links`() {
+        Twtrto.group shouldBe "t.ly [experimental]"
+        Twtrto.privacyURL shouldBe "https://t.ly/privacy"
+        Twtrto.termsURL shouldBe "https://t.ly/terms"
+    }
+
+    @Test
     fun `is no longer offered`() {
         Twtrto.enabled.shouldBeFalse()
         (Twtrto in ShortURLProviderCompanion.enabled).shouldBeFalse()

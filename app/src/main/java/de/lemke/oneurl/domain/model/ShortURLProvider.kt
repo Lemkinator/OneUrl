@@ -149,6 +149,9 @@ class Unknown : UnavailableProvider() {
 object Twtrto : UnavailableProvider() {
     override val name = "t.ly (twtr.to)"
     override val baseURL = "https://t.ly"
+    override val group = Tly.Default.group
+    override val privacyURL = Tly.Default.privacyURL
+    override val termsURL = Tly.Default.termsURL
 }
 
 @Suppress("SameReturnValue")
