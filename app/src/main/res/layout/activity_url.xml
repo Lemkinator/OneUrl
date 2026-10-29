@@ -278,20 +278,20 @@
                     <TextView
                         android:id="@+id/url_visits_label"
                         style="?android:attr/textAppearanceLarge"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
+                        android:layout_weight="1"
                         android:textSize="18sp" />
 
                     <TextView
                         android:id="@+id/url_visits_textview"
                         style="?android:attr/textAppearanceLarge"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
-                        android:layout_weight="1"
                         android:textSize="18sp" />
 
                     <androidx.appcompat.widget.AppCompatButton

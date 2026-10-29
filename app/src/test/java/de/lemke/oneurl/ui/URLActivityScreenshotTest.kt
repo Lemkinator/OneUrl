@@ -20,6 +20,7 @@ import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.os.Looper
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -30,10 +31,14 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
+import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -42,6 +47,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -56,6 +62,9 @@ class URLActivityScreenshotTest {
 
     @Inject
     lateinit var urlRepository: URLRepository
+
+    @Inject
+    lateinit var shortURLClient: FakeShortURLClient
 
     private lateinit var seededUrl: URL
 
@@ -86,13 +95,33 @@ class URLActivityScreenshotTest {
         launchAndCapture("src/test/screenshots/url_default_dark.png")
     }
 
-    private fun launchAndCapture(fileName: String) {
+    @Test
+    @Config(qualifiers = "de-w320dp-h1400dp")
+    fun url_visits_large_font_de() {
+        RuntimeEnvironment.setFontScale(2f)
+        val url = seededUrl.copy(shortURL = "https://spoo.me/seeded2", shortURLProvider = Spoome.Default)
+        runBlocking { urlRepository.addURL(url) }
+        shortURLClient.visitCounts[url.shortURL] = 1234
+        launchAndCapture("src/test/screenshots/url_visits_large_font_de.png", url) { activity ->
+            val count = activity.findViewById<TextView>(R.id.url_visits_textview)
+            count.text.toString() shouldBe "1.234"
+            count.width shouldBeGreaterThan count.paint.measureText("1.234").toInt() - 1
+            activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBeGreaterThan 1
+        }
+    }
+
+    private fun launchAndCapture(
+        fileName: String,
+        url: URL = seededUrl,
+        check: (URLActivity) -> Unit = {},
+    ) {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                .putExtra(KEY_SHORTURL, seededUrl.shortURL)
+                .putExtra(KEY_SHORTURL, url.shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
             idleMainLooper()
             assertQrLoaded(scenario)
+            scenario.onActivity(check)
             onView(isRoot()).captureRoboImage(fileName)
         }
     }
