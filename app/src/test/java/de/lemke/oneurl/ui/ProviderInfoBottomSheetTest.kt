@@ -203,11 +203,12 @@ class ProviderInfoBottomSheetTest {
     }
 
     @Test
-    fun `a T_LY provider shows the key entry with its plan hint`() {
+    fun `a T_LY provider shows the key entry below the API key info row`() {
         withBottomSheet(Tly.Default) { fragment ->
             viewOf<View>(fragment, R.id.providerBottomSheetTlyKey).isVisible.shouldBeTrue()
-            viewOf<TextView>(fragment, R.id.providerBottomSheetTlyKeyInfo).text.toString() shouldBe
-                "You can add your own API key. It needs a T.LY plan with API access."
+            infoButtonOf(fragment, 0).text.toString() shouldBe "API key"
+            infoTextOf(fragment, 0).text.toString() shouldBe "You can add your own API key. It needs a T.LY plan with API access."
+            infoButtonOf(fragment, 1).isVisible.shouldBeFalse()
         }
     }
 

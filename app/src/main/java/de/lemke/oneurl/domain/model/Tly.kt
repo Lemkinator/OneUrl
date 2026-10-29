@@ -85,7 +85,7 @@ private const val KEYED_API_URL = "https://api.t.ly/api/v1/link/shorten"
 
 sealed class Tly : ShortURLProvider {
     abstract val domain: String
-    final override val group = "t.ly [experimental]"
+    final override val group = "t.ly"
     final override val baseURL = "https://t.ly"
     final override val apiURL = "$baseURL/api/v1/link/shorten"
     final override val privacyURL = "$baseURL/privacy"
@@ -95,9 +95,9 @@ sealed class Tly : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-                context.getString(commonutilsR.string.commonutils_experimental),
-                context.getString(R.string.tly_info),
+                R.drawable.ic_key,
+                context.getString(R.string.tly_key_title),
+                context.getString(R.string.tly_key_info),
             ),
         )
 
