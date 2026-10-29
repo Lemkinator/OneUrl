@@ -25,22 +25,27 @@ import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.viewModels
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.showOnce
 import de.lemke.oneurl.databinding.ViewProviderInfoBottomsheetBinding
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.Tly
 import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 
 @AndroidEntryPoint
 class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewProviderInfoBottomsheetBinding
+    private val viewModel: ProviderInfoViewModel by viewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
@@ -67,6 +72,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
             binding.providerBottomSheetInfoGroupText.text = provider.group
         }
         bindInfoContents(provider)
+        if (provider is Tly) bindTlyKey(provider)
         bindInfoButtons(provider)
     }
 
@@ -95,6 +101,18 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
                     text = info.linkOrDescription
                     isVisible = true
                 }
+            }
+        }
+    }
+
+    private fun bindTlyKey(provider: Tly) {
+        binding.providerBottomSheetTlyKey.isVisible = true
+        binding.providerBottomSheetTlyKeyLink.onSingleLaunchClick { openURL(provider.keySettingsURL) }
+        binding.providerBottomSheetTlyKeyInput.addTextChangedListener { viewModel.onTlyKeyChanged(it.toString()) }
+        collectState(viewModel.tlyKey) { key ->
+            if (key != null) {
+                binding.providerBottomSheetTlyKeyInput.isEnabled = true
+                if (binding.providerBottomSheetTlyKeyInput.text.toString() != key) binding.providerBottomSheetTlyKeyInput.setText(key)
             }
         }
     }

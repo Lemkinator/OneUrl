@@ -23,22 +23,27 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.idleMainLooper
 import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeTlyKeyStore
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Shareaholic
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.Tinyurl
+import de.lemke.oneurl.domain.model.Tly
+import de.lemke.oneurl.domain.model.TlyApiKey
 import de.lemke.oneurl.domain.model.VgdIsgd
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -53,6 +58,9 @@ import org.robolectric.annotation.Config
 class ProviderInfoBottomSheetTest {
     @get:Rule(order = 0)
     val hiltRule = HiltTestRule(this)
+
+    @Inject
+    lateinit var tlyKeys: FakeTlyKeyStore
 
     @Before
     fun setup() {
@@ -191,6 +199,57 @@ class ProviderInfoBottomSheetTest {
             }
         }
     }
+
+    @Test
+    fun `a T_LY provider shows the key entry with its plan hint`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            viewOf<View>(fragment, R.id.providerBottomSheetTlyKey).isVisible.shouldBeTrue()
+            viewOf<TextView>(fragment, R.id.providerBottomSheetTlyKeyInfo).text.toString() shouldBe
+                "A key needs a T.LY plan with API access"
+        }
+    }
+
+    @Test
+    fun `a provider other than T_LY hides the key entry`() {
+        withBottomSheet(Dagd) { fragment ->
+            viewOf<View>(fragment, R.id.providerBottomSheetTlyKey).isVisible.shouldBeFalse()
+        }
+    }
+
+    @Test
+    fun `the key entry shows the stored key and takes input`() {
+        tlyKeys.apiKey = TlyApiKey.ofOrNull("abc123")
+
+        withBottomSheet(Tly.Default) { fragment ->
+            keyInputOf(fragment).text.toString() shouldBe "abc123"
+            keyInputOf(fragment).isEnabled.shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `typing a key stores it and clearing the field removes it`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            keyInputOf(fragment).setText("abc123")
+            idleMainLooper()
+            tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abc123")
+
+            keyInputOf(fragment).setText("")
+            idleMainLooper()
+            tlyKeys.apiKey shouldBe null
+        }
+    }
+
+    @Test
+    fun `the key link opens the T_LY key settings`() {
+        withScenarioAndBottomSheet(Tly.Default) { scenario ->
+            scenario.onActivity { activity ->
+                viewOf<View>(activity.providerInfoBottomSheet(), R.id.providerBottomSheetTlyKeyLink).performClick()
+                shadowOf(activity).nextStartedActivity.data.toString() shouldBe "https://t.ly/settings#/api"
+            }
+        }
+    }
+
+    private fun keyInputOf(fragment: ProviderInfoBottomSheet): TextInputEditText = viewOf(fragment, R.id.providerBottomSheetTlyKeyInput)
 
     private fun assertInfoContentsBound(
         fragment: ProviderInfoBottomSheet,

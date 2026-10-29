@@ -90,6 +90,7 @@ sealed class Tly : ShortURLProvider {
     final override val apiURL = "$baseURL/api/v1/link/shorten"
     final override val privacyURL = "$baseURL/privacy"
     final override val termsURL = "$baseURL/terms"
+    val keySettingsURL = "$baseURL/settings#/api"
 
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
