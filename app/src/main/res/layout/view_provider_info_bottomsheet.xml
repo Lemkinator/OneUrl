@@ -173,7 +173,8 @@
                         android:enabled="false"
                         android:importantForAutofill="no"
                         android:inputType="textPassword"
-                        android:maxLines="1" />
+                        android:maxLines="1"
+                        android:saveEnabled="false" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
