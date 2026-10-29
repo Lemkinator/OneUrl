@@ -44,6 +44,7 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import javax.inject.Inject
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -224,6 +225,24 @@ class ProviderInfoBottomSheetTest {
         withBottomSheet(Tly.Default) { fragment ->
             keyInputOf(fragment).text.toString() shouldBe "abc123"
             keyInputOf(fragment).isEnabled.shouldBeTrue()
+        }
+    }
+
+    @Test
+    fun `the key entry stays disabled and empty until the stored key is read`() {
+        val read = CompletableDeferred<Unit>()
+        tlyKeys.gate = read
+        tlyKeys.apiKey = TlyApiKey.ofOrNull("abc123")
+
+        withBottomSheet(Tly.Default) { fragment ->
+            keyInputOf(fragment).isEnabled.shouldBeFalse()
+            keyInputOf(fragment).text.toString() shouldBe ""
+
+            read.complete(Unit)
+            idleMainLooper()
+
+            keyInputOf(fragment).isEnabled.shouldBeTrue()
+            keyInputOf(fragment).text.toString() shouldBe "abc123"
         }
     }
 
