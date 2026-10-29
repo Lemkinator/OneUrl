@@ -19,6 +19,7 @@ package de.lemke.oneurl.ui
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.os.Looper
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
@@ -38,6 +39,7 @@ import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -96,18 +98,51 @@ class URLActivityScreenshotTest {
     }
 
     @Test
+    fun url_visits_default() {
+        val url = seedVisitsUrl()
+        launchAndCapture("src/test/screenshots/url_visits_default.png", url) { activity ->
+            val label = activity.findViewById<TextView>(R.id.url_visits_label)
+            val count = activity.findViewById<TextView>(R.id.url_visits_textview)
+            assertVisitsRow(activity, "1,234")
+            label.lineCount shouldBe 1
+            val gap = count.left - label.right
+            gap shouldBeGreaterThan -1
+            gap shouldBeLessThan
+                activity.resources.displayMetrics.density
+                    .times(VISITS_GAP_TOLERANCE_DP)
+                    .toInt()
+        }
+    }
+
+    @Test
     @Config(qualifiers = "de-w320dp-h1400dp")
     fun url_visits_large_font_de() {
         RuntimeEnvironment.setFontScale(2f)
+        val url = seedVisitsUrl()
+        launchAndCapture("src/test/screenshots/url_visits_large_font_de.png", url) { activity ->
+            assertVisitsRow(activity, "1.234")
+            activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBeGreaterThan 1
+        }
+    }
+
+    private fun seedVisitsUrl(): URL {
         val url = seededUrl.copy(shortURL = "https://spoo.me/seeded2", shortURLProvider = Spoome.Default)
         runBlocking { urlRepository.addURL(url) }
         shortURLClient.visitCounts[url.shortURL] = 1234
-        launchAndCapture("src/test/screenshots/url_visits_large_font_de.png", url) { activity ->
-            val count = activity.findViewById<TextView>(R.id.url_visits_textview)
-            count.text.toString() shouldBe "1.234"
-            count.width shouldBeGreaterThan count.paint.measureText("1.234").toInt() - 1
-            activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBeGreaterThan 1
-        }
+        return url
+    }
+
+    private fun assertVisitsRow(
+        activity: URLActivity,
+        expectedCount: String,
+    ) {
+        val row = activity.findViewById<View>(R.id.url_visits_layout)
+        val count = activity.findViewById<TextView>(R.id.url_visits_textview)
+        val refresh = activity.findViewById<View>(R.id.url_visits_refresh_button)
+        count.text.toString() shouldBe expectedCount
+        count.width shouldBeGreaterThan count.paint.measureText(expectedCount).toInt() - 1
+        count.right shouldBeLessThan row.width + 1
+        refresh.width shouldBeGreaterThan 0
     }
 
     private fun launchAndCapture(
@@ -134,5 +169,9 @@ class URLActivityScreenshotTest {
                     ?.bitmap != null
         }
         check(loaded) { "QR drawable did not load" }
+    }
+
+    private companion object {
+        const val VISITS_GAP_TOLERANCE_DP = 8f
     }
 }

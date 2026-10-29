@@ -268,22 +268,27 @@
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/url_visits_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:visibility="gone">
 
                     <TextView
                         android:id="@+id/url_visits_label"
                         style="?android:attr/textAppearanceLarge"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
-                        android:layout_weight="1"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constrainedWidth="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/url_visits_textview"
+                        app:layout_constraintHorizontal_bias="0"
+                        app:layout_constraintHorizontal_chainStyle="packed"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
                         android:id="@+id/url_visits_textview"
@@ -292,19 +297,26 @@
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/url_visits_refresh_button"
+                        app:layout_constraintStart_toEndOf="@id/url_visits_label"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_visits_refresh_button"
                         style="@style/ButtonStyle.Transparent"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
+                        android:layout_height="0dp"
                         android:layout_marginEnd="18dp"
                         android:drawableEnd="@drawable/ic_oui_refresh"
                         android:minWidth="24dp"
-                        android:minHeight="24dp" />
+                        android:minHeight="24dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
