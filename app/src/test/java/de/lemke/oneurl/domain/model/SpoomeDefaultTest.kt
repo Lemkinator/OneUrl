@@ -25,6 +25,9 @@ import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.data.deliverResponse
 import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
+import java.net.URLDecoder
+import java.time.Duration
+import java.time.Instant
 import java.time.ZonedDateTime
 import org.json.JSONObject
 import org.junit.Assert.fail
@@ -180,25 +183,53 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `legacy UrlError body maps to InvalidURL`() {
+    fun `422 detail with an alias location maps to InvalidAlias`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
-        val body = """{"UrlError":"Invalid URL, URL must have a valid protocol"}"""
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "ab", { fail("unexpected success") }, { error = it })
+        val body = """{"detail":[{"type":"string_too_short","loc":["body","alias"],"msg":"String should have at least 3 characters"}]}"""
 
-        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.InvalidAlias
+    }
+
+    @Test
+    fun `422 detail with a long_url location maps to InvalidURL`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(queue, "notaurl", "", { fail("unexpected success") }, { error = it })
+        val body = """{"detail":[{"type":"url_parsing","loc":["body","long_url"],"msg":"Input should be a valid URL"}]}"""
+
+        req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.InvalidURL
     }
 
     @Test
-    fun `error body for another field falls back to Custom with the raw body`() {
+    fun `422 detail without a known location falls back to Custom with the raw body`() {
+        listOf(
+            """{"detail":[{"loc":["body","password"],"msg":"bad"}]}""",
+            """{"detail":[{"msg":"no location"}]}""",
+            """{"detail":["text"]}""",
+            """{"detail":"Not found"}""",
+        ).forEach { body ->
+            var error: GenerateURLError? = null
+            val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+
+            req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
+
+            error shouldBe GenerateURLError.Custom(422, body)
+        }
+    }
+
+    @Test
+    fun `error body for another field falls back to Custom with the server message`() {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
         val body = """{"error":"Bad body","code":"validation_error","field":"password"}"""
 
         req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
 
-        error shouldBe GenerateURLError.Custom(422, body)
+        error shouldBe GenerateURLError.Custom(422, "Bad body")
     }
 
     @Test
@@ -297,9 +328,17 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `isAliasValid accepts alphanumerics and underscores, rejects other characters`() {
-        Spoome.Default.aliasConfig.isAliasValid("abc_123") shouldBe true
-        Spoome.Default.aliasConfig.isAliasValid("abc-123") shouldBe false
+    fun `alias config follows the v1 rules`() {
+        val config = Spoome.Default.aliasConfig
+
+        config.minAliasLength shouldBe 3
+        config.maxAliasLength shouldBe 16
+        config.allowedAliasCharacters shouldBe "a-z, A-Z, 0-9, _, -"
+        config.isAliasValid("abc_1-Z") shouldBe true
+        config.isAliasValid("abc.123") shouldBe false
+        config.isAliasValid("äbc") shouldBe false
+        config.isAliasValid("") shouldBe false
+        config.aliasLength("abc_1-Z") shouldBe 7
     }
 
     @Test
@@ -314,17 +353,64 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `getURLClickCount reads total_clicks from the public stats of the alias`() {
+    fun `getURLClickCount reads total_clicks from the public stats since the link was added`() {
         var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+        val added = ZonedDateTime.now().minusDays(1)
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", added)
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
         val request = queue.added.single()
         request.method shouldBe Request.Method.GET
-        request.url shouldBe "https://spoo.me/api/v1/public/stats/abc"
+        request.url.substringBefore("?") shouldBe "https://spoo.me/api/v1/public/stats/abc"
+        request.query()["start_date"] shouldBe added.toInstant().toString()
         request.deliverResponse(JSONObject("""{"generation":"v2","stats":{"summary":{"total_clicks":42,"unique_clicks":40}}}"""))
 
         clicks shouldBe 42
+        queue.added.size shouldBe 1
+    }
+
+    @Test
+    fun `getURLClickCount sums consecutive windows of at most 89 days back to the creation`() {
+        var clicks: Int? = -1
+        val added = ZonedDateTime.now().minusDays(200)
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", added)
+
+        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        queue.added[0].deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":10}}}"""))
+        clicks shouldBe -1
+        queue.added[1].deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":5}}}"""))
+        clicks shouldBe -1
+        queue.added[2].deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":1}}}"""))
+
+        clicks shouldBe 16
+        queue.added.size shouldBe 3
+        val windows = queue.added.map { it.query().let { q -> Instant.parse(q["start_date"]!!) to Instant.parse(q["end_date"]!!) } }
+        Duration.between(windows[0].first, windows[0].second) shouldBe Duration.ofDays(89)
+        Duration.between(windows[1].first, windows[1].second) shouldBe Duration.ofDays(89)
+        windows[1].second shouldBe windows[0].first.minusMillis(1)
+        windows[2].second shouldBe windows[1].first.minusMillis(1)
+        windows[2].first shouldBe added.toInstant()
+    }
+
+    @Test
+    fun `getURLClickCount asks for an empty window when the link was added in the future`() {
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().plusDays(1))
+
+        Spoome.Default.getURLClickCount(queue, url) { }
+
+        val query = queue.added.single().query()
+        query["start_date"] shouldBe query["end_date"]
+    }
+
+    @Test
+    fun `getURLClickCount resolves to null when the response has no stats`() {
+        var clicks: Int? = -1
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+
+        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject("""{"generation":"v2","link":{}}"""))
+
+        clicks shouldBe null
     }
 
     @Test
@@ -359,3 +445,8 @@ class SpoomeDefaultTest {
         error shouldBe GenerateURLError.Unknown(200)
     }
 }
+
+private fun Request<*>.query(): Map<String, String> =
+    url.substringAfter("?").split("&").associate { pair ->
+        pair.substringBefore("=") to URLDecoder.decode(pair.substringAfter("="), "UTF-8")
+    }

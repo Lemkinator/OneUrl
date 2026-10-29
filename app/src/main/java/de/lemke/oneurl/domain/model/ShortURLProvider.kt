@@ -220,6 +220,8 @@ interface AliasConfig {
 
     fun isAliasValid(alias: String): Boolean
 
+    fun aliasLength(alias: String): Int = alias.length
+
     companion object {
         const val NO_MAX_ALIAS_SPECIFIED = 100
     }

@@ -17,6 +17,8 @@
 package de.lemke.oneurl.domain.model
 
 import android.content.Context
+import android.icu.lang.UCharacter
+import android.icu.lang.UProperty
 import android.util.Log
 import com.android.volley.NoConnectionError
 import com.android.volley.ParseError
@@ -27,6 +29,9 @@ import de.lemke.commonutils.ui.utils.urlEncode
 import de.lemke.commonutils.ui.utils.withHttps
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.VolleyQueue
+import java.time.Duration
+import java.time.Instant
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import de.lemke.commonutils.R as commonutilsR
@@ -35,7 +40,7 @@ import de.lemke.commonutils.R as commonutilsR
 https://spoo.me/docs/api-reference/url-shortening/create-shortened-url.md
 example:
 POST https://spoo.me/api/v1/shorten {"long_url": "https://example.com", "alias": "abc"}
-No API key. Anonymous limit: 20 requests per minute and 200 per day.
+No API key. Anonymous create limit: 20 requests per minute.
 
 response (201):
 {
@@ -50,19 +55,21 @@ Errors ({"error", "code", "field"}):
                           "code":"validation_error","field":"alias"}
 409                       {"error":"Alias is already in use","code":"conflict"}
 429                       rate limit exceeded
+422 (validation)          {"detail":[{"loc":["body","alias"],"msg":"...","type":"..."}]}
 
-Emoji links are created with an emoji-only alias. Only the legacy POST /emoji generates random emoji,
-so the emoji provider uses it when no alias is given. It answers with an http:// short link and
-{"UrlError": "..."} for an invalid URL. Legacy limit: 5 per minute and 50 per day.
+Emoji links use an emoji-only alias, or "alias_type": "emoji" without alias for a generated one.
 
-Click count: GET https://spoo.me/api/v1/public/stats/{alias}
+Click count: GET https://spoo.me/api/v1/public/stats/{alias}?start_date={ISO 8601}&end_date={ISO 8601}
 {"stats": {"summary": {"total_clicks": 0}}}
-Reads links created by either API generation, unlike the legacy POST /stats/{alias}.
+Without start_date only the last 7 days count, and a range above 90 days answers 400, so the count sums
+consecutive windows from the creation of the link.
  */
 sealed class Spoome : ShortURLProvider {
     final override val group = "spoo.me, spoo.me (emoji)"
     final override val baseURL = "https://spoo.me"
     final override val apiURL = "$baseURL/api/v1/shorten"
+
+    protected open val generatedAliasType: String? = null
 
     override fun getAnalyticsURL(alias: String) = "$baseURL/stats/$alias"
 
@@ -73,9 +80,24 @@ sealed class Spoome : ShortURLProvider {
         url: URL,
         callback: (clicks: Int?) -> Unit,
     ) {
+        val now = Instant.now()
+        countClicks(queue, url, minOf(url.added.toInstant(), now), now, 0, callback)
+    }
+
+    private fun countClicks(
+        queue: VolleyQueue,
+        url: URL,
+        created: Instant,
+        end: Instant,
+        clicksAfter: Int,
+        callback: (clicks: Int?) -> Unit,
+    ) {
         val tag = "GetURLVisitCount_$name"
-        val requestURL = "$baseURL/api/v1/public/stats/${url.alias.urlEncode()}"
-        Log.d(tag, "start request: $url")
+        val start = maxOf(created, end.minus(STATS_WINDOW))
+        val requestURL =
+            "$baseURL/api/v1/public/stats/${url.alias.urlEncode()}" +
+                "?start_date=${start.toString().urlEncode()}&end_date=${end.toString().urlEncode()}"
+        Log.d(tag, "start request: $requestURL")
         queue.add(
             JsonObjectRequest(
                 Request.Method.GET,
@@ -84,9 +106,13 @@ sealed class Spoome : ShortURLProvider {
                 { response ->
                     try {
                         Log.d(tag, "response: $response")
-                        val clicks = response.getJSONObject("stats").getJSONObject("summary").getInt("total_clicks")
-                        Log.d(tag, "clicks: $clicks")
-                        callback(clicks)
+                        val clicks = clicksAfter + response.getJSONObject("stats").getJSONObject("summary").getInt("total_clicks")
+                        if (start > created) {
+                            countClicks(queue, url, created, start.minusMillis(1), clicks, callback)
+                        } else {
+                            Log.d(tag, "clicks: $clicks")
+                            callback(clicks)
+                        }
                     } catch (e: JSONException) {
                         Log.e(tag, "error parsing click count response", e)
                         callback(null)
@@ -108,7 +134,11 @@ sealed class Spoome : ShortURLProvider {
         errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val body = JSONObject().put("long_url", longURL)
-        if (alias.isNotBlank()) body.put("alias", alias)
+        if (alias.isNotBlank()) {
+            body.put("alias", alias)
+        } else {
+            generatedAliasType?.let { body.put("alias_type", it) }
+        }
         return createRequest(apiURL, body, successCallback, errorCallback)
     }
 
@@ -180,11 +210,11 @@ sealed class Spoome : ShortURLProvider {
                 errorCallback(GenerateURLError.AliasAlreadyExists)
             }
 
-            response?.has("UrlError") == true || response?.optString("field") == "long_url" -> {
+            response?.concerns("long_url") == true -> {
                 errorCallback(GenerateURLError.InvalidURL)
             }
 
-            response?.optString("field") == "alias" -> {
+            response?.concerns("alias") == true -> {
                 errorCallback(GenerateURLError.InvalidAlias)
             }
 
@@ -193,25 +223,37 @@ sealed class Spoome : ShortURLProvider {
             }
 
             else -> {
-                errorCallback(GenerateURLError.Custom(statusCode, data))
+                errorCallback(GenerateURLError.Custom(statusCode, response.optStringOrNull("error") ?: data))
             }
         }
     }
 
+    private fun JSONObject.concerns(field: String): Boolean {
+        val detail = optJSONArray("detail") ?: JSONArray()
+        return optString("field") == field ||
+            (0 until detail.length()).any { i ->
+                val loc = detail.optJSONObject(i)?.optJSONArray("loc") ?: JSONArray()
+                (0 until loc.length()).any { loc.optString(it) == field }
+            }
+    }
+
     private companion object {
-        const val MAX_ALIAS_LENGTH_DEFAULT = 15
-        const val MAX_ALIAS_LENGTH_EMOJI = 30 // returns invalid alias if more than 30
+        val STATS_WINDOW: Duration = Duration.ofDays(89)
+        const val MIN_ALIAS_LENGTH_DEFAULT = 3
+        const val MAX_ALIAS_LENGTH_DEFAULT = 16
+        const val MAX_ALIAS_LENGTH_EMOJI = 15
+        val REGIONAL_INDICATORS = 0x1F1E6..0x1F1FF
     }
 
     object Default : Spoome() {
         override val name = "spoo.me"
         override val aliasConfig =
             object : AliasConfig {
-                override val minAliasLength = 0
+                override val minAliasLength = MIN_ALIAS_LENGTH_DEFAULT
                 override val maxAliasLength = MAX_ALIAS_LENGTH_DEFAULT
-                override val allowedAliasCharacters = "a-z, A-Z, 0-9, _"
+                override val allowedAliasCharacters = "a-z, A-Z, 0-9, _, -"
 
-                override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_]+"))
+                override fun isAliasValid(alias: String) = alias.matches(Regex("[a-zA-Z0-9_-]+"))
             }
 
         override fun getInfoContents(context: Context): List<ProviderInfo> =
@@ -236,27 +278,23 @@ sealed class Spoome : ShortURLProvider {
 
     object Emoji : Spoome() {
         override val name = "spoo.me (emoji)"
+        override val generatedAliasType = "emoji"
         override val aliasConfig =
             object : AliasConfig {
-                override val minAliasLength = 0
+                override val minAliasLength = 1
                 override val maxAliasLength = MAX_ALIAS_LENGTH_EMOJI
                 override val allowedAliasCharacters = "Emojis"
 
-                // one or more characters that belong to the "Symbol, Other" Unicode category, which includes emoji characters
-                override fun isAliasValid(alias: String) = alias.matches(Regex("\\p{So}+"))
-            }
+                override fun aliasLength(alias: String) = alias.codePointCount(0, alias.length)
 
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest =
-            if (alias.isBlank()) {
-                createRequest("$baseURL/emoji?url=${longURL.urlEncode()}", null, successCallback, errorCallback)
-            } else {
-                super.getCreateRequest(queue, longURL, alias, successCallback, errorCallback)
+                // The server rejects flags, ZWJ sequences, skin tones and variation selectors, so only single code points pass.
+                override fun isAliasValid(alias: String) =
+                    alias.isNotEmpty() &&
+                        alias.codePoints().allMatch {
+                            UCharacter.hasBinaryProperty(it, UProperty.EMOJI_PRESENTATION) &&
+                                !UCharacter.hasBinaryProperty(it, UProperty.EMOJI_MODIFIER) &&
+                                it !in REGIONAL_INDICATORS
+                        }
             }
 
         override fun getTipsCardTitleAndInfo(context: Context) =
