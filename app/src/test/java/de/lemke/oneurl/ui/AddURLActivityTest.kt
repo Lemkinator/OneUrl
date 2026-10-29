@@ -41,6 +41,7 @@ import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.Murl
 import de.lemke.oneurl.domain.model.Shareaholic
+import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.VgdIsgd
 import de.lemke.oneurl.domain.testUrl
 import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
@@ -110,6 +111,29 @@ class AddURLActivityTest {
             aliasField.setText("a".repeat(31))
             submit()
             aliasField.error shouldBe "Alias exceeds the 30-character limit."
+        }
+    }
+
+    @Test
+    fun `submit accepts an emoji alias of 15 emoji`() {
+        userSettings.selectedShortURLProvider = Spoome.Emoji
+        shortURLClient.results[Spoome.Emoji] = GenerateURLResult.Success("https://spoo.me/short")
+        withAddURLActivity { _, urlField, aliasField, submit ->
+            urlField.setText("https://example.com")
+            aliasField.setText("😀".repeat(15))
+            submit()
+            aliasField.error.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `submit sets too-long error for an emoji alias of 16 emoji`() {
+        userSettings.selectedShortURLProvider = Spoome.Emoji
+        withAddURLActivity { _, urlField, aliasField, submit ->
+            urlField.setText("https://example.com")
+            aliasField.setText("😀".repeat(16))
+            submit()
+            aliasField.error shouldBe "Alias exceeds the 15-character limit."
         }
     }
 
