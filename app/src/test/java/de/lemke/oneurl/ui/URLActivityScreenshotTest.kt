@@ -19,7 +19,9 @@ package de.lemke.oneurl.ui
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.os.Looper
+import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -30,10 +32,15 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
+import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
+import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeLessThan
+import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -42,6 +49,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -56,6 +64,9 @@ class URLActivityScreenshotTest {
 
     @Inject
     lateinit var urlRepository: URLRepository
+
+    @Inject
+    lateinit var shortURLClient: FakeShortURLClient
 
     private lateinit var seededUrl: URL
 
@@ -86,13 +97,70 @@ class URLActivityScreenshotTest {
         launchAndCapture("src/test/screenshots/url_default_dark.png")
     }
 
-    private fun launchAndCapture(fileName: String) {
+    @Test
+    fun url_visits_default() {
+        val url = seedVisitsUrl()
+        launchAndCapture("src/test/screenshots/url_visits_default.png", url) { activity ->
+            val label = activity.findViewById<TextView>(R.id.url_visits_label)
+            val count = activity.findViewById<TextView>(R.id.url_visits_textview)
+            assertVisitsRow(activity, "1,234", "Refresh")
+            label.lineCount shouldBe 1
+            val gap = count.left - label.right
+            gap shouldBeGreaterThan -1
+            gap shouldBeLessThan
+                activity.resources.displayMetrics.density
+                    .times(VISITS_GAP_TOLERANCE_DP)
+                    .toInt()
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "de-w320dp-h1400dp")
+    fun url_visits_large_font_de() {
+        RuntimeEnvironment.setFontScale(2f)
+        val url = seedVisitsUrl()
+        launchAndCapture("src/test/screenshots/url_visits_large_font_de.png", url) { activity ->
+            assertVisitsRow(activity, "1.234", "Aktualisieren")
+            activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBeGreaterThan 1
+        }
+    }
+
+    private fun seedVisitsUrl(): URL {
+        val url = seededUrl.copy(shortURL = "https://spoo.me/seeded2", shortURLProvider = Spoome.Default)
+        runBlocking { urlRepository.addURL(url) }
+        shortURLClient.visitCounts[url.shortURL] = 1234
+        return url
+    }
+
+    private fun assertVisitsRow(
+        activity: URLActivity,
+        expectedCount: String,
+        expectedRefreshDescription: String,
+    ) {
+        val count = activity.findViewById<TextView>(R.id.url_visits_textview)
+        val refresh = activity.findViewById<View>(R.id.url_visits_refresh_button)
+        count.text.toString() shouldBe expectedCount
+        count.width shouldBeGreaterThan count.paint.measureText(expectedCount).toInt() - 1
+        count.right shouldBeLessThan refresh.left + 1
+        refresh.width shouldBeGreaterThan 0
+        refresh.contentDescription.toString() shouldBe expectedRefreshDescription
+        val label = activity.findViewById<TextView>(R.id.url_visits_label)
+        val baselineDiff = (count.top + count.baseline) - (label.top + label.baseline)
+        baselineDiff shouldBe 0
+    }
+
+    private fun launchAndCapture(
+        fileName: String,
+        url: URL = seededUrl,
+        check: (URLActivity) -> Unit = {},
+    ) {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                .putExtra(KEY_SHORTURL, seededUrl.shortURL)
+                .putExtra(KEY_SHORTURL, url.shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
             idleMainLooper()
             assertQrLoaded(scenario)
+            scenario.onActivity(check)
             onView(isRoot()).captureRoboImage(fileName)
         }
     }
@@ -105,5 +173,9 @@ class URLActivityScreenshotTest {
                     ?.bitmap != null
         }
         check(loaded) { "QR drawable did not load" }
+    }
+
+    private companion object {
+        const val VISITS_GAP_TOLERANCE_DP = 8f
     }
 }

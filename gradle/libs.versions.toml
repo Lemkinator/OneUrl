@@ -11,6 +11,7 @@ jvmTarget = "21"
 aboutlibraries = "15.3.0"
 agp = "9.4.1"
 androidx-collection = "1.7.0"
+androidx-constraintlayout = "2.2.2"
 apache-httpcore = "4.4.16"
 androidx-test-core = "1.7.0"
 androidx-test-espresso = "3.7.0"
@@ -50,6 +51,7 @@ volley = "1.2.1"
 
 [libraries]
 androidx-collection = { module = "androidx.collection:collection", version.ref = "androidx-collection" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidx-constraintlayout" }
 apache-httpcore = { module = "org.apache.httpcomponents:httpcore", version.ref = "apache-httpcore" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }

@@ -160,6 +160,8 @@ interface ShortURLProvider {
         get() = null
     val aliasConfig: AliasConfig?
         get() = null
+    val clickCountPeriod: ClickCountPeriod
+        get() = ClickCountPeriod.AllTime
 
     fun getAnalyticsURL(alias: String): String? = null
 
@@ -219,6 +221,8 @@ interface AliasConfig {
     val allowedAliasCharacters: String
 
     fun isAliasValid(alias: String): Boolean
+
+    fun aliasLength(alias: String): Int = alias.length
 
     companion object {
         const val NO_MAX_ALIAS_SPECIFIED = 100

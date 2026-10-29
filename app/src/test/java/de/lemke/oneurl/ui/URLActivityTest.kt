@@ -61,6 +61,7 @@ import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.di.BitmapExporterModule
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Gg
+import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.booleans.shouldBeFalse
@@ -671,6 +672,28 @@ class URLActivityTest {
             activity.findViewById<android.view.View>(R.id.url_visits_divider).isVisible.shouldBeTrue()
             activity.findViewById<android.view.View>(R.id.url_visits_layout).isVisible.shouldBeTrue()
             activity.findViewById<android.widget.TextView>(R.id.url_visits_textview).text.toString() shouldBe "42"
+        }
+    }
+
+    @Test
+    fun `visit label names no period for a provider that counts all visits`() {
+        shortURLClient.visitCounts[seededUrl.shortURL] = 3
+
+        withUrlActivity { activity ->
+            idleMainLooper()
+            activity.findViewById<android.widget.TextView>(R.id.url_visits_label).text.toString() shouldBe "Visits: "
+        }
+    }
+
+    @Test
+    fun `visit label names the last three months for a spoo_me link`() {
+        val url = seededUrl.copy(shortURL = "https://spoo.me/visit-label", shortURLProvider = Spoome.Default)
+        runBlocking { urlRepository.addURL(url) }
+        shortURLClient.visitCounts[url.shortURL] = 3
+
+        withUrlActivity(shortURL = url.shortURL) { activity ->
+            idleMainLooper()
+            activity.findViewById<android.widget.TextView>(R.id.url_visits_label).text.toString() shouldBe "Visits (last 3 months): "
         }
     }
 
