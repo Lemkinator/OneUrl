@@ -120,6 +120,12 @@ class TlyKeyedTest {
     }
 
     @Test
+    fun `a keyed 402 and 403 with an empty body are Unknown with their status`() {
+        errorOf(402, "") shouldBe GenerateURLError.Unknown(402)
+        errorOf(403, "") shouldBe GenerateURLError.Unknown(403)
+    }
+
+    @Test
     fun `a rejected key is reported when the body is empty`() {
         errorOf(401, "") shouldBe GenerateURLError.TlyKeyRejected
     }
