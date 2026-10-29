@@ -354,57 +354,29 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `getURLClickCount reads total_clicks from the public stats since a young link was added`() {
-        var clicks: Int? = -1
-        val added = ZonedDateTime.now().minusDays(1)
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", added)
-        val before = Instant.now()
+    fun `getURLClickCount requests the last 90 days for a link of any age and reads total_clicks`() {
+        for (added in listOf(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusDays(200), ZonedDateTime.now().plusDays(1))) {
+            val localQueue = FakeVolleyQueue()
+            var clicks: Int? = -1
+            val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", added)
+            val before = Instant.now()
 
-        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
-        val after = Instant.now()
-        val request = queue.added.single()
-        request.method shouldBe Request.Method.GET
-        request.url.substringBefore("?") shouldBe "https://spoo.me/api/v1/public/stats/abc"
-        request.query()["start_date"] shouldBe added.toInstant().truncatedTo(ChronoUnit.MILLIS).toString()
-        val end = Instant.parse(request.query()["end_date"]!!)
-        end.isBefore(before.truncatedTo(ChronoUnit.MILLIS)) shouldBe false
-        end.isAfter(after) shouldBe false
-        end shouldBe end.truncatedTo(ChronoUnit.MILLIS)
-        request.deliverResponse(JSONObject("""{"generation":"v2","stats":{"summary":{"total_clicks":42,"unique_clicks":40}}}"""))
+            Spoome.Default.getURLClickCount(localQueue, url) { clicks = it }
+            val after = Instant.now()
+            val request = localQueue.added.single()
+            request.method shouldBe Request.Method.GET
+            request.url.substringBefore("?") shouldBe "https://spoo.me/api/v1/public/stats/abc"
+            val start = Instant.parse(request.query()["start_date"]!!)
+            val end = Instant.parse(request.query()["end_date"]!!)
+            Duration.between(start, end) shouldBe Duration.ofDays(90)
+            end.isBefore(before.truncatedTo(ChronoUnit.MILLIS)) shouldBe false
+            end.isAfter(after) shouldBe false
+            end shouldBe end.truncatedTo(ChronoUnit.MILLIS)
+            request.deliverResponse(JSONObject("""{"generation":"v2","stats":{"summary":{"total_clicks":42,"unique_clicks":40}}}"""))
 
-        clicks shouldBe 42
-        queue.added.size shouldBe 1
-    }
-
-    @Test
-    fun `getURLClickCount asks for the last 90 days with a single request for an old link`() {
-        var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(200))
-        val before = Instant.now()
-
-        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
-        val after = Instant.now()
-        val request = queue.added.single()
-        val start = Instant.parse(request.query()["start_date"]!!)
-        val end = Instant.parse(request.query()["end_date"]!!)
-        Duration.between(start, end) shouldBe Duration.ofDays(90)
-        end.isBefore(before.truncatedTo(ChronoUnit.MILLIS)) shouldBe false
-        end.isAfter(after) shouldBe false
-        request.deliverResponse(JSONObject("""{"stats":{"summary":{"total_clicks":16}}}"""))
-
-        clicks shouldBe 16
-        queue.added.size shouldBe 1
-    }
-
-    @Test
-    fun `getURLClickCount answers 0 without a request when the link was added in the future`() {
-        var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().plusDays(1))
-
-        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
-
-        clicks shouldBe 0
-        queue.added.size shouldBe 0
+            clicks shouldBe 42
+            localQueue.added.size shouldBe 1
+        }
     }
 
     @Test

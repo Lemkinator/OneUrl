@@ -61,7 +61,7 @@ Emoji links use an emoji-only alias, or "alias_type": "emoji" without alias for 
 Click count: GET https://spoo.me/api/v1/public/stats/{alias}?start_date={ISO 8601}&end_date={ISO 8601}
 {"stats": {"summary": {"total_clicks": 0}}}
 Without start_date only the last 7 days count, and a range above 90 days answers 400, so the count covers
-the last 90 days at most, or the time since the creation of a younger link.
+the last 90 days at most; the server counts only clicks that exist, so a younger link needs no special range.
  */
 sealed class Spoome : ShortURLProvider {
     final override val group = "spoo.me, spoo.me (emoji)"
@@ -81,12 +81,7 @@ sealed class Spoome : ShortURLProvider {
         callback: (clicks: Int?) -> Unit,
     ) {
         val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-        val created = url.added.toInstant().truncatedTo(ChronoUnit.MILLIS)
-        if (created.isBefore(end)) {
-            requestClicks(queue, url, maxOf(created, end.minus(MAX_STATS_RANGE)), end, callback)
-        } else {
-            callback(0)
-        }
+        requestClicks(queue, url, end.minus(MAX_STATS_RANGE), end, callback)
     }
 
     override fun getCreateRequest(
