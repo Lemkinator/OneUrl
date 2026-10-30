@@ -158,6 +158,19 @@ abstract class URLRepositoryContract {
         }
 
     @Test
+    fun `getURL by provider and long url keeps the newer insert first for equal added instants`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val utc = url("https://da.gd/utc", added = ZonedDateTime.parse("2026-10-27T09:00Z"))
+            val offset = url("https://da.gd/offset", added = ZonedDateTime.parse("2026-10-27T10:00+01:00"))
+
+            repository.addURL(utc)
+            repository.addURL(offset)
+
+            repository.getURL(Dagd, LONG_URL) shouldBe listOf(offset, utc)
+        }
+
+    @Test
     fun `addURL of a stored short url replaces it and keeps the added order`() =
         runTest(dispatcher) {
             val repository = createRepository()
