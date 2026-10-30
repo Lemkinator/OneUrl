@@ -1,4 +1,0 @@
-{"entries":[
-{"shortURL":"https://da.gd/abc","longURL":"https://example.com/a","shortURLProvider":"da.gd","favorite":true,"title":"Example A","description":"first","added":"2026-10-27T14:30:00+01:00"},
-{"shortURL":"https://tinyurl.com/xyz","longURL":"https://example.com/b","shortURLProvider":"tinyurl.com","favorite":false,"title":"","description":"","added":"2026-10-27T09:00:00Z"}
-]}

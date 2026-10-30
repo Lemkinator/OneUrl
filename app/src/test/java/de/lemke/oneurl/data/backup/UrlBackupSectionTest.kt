@@ -19,9 +19,6 @@ package de.lemke.oneurl.data.backup
 import android.app.Application
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import de.lemke.commonutils.backup.BackupSectionContract
-import de.lemke.commonutils.backup.ClashCase
-import de.lemke.commonutils.backup.SectionFixture
 import de.lemke.commonutils.backup.core.BackupApp
 import de.lemke.commonutils.backup.core.BackupEngine
 import de.lemke.commonutils.backup.core.BackupFileExtension
@@ -51,7 +48,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
-class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
+class UrlBackupSectionTest : UrlBackupSectionContract() {
     private val database =
         Room
             .inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
@@ -82,70 +79,6 @@ class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
     override fun section(): BackupSection<UrlBackupEntry> = section
 
     override fun transaction(): BackupTransaction = transaction
-
-    override fun sampleEntries(): List<UrlBackupEntry> =
-        listOf(entry("https://da.gd/a"), entry("https://da.gd/b", favorite = true, title = ""))
-
-    override fun fixtures(): Map<Int, SectionFixture<UrlBackupEntry>> =
-        mapOf(
-            1 to
-                SectionFixture(
-                    checkNotNull(javaClass.classLoader).getResource("backup/urls-v1.json")!!.readText(),
-                    listOf(
-                        UrlBackupEntry(
-                            shortURL = "https://da.gd/abc",
-                            longURL = "https://example.com/a",
-                            shortURLProvider = "da.gd",
-                            favorite = true,
-                            title = "Example A",
-                            description = "first",
-                            added = "2026-10-27T14:30:00+01:00",
-                        ),
-                        UrlBackupEntry(
-                            shortURL = "https://tinyurl.com/xyz",
-                            longURL = "https://example.com/b",
-                            shortURLProvider = "tinyurl.com",
-                            favorite = false,
-                            title = "",
-                            description = "",
-                            added = "2026-10-27T10:00:00+01:00",
-                        ),
-                    ),
-                ),
-        )
-
-    override fun brokenEntryJson(): String = """{"shortURL":"https://da.gd/broken"}"""
-
-    override fun clashCases(): List<ClashCase<UrlBackupEntry>> =
-        listOf(
-            ClashCase(
-                "favorite from file only is favorite",
-                entry("https://da.gd/a", favorite = false),
-                entry("https://da.gd/a", favorite = true),
-                entry("https://da.gd/a", favorite = true),
-            ),
-            ClashCase(
-                "favorite on phone only is favorite",
-                entry("https://da.gd/a", favorite = true),
-                entry("https://da.gd/a", favorite = false),
-                entry("https://da.gd/a", favorite = true),
-            ),
-            ClashCase(
-                "title and description stay from the phone",
-                entry("https://da.gd/a", title = "phone", description = "phone note"),
-                entry("https://da.gd/a", title = "file", description = "file note"),
-                entry("https://da.gd/a", title = "phone", description = "phone note"),
-                symmetric = false,
-            ),
-        )
-
-    private fun entry(
-        shortURL: String,
-        favorite: Boolean = false,
-        title: String = "title",
-        description: String = "description",
-        added: String = "2026-10-27T14:30:00+01:00",
-    ) = UrlBackupEntry(shortURL, "https://example.com", "da.gd", favorite, title, description, added)
 
     private fun urlDb(
         shortURL: String,
