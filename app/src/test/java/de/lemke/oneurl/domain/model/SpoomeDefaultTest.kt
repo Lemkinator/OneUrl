@@ -19,12 +19,17 @@ package de.lemke.oneurl.domain.model
 import android.app.Application
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
+import com.android.volley.Request
 import com.android.volley.VolleyError
 import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.data.deliverResponse
 import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
+import java.net.URLDecoder
+import java.time.Duration
+import java.time.Instant
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import org.json.JSONObject
 import org.junit.Assert.fail
 import org.junit.Test
@@ -41,9 +46,29 @@ class SpoomeDefaultTest {
     private val longURL = "https://example.com"
 
     @Test
-    fun `sanitizeLongURL adds https, encodes ampersands, and trims`() {
+    fun `sanitizeLongURL adds https and trims, keeping ampersands`() {
         Spoome.Default.sanitizeLongURL("example.com") shouldBe "https://example.com"
-        Spoome.Default.sanitizeLongURL("https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1%26b=2"
+        Spoome.Default.sanitizeLongURL("https://example.com?a=1&b=2 ") shouldBe "https://example.com?a=1&b=2"
+    }
+
+    @Test
+    fun `create request posts the url and alias as JSON to the v1 endpoint`() {
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc_1", { }, { fail("unexpected error") })
+
+        req.method shouldBe Request.Method.POST
+        req.url shouldBe "https://spoo.me/api/v1/shorten"
+        val body = JSONObject(String(req.body, Charsets.UTF_8))
+        body.getString("long_url") shouldBe "https://example.com"
+        body.getString("alias") shouldBe "abc_1"
+    }
+
+    @Test
+    fun `create request omits the alias when it is blank`() {
+        val req = Spoome.Default.getCreateRequest(queue, "https://example.com?a=1&b=2", " ", { }, { fail("unexpected error") })
+
+        val body = JSONObject(String(req.body, Charsets.UTF_8))
+        body.getString("long_url") shouldBe "https://example.com?a=1&b=2"
+        body.has("alias") shouldBe false
     }
 
     @Test
@@ -59,6 +84,16 @@ class SpoomeDefaultTest {
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
         req.deliverResponse(JSONObject().put("short_url", " https://spoo.me/NSPBXZ "))
+
+        result shouldBe "https://spoo.me/NSPBXZ"
+    }
+
+    @Test
+    fun `succeeds with an https short url when the response contains an http one`() {
+        var result: String? = null
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
+
+        req.deliverResponse(JSONObject().put("short_url", "http://spoo.me/NSPBXZ"))
 
         result shouldBe "https://spoo.me/NSPBXZ"
     }
@@ -115,10 +150,10 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `error body with UrlError maps to InvalidURL`() {
+    fun `error body for field long_url maps to InvalidURL`() {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
-        val body = """{"UrlError":"Invalid URL, URL must have a valid protocol"}"""
+        val body = """{"error":"URL is not allowed or invalid","code":"validation_error","field":"long_url"}"""
 
         req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
 
@@ -126,47 +161,76 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `error body with an already-exists AliasError maps to AliasAlreadyExists`() {
+    fun `error body for field alias maps to InvalidAlias`() {
         var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
-        val body = """{"AliasError":"Alias already exists"}"""
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "ab", { fail("unexpected success") }, { error = it })
+        val body =
+            """{"error":"alias: Value error, alphanumeric alias must be 3-16 characters","code":"validation_error","field":"alias"}"""
 
-        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
-
-        error shouldBe GenerateURLError.AliasAlreadyExists
-    }
-
-    @Test
-    fun `error body with a JSON null AliasError falls back to Custom with an empty message`() {
-        var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
-        val body = """{"AliasError":null}"""
-
-        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
-
-        error shouldBe GenerateURLError.Custom(400, "")
-    }
-
-    @Test
-    fun `error body with an invalid AliasError maps to InvalidAlias`() {
-        var error: GenerateURLError? = null
-        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
-        val body = """{"AliasError":"Invalid Alias"}"""
-
-        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.InvalidAlias
     }
 
     @Test
-    fun `error body with an unrecognized AliasError falls back to Custom`() {
+    fun `409 status maps to AliasAlreadyExists`() {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
-        val body = """{"AliasError":"something else entirely"}"""
+        val body = """{"error":"Alias is already in use","code":"conflict"}"""
 
-        req.deliverError(VolleyError(NetworkResponse(400, body.toByteArray(), false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(409, body.toByteArray(), false, 0L, emptyList())))
 
-        error shouldBe GenerateURLError.Custom(400, "something else entirely")
+        error shouldBe GenerateURLError.AliasAlreadyExists
+    }
+
+    @Test
+    fun `422 detail with an alias location maps to InvalidAlias`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "ab", { fail("unexpected success") }, { error = it })
+        val body = """{"detail":[{"type":"string_too_short","loc":["body","alias"],"msg":"String should have at least 3 characters"}]}"""
+
+        req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.InvalidAlias
+    }
+
+    @Test
+    fun `422 detail with a long_url location maps to InvalidURL`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(queue, "notaurl", "", { fail("unexpected success") }, { error = it })
+        val body = """{"detail":[{"type":"url_parsing","loc":["body","long_url"],"msg":"Input should be a valid URL"}]}"""
+
+        req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.InvalidURL
+    }
+
+    @Test
+    fun `422 detail without a known location falls back to Custom with the raw body`() {
+        listOf(
+            """{"detail":[{"loc":["body","password"],"msg":"bad"}]}""",
+            """{"detail":[{"msg":"no location"}]}""",
+            """{"detail":["text"]}""",
+            """{"detail":"Not found"}""",
+        ).forEach { body ->
+            var error: GenerateURLError? = null
+            val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+
+            req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
+
+            error shouldBe GenerateURLError.Custom(422, body)
+        }
+    }
+
+    @Test
+    fun `error body for another field falls back to Custom with the server message`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val body = """{"error":"Bad body","code":"validation_error","field":"password"}"""
+
+        req.deliverError(VolleyError(NetworkResponse(422, body.toByteArray(), false, 0L, emptyList())))
+
+        error shouldBe GenerateURLError.Custom(422, "Bad body")
     }
 
     @Test
@@ -265,29 +329,74 @@ class SpoomeDefaultTest {
     }
 
     @Test
-    fun `isAliasValid accepts alphanumerics and underscores, rejects other characters`() {
-        Spoome.Default.aliasConfig.isAliasValid("abc_123") shouldBe true
-        Spoome.Default.aliasConfig.isAliasValid("abc-123") shouldBe false
+    fun `alias config follows the v1 rules`() {
+        val config = Spoome.Default.aliasConfig
+
+        config.minAliasLength shouldBe 3
+        config.maxAliasLength shouldBe 16
+        config.allowedAliasCharacters shouldBe "a-z, A-Z, 0-9, _, -"
+        config.isAliasValid("abc_1-Z") shouldBe true
+        config.isAliasValid("abc.123") shouldBe false
+        config.isAliasValid("äbc") shouldBe false
+        config.isAliasValid("") shouldBe false
+        config.aliasLength("abc_1-Z") shouldBe 7
     }
 
     @Test
-    fun `getURLClickCount resolves the click count from total-clicks`() {
-        var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+    fun `429 status with the v1 rate limit body maps to RateLimitExceeded`() {
+        var error: GenerateURLError? = null
+        val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
+        val body = """{"error":"Too many requests","code":"rate_limit_exceeded"}"""
 
-        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
-        queue.added.single().deliverResponse(JSONObject().put("total-clicks", 42))
+        req.deliverError(VolleyError(NetworkResponse(429, body.toByteArray(), false, 0L, emptyList())))
 
-        clicks shouldBe 42
+        error shouldBe GenerateURLError.RateLimitExceeded
     }
 
     @Test
-    fun `getURLClickCount resolves to null when total-clicks is missing`() {
+    fun `getURLClickCount requests the last 90 days for a link of any age and reads total_clicks`() {
+        for (added in listOf(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusDays(200), ZonedDateTime.now().plusDays(1))) {
+            val localQueue = FakeVolleyQueue()
+            var clicks: Int? = -1
+            val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", added)
+            val before = Instant.now()
+
+            Spoome.Default.getURLClickCount(localQueue, url) { clicks = it }
+            val after = Instant.now()
+            val request = localQueue.added.single()
+            request.method shouldBe Request.Method.GET
+            request.url.substringBefore("?") shouldBe "https://spoo.me/api/v1/public/stats/abc"
+            val start = Instant.parse(request.query()["start_date"]!!)
+            val end = Instant.parse(request.query()["end_date"]!!)
+            Duration.between(start, end) shouldBe Duration.ofDays(90)
+            end.isBefore(before.truncatedTo(ChronoUnit.MILLIS)) shouldBe false
+            end.isAfter(after) shouldBe false
+            end shouldBe end.truncatedTo(ChronoUnit.MILLIS)
+            request.deliverResponse(JSONObject("""{"generation":"v2","stats":{"summary":{"total_clicks":42,"unique_clicks":40}}}"""))
+
+            clicks shouldBe 42
+            localQueue.added.size shouldBe 1
+        }
+    }
+
+    @Test
+    fun `getURLClickCount resolves to null when the response has no stats`() {
         var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(1))
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
-        queue.added.single().deliverResponse(JSONObject())
+        queue.added.single().deliverResponse(JSONObject("""{"generation":"v2","link":{}}"""))
+
+        clicks shouldBe null
+    }
+
+    @Test
+    fun `getURLClickCount resolves to null when the summary has no total_clicks`() {
+        var clicks: Int? = -1
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(1))
+
+        Spoome.Default.getURLClickCount(queue, url) { clicks = it }
+        queue.added.single().deliverResponse(JSONObject("""{"stats":{"summary":{}}}"""))
 
         clicks shouldBe null
     }
@@ -295,7 +404,7 @@ class SpoomeDefaultTest {
     @Test
     fun `getURLClickCount resolves to null on error`() {
         var clicks: Int? = -1
-        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now())
+        val url = URL("https://spoo.me/abc", longURL, Spoome.Default, false, "", "", ZonedDateTime.now().minusDays(1))
 
         Spoome.Default.getURLClickCount(queue, url) { clicks = it }
         queue.added.single().deliverError(VolleyError("no network"))
@@ -313,3 +422,8 @@ class SpoomeDefaultTest {
         error shouldBe GenerateURLError.Unknown(200)
     }
 }
+
+private fun Request<*>.query(): Map<String, String> =
+    url.substringAfter("?").split("&").associate { pair ->
+        pair.substringBefore("=") to URLDecoder.decode(pair.substringAfter("="), "UTF-8")
+    }

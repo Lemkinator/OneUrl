@@ -11,6 +11,7 @@ jvmTarget = "21"
 aboutlibraries = "15.3.0"
 agp = "9.4.1"
 androidx-collection = "1.7.0"
+androidx-constraintlayout = "2.2.2"
 apache-httpcore = "4.4.16"
 androidx-test-core = "1.7.0"
 androidx-test-espresso = "3.7.0"
@@ -31,6 +32,7 @@ konsist = "0.18.1"
 kotest = "6.2.6"
 kotlin = "2.4.21"
 kover = "0.9.11"
+ksafe = "3.3.0"
 ksp = "2.3.12"
 # Used via spotless { kotlin { ktlint(libs.versions.ktlint.get()) } } — version-only ref, no library/plugin alias
 #noinspection UnusedVersionCatalogEntry
@@ -50,6 +52,7 @@ volley = "1.2.1"
 
 [libraries]
 androidx-collection = { module = "androidx.collection:collection", version.ref = "androidx-collection" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidx-constraintlayout" }
 apache-httpcore = { module = "org.apache.httpcomponents:httpcore", version.ref = "apache-httpcore" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
@@ -71,6 +74,7 @@ junit4 = { module = "junit:junit", version.ref = "junit4" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+ksafe = { module = "eu.anifantakis:ksafe", version.ref = "ksafe" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 oneui-design = { module = "io.github.tribalfs:oneui-design", version.ref = "oneui-design" }

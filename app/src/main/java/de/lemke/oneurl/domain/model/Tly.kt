@@ -25,21 +25,18 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONObject
-import de.lemke.commonutils.R as commonutilsR
 
 /*
 login required (also for alias), but:
 https://t.ly/api/v1/link/shorten
 https://t.ly/api/v1/link/providers
-t.ly, ibit.ly, twtr.to, jpeg.ly, is.gd, rebrand.ly, tinyurl, bit.ly
-t.ly: shows t.ly for valid links (example.com) and tinyurl.com else (example), works also when bit.ly asks for t.ly api key?
-ibit.ly: responds ibit.ly for valid links (example.com) and tinyurl.com else (example)
-twtr.to: responds t.ly for valid links (example.com) and tinyurl.com else (example)
-jpeg.ly: responds jpeg.ly for valid links (example.com) and tinyurl.com else (example)
-is.gd: responds is.gd for valid links (example.com) and tinyurl.com else (example)
-rebrand.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example)
-tinyurl: tinyurl.com
-bit.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example), some requests:
+t.ly, shorturl.ly, ibit.ly, jpeg.ly, is.gd, rebrand.ly, bit.ly
+t.ly: shows t.ly for valid links (example.com), works also when bit.ly asks for t.ly api key?
+ibit.ly: responds ibit.ly for valid links (example.com)
+jpeg.ly: responds jpeg.ly for valid links (example.com)
+is.gd: responds is.gd for valid links (example.com)
+rebrand.ly: responds t.ly for valid links (example.com)
+bit.ly: responds t.ly for valid links (example.com), some requests:
 T.LY account and API key required to create additional short links.
 wtf? :D anyway...
 
@@ -83,46 +80,54 @@ errors:
   "message": "T.LY account and API key required to create additional short links."
 }
  */
+private const val KEYED_API_URL = "https://api.t.ly/api/v1/link/shorten"
+
 sealed class Tly : ShortURLProvider {
-    final override val group = "t.ly [experimental]"
+    abstract val domain: String
+    final override val group = "t.ly"
     final override val baseURL = "https://t.ly"
     final override val apiURL = "$baseURL/api/v1/link/shorten"
     final override val privacyURL = "$baseURL/privacy"
     final override val termsURL = "$baseURL/terms"
+    val keySettingsURL = "$baseURL/settings#/api"
 
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-                context.getString(commonutilsR.string.commonutils_experimental),
-                context.getString(R.string.tly_info),
+                R.drawable.ic_key,
+                context.getString(R.string.tly_key_title),
+                context.getString(R.string.tly_key_info),
             ),
         )
 
-    override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? =
-        Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.tly_info),
-        )
+    final override fun getCreateRequest(
+        queue: VolleyQueue,
+        longURL: String,
+        alias: String,
+        successCallback: (shortURL: String) -> Unit,
+        errorCallback: (error: GenerateURLError) -> Unit,
+    ): JsonObjectRequest = getTlyCreateRequest(null, longURL, successCallback, errorCallback)
 
-    @Suppress("TooGenericExceptionCaught")
+    /** Creates under the account of [apiKey] through the documented API, or without an account when it is null. */
     fun getTlyCreateRequest(
-        provider: String,
+        apiKey: TlyApiKey?,
         longURL: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit,
     ): JsonObjectRequest {
         val tag = "CreateRequest_$name"
-        Log.d(tag, "start request: $apiURL {long_url=$longURL provider=$provider}")
+        val url = if (apiKey == null) apiURL else KEYED_API_URL
+        val body =
+            if (apiKey == null) {
+                mapOf("long_url" to longURL, "provider" to domain)
+            } else {
+                mapOf("long_url" to longURL, "domain" to "https://$domain/")
+            }
+        Log.d(tag, "start request: $url $body")
         return object : JsonObjectRequest(
             Method.POST,
-            apiURL,
-            JSONObject(
-                mapOf(
-                    "long_url" to longURL,
-                    "provider" to provider,
-                ),
-            ),
+            url,
+            JSONObject(body),
             { response ->
                 Log.d(tag, "response: $response")
                 val shortURL = response.optStringOrNull("short_url")?.trim()
@@ -134,14 +139,22 @@ sealed class Tly : ShortURLProvider {
                     errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
                 }
             },
-            { error -> handleTlyError(tag, error, errorCallback) },
+            { error -> handleTlyError(tag, error, apiKey != null, errorCallback) },
         ) {
             override fun getHeaders() =
-                mapOf(
-                    "accept" to "application/json",
-                    "content-type" to "application/json;charset=UTF-8",
-                    "origin" to "chrome-extension://oodfdmglhbbkkcngodjjagblikmoegpa",
-                )
+                if (apiKey == null) {
+                    mapOf(
+                        "accept" to "application/json",
+                        "content-type" to "application/json;charset=UTF-8",
+                        "origin" to "chrome-extension://oodfdmglhbbkkcngodjjagblikmoegpa",
+                    )
+                } else {
+                    mapOf(
+                        "accept" to "application/json",
+                        "content-type" to "application/json;charset=UTF-8",
+                        "authorization" to "Bearer ${apiKey.token}",
+                    )
+                }
         }
     }
 
@@ -149,104 +162,67 @@ sealed class Tly : ShortURLProvider {
     private fun handleTlyError(
         tag: String,
         error: VolleyError,
+        keyed: Boolean,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
         // An exception escaping a Volley callback on the main thread crashes the app.
         try {
-            Log.e(tag, "error: $error")
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            val message = data?.takeIf { it.isNotBlank() }?.let { runCatching { JSONObject(it).optStringOrNull("message") }.getOrNull() }
-            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-            Log.e(tag, "response message: $message")
-            when {
-                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                error is ParseError -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                data.isNullOrBlank() || message.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                message.contains("long url field is required", true) -> errorCallback(GenerateURLError.InvalidURL)
-                message.contains("T.LY account and API key", true) -> errorCallback(GenerateURLError.RateLimitExceeded)
-                else -> errorCallback(GenerateURLError.Custom(statusCode, message))
-            }
+            errorCallback(toGenerateURLError(tag, error, keyed))
         } catch (e: Exception) {
             Log.e(tag, "error parsing error response", e)
             errorCallback(GenerateURLError.Unknown())
         }
     }
 
+    private fun toGenerateURLError(
+        tag: String,
+        error: VolleyError,
+        keyed: Boolean,
+    ): GenerateURLError {
+        Log.e(tag, "error: $error")
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        val message = data?.takeIf { it.isNotBlank() }?.let { runCatching { JSONObject(it).optStringOrNull("message") }.getOrNull() }
+        Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+        Log.e(tag, "response message: $message")
+        return when {
+            error is NoConnectionError -> GenerateURLError.ServiceOffline
+            error is ParseError -> GenerateURLError.ServiceTemporarilyUnavailable(baseURL)
+            statusCode == null -> GenerateURLError.Unknown()
+            keyed && statusCode == HttpStatusCode.UNAUTHORIZED -> GenerateURLError.TlyKeyRejected
+            statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> GenerateURLError.ServiceTemporarilyUnavailable(baseURL)
+            data.isNullOrBlank() || message.isNullOrBlank() -> GenerateURLError.Unknown(statusCode)
+            message.contains("long url field is required", true) -> GenerateURLError.InvalidURL
+            !keyed && message.contains("T.LY account and API key", true) -> GenerateURLError.RateLimitExceeded
+            else -> GenerateURLError.Custom(statusCode, message)
+        }
+    }
+
     object Default : Tly() {
         override val name = "t.ly"
-
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest("t.ly", longURL, successCallback, errorCallback)
+        override val domain = "t.ly"
     }
 
     object Ibitly : Tly() {
         override val name = "t.ly (ibit.ly)"
-
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest("ibit.ly", longURL, successCallback, errorCallback)
-    }
-
-    object Twtrto : Tly() {
-        override val name = "t.ly (twtr.to)"
-
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest("twtr.to", longURL, successCallback, errorCallback)
+        override val domain = "ibit.ly"
     }
 
     object Jpegly : Tly() {
         override val name = "t.ly (jpeg.ly)"
-
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest("jpeg.ly", longURL, successCallback, errorCallback)
+        override val domain = "jpeg.ly"
     }
 
     object Rebrandly : Tly() {
         override val enabled = false // useless, only responds with t.ly??
         override val name = "t.ly (rebrand.ly)"
-
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest("rebrand.ly", longURL, successCallback, errorCallback)
+        override val domain = "rebrand.ly"
     }
 
     object Bitly : Tly() {
         override val enabled = false // requires api key after some requests?
         override val name = "t.ly (bit.ly)"
-
-        override fun getCreateRequest(
-            queue: VolleyQueue,
-            longURL: String,
-            alias: String,
-            successCallback: (shortURL: String) -> Unit,
-            errorCallback: (error: GenerateURLError) -> Unit,
-        ): JsonObjectRequest = getTlyCreateRequest("bit.ly", longURL, successCallback, errorCallback)
+        override val domain = "bit.ly"
     }
 }

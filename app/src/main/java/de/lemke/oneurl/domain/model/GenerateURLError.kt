@@ -48,6 +48,8 @@ sealed class GenerateURLError {
     data object InternalServerError : GenerateURLError()
 
     data object ServiceOffline : GenerateURLError()
+
+    data object TlyKeyRejected : GenerateURLError()
 }
 
 /** HTTP status codes returned by URL-shortener provider APIs, used to map responses to a [GenerateURLError]. */
@@ -58,6 +60,7 @@ object HttpStatusCode {
     const val UNAUTHORIZED = 401
     const val FORBIDDEN = 403
     const val NOT_FOUND = 404
+    const val CONFLICT = 409
     const val LOCKED = 423
     const val UNPROCESSABLE_ENTITY = 422
     const val TOO_MANY_REQUESTS = 429

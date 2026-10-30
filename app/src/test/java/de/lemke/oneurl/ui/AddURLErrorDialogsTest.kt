@@ -323,6 +323,14 @@ class AddURLErrorDialogsTest {
     }
 
     @Test
+    fun `configureFor a rejected T_LY key tells the user to check or remove it`() {
+        val dialog = dialogFor(themedActivity(), GenerateURLError.TlyKeyRejected)
+
+        dialog.titleText() shouldBe "Error"
+        dialog.messageText() shouldBe "Your T.LY API key does not work. Check it or remove it."
+    }
+
+    @Test
     fun `configureFor shows the simple error message without the provider hint for every remaining named error`() {
         val activity = themedActivity()
         val cases =

@@ -32,6 +32,7 @@
     <string name="group">Gruppe</string>
     <string name="redirect_hint">Hinweis vor Weiterleitung</string>
     <string name="redirect_hint_text">Vor der Weiterleitung zeigt dieser Anbieter einen Hinweis an, der den Benutzer über die Ziel-URL informiert.</string>
+    <string name="redirect_hint_text_dagd">Neue Links zeigen im Browser vor der Weiterleitung eine Vorschauseite, bis eine Wartezeit endet. Ältere Links leiten direkt weiter.</string>
     <string name="privacy_text">Dieser Anbieter wurde so konzipiert, dass er so datensparsam arbeitet, wie möglich. Er wird von Deutschland aus betrieben und hält sich an die geltenden Datenschutzregelungen in Deutschland und Europa.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">Dieser URL-Verkürzer verwendet Emojis, um personalisierte und leicht zu merkende Links zu erstellen. Falls ein eigenes Kürzel angegeben wird, sind nur Emojis erlaubt.</string>
@@ -44,7 +45,10 @@
     <string name="owovc_sketchy">Der URL-Verkürzer \"owo.vc (sketchy)\" generiert verdächtig aussehende URLs, die Schlüsselwörter wie \"bank-login\", \"password\", \"hidden\", \"grab\" oder \"account\" zusammen mit populären Website-Namen enthalten.</string>
     <string name="owovc_gay">Der URL-Verkürzer \"owo.vc (gay)\" verwendet anstößige und sexistische Wörter und kann für unangemessene oder beleidigende Inhalte stehen. Sei dir bewusst, dass die erstellten Links möglicherweise sexis tische Begriffe enthalten und von anderen als beleidigend und respektlos empfunden werden könnten. Sei respektvoll und verantwortungsbewusst bei der Verwendung dieses Dienstes.</string>
     <string name="zwsim_zws">Der URL-Verkürzer \"zws.im (zws)\" verwendet Zero-Width Spaces (Breitenlose Leerzeichen) in den erstellten Links. Da diese Leerzeichen unsichtbar sind, sehen alle Links gleich aus (\"zws.im/\"). Beim Kopieren und Einfügen in bestimmten Apps kann es vorkommen, dass diese Leerzeichen entfernt werden. In solchen Fällen öffnet sich die Standardseite von zws.im anstelle der beabsichtigten Ziel-URL. Nutze diesen Dienst daher mit Vorsicht.</string>
-    <string name="tly_info">Dieser URL-Shortener verwendet mehrere Domains für denselben Dienst, was bedeutet, dass er Kurz-URLs mit unterschiedlichen Domainnamen (z.B. tinyurl.com) erstellen kann. Nutze diesen Dienst daher mit Vorsicht.</string>
+    <string name="tly_key_title">API-Schlüssel</string>
+    <string name="tly_key_info">Du kannst deinen eigenen API-Schlüssel hinzufügen. Dafür brauchst du einen T.LY-Tarif mit API-Zugang.</string>
+    <string name="tly_key_hint">API-Schlüssel (optional)</string>
+    <string name="tly_key_get">API-Schlüssel bei T.LY holen</string>
     <string name="shorturlat_info">Der URL-Verkürzer shorturl.at bietet keine Schnittstelle und ist daher nicht so zuverlässig wie andere Anbieter in dieser App. Darüber hinaus werden Links mit weniger als einem Klick pro Monat deaktiviert. Nutze diesen Dienst daher mit Vorsicht.</string>
 
     <!--Settings-->
@@ -73,8 +77,10 @@
     <string name="title_">"Titel: "</string>
     <string name="created_">"Erstellt: "</string>
     <string name="visits_">"Klicks: "</string>
+    <string name="visits_last_3_months">"Klicks (letzte 3 Monate): "</string>
     <string name="shorten_url">URL verkürzen (OneURL)</string>
     <string name="copy_shortened_url">Verkürzte URL kopieren</string>
+    <string name="refresh">Aktualisieren</string>
     <string name="copy_to_clipboard_hint">Lange drücken, um URLs oder QR-Codes in die Zwischenablage zu kopieren.</string>
     <string name="no_urls">Keine URLs</string>
     <string name="no_favorite_urls">Keine Favoriten</string>
@@ -107,6 +113,7 @@
     <string name="error_with_code">Fehler (Code %1$d)</string>
     <string name="error_request_rejected">Der Anbieter hat die Anfrage abgelehnt.</string>
     <string name="error_access_refused">Der Anbieter hat den Zugriff verweigert.</string>
+    <string name="error_tly_key_rejected">Dein T.LY-API-Schlüssel funktioniert nicht. Prüfe ihn oder entferne ihn.</string>
     <string name="error_provider_cannot_handle_requests">Dieser Anbieter kann gerade keine Anfragen bearbeiten. Möglicherweise ist er offline oder wurde eingestellt.</string>
     <string name="error_try_another_provider">Falls das Problem weiterhin besteht, wähle einen anderen Anbieter.</string>
 

@@ -36,6 +36,7 @@
     <string name="group">Group</string>
     <string name="redirect_hint">Hint before redirecting</string>
     <string name="redirect_hint_text">Before redirecting, this provider displays a hint that informs the user about the destination URL.</string>
+    <string name="redirect_hint_text_dagd">New links show a preview page in the browser before redirecting, until a cooldown ends. Older links redirect directly.</string>
     <string name="privacy_text">This provider has been designed to be as data efficient as possible. It is operated from Germany and complies with the applicable privacy regulations in Germany and Europe.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">This URL shortener uses emojis to create personalized and easy-to-remember links. When specifying an alias, only emojis are allowed.</string>
@@ -48,7 +49,10 @@
     <string name="owovc_sketchy">The URL shortener \"owo.vc (sketchy)\" generates suspicious-looking URLs containing keywords like \"bank-login\", \"password\", \"hidden\", \"grab\" or \"account\" along with popular website names.</string>
     <string name="owovc_gay">The URL shortener \"owo.vc (gay)\" employs offensive and sexist language and may represent inappropriate or offensive content. Be aware that the generated links may contain sexist terms and could be considered offensive and disrespectful by others. Use this service with respect and responsibility.</string>
     <string name="zwsim_zws">The URL shortener \"zws.im\" uses Zero-Width Spaces in the generated links. These spaces are invisible, which is why all links appear the same (\"zws.im/\"). When copying and pasting in certain apps, these spaces may be removed. In such cases, the standard zws.im page will open instead of the intended destination URL. Therefore, use this service with caution.</string>
-    <string name="tly_info">This URL shortener utilizes multiple domains for the same service, meaning it may generate short URLs with different domain names (e.g., tinyurl.com). Therefore, use this service with caution.</string>
+    <string name="tly_key_title">API key</string>
+    <string name="tly_key_info">You can add your own API key. It needs a T.LY plan with API access.</string>
+    <string name="tly_key_hint">API key (optional)</string>
+    <string name="tly_key_get">Get an API key from T.LY</string>
     <string name="shorturlat_info">The URL shortener shorturl.at does not offer an API and is therefore not as reliable as other providers in this app. In addition, links with less than one click per month are deactivated. Therefore, use this service with caution.</string>
 
     <!--Settings-->
@@ -77,8 +81,10 @@
     <string name="title_">"Title: "</string>
     <string name="created_">"Created: "</string>
     <string name="visits_">"Visits: "</string>
+    <string name="visits_last_3_months">"Visits (last 3 months): "</string>
     <string name="shorten_url">Shorten URL (OneURL)</string>
     <string name="copy_shortened_url">Copy shortened URL</string>
+    <string name="refresh">Refresh</string>
     <string name="copy_to_clipboard_hint">Long press URLs or QR codes to copy them to the clipboard.</string>
     <string name="no_urls">No URLs</string>
     <string name="no_favorite_urls">No favorite URLs</string>
@@ -111,6 +117,7 @@
     <string name="error_with_code">Error (code %1$d)</string>
     <string name="error_request_rejected">The provider rejected the request.</string>
     <string name="error_access_refused">The provider refused access.</string>
+    <string name="error_tly_key_rejected">Your T.LY API key does not work. Check it or remove it.</string>
     <string name="error_provider_cannot_handle_requests">This provider can\'t handle requests right now. It may be down or discontinued.</string>
     <string name="error_try_another_provider">If this keeps happening, try another provider.</string>
 

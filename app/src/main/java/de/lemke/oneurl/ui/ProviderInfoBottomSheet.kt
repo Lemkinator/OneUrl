@@ -18,6 +18,9 @@ package de.lemke.oneurl.ui
 
 import android.app.Dialog
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,22 +28,29 @@ import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.viewModels
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.showOnce
+import de.lemke.commonutils.ui.utils.toast
 import de.lemke.oneurl.databinding.ViewProviderInfoBottomsheetBinding
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
+import de.lemke.oneurl.domain.model.Tly
 import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
+import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
 class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewProviderInfoBottomsheetBinding
+    private val viewModel: ProviderInfoViewModel by viewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
@@ -67,6 +77,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
             binding.providerBottomSheetInfoGroupText.text = provider.group
         }
         bindInfoContents(provider)
+        if (provider is Tly) bindTlyKey(provider)
         bindInfoButtons(provider)
     }
 
@@ -95,6 +106,25 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
                     text = info.linkOrDescription
                     isVisible = true
                 }
+            }
+        }
+    }
+
+    private fun bindTlyKey(provider: Tly) {
+        binding.providerBottomSheetTlyKey.isVisible = true
+        binding.providerBottomSheetTlyKeyLink.onSingleLaunchClick { openURL(provider.keySettingsURL) }
+        binding.providerBottomSheetTlyKeyInput.filters += WhitespaceFilter
+        binding.providerBottomSheetTlyKeyInput.addTextChangedListener { viewModel.onTlyKeyChanged(it.toString()) }
+        collectState(viewModel.tlyKeySaveFailed) { failed ->
+            if (failed) {
+                requireContext().toast(commonutilsR.string.commonutils_error)
+                viewModel.onTlyKeySaveFailedHandled()
+            }
+        }
+        collectState(viewModel.tlyKey) { key ->
+            if (key != null) {
+                binding.providerBottomSheetTlyKeyInput.isEnabled = true
+                if (binding.providerBottomSheetTlyKeyInput.text.toString() != key) binding.providerBottomSheetTlyKeyInput.setText(key)
             }
         }
     }
@@ -134,5 +164,23 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
 
         const val KEY_PROVIDER = "key_provider"
         private const val LAST_INFO_CONTENT_INDEX = 3
+    }
+}
+
+private object WhitespaceFilter : InputFilter {
+    override fun filter(
+        source: CharSequence,
+        start: Int,
+        end: Int,
+        dest: Spanned,
+        dstart: Int,
+        dend: Int,
+    ): CharSequence? {
+        // The copy constructor drops NoCopySpans such as the keyboard's composing span; append keeps them.
+        val kept = SpannableStringBuilder().append(source, start, end)
+        for (index in kept.indices.reversed()) {
+            if (kept[index].isWhitespace()) kept.delete(index, index + 1)
+        }
+        return if (kept.length == end - start) null else kept
     }
 }

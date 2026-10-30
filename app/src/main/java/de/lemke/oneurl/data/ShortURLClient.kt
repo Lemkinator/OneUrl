@@ -16,9 +16,13 @@
 
 package de.lemke.oneurl.data
 
+import com.android.volley.Request
+import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.ShortURLProvider
+import de.lemke.oneurl.domain.model.Tly
 import de.lemke.oneurl.domain.model.URL
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -37,33 +41,63 @@ interface ShortURLClient {
 
 class DefaultShortURLClient @Inject constructor(
     private val queue: VolleyQueue,
+    private val tlyKeys: TlyKeyStore,
 ) : ShortURLClient {
     override suspend fun create(
         provider: ShortURLProvider,
         longURL: String,
         alias: String,
-    ): GenerateURLResult =
-        suspendCancellableCoroutine { continuation ->
+    ): GenerateURLResult {
+        val tlyKey =
+            when (val stored = if (provider is Tly) tlyKeys.get() else StoredTlyKey.None) {
+                is StoredTlyKey.Key -> stored.apiKey
+                StoredTlyKey.None -> null
+                StoredTlyKey.Unavailable -> return GenerateURLResult.Failure(GenerateURLError.TlyKeyRejected)
+            }
+        return suspendCancellableCoroutine { continuation ->
+            val onSuccess = { shortURL: String ->
+                if (continuation.isActive) continuation.resume(GenerateURLResult.Success(shortURL))
+            }
+            val onError = { error: GenerateURLError ->
+                if (continuation.isActive) continuation.resume(GenerateURLResult.Failure(error))
+            }
             val request =
-                provider.getCreateRequest(
-                    queue,
-                    longURL,
-                    alias,
-                    successCallback = { shortURL ->
-                        if (continuation.isActive) continuation.resume(GenerateURLResult.Success(shortURL))
-                    },
-                    errorCallback = { error ->
-                        if (continuation.isActive) continuation.resume(GenerateURLResult.Failure(error))
-                    },
-                )
+                when (provider) {
+                    is Tly -> provider.getTlyCreateRequest(tlyKey, longURL, onSuccess, onError)
+                    else -> provider.getCreateRequest(queue, longURL, alias, onSuccess, onError)
+                }
             queue.add(request)
             continuation.invokeOnCancellation { request.cancel() }
         }
+    }
 
     override suspend fun visitCount(url: URL): Int? =
         suspendCancellableCoroutine { continuation ->
-            url.shortURLProvider.getURLClickCount(queue, url) { count ->
+            val requests = CancelableQueue(queue)
+            continuation.invokeOnCancellation { requests.cancelAll() }
+            url.shortURLProvider.getURLClickCount(requests, url) { count ->
                 if (continuation.isActive) continuation.resume(count)
             }
         }
+}
+
+/** Forwards to [delegate] and remembers the requests, because a provider hands back no handle to cancel its count request. */
+private class CancelableQueue(
+    private val delegate: VolleyQueue,
+) : VolleyQueue by delegate {
+    private val requests = ConcurrentLinkedQueue<Request<*>>()
+
+    @Volatile
+    private var canceled = false
+
+    override fun add(request: Request<*>) {
+        requests += request
+        if (canceled) request.cancel()
+        delegate.add(request)
+    }
+
+    fun cancelAll() {
+        canceled = true
+        requests.forEach { it.cancel() }
+    }
 }

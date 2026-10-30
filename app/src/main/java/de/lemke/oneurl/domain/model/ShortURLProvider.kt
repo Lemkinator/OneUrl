@@ -82,7 +82,7 @@ object ShortURLProviderCompanion {
             Murl,
             Tly.Default,
             Tly.Ibitly,
-            Tly.Twtrto,
+            Twtrto,
             Tly.Jpegly,
             Tly.Rebrandly,
             Tly.Bitly,
@@ -118,19 +118,18 @@ object ShortURLProviderCompanion {
     fun fromStringOrDefault(name: String?): ShortURLProvider = getIfEnabledOrDefault(fromStringOrNull(name))
 }
 
-class Unknown : ShortURLProvider {
-    override val enabled = false
-    override val name = "Unknown"
-    override val baseURL = "https://www.leonard-lemke.com/apps/oneurl"
+/** A provider that only names stored links; it cannot create new ones. */
+abstract class UnavailableProvider : ShortURLProvider {
+    final override val enabled = false
 
-    override fun getCreateRequest(
+    final override fun getCreateRequest(
         queue: VolleyQueue,
         longURL: String,
         alias: String,
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit,
     ): Request<*> {
-        Log.e("UnknownProvider", "Tried to generate short URL with unknown provider")
+        Log.e("UnavailableProvider", "Tried to generate short URL with unavailable provider $name")
         errorCallback(GenerateURLError.Unknown())
         return object : Request<Any>(Method.GET, "", Response.ErrorListener { }) {
             override fun deliverResponse(response: Any?) {
@@ -140,6 +139,19 @@ class Unknown : ShortURLProvider {
             override fun parseNetworkResponse(response: NetworkResponse?) = null
         }
     }
+}
+
+class Unknown : UnavailableProvider() {
+    override val name = "Unknown"
+    override val baseURL = "https://www.leonard-lemke.com/apps/oneurl"
+}
+
+object Twtrto : UnavailableProvider() {
+    override val name = "t.ly (twtr.to)"
+    override val baseURL = "https://t.ly"
+    override val group = Tly.Default.group
+    override val privacyURL = Tly.Default.privacyURL
+    override val termsURL = Tly.Default.termsURL
 }
 
 @Suppress("SameReturnValue")
@@ -160,6 +172,8 @@ interface ShortURLProvider {
         get() = null
     val aliasConfig: AliasConfig?
         get() = null
+    val clickCountPeriod: ClickCountPeriod
+        get() = ClickCountPeriod.AllTime
 
     fun getAnalyticsURL(alias: String): String? = null
 
@@ -219,6 +233,8 @@ interface AliasConfig {
     val allowedAliasCharacters: String
 
     fun isAliasValid(alias: String): Boolean
+
+    fun aliasLength(alias: String): Int = alias.length
 
     companion object {
         const val NO_MAX_ALIAS_SPECIFIED = 100
