@@ -58,6 +58,7 @@
     <!--Settings-->
     <string name="auto_copy_on_create">Automatic copying</string>
     <string name="auto_copy_on_create_summary">Automatically copy the shortened URL to the clipboard</string>
+    <string name="backup_section_urls">URLs</string>
 
     <!--Add URL-->
     <string name="add_url">Add url</string>

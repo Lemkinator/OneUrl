@@ -54,6 +54,7 @@
     <!--Settings-->
     <string name="auto_copy_on_create">Automatisch kopieren</string>
     <string name="auto_copy_on_create_summary">Automatisch die verkürzte URL in die Zwischenablage kopieren</string>
+    <string name="backup_section_urls">URLs</string>
 
     <!--Add URL-->
     <string name="add_url">URL hinzufügen</string>

@@ -85,6 +85,11 @@ than calling use cases directly.
 exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` is the one screen-side reaction to a result.
 `GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss.
 
+**Backup** — `data/backup/` holds `UrlBackupSection`, the one `urls` section of a common-utils backup, over `UrlBackupEntry` (a serializable DTO,
+never `URLDb`). Merge keys by short URL and keeps the phone's entry, favorite when either side is; the `added` stamp travels as ISO-8601 text with
+its offset. `RoomBackupTransaction` runs the engine in one Room transaction. OneUrl signs nothing, so its `.oneurl` files stay plain zips. The
+Backup category comes from `commonutilsR.xml.preferences_backup` in the list `MainActivity` passes to `setupCommonUtilsSettingsActivity`.
+
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
 `ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers with `enabled = false` are instantiated but filtered out of
 `enabled`.
@@ -94,7 +99,8 @@ exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` 
 `ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (binds `VolleyQueue`,
 `NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`), `SecretsModule` (provides `KSafe`, binds `TlyKeyStore`),
 `BitmapExporterModule` (provides the common-utils `DefaultBitmapExporter`; screen tests uninstall it to bind an exporter on a pausable
-IO dispatcher) and `InAppReviewModule` (includes the common-utils `CommonUtilsInAppReviewModule`, which binds `PlayInAppReview` as `InAppReview`).
+IO dispatcher), `InAppReviewModule` (includes the common-utils `CommonUtilsInAppReviewModule`, which binds `PlayInAppReview` as `InAppReview`)
+and `BackupModule` (includes the common-utils `CommonUtilsBackupModule`; binds `UrlBackupSection`, `RoomBackupTransaction`, the `urls` label and the `BackupApp` with the `.oneurl` extension).
 
 **Test doubles** — `testFixtures` holds the `@TestInstallIn` modules that every Hilt test, local or instrumented, loads:
 `TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule`, `TestInAppReviewModule` (a singleton `FakeInAppReview`), `TestSecretsModule` (a singleton `FakeTlyKeyStore`, because the Android Keystore is missing under Robolectric) and `TestNetworkModule`. `TestNetworkModule` binds the singleton

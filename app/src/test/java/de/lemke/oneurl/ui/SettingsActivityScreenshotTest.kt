@@ -49,6 +49,7 @@ class SettingsActivityScreenshotTest {
         setupCommonUtilsSettingsActivity(
             commonutilsR.xml.preferences_design,
             R.xml.preferences,
+            commonutilsR.xml.preferences_backup,
             commonutilsR.xml.preferences_dev_options_delete_app_data,
             commonutilsR.xml.preferences_more_info,
         )
