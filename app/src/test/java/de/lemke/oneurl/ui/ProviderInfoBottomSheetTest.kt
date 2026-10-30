@@ -16,8 +16,15 @@
 
 package de.lemke.oneurl.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Looper
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.UnderlineSpan
 import android.view.View
+import android.view.inputmethod.BaseInputConnection
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
@@ -203,11 +210,12 @@ class ProviderInfoBottomSheetTest {
     }
 
     @Test
-    fun `a T_LY provider shows the key entry with its plan hint`() {
+    fun `a T_LY provider shows the key entry below the API key info row`() {
         withBottomSheet(Tly.Default) { fragment ->
             viewOf<View>(fragment, R.id.providerBottomSheetTlyKey).isVisible.shouldBeTrue()
-            viewOf<TextView>(fragment, R.id.providerBottomSheetTlyKeyInfo).text.toString() shouldBe
-                "A key needs a T.LY plan with API access"
+            infoButtonOf(fragment, 0).text.toString() shouldBe "API key"
+            infoTextOf(fragment, 0).text.toString() shouldBe "You can add your own API key. It needs a T.LY plan with API access."
+            infoButtonOf(fragment, 1).isVisible.shouldBeFalse()
         }
     }
 
@@ -256,6 +264,79 @@ class ProviderInfoBottomSheetTest {
             keyInputOf(fragment).setText("")
             idleMainLooper()
             tlyKeys.apiKey shouldBe null
+        }
+    }
+
+    @Test
+    fun `a pasted key with line breaks and tabs keeps only the key in the field and the store`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            keyInputOf(fragment).setText("abc\n12\t3\r\n")
+            idleMainLooper()
+
+            keyInputOf(fragment).text.toString() shouldBe "abc123"
+            tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abc123")
+        }
+    }
+
+    @Test
+    fun `text inserted into a typed key drops its line break and keeps the cursor text`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val input = keyInputOf(fragment)
+            input.setText("abcd")
+            input.setSelection(2)
+
+            input.text!!.insert(2, "x\n")
+            idleMainLooper()
+
+            input.text.toString() shouldBe "abxcd"
+            input.selectionStart shouldBe 3
+            input.selectionEnd shouldBe 3
+            tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abxcd")
+        }
+    }
+
+    @Test
+    fun `pasting a key with a trailing line break fills the field with the trimmed key`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("key", "abc123\n"))
+            val input = keyInputOf(fragment)
+
+            input.onTextContextMenuItem(android.R.id.paste)
+            idleMainLooper()
+
+            input.text.toString() shouldBe "abc123"
+            tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abc123")
+        }
+    }
+
+    @Test
+    fun `inserted text keeps its spans while whitespace is dropped`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val input = keyInputOf(fragment)
+            val underline = UnderlineSpan()
+            val inserted = SpannableString("ab\ncd").apply { setSpan(underline, 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
+
+            input.text!!.insert(0, inserted)
+
+            input.text.toString() shouldBe "abcd"
+            input.text!!.getSpanStart(underline) shouldBe 0
+            input.text!!.getSpanEnd(underline) shouldBe 4
+        }
+    }
+
+    @Test
+    fun `inserted text keeps its composing range while whitespace is dropped`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val input = keyInputOf(fragment)
+            val inserted = SpannableString("ab\ncd")
+            BaseInputConnection.setComposingSpans(inserted)
+
+            input.text!!.insert(0, inserted)
+
+            input.text.toString() shouldBe "abcd"
+            BaseInputConnection.getComposingSpanStart(input.text!!) shouldBe 0
+            BaseInputConnection.getComposingSpanEnd(input.text!!) shouldBe 4
         }
     }
 

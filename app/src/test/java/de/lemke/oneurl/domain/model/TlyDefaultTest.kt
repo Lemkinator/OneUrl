@@ -33,7 +33,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import de.lemke.commonutils.R as commonutilsR
 
 // Volley's Request/VolleyLog touch android.util.Log/SystemClock in static initializers, which
 // crash under the default unit-test "not mocked" stub jar, hence Robolectric here.
@@ -47,7 +46,7 @@ class TlyDefaultTest {
     @Test
     fun `name group and enabled reflect the default t_ly provider`() {
         Tly.Default.name shouldBe "t.ly"
-        Tly.Default.group shouldBe "t.ly [experimental]"
+        Tly.Default.group shouldBe "t.ly"
         Tly.Default.enabled shouldBe true
     }
 
@@ -230,20 +229,13 @@ class TlyDefaultTest {
     }
 
     @Test
-    fun `getInfoContents returns the experimental info`() {
+    fun `getInfoContents returns the API key info with the key icon`() {
         val infoContents = Tly.Default.getInfoContents(realContext)
 
         infoContents.size shouldBe 1
-        infoContents[0].title shouldBe realContext.getString(commonutilsR.string.commonutils_experimental)
-        infoContents[0].linkOrDescription shouldBe realContext.getString(R.string.tly_info)
-    }
-
-    @Test
-    fun `getTipsCardTitleAndInfo returns the info title and experimental text`() {
-        val (title, info) = Tly.Default.getTipsCardTitleAndInfo(realContext)!!
-
-        title shouldBe realContext.getString(commonutilsR.string.commonutils_info)
-        info shouldBe realContext.getString(R.string.tly_info)
+        infoContents[0].icon shouldBe R.drawable.ic_key
+        infoContents[0].title shouldBe "API key"
+        infoContents[0].linkOrDescription shouldBe "You can add your own API key. It needs a T.LY plan with API access."
     }
 
     @Test

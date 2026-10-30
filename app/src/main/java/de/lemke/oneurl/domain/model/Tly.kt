@@ -25,21 +25,18 @@ import com.android.volley.toolbox.JsonObjectRequest
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.VolleyQueue
 import org.json.JSONObject
-import de.lemke.commonutils.R as commonutilsR
 
 /*
 login required (also for alias), but:
 https://t.ly/api/v1/link/shorten
 https://t.ly/api/v1/link/providers
-t.ly, ibit.ly, twtr.to, jpeg.ly, is.gd, rebrand.ly, tinyurl, bit.ly
-t.ly: shows t.ly for valid links (example.com) and tinyurl.com else (example), works also when bit.ly asks for t.ly api key?
-ibit.ly: responds ibit.ly for valid links (example.com) and tinyurl.com else (example)
-twtr.to: responds t.ly for valid links (example.com) and tinyurl.com else (example)
-jpeg.ly: responds jpeg.ly for valid links (example.com) and tinyurl.com else (example)
-is.gd: responds is.gd for valid links (example.com) and tinyurl.com else (example)
-rebrand.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example)
-tinyurl: tinyurl.com
-bit.ly: responds t.ly for valid links (example.com) and tinyurl.com else (example), some requests:
+t.ly, shorturl.ly, ibit.ly, jpeg.ly, is.gd, rebrand.ly, bit.ly
+t.ly: shows t.ly for valid links (example.com), works also when bit.ly asks for t.ly api key?
+ibit.ly: responds ibit.ly for valid links (example.com)
+jpeg.ly: responds jpeg.ly for valid links (example.com)
+is.gd: responds is.gd for valid links (example.com)
+rebrand.ly: responds t.ly for valid links (example.com)
+bit.ly: responds t.ly for valid links (example.com), some requests:
 T.LY account and API key required to create additional short links.
 wtf? :D anyway...
 
@@ -84,11 +81,10 @@ errors:
 }
  */
 private const val KEYED_API_URL = "https://api.t.ly/api/v1/link/shorten"
-private val KEY_REJECTED_STATUS_CODES = setOf(HttpStatusCode.UNAUTHORIZED, HttpStatusCode.PAYMENT_REQUIRED, HttpStatusCode.FORBIDDEN)
 
 sealed class Tly : ShortURLProvider {
     abstract val domain: String
-    final override val group = "t.ly [experimental]"
+    final override val group = "t.ly"
     final override val baseURL = "https://t.ly"
     final override val apiURL = "$baseURL/api/v1/link/shorten"
     final override val privacyURL = "$baseURL/privacy"
@@ -98,16 +94,10 @@ sealed class Tly : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
             ProviderInfo(
-                dev.oneuiproject.oneui.R.drawable.ic_oui_labs,
-                context.getString(commonutilsR.string.commonutils_experimental),
-                context.getString(R.string.tly_info),
+                R.drawable.ic_key,
+                context.getString(R.string.tly_key_title),
+                context.getString(R.string.tly_key_info),
             ),
-        )
-
-    override fun getTipsCardTitleAndInfo(context: Context): Pair<String, String>? =
-        Pair(
-            context.getString(commonutilsR.string.commonutils_info),
-            context.getString(R.string.tly_info),
         )
 
     final override fun getCreateRequest(
@@ -200,7 +190,7 @@ sealed class Tly : ShortURLProvider {
             error is NoConnectionError -> GenerateURLError.ServiceOffline
             error is ParseError -> GenerateURLError.ServiceTemporarilyUnavailable(baseURL)
             statusCode == null -> GenerateURLError.Unknown()
-            keyed && statusCode in KEY_REJECTED_STATUS_CODES -> GenerateURLError.TlyKeyRejected
+            keyed && statusCode == HttpStatusCode.UNAUTHORIZED -> GenerateURLError.TlyKeyRejected
             statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> GenerateURLError.ServiceTemporarilyUnavailable(baseURL)
             data.isNullOrBlank() || message.isNullOrBlank() -> GenerateURLError.Unknown(statusCode)
             message.contains("long url field is required", true) -> GenerateURLError.InvalidURL

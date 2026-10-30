@@ -41,7 +41,7 @@ class TwtrtoTest {
 
     @Test
     fun `keeps the T_LY group and legal links`() {
-        Twtrto.group shouldBe "t.ly [experimental]"
+        Twtrto.group shouldBe "t.ly"
         Twtrto.privacyURL shouldBe "https://t.ly/privacy"
         Twtrto.termsURL shouldBe "https://t.ly/terms"
     }

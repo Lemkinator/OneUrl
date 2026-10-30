@@ -327,7 +327,7 @@ class AddURLErrorDialogsTest {
         val dialog = dialogFor(themedActivity(), GenerateURLError.TlyKeyRejected)
 
         dialog.titleText() shouldBe "Error"
-        dialog.messageText() shouldBe "Your T.LY key does not work. Check it or remove it."
+        dialog.messageText() shouldBe "Your T.LY API key does not work. Check it or remove it."
     }
 
     @Test
