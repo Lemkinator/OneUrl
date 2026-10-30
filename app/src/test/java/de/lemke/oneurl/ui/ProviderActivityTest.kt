@@ -175,13 +175,13 @@ class ProviderActivityTest {
 
     @Test
     fun `provider info button lists the shown feature titles`() {
-        assertFirstRowInfoDescription("Provider info for da.gd: Custom alias, Analytics")
+        assertFirstRowInfoDescription("Provider info for da.gd: Hint before redirecting, Custom alias, Analytics")
     }
 
     @Test
     @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "de")
     fun `provider info button description is localized in German`() {
-        assertFirstRowInfoDescription("Anbieter-Info zu da.gd: Benutzerdefiniertes Kürzel, Analytics")
+        assertFirstRowInfoDescription("Anbieter-Info zu da.gd: Hinweis vor Weiterleitung, Benutzerdefiniertes Kürzel, Analytics")
     }
 
     @Test

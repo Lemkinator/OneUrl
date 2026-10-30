@@ -36,6 +36,7 @@
     <string name="group">Group</string>
     <string name="redirect_hint">Hint before redirecting</string>
     <string name="redirect_hint_text">Before redirecting, this provider displays a hint that informs the user about the destination URL.</string>
+    <string name="redirect_hint_text_dagd">Only new links show a preview page before redirecting. da.gd shows this page to HTML clients, such as browsers, until a cooldown ends. Older links redirect directly.</string>
     <string name="privacy_text">This provider has been designed to be as data efficient as possible. It is operated from Germany and complies with the applicable privacy regulations in Germany and Europe.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">This URL shortener uses emojis to create personalized and easy-to-remember links. When specifying an alias, only emojis are allowed.</string>

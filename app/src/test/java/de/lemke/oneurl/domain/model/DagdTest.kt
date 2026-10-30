@@ -17,6 +17,7 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
@@ -243,5 +244,17 @@ class DagdTest {
         Dagd.aliasConfig.isAliasValid("abc_DEF_123") shouldBe true
         Dagd.aliasConfig.isAliasValid("abc-123") shouldBe false
         Dagd.aliasConfig.isAliasValid("") shouldBe false
+    }
+
+    @Test
+    fun `info contents lead with the preview page hint for new links`() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+
+        val infoContents = Dagd.getInfoContents(context)
+
+        infoContents.map { it.title } shouldBe listOf("Hint before redirecting", "Custom alias", "Analytics")
+        infoContents[0].linkOrDescription shouldBe
+            "Only new links show a preview page before redirecting. da.gd shows this page to HTML clients, " +
+            "such as browsers, until a cooldown ends. Older links redirect directly."
     }
 }
