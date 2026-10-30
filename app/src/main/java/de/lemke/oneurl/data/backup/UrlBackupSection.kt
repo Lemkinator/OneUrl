@@ -20,8 +20,7 @@ import de.lemke.commonutils.backup.core.EntryCheck
 import de.lemke.commonutils.backup.core.MergeableSection
 import de.lemke.oneurl.data.database.URLDao
 import de.lemke.oneurl.data.database.URLDb
-import java.time.OffsetDateTime
-import java.time.format.DateTimeParseException
+import java.time.DateTimeException
 import javax.inject.Inject
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonObject
@@ -69,7 +68,7 @@ class UrlBackupSection @Inject constructor(
     override suspend fun replace(
         local: UrlBackupEntry,
         merged: UrlBackupEntry,
-    ) = dao.update(merged.toDb())
+    ) = dao.setFavorite(merged.shortURL, merged.favorite)
 
     companion object {
         const val ID = "urls"
@@ -79,8 +78,8 @@ class UrlBackupSection @Inject constructor(
 
 private fun UrlBackupEntry.hasOffsetStamp(): Boolean =
     try {
-        OffsetDateTime.parse(added)
+        addedInSystemZone()
         true
-    } catch (e: DateTimeParseException) {
+    } catch (ignored: DateTimeException) {
         false
     }

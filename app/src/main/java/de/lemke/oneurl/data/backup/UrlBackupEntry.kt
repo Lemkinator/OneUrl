@@ -19,6 +19,7 @@ package de.lemke.oneurl.data.backup
 import de.lemke.oneurl.data.database.URLDb
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.Serializable
 
@@ -52,5 +53,7 @@ internal fun UrlBackupEntry.toDb() =
         favorite = favorite,
         title = title,
         description = description,
-        added = OffsetDateTime.parse(added).atZoneSameInstant(ZoneId.systemDefault()),
+        added = addedInSystemZone(),
     )
+
+internal fun UrlBackupEntry.addedInSystemZone(): ZonedDateTime = OffsetDateTime.parse(added).atZoneSameInstant(ZoneId.systemDefault())

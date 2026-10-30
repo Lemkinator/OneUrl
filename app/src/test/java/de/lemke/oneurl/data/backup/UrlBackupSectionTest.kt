@@ -162,8 +162,26 @@ class UrlBackupSectionTest : UrlBackupSectionContract() {
         }
 
     @Test
+    fun `replace changes only the favorite flag and keeps the stored zone`(): Unit =
+        runBlocking {
+            val tokyo = ZonedDateTime.of(2026, 10, 27, 14, 30, 0, 0, ZoneId.of("Asia/Tokyo"))
+            database.urlDao().insert(urlDb("https://da.gd/a", tokyo))
+            val local = section.exportEntries().single()
+
+            section.replace(local, local.copy(favorite = true, title = "other"))
+
+            database.urlDao().getAll().single() shouldBe urlDb("https://da.gd/a", tokyo).copy(favorite = true)
+        }
+
+    @Test
     fun `an added without offset is broken`() {
         section.validate(entry("https://da.gd/a", added = "2026-10-27T14:30:00")) shouldBe
+            EntryCheck.Invalid("added is not an ISO-8601 date-time with an offset")
+    }
+
+    @Test
+    fun `an added that overflows the device zone is broken`() {
+        section.validate(entry("https://da.gd/a", added = "+999999999-12-31T23:59:59-18:00")) shouldBe
             EntryCheck.Invalid("added is not an ISO-8601 date-time with an offset")
     }
 

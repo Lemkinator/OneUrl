@@ -53,6 +53,12 @@ interface URLDao {
     @Update
     suspend fun update(url: URLDb)
 
+    @Query("UPDATE url SET favorite = :favorite WHERE shortURL = :shortURL")
+    suspend fun setFavorite(
+        shortURL: String,
+        favorite: Boolean,
+    )
+
     @Update
     suspend fun updateMultiple(urls: List<URLDb>)
 

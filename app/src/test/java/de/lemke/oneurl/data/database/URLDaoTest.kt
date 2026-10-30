@@ -260,6 +260,11 @@ class URLDaoTest {
 
                     override suspend fun update(url: URLDb) = Unit
 
+                    override suspend fun setFavorite(
+                        shortURL: String,
+                        favorite: Boolean,
+                    ) = Unit
+
                     override suspend fun updateMultiple(urls: List<URLDb>) = Unit
 
                     override suspend fun delete(shortURL: String) {
