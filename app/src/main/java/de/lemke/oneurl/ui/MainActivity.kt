@@ -56,8 +56,6 @@ import de.lemke.commonutils.ui.utils.onboardIfNeeded
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationFrom
 import de.lemke.commonutils.ui.utils.restoreSearchAndActionMode
 import de.lemke.commonutils.ui.utils.saveSearchAndActionMode
-import de.lemke.commonutils.ui.utils.setupCommonUtilsAboutActivity
-import de.lemke.commonutils.ui.utils.setupCommonUtilsSettingsActivity
 import de.lemke.commonutils.ui.utils.setupHeaderAndNavRail
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.transformToActivity
@@ -185,14 +183,6 @@ class MainActivity :
         }
 
     private fun openMain(savedInstanceState: Bundle?) {
-        setupCommonUtilsAboutActivity(appVersion = BuildConfig.VERSION_NAME)
-        setupCommonUtilsSettingsActivity(
-            commonutilsR.xml.preferences_design,
-            R.xml.preferences,
-            commonutilsR.xml.preferences_backup,
-            commonutilsR.xml.preferences_dev_options_delete_app_data,
-            commonutilsR.xml.preferences_more_info,
-        )
         initDrawer()
         initRecycler()
         savedInstanceState?.restoreSearchAndActionMode(onSearchMode = { startSearch() }, onActionMode = { launchActionMode(it) })

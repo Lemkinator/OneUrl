@@ -20,7 +20,19 @@ import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.data.applyDarkMode
+import de.lemke.commonutils.ui.utils.setupCommonUtilsAboutActivity
+import de.lemke.commonutils.ui.utils.setupCommonUtilsSettingsActivity
 import javax.inject.Inject
+import de.lemke.commonutils.R as commonutilsR
+
+internal val settingsPreferences =
+    listOf(
+        commonutilsR.xml.preferences_design,
+        R.xml.preferences,
+        commonutilsR.xml.preferences_backup,
+        commonutilsR.xml.preferences_dev_options_delete_app_data,
+        commonutilsR.xml.preferences_more_info,
+    )
 
 /**
  * Main entry point into the application process.
@@ -34,5 +46,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         settings.applyDarkMode()
+        setupCommonUtilsAboutActivity(appVersion = BuildConfig.VERSION_NAME)
+        setupCommonUtilsSettingsActivity(settingsPreferences)
     }
 }

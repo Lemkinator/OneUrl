@@ -88,7 +88,7 @@ exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` 
 **Backup** — `data/backup/` holds `UrlBackupSection`, the one `urls` section of a common-utils backup, over `UrlBackupEntry` (a serializable DTO,
 never `URLDb`). Merge keys by short URL and keeps the phone's entry, favorite when either side is; the `added` stamp travels as ISO-8601 text with
 its offset. `RoomBackupTransaction` runs the engine in one Room transaction. OneUrl signs nothing, so its `.oneurl` files stay plain zips. The
-Backup category comes from `commonutilsR.xml.preferences_backup` in the list `MainActivity` passes to `setupCommonUtilsSettingsActivity`.
+Backup category comes from `commonutilsR.xml.preferences_backup` in `settingsPreferences`, which `App.onCreate` passes to `setupCommonUtilsSettingsActivity`.
 
 **`domain/model/`** — Each shortener service is an `object` (or nested objects for grouped services like `Tly`, `Kurzelinks`) implementing
 `ShortURLProvider`. `ShortURLProviderCompanion` holds the master list; providers with `enabled = false` are instantiated but filtered out of

@@ -25,7 +25,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
 import de.lemke.commonutils.ui.utils.setupCommonUtilsSettingsActivity
-import de.lemke.oneurl.R
+import de.lemke.oneurl.settingsPreferences
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +33,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import de.lemke.commonutils.R as commonutilsR
 
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -46,13 +45,7 @@ class SettingsActivityScreenshotTest {
     @Before
     fun setup() {
         hiltRule.inject()
-        setupCommonUtilsSettingsActivity(
-            commonutilsR.xml.preferences_design,
-            R.xml.preferences,
-            commonutilsR.xml.preferences_backup,
-            commonutilsR.xml.preferences_dev_options_delete_app_data,
-            commonutilsR.xml.preferences_more_info,
-        )
+        setupCommonUtilsSettingsActivity(settingsPreferences)
     }
 
     @Test
