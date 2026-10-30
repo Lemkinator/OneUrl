@@ -28,7 +28,7 @@ data class UrlBackupEntry(
     val longURL: String,
     val shortURLProvider: String,
     val favorite: Boolean,
-    val title: String = "",
+    val title: String,
     val description: String,
     val added: String,
 )

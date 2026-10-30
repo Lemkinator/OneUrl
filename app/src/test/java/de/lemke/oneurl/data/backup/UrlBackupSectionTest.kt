@@ -105,6 +105,7 @@ class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
                             longURL = "https://example.com/b",
                             shortURLProvider = "tinyurl.com",
                             favorite = false,
+                            title = "",
                             description = "",
                             added = "2026-10-27T10:00:00+01:00",
                         ),
