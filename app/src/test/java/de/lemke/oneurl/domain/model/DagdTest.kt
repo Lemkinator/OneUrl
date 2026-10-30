@@ -254,7 +254,21 @@ class DagdTest {
 
         infoContents.map { it.title } shouldBe listOf("Hint before redirecting", "Custom alias", "Analytics")
         infoContents[0].linkOrDescription shouldBe
-            "Only new links show a preview page before redirecting. da.gd shows this page to HTML clients, " +
-            "such as browsers, until a cooldown ends. Older links redirect directly."
+            "New links show a preview page in the browser before redirecting, until a cooldown ends. " +
+            "Older links redirect directly."
+        infoContents[0].icon shouldBe dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action
+    }
+
+    @Test
+    @Config(application = Application::class, sdk = [36], qualifiers = "de")
+    fun `info contents show the German preview page hint`() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+
+        val infoContents = Dagd.getInfoContents(context)
+
+        infoContents[0].title shouldBe "Hinweis vor Weiterleitung"
+        infoContents[0].linkOrDescription shouldBe
+            "Neue Links zeigen im Browser vor der Weiterleitung eine Vorschauseite, bis eine Wartezeit endet. " +
+            "Ältere Links leiten direkt weiter."
     }
 }
