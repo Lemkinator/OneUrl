@@ -24,6 +24,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.UnderlineSpan
 import android.view.View
+import android.view.inputmethod.BaseInputConnection
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
@@ -318,6 +319,21 @@ class ProviderInfoBottomSheetTest {
             input.text.toString() shouldBe "abcd"
             input.text!!.getSpanStart(underline) shouldBe 0
             input.text!!.getSpanEnd(underline) shouldBe 4
+        }
+    }
+
+    @Test
+    fun `inserted text keeps its composing range while whitespace is dropped`() {
+        withBottomSheet(Tly.Default) { fragment ->
+            val input = keyInputOf(fragment)
+            val inserted = SpannableString("ab\ncd")
+            BaseInputConnection.setComposingSpans(inserted)
+
+            input.text!!.insert(0, inserted)
+
+            input.text.toString() shouldBe "abcd"
+            BaseInputConnection.getComposingSpanStart(input.text!!) shouldBe 0
+            BaseInputConnection.getComposingSpanEnd(input.text!!) shouldBe 4
         }
     }
 

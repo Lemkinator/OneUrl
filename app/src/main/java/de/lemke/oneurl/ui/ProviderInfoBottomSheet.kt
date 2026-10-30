@@ -176,7 +176,8 @@ private object WhitespaceFilter : InputFilter {
         dstart: Int,
         dend: Int,
     ): CharSequence? {
-        val kept = SpannableStringBuilder(source, start, end)
+        // The copy constructor drops NoCopySpans such as the keyboard's composing span; append keeps them.
+        val kept = SpannableStringBuilder().append(source, start, end)
         for (index in kept.indices.reversed()) {
             if (kept[index].isWhitespace()) kept.delete(index, index + 1)
         }
