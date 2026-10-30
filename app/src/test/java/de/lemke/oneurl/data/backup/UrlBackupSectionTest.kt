@@ -34,6 +34,7 @@ import de.lemke.commonutils.backup.exportFiles
 import de.lemke.oneurl.data.database.AppDatabase
 import de.lemke.oneurl.data.database.URLDb
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.time.ZoneId
@@ -187,6 +188,25 @@ class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
     fun `a lookup chunk stays within the SQLite default variable limit`() {
         (UrlBackupSection.LOOKUP_CHUNK_SIZE <= SQLITE_DEFAULT_VARIABLE_LIMIT) shouldBe true
     }
+
+    @Test
+    fun `a failure inside the transaction keeps every stored url`(): Unit =
+        runBlocking {
+            storeUrls(3)
+
+            shouldThrow<IllegalStateException> {
+                transaction.run {
+                    database.urlDao().deleteAll()
+                    error("x")
+                }
+            }
+
+            database.urlDao().getAll().map { it.shortURL }.shouldContainExactlyInAnyOrder(
+                "https://da.gd/0",
+                "https://da.gd/1",
+                "https://da.gd/2",
+            )
+        }
 
     @Test
     fun `export writes added with its offset`(): Unit =
