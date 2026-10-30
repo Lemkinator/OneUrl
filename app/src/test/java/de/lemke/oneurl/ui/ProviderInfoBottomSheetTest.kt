@@ -283,11 +283,14 @@ class ProviderInfoBottomSheetTest {
         withBottomSheet(Tly.Default) { fragment ->
             val input = keyInputOf(fragment)
             input.setText("abcd")
+            input.setSelection(2)
 
             input.text!!.insert(2, "x\n")
             idleMainLooper()
 
             input.text.toString() shouldBe "abxcd"
+            input.selectionStart shouldBe 3
+            input.selectionEnd shouldBe 3
             tlyKeys.apiKey shouldBe TlyApiKey.ofOrNull("abxcd")
         }
     }
