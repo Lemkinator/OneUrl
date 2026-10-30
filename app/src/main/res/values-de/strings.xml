@@ -32,6 +32,7 @@
     <string name="group">Gruppe</string>
     <string name="redirect_hint">Hinweis vor Weiterleitung</string>
     <string name="redirect_hint_text">Vor der Weiterleitung zeigt dieser Anbieter einen Hinweis an, der den Benutzer über die Ziel-URL informiert.</string>
+    <string name="redirect_hint_text_dagd">Neue Links zeigen im Browser vor der Weiterleitung eine Vorschauseite, bis eine Wartezeit endet. Ältere Links leiten direkt weiter.</string>
     <string name="privacy_text">Dieser Anbieter wurde so konzipiert, dass er so datensparsam arbeitet, wie möglich. Er wird von Deutschland aus betrieben und hält sich an die geltenden Datenschutzregelungen in Deutschland und Europa.</string>
     <string name="emoji">Emoji</string>
     <string name="emoji_text">Dieser URL-Verkürzer verwendet Emojis, um personalisierte und leicht zu merkende Links zu erstellen. Falls ein eigenes Kürzel angegeben wird, sind nur Emojis erlaubt.</string>

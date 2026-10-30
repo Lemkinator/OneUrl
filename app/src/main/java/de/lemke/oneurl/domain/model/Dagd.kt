@@ -56,6 +56,11 @@ object Dagd : ShortURLProvider {
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
             ProviderInfo(
+                dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action,
+                context.getString(R.string.redirect_hint),
+                context.getString(R.string.redirect_hint_text_dagd),
+            ),
+            ProviderInfo(
                 dev.oneuiproject.oneui.R.drawable.ic_oui_tool_outline,
                 context.getString(R.string.alias),
                 context.getString(

@@ -37,6 +37,7 @@ import de.lemke.oneurl.data.FakePageTitleFetcher
 import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.data.UserSettings
+import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.Murl
@@ -210,6 +211,15 @@ class AddURLActivityTest {
             activity.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe
                 "Provider info for v.gd: Hint before redirecting, Custom alias, Analytics"
             activity.findViewById<View>(R.id.providerIcon1).importantForAccessibility shouldBe View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+    }
+
+    @Test
+    fun `provider info button lists the preview page hint for da-gd`() {
+        userSettings.selectedShortURLProvider = Dagd
+        withAddURLActivity { activity, _, _, _ ->
+            activity.findViewById<View>(R.id.providerIconLayout).contentDescription shouldBe
+                "Provider info for da.gd: Hint before redirecting, Custom alias, Analytics"
         }
     }
 

@@ -17,6 +17,7 @@
 package de.lemke.oneurl.domain.model
 
 import android.app.Application
+import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
@@ -243,5 +244,31 @@ class DagdTest {
         Dagd.aliasConfig.isAliasValid("abc_DEF_123") shouldBe true
         Dagd.aliasConfig.isAliasValid("abc-123") shouldBe false
         Dagd.aliasConfig.isAliasValid("") shouldBe false
+    }
+
+    @Test
+    fun `info contents lead with the preview page hint for new links`() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+
+        val infoContents = Dagd.getInfoContents(context)
+
+        infoContents.map { it.title } shouldBe listOf("Hint before redirecting", "Custom alias", "Analytics")
+        infoContents[0].linkOrDescription shouldBe
+            "New links show a preview page in the browser before redirecting, until a cooldown ends. " +
+            "Older links redirect directly."
+        infoContents[0].icon shouldBe dev.oneuiproject.oneui.R.drawable.ic_oui_confirm_before_next_action
+    }
+
+    @Test
+    @Config(application = Application::class, sdk = [36], qualifiers = "de")
+    fun `info contents show the German preview page hint`() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+
+        val infoContents = Dagd.getInfoContents(context)
+
+        infoContents[0].title shouldBe "Hinweis vor Weiterleitung"
+        infoContents[0].linkOrDescription shouldBe
+            "Neue Links zeigen im Browser vor der Weiterleitung eine Vorschauseite, bis eine Wartezeit endet. " +
+            "Ältere Links leiten direkt weiter."
     }
 }
