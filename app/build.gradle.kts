@@ -21,6 +21,7 @@ import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.gradle.secrets)
     alias(libs.plugins.aboutlibraries)
@@ -191,6 +192,7 @@ dependencies {
     implementation(libs.ksafe)
     implementation(libs.room.runtime)
     implementation(libs.hilt.android)
+    implementation(libs.kotlinx.serialization.json)
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
 

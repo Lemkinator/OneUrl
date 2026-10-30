@@ -119,6 +119,30 @@ class URLDaoTest {
         }
 
     @Test
+    fun `insertAll stores every row and replaces a conflicting short URL`() =
+        runTest {
+            val replaced = url("https://short.url/a")
+            val kept = url("https://short.url/b")
+            dao.insert(replaced)
+
+            dao.insertAll(listOf(replaced.copy(title = "replacement"), kept))
+
+            dao.getAll() shouldContainExactly listOf(replaced.copy(title = "replacement"), kept)
+        }
+
+    @Test
+    fun `getByShortURLs returns only the rows with a listed short URL`() =
+        runTest {
+            val first = url("https://short.url/a")
+            val second = url("https://short.url/b")
+            dao.insertAll(listOf(first, second, url("https://short.url/c")))
+
+            dao.getByShortURLs(listOf("https://short.url/a", "https://short.url/b", "https://short.url/missing")) shouldContainExactly
+                listOf(first, second)
+            dao.getByShortURLs(emptyList()) shouldBe emptyList()
+        }
+
+    @Test
     fun `getAll returns every inserted row`() =
         runTest {
             val first = url("https://short.url/a")
@@ -219,7 +243,11 @@ class URLDaoTest {
                 object : URLDao {
                     override suspend fun insert(url: URLDb) = Unit
 
+                    override suspend fun insertAll(urls: List<URLDb>) = Unit
+
                     override suspend fun getURL(shortURL: String): URLDb? = null
+
+                    override suspend fun getByShortURLs(shortURLs: List<String>): List<URLDb> = emptyList()
 
                     override suspend fun getURL(
                         shortURLProvider: String,
