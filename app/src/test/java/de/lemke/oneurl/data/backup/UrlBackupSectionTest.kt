@@ -82,7 +82,8 @@ class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
 
     override fun transaction(): BackupTransaction = transaction
 
-    override fun sampleEntries(): List<UrlBackupEntry> = listOf(entry("https://da.gd/a"), entry("https://da.gd/b", favorite = true))
+    override fun sampleEntries(): List<UrlBackupEntry> =
+        listOf(entry("https://da.gd/a"), entry("https://da.gd/b", favorite = true, title = ""))
 
     override fun fixtures(): Map<Int, SectionFixture<UrlBackupEntry>> =
         mapOf(
@@ -104,7 +105,6 @@ class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
                             longURL = "https://example.com/b",
                             shortURLProvider = "tinyurl.com",
                             favorite = false,
-                            title = "",
                             description = "",
                             added = "2026-10-27T10:00:00+01:00",
                         ),
