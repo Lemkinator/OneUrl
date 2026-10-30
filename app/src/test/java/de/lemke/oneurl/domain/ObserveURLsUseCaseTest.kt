@@ -20,14 +20,28 @@ import app.cash.turbine.test
 import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 class ObserveURLsUseCaseTest : ShouldSpec(
     {
-        val favoriteUrl = testUrl(shortURL = "https://short.url/fav", favorite = true, title = "favorite title")
-        val plainUrl = testUrl(shortURL = "https://short.url/plain", favorite = false, title = "plain title")
+        val favoriteUrl =
+            testUrl(
+                shortURL = "https://short.url/fav",
+                favorite = true,
+                title = "favorite title",
+                added = ZonedDateTime.of(2024, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC),
+            )
+        val plainUrl =
+            testUrl(
+                shortURL = "https://short.url/plain",
+                favorite = false,
+                title = "plain title",
+                added = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC),
+            )
         val allUrls = listOf(favoriteUrl, plainUrl)
         lateinit var urlRepository: FakeURLRepository
         lateinit var observeURLs: ObserveURLsUseCase
@@ -70,7 +84,13 @@ class ObserveURLsUseCaseTest : ShouldSpec(
         }
 
         should("emits again when the repository stores a new url") {
-            val added = testUrl(shortURL = "https://short.url/added", favorite = true, title = "added title")
+            val added =
+                testUrl(
+                    shortURL = "https://short.url/added",
+                    favorite = true,
+                    title = "added title",
+                    added = ZonedDateTime.of(2024, 12, 1, 0, 0, 0, 0, ZoneOffset.UTC),
+                )
 
             observeURLs(searchQuery = flowOf(null), filterFavorite = flowOf(true)).test {
                 awaitItem() shouldBe listOf(favoriteUrl)

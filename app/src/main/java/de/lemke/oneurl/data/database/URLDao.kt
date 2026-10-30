@@ -38,6 +38,12 @@ interface URLDao {
         longURL: String,
     ): List<URLDb>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(urls: List<URLDb>)
+
+    @Query("SELECT * FROM url WHERE shortURL IN (:shortURLs)")
+    suspend fun getByShortURLs(shortURLs: List<String>): List<URLDb>
+
     @Query("SELECT * FROM url;")
     suspend fun getAll(): List<URLDb>
 
@@ -46,6 +52,12 @@ interface URLDao {
 
     @Update
     suspend fun update(url: URLDb)
+
+    @Query("UPDATE url SET favorite = :favorite WHERE shortURL = :shortURL")
+    suspend fun setFavorite(
+        shortURL: String,
+        favorite: Boolean,
+    )
 
     @Update
     suspend fun updateMultiple(urls: List<URLDb>)

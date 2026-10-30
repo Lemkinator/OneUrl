@@ -23,14 +23,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
- * Keeps [urls] in memory, newest first, with the replace-on-add and update-in-place rules of [DefaultURLRepository].
+ * Keeps [urls] in memory, latest `added` first and the newer insert first among equals, with the replace-on-add and update-in-place rules of [DefaultURLRepository].
  * Like Room, [observeURLs] emits after every write that touches a row, even when the rows stay equal.
  */
 internal class FakeURLRepository(
     urls: List<URL> = emptyList(),
 ) : URLRepository {
-    private val rows = MutableSharedFlow<List<URL>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply { tryEmit(urls) }
+    private var lastSequence = 0L
+    private val sequences = HashMap<String, Long>()
+    private val rows =
+        MutableSharedFlow<List<URL>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
+            urls.asReversed().forEach { sequences[it.shortURL] = ++lastSequence }
+            tryEmit(urls.byAddedAndInsert())
+        }
     val urls: List<URL> get() = rows.replayCache.single()
+
+    private fun List<URL>.byAddedAndInsert() = sortedWith(newestAddedFirstOrder.thenByDescending { sequences.getValue(it.shortURL) })
 
     override fun observeURLs(): Flow<List<URL>> = rows
 
@@ -42,7 +50,8 @@ internal class FakeURLRepository(
     ): List<URL> = urls.filter { it.shortURLProvider.name == provider.name && it.longURL == longURL }
 
     override suspend fun addURL(url: URL) {
-        rows.emit(listOf(url) + urls.filterNot { it.shortURL == url.shortURL })
+        sequences[url.shortURL] = ++lastSequence
+        rows.emit((urls.filterNot { it.shortURL == url.shortURL } + url).byAddedAndInsert())
     }
 
     override suspend fun updateURL(url: URL) = updateURLs(listOf(url))
@@ -50,7 +59,7 @@ internal class FakeURLRepository(
     override suspend fun updateURLs(urls: List<URL>) {
         val updates = urls.associateBy { it.shortURL }
         val stored = this.urls
-        if (stored.any { it.shortURL in updates }) rows.emit(stored.map { updates[it.shortURL] ?: it })
+        if (stored.any { it.shortURL in updates }) rows.emit(stored.map { updates[it.shortURL] ?: it }.byAddedAndInsert())
     }
 
     override suspend fun deleteURL(url: URL) = deleteURLs(listOf(url))
@@ -58,6 +67,9 @@ internal class FakeURLRepository(
     override suspend fun deleteURLs(urls: List<URL>) {
         val deleted = urls.mapTo(HashSet()) { it.shortURL }
         val stored = this.urls
-        if (stored.any { it.shortURL in deleted }) rows.emit(stored.filterNot { it.shortURL in deleted })
+        if (stored.any { it.shortURL in deleted }) {
+            deleted.forEach(sequences::remove)
+            rows.emit(stored.filterNot { it.shortURL in deleted })
+        }
     }
 }

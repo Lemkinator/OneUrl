@@ -63,6 +63,60 @@ abstract class URLRepositoryContract {
         }
 
     @Test
+    fun `observeURLs lists the newest added first, whatever the insert order`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val oldest = url("https://da.gd/oldest", added = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val middle = url("https://da.gd/middle", added = ZonedDateTime.of(2024, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val newest = url("https://da.gd/newest", added = ZonedDateTime.of(2024, 12, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+
+            repository.addURL(middle)
+            repository.addURL(newest)
+            repository.addURL(oldest)
+
+            repository.stored() shouldBe listOf(newest, middle, oldest)
+        }
+
+    @Test
+    fun `observeURLs compares added as instants across offsets`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val earlier = url("https://da.gd/earlier", added = ZonedDateTime.parse("2026-10-27T10:00+02:00"))
+            val later = url("https://da.gd/later", added = ZonedDateTime.parse("2026-10-27T09:30+01:00"))
+
+            repository.addURL(later)
+            repository.addURL(earlier)
+
+            repository.stored() shouldBe listOf(later, earlier)
+        }
+
+    @Test
+    fun `observeURLs keeps the newer insert first for equal added instants`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val utc = url("https://da.gd/utc", added = ZonedDateTime.parse("2026-10-27T09:00Z"))
+            val offset = url("https://da.gd/offset", added = ZonedDateTime.parse("2026-10-27T10:00+01:00"))
+
+            repository.addURL(utc)
+            repository.addURL(offset)
+
+            repository.stored() shouldBe listOf(offset, utc)
+        }
+
+    @Test
+    fun `observeURLs breaks equal added instants by insert order, not by local time`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val utc = url("https://da.gd/utc", added = ZonedDateTime.parse("2026-10-27T09:00Z"))
+            val offset = url("https://da.gd/offset", added = ZonedDateTime.parse("2026-10-27T10:00+01:00"))
+
+            repository.addURL(offset)
+            repository.addURL(utc)
+
+            repository.stored() shouldBe listOf(utc, offset)
+        }
+
+    @Test
     fun `getURL by short url returns the stored url or null`() =
         runTest(dispatcher) {
             val repository = createRepository()
@@ -89,7 +143,50 @@ abstract class URLRepositoryContract {
         }
 
     @Test
-    fun `addURL of a stored short url replaces it and makes it the newest`() =
+    fun `getURL by provider and long url lists the newest added first, whatever the insert order`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val oldest = url("https://da.gd/oldest", added = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val middle = url("https://da.gd/middle", added = ZonedDateTime.of(2024, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val newest = url("https://da.gd/newest", added = ZonedDateTime.of(2024, 12, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+
+            repository.addURL(middle)
+            repository.addURL(newest)
+            repository.addURL(oldest)
+
+            repository.getURL(Dagd, LONG_URL) shouldBe listOf(newest, middle, oldest)
+        }
+
+    @Test
+    fun `getURL by provider and long url keeps the newer insert first for equal added instants`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val utc = url("https://da.gd/utc", added = ZonedDateTime.parse("2026-10-27T09:00Z"))
+            val offset = url("https://da.gd/offset", added = ZonedDateTime.parse("2026-10-27T10:00+01:00"))
+
+            repository.addURL(utc)
+            repository.addURL(offset)
+
+            repository.getURL(Dagd, LONG_URL) shouldBe listOf(offset, utc)
+        }
+
+    @Test
+    fun `addURL of a stored short url replaces it and keeps the added order`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val older = url("https://da.gd/older", added = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val newer = url("https://da.gd/newer", added = ZonedDateTime.of(2024, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            repository.addURL(older)
+            repository.addURL(newer)
+            val replacement = older.copy(title = "replaced")
+
+            repository.addURL(replacement)
+
+            repository.stored() shouldBe listOf(newer, replacement)
+        }
+
+    @Test
+    fun `addURL of a stored short url lists it first among equal added instants`() =
         runTest(dispatcher) {
             val repository = createRepository()
             repository.addURL(first)
@@ -138,6 +235,34 @@ abstract class URLRepositoryContract {
             repository.updateURLs(listOf(renamedFirst, renamedThird))
 
             repository.stored() shouldBe listOf(renamedThird, second, renamedFirst)
+        }
+
+    @Test
+    fun `updateURLs re-sorts a url whose added instant changed`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            repository.addURL(first)
+            repository.addURL(second)
+            val readded = first.copy(added = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+
+            repository.updateURLs(listOf(readded))
+
+            repository.stored() shouldBe listOf(readded, second)
+        }
+
+    @Test
+    fun `updateURLs breaks equal added instants by insert order after the added instant changed`() =
+        runTest(dispatcher) {
+            val repository = createRepository()
+            val instant = ZonedDateTime.of(2024, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC)
+            val insertedFirst = url("https://da.gd/b", added = ZonedDateTime.of(2024, 12, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+            val insertedSecond = url("https://da.gd/a", added = instant)
+            repository.addURL(insertedFirst)
+            repository.addURL(insertedSecond)
+
+            repository.updateURL(insertedFirst.copy(added = instant))
+
+            repository.stored() shouldBe listOf(insertedSecond, insertedFirst.copy(added = instant))
         }
 
     @Test
@@ -246,6 +371,7 @@ abstract class URLRepositoryContract {
             shortURL: String,
             longURL: String = LONG_URL,
             provider: ShortURLProvider = Dagd,
+            added: ZonedDateTime = ZonedDateTime.of(2024, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC),
         ) = URL(
             shortURL = shortURL,
             longURL = longURL,
@@ -253,7 +379,7 @@ abstract class URLRepositoryContract {
             favorite = false,
             title = "title",
             description = "description",
-            added = ZonedDateTime.of(2024, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC),
+            added = added,
         )
     }
 }

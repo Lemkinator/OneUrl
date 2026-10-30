@@ -18,7 +18,7 @@ package de.lemke.oneurl.data
 
 import android.app.Application
 import de.lemke.commonutils.data.assertPreferenceXmlBoundToSettings
-import de.lemke.oneurl.R
+import de.lemke.oneurl.settingsPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -26,10 +26,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import de.lemke.commonutils.R as commonutilsR
 
 /**
- * Verifies every XML resource [de.lemke.oneurl.ui.MainActivity] composes together via
+ * Verifies every XML resource [de.lemke.oneurl.App] composes together via
  * `setupCommonUtilsSettingsActivity` is correctly bound to the real [UserSettings].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -39,10 +38,7 @@ class PreferenceXmlParityTest {
     @Test
     fun `preferences xml is bound to UserSettings`() {
         assertPreferenceXmlBoundToSettings(
-            commonutilsR.xml.preferences_design,
-            R.xml.preferences,
-            commonutilsR.xml.preferences_dev_options_delete_app_data,
-            commonutilsR.xml.preferences_more_info,
+            *settingsPreferences.toIntArray(),
             factory = { UserSettings(it, CoroutineScope(UnconfinedTestDispatcher())) },
         )
     }

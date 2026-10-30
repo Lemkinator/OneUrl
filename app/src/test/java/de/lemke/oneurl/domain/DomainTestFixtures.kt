@@ -19,6 +19,7 @@ package de.lemke.oneurl.domain
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.URL
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 internal fun testUrl(
@@ -28,6 +29,7 @@ internal fun testUrl(
     favorite: Boolean = false,
     title: String = "title",
     description: String = "description",
+    added: ZonedDateTime = ZonedDateTime.of(2024, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC),
 ) = URL(
     shortURL = shortURL,
     longURL = longURL,
@@ -35,5 +37,5 @@ internal fun testUrl(
     favorite = favorite,
     title = title,
     description = description,
-    added = ZonedDateTime.now(),
+    added = added,
 )

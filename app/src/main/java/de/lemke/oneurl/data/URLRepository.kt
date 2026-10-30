@@ -21,11 +21,12 @@ import de.lemke.oneurl.data.database.urlFromDb
 import de.lemke.oneurl.data.database.urlToDb
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.URL
+import java.time.chrono.ChronoZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Stores the shortened URLs; lists return the newest URL first. */
+/** Stores the shortened URLs; lists return the URL with the latest `added` instant first, the newer insert first among equals. */
 interface URLRepository {
     fun observeURLs(): Flow<List<URL>>
 
@@ -36,7 +37,7 @@ interface URLRepository {
         longURL: String,
     ): List<URL>
 
-    /** Stores [url]; a stored URL with the same short URL is replaced, and [url] becomes the newest. */
+    /** Stores [url]; a stored URL with the same short URL is replaced, and [url] lists first among URLs with an equal `added` instant. */
     suspend fun addURL(url: URL)
 
     /** Replaces the stored URL with the short URL of [url] in place; stores nothing for an unknown short URL. */
@@ -52,14 +53,14 @@ interface URLRepository {
 class DefaultURLRepository @Inject constructor(
     private val urlDao: URLDao,
 ) : URLRepository {
-    override fun observeURLs(): Flow<List<URL>> = urlDao.observeAll().map { it.map(::urlFromDb) }
+    override fun observeURLs(): Flow<List<URL>> = urlDao.observeAll().map { rows -> rows.map(::urlFromDb).newestAddedFirst() }
 
     override suspend fun getURL(shortURL: String): URL? = urlDao.getURL(shortURL)?.let(::urlFromDb)
 
     override suspend fun getURL(
         provider: ShortURLProvider,
         longURL: String,
-    ): List<URL> = urlDao.getURL(provider.name, longURL).map(::urlFromDb)
+    ): List<URL> = urlDao.getURL(provider.name, longURL).map(::urlFromDb).newestAddedFirst()
 
     override suspend fun addURL(url: URL) = urlDao.insert(urlToDb(url))
 
@@ -71,3 +72,7 @@ class DefaultURLRepository @Inject constructor(
 
     override suspend fun deleteURLs(urls: List<URL>) = urlDao.delete(urls.map(::urlToDb))
 }
+
+internal val newestAddedFirstOrder: Comparator<URL> = compareByDescending(ChronoZonedDateTime.timeLineOrder()) { it.added }
+
+internal fun List<URL>.newestAddedFirst(): List<URL> = sortedWith(newestAddedFirstOrder)
