@@ -22,6 +22,8 @@ import de.lemke.oneurl.domain.model.Tinyurl
 import de.lemke.oneurl.domain.model.URL
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
@@ -31,8 +33,10 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetURLUseCaseTest : ShouldSpec(
     {
-        val newer = testUrl(shortURL = "https://da.gd/newer", provider = Dagd)
-        val older = testUrl(shortURL = "https://da.gd/older", provider = Dagd)
+        val newer =
+            testUrl(shortURL = "https://da.gd/newer", provider = Dagd, added = ZonedDateTime.of(2024, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+        val older =
+            testUrl(shortURL = "https://da.gd/older", provider = Dagd, added = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
         val otherProvider = testUrl(shortURL = "https://tinyurl.com/x", provider = Tinyurl)
         val repository = FakeURLRepository(listOf(newer, otherProvider, older))
 
