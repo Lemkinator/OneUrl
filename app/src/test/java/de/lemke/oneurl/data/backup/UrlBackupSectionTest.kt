@@ -184,6 +184,11 @@ class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
         }
 
     @Test
+    fun `a lookup chunk stays within the SQLite default variable limit`() {
+        (UrlBackupSection.LOOKUP_CHUNK_SIZE <= SQLITE_DEFAULT_VARIABLE_LIMIT) shouldBe true
+    }
+
+    @Test
     fun `export writes added with its offset`(): Unit =
         runBlocking {
             database.urlDao().insert(urlDb("https://da.gd/a", ZonedDateTime.of(2026, 10, 27, 14, 30, 0, 0, ZoneId.of("Asia/Tokyo"))))
@@ -228,5 +233,6 @@ class UrlBackupSectionTest : BackupSectionContract<UrlBackupEntry>() {
 
     private companion object {
         const val BERLIN = "Europe/Berlin"
+        const val SQLITE_DEFAULT_VARIABLE_LIMIT = 999
     }
 }

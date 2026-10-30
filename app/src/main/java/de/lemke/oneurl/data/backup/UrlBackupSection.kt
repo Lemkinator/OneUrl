@@ -73,7 +73,7 @@ class UrlBackupSection @Inject constructor(
 
     companion object {
         const val ID = "urls"
-        private const val LOOKUP_CHUNK_SIZE = 500
+        internal const val LOOKUP_CHUNK_SIZE = 500
     }
 }
 
