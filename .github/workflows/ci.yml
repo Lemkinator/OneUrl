@@ -20,6 +20,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Test CI scripts
+        run: python3 -m unittest discover -s .github/scripts
       - name: Copy CI gradle.properties
         run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
       - name: Set up JDK
@@ -258,15 +260,11 @@ jobs:
               status=1
               continue
             fi
-            dexes=()
-            for dex in "$dex_dir"/classes*.dex; do
-              if grep -qF 'Lorg/junit/Test;' "$dex"; then
-                dexes+=("$dex")
-              fi
-            done
+            dexes=("$dex_dir"/classes*.dex)
+            # testFixtures APK classes can be abstract contracts: only concrete top-level classes run, with their inherited @Test methods.
             expected=0
-            if [ ${#dexes[@]} -gt 0 ] && ! expected=$("$dexdump" -a "${dexes[@]}" | awk '/^  VISIBILITY_RUNTIME Lorg\/junit\/Test;/ { n++ } END { print n + 0 }'); then
-              echo "::error::$module: $dexdump failed on the dex files of $apk"
+            if [ ${#dexes[@]} -gt 0 ] && ! expected=$("$dexdump" -a "${dexes[@]}" | python3 .github/scripts/count_junit_tests.py); then
+              echo "::error::$module: counting the @Test methods failed on the dex files of $apk"
               status=1
               continue
             fi
