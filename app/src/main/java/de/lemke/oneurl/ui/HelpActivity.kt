@@ -23,10 +23,10 @@ import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationBetween
 import de.lemke.commonutils.ui.utils.sendEmailHelp
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
-import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityHelpBinding
+import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
 
 @AndroidEntryPoint
 class HelpActivity : AppCompatActivity() {
@@ -38,7 +38,7 @@ class HelpActivity : AppCompatActivity() {
         binding = ActivityHelpBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
-        binding.providerInfoButton.onSingleLaunchClick { it.transformToActivity(ProviderActivity::class.java, "ProviderTransformation") }
+        binding.providerInfoButton.onSingleLaunchClick { it.transformToProviderActivity(ProviderScreenMode.Info) }
         binding.contactMeButton.onSingleLaunchClick { sendEmailHelp(getString(R.string.commonutils_email), BuildConfig.APP_NAME) }
     }
 }

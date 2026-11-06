@@ -16,9 +16,11 @@
 
 package de.lemke.oneurl.ui
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.di.EnabledProviders
 import de.lemke.oneurl.domain.model.ShortURLProvider
@@ -34,26 +36,21 @@ class ProviderViewModel @Inject constructor(
     @EnabledProviders private val enabledProviders: @JvmSuppressWildcards List<ShortURLProvider>,
 ) : ViewModel() {
     val state: StateFlow<ProviderUiState>
-        field = MutableStateFlow(ProviderUiState())
+        field = MutableStateFlow(initialState(savedStateHandle))
 
     val navigation: StateFlow<ProviderNavigation>
         field = MutableStateFlow<ProviderNavigation>(ProviderNavigation.None)
 
-    init {
-        val selectMode = savedStateHandle.get<Boolean>(ProviderActivity.KEY_SELECT_PROVIDER) == true
-        val currentSelected = userSettings.selectedShortURLProvider
-        val position = enabledProviders.indexOf(currentSelected).takeIf { selectMode && it >= 0 }
-        state.update {
-            it.copy(providers = enabledProviders, selectMode = selectMode, currentSelected = currentSelected, scrollToPosition = position)
-        }
-    }
-
     fun onProviderClick(provider: ShortURLProvider) {
-        if (state.value.selectMode) {
-            userSettings.selectedShortURLProvider = provider
-            navigation.value = ProviderNavigation.Finish
-        } else {
-            navigation.value = ProviderNavigation.ShowInfo(provider)
+        when (state.value.mode) {
+            ProviderScreenMode.Select -> {
+                userSettings.selectedShortURLProvider = provider
+                navigation.value = ProviderNavigation.Finish
+            }
+
+            ProviderScreenMode.Info -> {
+                navigation.value = ProviderNavigation.ShowInfo(provider)
+            }
         }
     }
 
@@ -68,14 +65,35 @@ class ProviderViewModel @Inject constructor(
     fun onNavigationHandled(request: ProviderNavigation.Request) {
         navigation.compareAndSet(request, ProviderNavigation.None)
     }
+
+    private fun initialState(savedStateHandle: SavedStateHandle): ProviderUiState {
+        val mode = checkNotNull(savedStateHandle.get<ProviderScreenMode>(ProviderActivity.KEY_MODE)) { "ProviderActivity needs a mode" }
+        val currentSelected = userSettings.selectedShortURLProvider
+        val position = enabledProviders.indexOf(currentSelected).takeIf { mode == ProviderScreenMode.Select && it >= 0 }
+        return ProviderUiState(providers = enabledProviders, mode = mode, currentSelected = currentSelected, scrollToPosition = position)
+    }
 }
 
+/** What the provider screen is for: picking the default provider, or browsing provider info. */
+enum class ProviderScreenMode(
+    @StringRes val title: Int,
+) {
+    Select(R.string.select_provider),
+    Info(R.string.provider_info),
+}
+
+/** One list row; [marked] shows the checkmark of the current provider. */
+data class ProviderItem(val provider: ShortURLProvider, val marked: Boolean)
+
 data class ProviderUiState(
-    val providers: List<ShortURLProvider> = emptyList(),
-    val selectMode: Boolean = false,
-    val currentSelected: ShortURLProvider? = null,
-    val scrollToPosition: Int? = null,
-)
+    val providers: List<ShortURLProvider>,
+    val mode: ProviderScreenMode,
+    val currentSelected: ShortURLProvider?,
+    val scrollToPosition: Int?,
+) {
+    val items: List<ProviderItem>
+        get() = providers.map { ProviderItem(it, marked = mode == ProviderScreenMode.Select && it == currentSelected) }
+}
 
 /** Where a provider tap leads. The activity acts on a [Request] and then reports it handled. */
 sealed interface ProviderNavigation {

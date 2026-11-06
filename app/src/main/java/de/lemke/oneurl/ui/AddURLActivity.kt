@@ -16,10 +16,8 @@
 
 package de.lemke.oneurl.ui
 
-import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
-import android.util.Pair
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -35,7 +33,6 @@ import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationBetween
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
 import de.lemke.commonutils.ui.utils.showOnce
-import de.lemke.commonutils.ui.utils.singleLaunchActivity
 import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.R
@@ -43,7 +40,7 @@ import de.lemke.oneurl.databinding.ActivityAddUrlBinding
 import de.lemke.oneurl.domain.model.AliasConfig
 import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.ShortURLProvider
-import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
+import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.ktx.hideSoftInput
@@ -52,6 +49,7 @@ import de.lemke.commonutils.R as commonutilsR
 @AndroidEntryPoint
 class AddURLActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddUrlBinding
+    private val providerRow by lazy { ProviderRow(binding.providerSelection) }
     private val viewModel: AddURLViewModel by viewModels()
     private var isInitialized = false
 
@@ -112,28 +110,11 @@ class AddURLActivity : AppCompatActivity() {
         binding.editTextURL.addTextChangedListener { text -> viewModel.onLongURLChanged(text.toString()) }
         binding.editTextAlias.addTextChangedListener { text -> viewModel.onAliasChanged(text.toString()) }
         binding.editTextDescription.addTextChangedListener { text -> viewModel.onDescriptionChanged(text.toString()) }
-        binding.providerSelection.onSingleLaunchClick {
-            singleLaunchActivity(
-                Intent(this, ProviderActivity::class.java).putExtra(KEY_SELECT_PROVIDER, true),
-                ActivityOptions.makeSceneTransitionAnimation(this, Pair.create(binding.providerSelection, "provider_selection")).toBundle(),
-            )
-        }
+        binding.providerSelection.onSingleLaunchClick { it.transformToProviderActivity(ProviderScreenMode.Select) }
     }
 
     private fun updateProvider(provider: ShortURLProvider) {
-        binding.providerTitle.text = provider.name
-        val infoContents = provider.getInfoContents(this)
-        val icons = listOf(binding.providerIcon1, binding.providerIcon2, binding.providerIcon3, binding.providerIcon4)
-        icons.forEachIndexed { index, iconView ->
-            if (index < infoContents.size) {
-                iconView.setImageResource(infoContents[index].icon)
-                iconView.isVisible = true
-            } else {
-                iconView.isVisible = false
-            }
-        }
-        binding.providerIconLayout.contentDescription = providerInfoDescription(provider.name, infoContents.take(icons.size))
-        binding.providerIconLayout.onSingleLaunchClick { showProviderInfoBottomSheet(provider) }
+        providerRow.bind(provider) { showProviderInfoBottomSheet(provider) }
         binding.textInputLayoutAlias.isVisible = provider.aliasConfig != null
         val tipsCardInfo = provider.getTipsCardTitleAndInfo(this)
         if (tipsCardInfo != null) {

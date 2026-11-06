@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -45,17 +44,25 @@ class ProviderActivityScreenshotTest {
     }
 
     @Test
-    fun provider_default() {
-        ActivityScenario.launch(ProviderActivity::class.java).use {
-            onView(isRoot()).captureRoboImage("src/test/screenshots/provider_default.png")
-        }
-    }
+    fun provider_select() = capture(ProviderScreenMode.Select, "provider_select")
 
     @Test
     @Config(qualifiers = "+night")
-    fun provider_default_dark() {
-        ActivityScenario.launch(ProviderActivity::class.java).use {
-            onView(isRoot()).captureRoboImage("src/test/screenshots/provider_default_dark.png")
+    fun provider_select_dark() = capture(ProviderScreenMode.Select, "provider_select_dark")
+
+    @Test
+    fun provider_info() = capture(ProviderScreenMode.Info, "provider_info")
+
+    @Test
+    @Config(qualifiers = "+night")
+    fun provider_info_dark() = capture(ProviderScreenMode.Info, "provider_info_dark")
+
+    private fun capture(
+        mode: ProviderScreenMode,
+        name: String,
+    ) {
+        launchProviderActivity(mode).use {
+            onView(isRoot()).captureRoboImage("src/test/screenshots/$name.png")
         }
     }
 }

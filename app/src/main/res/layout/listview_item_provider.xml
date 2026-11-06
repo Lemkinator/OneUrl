@@ -15,6 +15,7 @@
     limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:animateLayoutChanges="true"
@@ -31,6 +32,15 @@
         android:paddingStart="?android:listPreferredItemPaddingStart"
         android:paddingEnd="4dp"
         android:textAppearance="?textAppearanceListItem" />
+
+    <ImageView
+        android:id="@+id/providerSelectedMark"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:contentDescription="@string/selected_provider"
+        android:src="@drawable/ic_oui_checkbox_checked"
+        android:visibility="gone"
+        app:tint="?colorPrimaryDark" />
 
     <LinearLayout
         android:id="@+id/providerIconLayout"

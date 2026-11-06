@@ -45,6 +45,18 @@ class HelpActivityTest {
     }
 
     @Test
+    fun `the provider info button opens ProviderActivity in info mode`() {
+        withHelpActivity { activity ->
+            activity.findViewById<View>(R.id.providerInfoButton).performClick()
+
+            val startedIntent = shadowOf(activity).nextStartedActivity
+            startedIntent.component?.className shouldBe ProviderActivity::class.java.name
+            startedIntent.getSerializableExtra(ProviderActivity.KEY_MODE, ProviderScreenMode::class.java) shouldBe ProviderScreenMode.Info
+            startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
+        }
+    }
+
+    @Test
     fun `double tap on the provider info button opens one ProviderActivity`() {
         withHelpActivity { activity ->
             val providerInfoButton = activity.findViewById<View>(R.id.providerInfoButton)

@@ -434,8 +434,22 @@ class MainActivityTest {
         assertNavItemStarts(R.id.qr_code_dest, GenerateQRCodeActivity::class.java.name)
 
     @Test
-    fun `navigation item provider_dest opens ProviderActivity`() =
-        assertNavItemStarts(R.id.provider_dest, ProviderActivity::class.java.name)
+    fun `navigation item provider_dest opens ProviderActivity in info mode`() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.provider_dest, 0)
+            }
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val startedIntent = shadowOf(activity).nextStartedActivity
+                startedIntent.component?.className shouldBe ProviderActivity::class.java.name
+                startedIntent.getSerializableExtra(ProviderActivity.KEY_MODE, ProviderScreenMode::class.java) shouldBe
+                    ProviderScreenMode.Info
+                startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
+            }
+        }
+    }
 
     @Test
     fun `navigation item help_dest opens HelpActivity`() = assertNavItemStarts(R.id.help_dest, HelpActivity::class.java.name)
