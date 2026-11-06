@@ -19,13 +19,13 @@ package de.lemke.oneurl.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle.State.RESUMED
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -44,6 +44,7 @@ import dev.oneuiproject.oneui.recyclerview.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
+import dev.oneuiproject.oneui.R as oneuiR
 
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
@@ -54,6 +55,11 @@ class ProviderActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
+        if (ProviderScreenMode.fromName(intent.getStringExtra(KEY_MODE)) == null) {
+            Log.w(TAG, "Finishing: the intent carries no valid provider screen mode")
+            finish()
+            return
+        }
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
@@ -91,12 +97,13 @@ class ProviderActivity : AppCompatActivity() {
 
     companion object {
         const val KEY_MODE = "providerScreenMode"
+        private const val TAG = "ProviderActivity"
         private const val TRANSITION_NAME = "ProviderTransformation"
 
         fun intent(
             context: Context,
             mode: ProviderScreenMode,
-        ): Intent = Intent(context, ProviderActivity::class.java).putExtra(KEY_MODE, mode)
+        ): Intent = Intent(context, ProviderActivity::class.java).putExtra(KEY_MODE, mode.name)
 
         fun View.transformToProviderActivity(mode: ProviderScreenMode): Boolean =
             transformToActivity(intent(context, mode), TRANSITION_NAME)
@@ -128,14 +135,22 @@ class ProviderActivity : AppCompatActivity() {
         ) {
             val (provider, marked) = getItem(position)
             holder.row.bind(provider) { viewModel.onProviderInfoClick(provider) }
-            holder.selectedMark.isVisible = marked
+            holder.markSelected(provider.name, marked)
             holder.itemView.onSingleLaunchClick { viewModel.onProviderClick(provider) }
             holder.itemView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
         }
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val row = ProviderRow(itemView)
-            val selectedMark: ImageView = itemView.findViewById(R.id.providerSelectedMark)
+            private val title: TextView = itemView.findViewById(R.id.providerTitle)
+
+            fun markSelected(
+                name: String,
+                marked: Boolean,
+            ) {
+                title.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, if (marked) oneuiR.drawable.ic_oui_checkbox_checked else 0, 0)
+                title.contentDescription = if (marked) getString(R.string.selected_provider_row, name) else null
+            }
         }
     }
 }

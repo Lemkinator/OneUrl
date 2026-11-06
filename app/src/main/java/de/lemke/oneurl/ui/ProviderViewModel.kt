@@ -67,7 +67,10 @@ class ProviderViewModel @Inject constructor(
     }
 
     private fun initialState(savedStateHandle: SavedStateHandle): ProviderUiState {
-        val mode = checkNotNull(savedStateHandle.get<ProviderScreenMode>(ProviderActivity.KEY_MODE)) { "ProviderActivity needs a mode" }
+        val mode =
+            checkNotNull(ProviderScreenMode.fromName(savedStateHandle.get<String>(ProviderActivity.KEY_MODE))) {
+                "ProviderActivity needs a mode"
+            }
         val currentSelected = userSettings.selectedShortURLProvider
         val position = enabledProviders.indexOf(currentSelected).takeIf { mode == ProviderScreenMode.Select && it >= 0 }
         return ProviderUiState(providers = enabledProviders, mode = mode, currentSelected = currentSelected, scrollToPosition = position)
@@ -80,6 +83,11 @@ enum class ProviderScreenMode(
 ) {
     Select(R.string.select_provider),
     Info(R.string.provider_info),
+    ;
+
+    companion object {
+        fun fromName(name: String?): ProviderScreenMode? = entries.firstOrNull { it.name == name }
+    }
 }
 
 /** One list row; [marked] shows the checkmark of the current provider. */

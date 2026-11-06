@@ -238,7 +238,7 @@ class AddURLActivityTest {
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.component?.className shouldBe ProviderActivity::class.java.name
-            startedIntent.getSerializableExtra(KEY_MODE, ProviderScreenMode::class.java) shouldBe ProviderScreenMode.Select
+            startedIntent.getStringExtra(KEY_MODE) shouldBe "Select"
             startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
         }
     }

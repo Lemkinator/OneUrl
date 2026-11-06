@@ -16,14 +16,17 @@
 
 package de.lemke.oneurl.ui
 
-import android.os.Looper
+import android.content.Intent
+import android.os.Parcel
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.HiltTestRule
@@ -216,17 +219,47 @@ class ProviderActivityTest {
     }
 
     @Test
-    fun `the selected provider mark describes itself for accessibility`() {
+    fun `an intent without a mode finishes the activity`() {
+        ActivityScenario.launch<ProviderActivity>(Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java)).use {
+            it.state shouldBe Lifecycle.State.DESTROYED
+        }
+    }
+
+    @Test
+    fun `an intent with an unknown mode finishes the activity`() {
+        val intent =
+            Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java).putExtra(ProviderActivity.KEY_MODE, "Browse")
+        ActivityScenario.launch<ProviderActivity>(intent).use {
+            it.state shouldBe Lifecycle.State.DESTROYED
+        }
+    }
+
+    @Test
+    fun `a parceled launch intent keeps the mode`() {
+        val parcel = Parcel.obtain()
+        val restored =
+            try {
+                ProviderActivity.intent(ApplicationProvider.getApplicationContext(), ProviderScreenMode.Select).writeToParcel(parcel, 0)
+                parcel.setDataPosition(0)
+                Intent.CREATOR.createFromParcel(parcel)
+            } finally {
+                parcel.recycle()
+            }
+        ActivityScenario.launch<ProviderActivity>(restored).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.screenTitle() shouldBe "Select provider" }
+        }
+    }
+
+    @Test
+    fun `the selected provider row describes itself for accessibility`() {
         userSettings.selectedShortURLProvider = Dagd
         launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
                 activity
-                    .findViewById<RecyclerView>(R.id.provider_list)
-                    .findViewHolderForAdapterPosition(2)!!
-                    .itemView
-                    .findViewById<View>(R.id.providerSelectedMark)
-                    .contentDescription shouldBe "Selected provider"
+                    .rowTitled("da.gd")
+                    .contentDescription shouldBe "da.gd, selected"
             }
         }
     }
@@ -286,6 +319,13 @@ class ProviderActivityTest {
         }
     }
 
+    private fun ProviderActivity.rowTitled(title: String): TextView {
+        val recycler = findViewById<RecyclerView>(R.id.provider_list)
+        return (0 until recycler.childCount)
+            .map { recycler.getChildAt(it).findViewById<TextView>(R.id.providerTitle) }
+            .first { it.text.toString() == title }
+    }
+
     private fun ProviderActivity.screenTitle(): String =
         (findViewById<ViewGroup>(android.R.id.content).getChildAt(0) as ToolbarLayout).expandedTitle.toString()
 
@@ -293,8 +333,9 @@ class ProviderActivityTest {
         val recycler = findViewById<RecyclerView>(R.id.provider_list)
         return (0 until recycler.childCount)
             .map { recycler.getChildAt(it) }
-            .filter { it.findViewById<View>(R.id.providerSelectedMark).isVisible }
-            .map { it.findViewById<TextView>(R.id.providerTitle).text.toString() }
+            .map { it.findViewById<TextView>(R.id.providerTitle) }
+            .filter { it.compoundDrawablesRelative[2] != null }
+            .map { it.text.toString() }
     }
 
     private fun awaitCurrentList(

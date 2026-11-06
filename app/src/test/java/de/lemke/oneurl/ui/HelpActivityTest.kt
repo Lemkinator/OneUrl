@@ -51,7 +51,7 @@ class HelpActivityTest {
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.component?.className shouldBe ProviderActivity::class.java.name
-            startedIntent.getSerializableExtra(ProviderActivity.KEY_MODE, ProviderScreenMode::class.java) shouldBe ProviderScreenMode.Info
+            startedIntent.getStringExtra(ProviderActivity.KEY_MODE) shouldBe "Info"
             startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
         }
     }

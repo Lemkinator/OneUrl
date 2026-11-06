@@ -35,7 +35,7 @@ class ProviderViewModelTest : ShouldSpec(
     {
         lateinit var userSettings: UserSettings
 
-        fun handleOf(mode: ProviderScreenMode) = SavedStateHandle(mapOf(ProviderActivity.KEY_MODE to mode))
+        fun handleOf(mode: ProviderScreenMode) = SavedStateHandle(mapOf(ProviderActivity.KEY_MODE to mode.name))
 
         fun newViewModel(
             savedStateHandle: SavedStateHandle = handleOf(ProviderScreenMode.Info),
@@ -53,6 +53,11 @@ class ProviderViewModelTest : ShouldSpec(
 
         should("init without a mode fails") {
             shouldThrow<IllegalStateException> { newViewModel(SavedStateHandle()) }
+                .message shouldBe "ProviderActivity needs a mode"
+        }
+
+        should("init with an unknown mode name fails") {
+            shouldThrow<IllegalStateException> { newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_MODE to "Browse"))) }
                 .message shouldBe "ProviderActivity needs a mode"
         }
 
