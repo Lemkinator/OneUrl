@@ -112,7 +112,9 @@ class ProviderViewModelTest : ShouldSpec(
         }
 
         should("onScrolledToSelected clears the scroll target") {
-            val viewModel = newViewModel()
+            userSettings.selectedShortURLProvider = Dagd
+            val viewModel = newViewModel(handleOf(ProviderScreenMode.Select))
+            viewModel.state.value.scrollToPosition shouldBe 2
 
             viewModel.onScrolledToSelected()
 
