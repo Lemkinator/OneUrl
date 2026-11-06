@@ -21,6 +21,7 @@ import android.os.Parcel
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -257,9 +258,41 @@ class ProviderActivityTest {
         launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                activity
-                    .rowTitled("da.gd")
-                    .contentDescription shouldBe "da.gd, selected"
+                val row = activity.rowTitled("da.gd").itemRow()
+                ViewCompat.getStateDescription(row) shouldBe "Selected"
+                activity.rowTitled("da.gd").contentDescription shouldBe null
+            }
+        }
+    }
+
+    @Test
+    @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "de")
+    fun `the selected provider row state description is localized in German`() {
+        userSettings.selectedShortURLProvider = Dagd
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                ViewCompat.getStateDescription(activity.rowTitled("da.gd").itemRow()) shouldBe "Ausgewählt"
+            }
+        }
+    }
+
+    @Test
+    fun `a row that loses its selection drops the check and the state description`() {
+        userSettings.selectedShortURLProvider = Dagd
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val adapter = activity.findViewById<RecyclerView>(R.id.provider_list).adapter as ProviderActivity.ProviderAdapter
+                val unmarked = adapter.currentList.map { it.copy(marked = false) }
+                adapter.submitList(unmarked)
+                awaitCurrentList(adapter, unmarked)
+                idleMainLooper()
+
+                val title = activity.rowTitled("da.gd")
+                title.compoundDrawablesRelative[2] shouldBe null
+                ViewCompat.getStateDescription(title.itemRow()) shouldBe null
+                activity.markedProviderTitles() shouldBe emptyList()
             }
         }
     }
@@ -325,6 +358,8 @@ class ProviderActivityTest {
             .map { recycler.getChildAt(it).findViewById<TextView>(R.id.providerTitle) }
             .first { it.text.toString() == title }
     }
+
+    private fun TextView.itemRow(): View = parent.parent as View
 
     private fun ProviderActivity.screenTitle(): String =
         (findViewById<ViewGroup>(android.R.id.content).getChildAt(0) as ToolbarLayout).expandedTitle.toString()

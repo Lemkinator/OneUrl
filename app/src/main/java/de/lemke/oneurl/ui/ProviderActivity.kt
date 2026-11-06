@@ -26,6 +26,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle.State.RESUMED
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -135,7 +136,7 @@ class ProviderActivity : AppCompatActivity() {
         ) {
             val (provider, marked) = getItem(position)
             holder.row.bind(provider) { viewModel.onProviderInfoClick(provider) }
-            holder.markSelected(provider.name, marked)
+            holder.markSelected(marked)
             holder.itemView.onSingleLaunchClick { viewModel.onProviderClick(provider) }
             holder.itemView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
         }
@@ -144,12 +145,9 @@ class ProviderActivity : AppCompatActivity() {
             val row = ProviderRow(itemView)
             private val title: TextView = itemView.findViewById(R.id.providerTitle)
 
-            fun markSelected(
-                name: String,
-                marked: Boolean,
-            ) {
+            fun markSelected(marked: Boolean) {
                 title.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, if (marked) oneuiR.drawable.ic_oui_checkbox_checked else 0, 0)
-                title.contentDescription = if (marked) getString(R.string.selected_provider_row, name) else null
+                ViewCompat.setStateDescription(itemView, if (marked) getString(R.string.provider_state_selected) else null)
             }
         }
     }
