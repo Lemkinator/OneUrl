@@ -30,6 +30,7 @@ import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
+import androidx.reflect.DeviceInfo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -51,9 +52,15 @@ import dev.oneuiproject.oneui.navigation.widget.DrawerNavigationView
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import javax.inject.Inject
 import leakcanary.AppWatcher
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -63,8 +70,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.fakes.RoboMenu
+import org.robolectric.shadows.ShadowActivity.IntentForResult
 import androidx.appcompat.R as appcompatR
 import dev.oneuiproject.oneui.design.R as designR
+
+private const val TRANSITION_NAME_KEY = "commonUtilsTransitionNameKey"
+private const val ANIM_TYPE_KEY = "android:activity.animType"
+private const val ANIM_SCENE_TRANSITION = 5
 
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -86,6 +98,11 @@ class MainActivityTest {
         if (!AppWatcher.isInstalled) {
             AppWatcher.manualInstall(ApplicationProvider.getApplicationContext<HiltTestApplication>())
         }
+    }
+
+    @After
+    fun unmockDeviceInfo() {
+        unmockkStatic(DeviceInfo::class)
     }
 
     @Test
@@ -464,6 +481,151 @@ class MainActivityTest {
     @Test
     fun `navigation item settings_dest opens CommonUtilsSettingsActivity`() =
         assertNavItemStarts(R.id.settings_dest, CommonUtilsSettingsActivity::class.java.name)
+
+    private fun navigateFromDrawer(
+        @IdRes navItemId: Int,
+        isOneUi: Boolean,
+        taps: Int = 1,
+    ): List<IntentForResult> {
+        mockkStatic(DeviceInfo::class)
+        every { DeviceInfo.isOneUI() } returns isOneUi
+        val started = mutableListOf<IntentForResult>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val menu = activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu()
+                repeat(taps) { menu.performIdentifierAction(navItemId, 0) }
+            }
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                generateSequence { shadowOf(activity).nextStartedActivityForResult }.forEach(started::add)
+            }
+        }
+        return started
+    }
+
+    private fun IntentForResult.shouldBePopOver(className: String) {
+        intent.component?.className shouldBe className
+        (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe Intent.FLAG_ACTIVITY_SINGLE_TOP
+        intent.hasExtra(TRANSITION_NAME_KEY) shouldBe false
+        options.shouldNotBeNull().getInt(ANIM_TYPE_KEY) shouldNotBe ANIM_SCENE_TRANSITION
+    }
+
+    private fun IntentForResult.shouldBeContainerTransform(
+        className: String,
+        transitionName: String = "commonUtilsActivityTransitionName",
+    ) {
+        intent.component?.className shouldBe className
+        (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe 0
+        intent.getStringExtra(TRANSITION_NAME_KEY) shouldBe transitionName
+        options.shouldNotBeNull().getInt(ANIM_TYPE_KEY) shouldBe ANIM_SCENE_TRANSITION
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `help_dest on a One UI tablet opens as a pop-over`() {
+        navigateFromDrawer(R.id.help_dest, isOneUi = true).single().shouldBePopOver(HelpActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `about_app_dest on a One UI tablet opens as a pop-over`() {
+        navigateFromDrawer(R.id.about_app_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsAboutActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `about_me_dest on a One UI tablet opens as a pop-over`() {
+        navigateFromDrawer(R.id.about_me_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsAboutMeActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `settings_dest on a One UI tablet opens as a pop-over`() {
+        navigateFromDrawer(R.id.settings_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsSettingsActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw599dp")
+    fun `help_dest on a One UI phone keeps the container transform`() {
+        navigateFromDrawer(R.id.help_dest, isOneUi = true).single().shouldBeContainerTransform(HelpActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw599dp")
+    fun `about_app_dest on a One UI phone keeps the container transform`() {
+        navigateFromDrawer(R.id.about_app_dest, isOneUi = true)
+            .single()
+            .shouldBeContainerTransform(CommonUtilsAboutActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw599dp")
+    fun `about_me_dest on a One UI phone keeps the container transform`() {
+        navigateFromDrawer(R.id.about_me_dest, isOneUi = true)
+            .single()
+            .shouldBeContainerTransform(CommonUtilsAboutMeActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw599dp")
+    fun `settings_dest on a One UI phone keeps the container transform`() {
+        navigateFromDrawer(R.id.settings_dest, isOneUi = true)
+            .single()
+            .shouldBeContainerTransform(CommonUtilsSettingsActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `help_dest on a non-One UI tablet keeps the container transform`() {
+        navigateFromDrawer(R.id.help_dest, isOneUi = false).single().shouldBeContainerTransform(HelpActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `about_app_dest on a non-One UI tablet keeps the container transform`() {
+        navigateFromDrawer(R.id.about_app_dest, isOneUi = false)
+            .single()
+            .shouldBeContainerTransform(CommonUtilsAboutActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `about_me_dest on a non-One UI tablet keeps the container transform`() {
+        navigateFromDrawer(R.id.about_me_dest, isOneUi = false)
+            .single()
+            .shouldBeContainerTransform(CommonUtilsAboutMeActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `settings_dest on a non-One UI tablet keeps the container transform`() {
+        navigateFromDrawer(R.id.settings_dest, isOneUi = false)
+            .single()
+            .shouldBeContainerTransform(CommonUtilsSettingsActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `qr_code_dest on a One UI tablet is not a pop-over`() {
+        navigateFromDrawer(R.id.qr_code_dest, isOneUi = true).single().shouldBeContainerTransform(GenerateQRCodeActivity::class.java.name)
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `provider_dest on a One UI tablet is not a pop-over`() {
+        navigateFromDrawer(R.id.provider_dest, isOneUi = true)
+            .single()
+            .shouldBeContainerTransform(ProviderActivity::class.java.name, transitionName = "ProviderTransformation")
+    }
+
+    @Test
+    @Config(qualifiers = "sw600dp")
+    fun `double tap on settings_dest on a One UI tablet pops over once`() {
+        navigateFromDrawer(R.id.settings_dest, isOneUi = true, taps = 2)
+            .single()
+            .shouldBePopOver(CommonUtilsSettingsActivity::class.java.name)
+    }
 
     @Test
     fun `navigation item leaks_dest opens leak canary`() {
