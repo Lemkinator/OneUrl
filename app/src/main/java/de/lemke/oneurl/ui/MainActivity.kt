@@ -50,6 +50,7 @@ import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
 import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.configureCommonUtilsSplashScreen
+import de.lemke.commonutils.ui.utils.launchDrawerPage
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.onSingleLaunchItemSelected
 import de.lemke.commonutils.ui.utils.onboardIfNeeded
@@ -260,11 +261,11 @@ class MainActivity :
             when (item.itemId) {
                 R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
                 R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToProviderActivity(ProviderScreenMode.Info)
-                R.id.help_dest -> findViewById<View>(R.id.help_dest).transformToActivity(HelpActivity::class.java)
-                R.id.about_app_dest -> findViewById<View>(R.id.about_app_dest).transformToActivity(CommonUtilsAboutActivity::class.java)
-                R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(CommonUtilsAboutMeActivity::class.java)
+                R.id.help_dest -> launchDrawerPage<HelpActivity>(R.id.help_dest)
+                R.id.about_app_dest -> launchDrawerPage<CommonUtilsAboutActivity>(R.id.about_app_dest)
+                R.id.about_me_dest -> launchDrawerPage<CommonUtilsAboutMeActivity>(R.id.about_me_dest)
                 R.id.leaks_dest -> openLeakCanary()
-                R.id.settings_dest -> findViewById<View>(R.id.settings_dest).transformToActivity(CommonUtilsSettingsActivity::class.java)
+                R.id.settings_dest -> launchDrawerPage<CommonUtilsSettingsActivity>(R.id.settings_dest)
                 else -> return@onSingleLaunchItemSelected false
             }
             true
