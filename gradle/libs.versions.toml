@@ -48,7 +48,7 @@ roborazzi = "1.77.0"
 room = "2.8.5"
 spotless = "8.11.0"
 turbine = "1.2.1"
-uiautomator = "2.4.0"
+uiautomator = "2.4.1"
 volley = "1.2.1"
 
 [libraries]
