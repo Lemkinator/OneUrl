@@ -107,7 +107,8 @@ and `BackupModule` (includes the common-utils `CommonUtilsBackupModule`; binds `
 fakes `FakeNetworkMonitor`, `FakeUrlhausClient`, `FakePageTitleFetcher` and `FakeShortURLClient`, so no Hilt test reaches the network;
 a test injects a fake to set its answers. ViewModel and use-case tests run real use cases over fakes such as `FakeURLRepository`,
 `FakeQRCodeRenderer` and `FakeVolleyQueue`. `TlyKeyStoreContract` (testFixtures) runs against `DefaultTlyKeyStore` over a `FakeSecretStore` and, on a device, over `KSafeSecretStore`. `URLRepositoryContract` runs against both `DefaultURLRepository` and `FakeURLRepository`.
-MockK stays only for framework values (`Bitmap`, `Uri`, `ClipData`) and `Log` in plain JVM Kotest specs, which cannot build them.
+MockK stays only for framework values (`Bitmap`, `Uri`, `ClipData`) and `Log` in plain JVM Kotest specs, which cannot build them,
+and for the `mockkStatic(DeviceInfo::class)` One UI check.
 
 ## Adding a New URL Provider
 
@@ -132,7 +133,7 @@ Three tools run as part of `./gradlew build`:
   `CodingConventionsTest.kt` also enforces the common-utils launch latch through `assertLaunchLatchConventions()` from the
   common-utils testFixtures: it bans raw activity launches and result registration by name, and a `show`/`showNow` call whose
   receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or `AddFab`. Launch through `singleLaunchActivity`,
-  `transformToActivity` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
+  `transformToActivity`, `launchDrawerPage` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
   `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunch`); show dialogs with `showOnce(tag)`.
   The Konsist rules come from the common-utils testFixtures: `ArchitectureTest.kt` calls `assertArchitecture`, and
   `CodingConventionsTest.kt` also calls `assertClassBodyOrder`, `assertNoCommonUtilsTypeExtensions` and
