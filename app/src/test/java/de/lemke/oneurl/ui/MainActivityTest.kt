@@ -679,6 +679,29 @@ class MainActivityTest {
     }
 
     @Test
+    @Config(qualifiers = "sw600dp")
+    fun `a pop-over navigation item opens its screen again after the user returns`() {
+        mockkStatic(DeviceInfo::class)
+        every { DeviceInfo.isOneUI() } returns true
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.settings_dest, 0)
+            }
+            scenario.returnFromLaunchedScreen()
+            scenario.onActivity { activity ->
+                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.settings_dest, 0)
+            }
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val started = generateSequence { shadowOf(activity).nextStartedActivityForResult }.toList()
+                started.size shouldBe 2
+                started.forEach { it.shouldBePopOver(CommonUtilsSettingsActivity::class.java.name) }
+            }
+        }
+    }
+
+    @Test
     fun `a navigation item opens its screen again after the user returns`() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
