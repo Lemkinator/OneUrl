@@ -47,8 +47,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="?android:colorBackground"
-                android:orientation="horizontal"
-                android:transitionName="provider_selection">
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/providerTitle"

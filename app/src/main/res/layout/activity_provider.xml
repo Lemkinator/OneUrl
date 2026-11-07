@@ -20,14 +20,12 @@
     android:layout_height="match_parent"
     android:background="?roundedCornerColor"
     app:expanded="false"
-    app:showNavButtonAsBack="true"
-    app:title="@string/select_provider">
+    app:showNavButtonAsBack="true">
 
     <dev.oneuiproject.oneui.widget.RoundedFrameLayout
         android:id="@+id/provider_list_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:transitionName="provider_selection"
         app:edgeInsetLeft="10dp"
         app:edgeInsetRight="10dp"
         app:roundedCorners="top_left|top_right">

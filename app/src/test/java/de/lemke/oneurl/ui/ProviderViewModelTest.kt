@@ -23,9 +23,8 @@ import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.ShortURLProviderCompanion
 import de.lemke.oneurl.domain.model.VgdIsgd
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.booleans.shouldBeFalse
-import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,8 +35,10 @@ class ProviderViewModelTest : ShouldSpec(
     {
         lateinit var userSettings: UserSettings
 
+        fun handleOf(mode: ProviderScreenMode) = SavedStateHandle(mapOf(ProviderActivity.KEY_MODE to mode.name))
+
         fun newViewModel(
-            savedStateHandle: SavedStateHandle = SavedStateHandle(),
+            savedStateHandle: SavedStateHandle = handleOf(ProviderScreenMode.Info),
             providers: List<ShortURLProvider> = ShortURLProviderCompanion.enabled,
         ) = ProviderViewModel(savedStateHandle, userSettings, providers)
 
@@ -45,33 +46,55 @@ class ProviderViewModelTest : ShouldSpec(
             userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
         }
 
-        should("init defaults to select mode false and reflects the currently selected provider") {
+        should("init reads the mode from saved state") {
+            newViewModel(handleOf(ProviderScreenMode.Select)).state.value.mode shouldBe ProviderScreenMode.Select
+            newViewModel(handleOf(ProviderScreenMode.Info)).state.value.mode shouldBe ProviderScreenMode.Info
+        }
+
+        should("init without a mode fails") {
+            shouldThrow<IllegalStateException> { newViewModel(SavedStateHandle()) }
+                .message shouldBe "ProviderActivity needs a mode"
+        }
+
+        should("init with an unknown mode name fails") {
+            shouldThrow<IllegalStateException> { newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_MODE to "Browse"))) }
+                .message shouldBe "ProviderActivity needs a mode"
+        }
+
+        should("init reflects the currently selected provider") {
             val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
             userSettings.selectedShortURLProvider = provider
 
-            val viewModel = newViewModel()
-
-            viewModel.state.value.selectMode
-                .shouldBeFalse()
-            viewModel.state.value.currentSelected shouldBe provider
+            newViewModel().state.value.currentSelected shouldBe provider
         }
 
-        should("init reads select mode true from saved state") {
-            val viewModel = newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)))
+        should("items mark the current provider in select mode only") {
+            userSettings.selectedShortURLProvider = Dagd
 
-            viewModel.state.value.selectMode
-                .shouldBeTrue()
+            newViewModel(handleOf(ProviderScreenMode.Select))
+                .state.value.items
+                .filter { it.marked }
+                .map { it.provider } shouldBe listOf(Dagd)
+            newViewModel(handleOf(ProviderScreenMode.Info))
+                .state.value.items
+                .filter { it.marked } shouldBe emptyList()
+        }
+
+        should("items hold every enabled provider in order") {
+            newViewModel()
+                .state.value.items
+                .map { it.provider } shouldBe ShortURLProviderCompanion.enabled
         }
 
         should("init in select mode holds the selected provider's index in the enabled list as the scroll target") {
             userSettings.selectedShortURLProvider = Dagd
 
-            val viewModel = newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)))
+            val viewModel = newViewModel(handleOf(ProviderScreenMode.Select))
 
             viewModel.state.value.scrollToPosition shouldBe 2
         }
 
-        should("init outside select mode holds no scroll target") {
+        should("init in info mode holds no scroll target") {
             userSettings.selectedShortURLProvider = ShortURLProviderCompanion.enabled.last()
 
             val viewModel = newViewModel()
@@ -83,13 +106,15 @@ class ProviderViewModelTest : ShouldSpec(
             userSettings.selectedShortURLProvider = Dagd
 
             val viewModel =
-                newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)), listOf(VgdIsgd.Isgd, VgdIsgd.Vgd))
+                newViewModel(handleOf(ProviderScreenMode.Select), listOf(VgdIsgd.Isgd, VgdIsgd.Vgd))
 
             viewModel.state.value.scrollToPosition shouldBe null
         }
 
         should("onScrolledToSelected clears the scroll target") {
-            val viewModel = newViewModel()
+            userSettings.selectedShortURLProvider = Dagd
+            val viewModel = newViewModel(handleOf(ProviderScreenMode.Select))
+            viewModel.state.value.scrollToPosition shouldBe 2
 
             viewModel.onScrolledToSelected()
 
@@ -102,7 +127,7 @@ class ProviderViewModelTest : ShouldSpec(
 
         should("onProviderClick in select mode selects the provider and holds Finish") {
             val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
-            val viewModel = newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)))
+            val viewModel = newViewModel(handleOf(ProviderScreenMode.Select))
 
             viewModel.onProviderClick(provider)
 
@@ -110,7 +135,7 @@ class ProviderViewModelTest : ShouldSpec(
             userSettings.selectedShortURLProvider shouldBe provider
         }
 
-        should("onProviderClick outside select mode leaves selection unchanged and holds ShowInfo") {
+        should("onProviderClick in info mode leaves selection unchanged and holds ShowInfo") {
             val previouslySelected = ShortURLProviderCompanion.default
             val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
             val viewModel = newViewModel()
@@ -121,9 +146,9 @@ class ProviderViewModelTest : ShouldSpec(
             userSettings.selectedShortURLProvider shouldBe previouslySelected
         }
 
-        should("onProviderInfoClick always holds ShowInfo regardless of select mode") {
+        should("onProviderInfoClick always holds ShowInfo in either mode") {
             val provider = ShortURLProviderCompanion.enabled.first { it != ShortURLProviderCompanion.default }
-            val viewModel = newViewModel(SavedStateHandle(mapOf(ProviderActivity.KEY_SELECT_PROVIDER to true)))
+            val viewModel = newViewModel(handleOf(ProviderScreenMode.Select))
 
             viewModel.onProviderInfoClick(provider)
 

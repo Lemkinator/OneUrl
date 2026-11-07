@@ -16,16 +16,17 @@
 
 package de.lemke.oneurl.ui
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle.State.RESUMED
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -36,14 +37,15 @@ import de.lemke.commonutils.ui.utils.collectState
 import de.lemke.commonutils.ui.utils.onSingleLaunchClick
 import de.lemke.commonutils.ui.utils.prepareActivityTransformationTo
 import de.lemke.commonutils.ui.utils.setCustomBackAnimation
+import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.R
 import de.lemke.oneurl.databinding.ActivityProviderBinding
-import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import dev.oneuiproject.oneui.recyclerview.ktx.enableCoreSeslFeatures
 import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
+import dev.oneuiproject.oneui.R as oneuiR
 
 @AndroidEntryPoint
 class ProviderActivity : AppCompatActivity() {
@@ -54,6 +56,11 @@ class ProviderActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
         super.onCreate(savedInstanceState)
+        if (ProviderScreenMode.fromName(intent.getStringExtra(KEY_MODE)) == null) {
+            Log.w(TAG, "Finishing: the intent carries no valid provider screen mode")
+            finish()
+            return
+        }
         binding = ActivityProviderBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
@@ -63,7 +70,8 @@ class ProviderActivity : AppCompatActivity() {
     }
 
     private fun render(state: ProviderUiState) {
-        providerAdapter.submitList(state.providers)
+        binding.root.setTitle(getString(state.mode.title))
+        providerAdapter.submitList(state.items)
         state.scrollToPosition?.let {
             binding.providerList.scrollToPosition(it)
             viewModel.onScrolledToSelected()
@@ -89,22 +97,32 @@ class ProviderActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val KEY_SELECT_PROVIDER = "key_select_provider"
+        const val KEY_MODE = "providerScreenMode"
+        private const val TAG = "ProviderActivity"
+        private const val TRANSITION_NAME = "ProviderTransformation"
+
+        fun intent(
+            context: Context,
+            mode: ProviderScreenMode,
+        ): Intent = Intent(context, ProviderActivity::class.java).putExtra(KEY_MODE, mode.name)
+
+        fun View.transformToProviderActivity(mode: ProviderScreenMode): Boolean =
+            transformToActivity(intent(context, mode), TRANSITION_NAME)
     }
 
-    private object ProviderDiffCallback : DiffUtil.ItemCallback<ShortURLProvider>() {
+    private object ProviderDiffCallback : DiffUtil.ItemCallback<ProviderItem>() {
         override fun areItemsTheSame(
-            oldItem: ShortURLProvider,
-            newItem: ShortURLProvider,
-        ): Boolean = oldItem.name == newItem.name
+            oldItem: ProviderItem,
+            newItem: ProviderItem,
+        ): Boolean = oldItem.provider.name == newItem.provider.name
 
         override fun areContentsTheSame(
-            oldItem: ShortURLProvider,
-            newItem: ShortURLProvider,
-        ): Boolean = oldItem.name == newItem.name
+            oldItem: ProviderItem,
+            newItem: ProviderItem,
+        ): Boolean = oldItem == newItem
     }
 
-    inner class ProviderAdapter : ListAdapter<ShortURLProvider, ProviderAdapter.ViewHolder>(ProviderDiffCallback) {
+    inner class ProviderAdapter : ListAdapter<ProviderItem, ProviderAdapter.ViewHolder>(ProviderDiffCallback) {
         override fun getItemViewType(position: Int): Int = 0
 
         override fun onCreateViewHolder(
@@ -116,32 +134,21 @@ class ProviderActivity : AppCompatActivity() {
             holder: ViewHolder,
             position: Int,
         ) {
-            val provider = getItem(position)
-            holder.title.text = provider.name
-            val infoContents = provider.getInfoContents(this@ProviderActivity)
-            val icons = listOf(holder.icon1, holder.icon2, holder.icon3, holder.icon4)
-            icons.forEachIndexed { index, iconView ->
-                if (index < infoContents.size) {
-                    iconView.setImageResource(infoContents[index].icon)
-                    iconView.isVisible = true
-                } else {
-                    iconView.isVisible = false
-                }
-            }
-            holder.parentView.onSingleLaunchClick { viewModel.onProviderClick(provider) }
-            holder.iconLayout.contentDescription = providerInfoDescription(provider.name, infoContents.take(icons.size))
-            holder.iconLayout.onSingleLaunchClick { viewModel.onProviderInfoClick(provider) }
-            holder.parentView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
+            val (provider, marked) = getItem(position)
+            holder.row.bind(provider) { viewModel.onProviderInfoClick(provider) }
+            holder.markSelected(marked)
+            holder.itemView.onSingleLaunchClick { viewModel.onProviderClick(provider) }
+            holder.itemView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
         }
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val parentView: LinearLayout = itemView as LinearLayout
-            val title: TextView = parentView.findViewById(R.id.providerTitle)
-            val icon1: ImageView = parentView.findViewById(R.id.providerIcon1)
-            val icon2: ImageView = parentView.findViewById(R.id.providerIcon2)
-            val icon3: ImageView = parentView.findViewById(R.id.providerIcon3)
-            val icon4: ImageView = parentView.findViewById(R.id.providerIcon4)
-            val iconLayout: LinearLayout = parentView.findViewById(R.id.providerIconLayout)
+            val row = ProviderRow(itemView)
+            private val title: TextView = itemView.findViewById(R.id.providerTitle)
+
+            fun markSelected(marked: Boolean) {
+                title.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, if (marked) oneuiR.drawable.ic_oui_checkbox_checked else 0, 0)
+                ViewCompat.setStateDescription(itemView, if (marked) getString(R.string.provider_state_selected) else null)
+            }
         }
     }
 }

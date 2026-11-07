@@ -163,7 +163,7 @@ class ProviderInfoBottomSheetTest {
 
     @Test
     fun `showing the bottom sheet twice before it is added adds one sheet`() {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             scenario.onActivity { activity ->
                 activity.showProviderInfoBottomSheet(Dagd).shouldBeTrue()
                 activity.showProviderInfoBottomSheet(Tinyurl).shouldBeFalse()
@@ -177,7 +177,7 @@ class ProviderInfoBottomSheetTest {
 
     @Test
     fun `showProviderInfoBottomSheet extension adds the fragment under its simple name tag`() {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             scenario.onActivity { activity ->
                 activity.showProviderInfoBottomSheet(Dagd)
                 activity.supportFragmentManager.executePendingTransactions()
@@ -193,7 +193,7 @@ class ProviderInfoBottomSheetTest {
 
     @Test
     fun `showProviderInfoBottomSheet with an explicit FragmentManager bundles the provider name`() {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             scenario.onActivity { activity ->
                 showProviderInfoBottomSheet(activity.supportFragmentManager, VgdIsgd.Vgd)
                 activity.supportFragmentManager.executePendingTransactions()
@@ -397,7 +397,7 @@ class ProviderInfoBottomSheetTest {
         provider: ShortURLProvider,
         block: (ActivityScenario<ProviderActivity>) -> Unit,
     ) {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             scenario.onActivity { activity -> activity.showProviderInfoBottomSheet(provider) }
             idleMainLooper()
             block(scenario)

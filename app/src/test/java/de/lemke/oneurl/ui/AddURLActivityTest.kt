@@ -45,7 +45,7 @@ import de.lemke.oneurl.domain.model.Shareaholic
 import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.VgdIsgd
 import de.lemke.oneurl.domain.testUrl
-import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_SELECT_PROVIDER
+import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_MODE
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -238,7 +238,8 @@ class AddURLActivityTest {
 
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.component?.className shouldBe ProviderActivity::class.java.name
-            startedIntent.getBooleanExtra(KEY_SELECT_PROVIDER, false).shouldBeTrue()
+            startedIntent.getStringExtra(KEY_MODE) shouldBe "Select"
+            startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
         }
     }
 

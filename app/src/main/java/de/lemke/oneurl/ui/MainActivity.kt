@@ -65,6 +65,7 @@ import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.openLeakCanary
+import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
@@ -258,7 +259,7 @@ class MainActivity :
         binding.navigationView.onSingleLaunchItemSelected { item ->
             when (item.itemId) {
                 R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
-                R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToActivity(ProviderActivity::class.java)
+                R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToProviderActivity(ProviderScreenMode.Info)
                 R.id.help_dest -> findViewById<View>(R.id.help_dest).transformToActivity(HelpActivity::class.java)
                 R.id.about_app_dest -> findViewById<View>(R.id.about_app_dest).transformToActivity(CommonUtilsAboutActivity::class.java)
                 R.id.about_me_dest -> findViewById<View>(R.id.about_me_dest).transformToActivity(CommonUtilsAboutMeActivity::class.java)

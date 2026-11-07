@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -43,12 +42,14 @@ class ProviderActivityTest {
     }
 
     @Test
-    fun activityLaunchesWithoutCrash() {
+    fun selectModeLaunchesWithoutCrash() = assertLaunches(ProviderScreenMode.Select)
+
+    @Test
+    fun infoModeLaunchesWithoutCrash() = assertLaunches(ProviderScreenMode.Info)
+
+    private fun assertLaunches(mode: ProviderScreenMode) {
         ActivityScenario
-            .launch<ProviderActivity>(
-                Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java),
-            ).use { scenario ->
-                scenario.state shouldBe Lifecycle.State.RESUMED
-            }
+            .launch<ProviderActivity>(ProviderActivity.intent(ApplicationProvider.getApplicationContext(), mode))
+            .use { scenario -> scenario.state shouldBe Lifecycle.State.RESUMED }
     }
 }

@@ -15,22 +15,32 @@
     limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:animateLayoutChanges="true"
     android:background="?listChoiceBackgroundIndicator"
+    android:baselineAligned="false"
     android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/providerTitle"
+    <FrameLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ellipsize="marquee"
-        android:maxLines="1"
-        android:paddingStart="?android:listPreferredItemPaddingStart"
-        android:paddingEnd="4dp"
-        android:textAppearance="?textAppearanceListItem" />
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/providerTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="12dp"
+            app:drawableTint="?colorPrimaryDark"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingStart="?android:listPreferredItemPaddingStart"
+            android:paddingEnd="4dp"
+            android:textAppearance="?textAppearanceListItem" />
+
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/providerIconLayout"

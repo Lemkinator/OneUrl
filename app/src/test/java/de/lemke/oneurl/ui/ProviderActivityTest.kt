@@ -17,9 +17,12 @@
 package de.lemke.oneurl.ui
 
 import android.content.Intent
-import android.os.Looper
+import android.os.Parcel
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,10 +36,10 @@ import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.model.Dagd
-import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.VgdIsgd
 import de.lemke.oneurl.domain.model.Zwsim
+import dev.oneuiproject.oneui.layout.ToolbarLayout
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
@@ -68,10 +71,7 @@ class ProviderActivityTest {
 
     @Test
     fun `clicking a provider item in select mode finishes the activity`() {
-        val intent =
-            Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java)
-                .putExtra(ProviderActivity.KEY_SELECT_PROVIDER, true)
-        ActivityScenario.launch<ProviderActivity>(intent).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
             scenario.onActivity { activity ->
                 idleMainLooper()
                 activity
@@ -86,8 +86,8 @@ class ProviderActivityTest {
     }
 
     @Test
-    fun `clicking a provider item outside select mode shows the provider info bottom sheet`() {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+    fun `clicking a provider item in info mode shows the provider info bottom sheet`() {
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             scenario.onActivity { activity ->
                 idleMainLooper()
                 activity
@@ -102,8 +102,8 @@ class ProviderActivityTest {
     }
 
     @Test
-    fun `double tap on a provider item outside select mode shows one provider info bottom sheet`() {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+    fun `double tap on a provider item in info mode shows one provider info bottom sheet`() {
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
                 val itemView =
@@ -123,7 +123,7 @@ class ProviderActivityTest {
 
     @Test
     fun `a provider info request shows one bottom sheet that a recreation does not show again`() {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
                 activity
@@ -146,10 +146,7 @@ class ProviderActivityTest {
     @Config(qualifiers = "w360dp-h240dp")
     fun `the list in select mode scrolls to the selected provider and reports the scroll done`() {
         userSettings.selectedShortURLProvider = Spoome.Emoji
-        val intent =
-            Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java)
-                .putExtra(ProviderActivity.KEY_SELECT_PROVIDER, true)
-        ActivityScenario.launch<ProviderActivity>(intent).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
                 val layoutManager = activity.findViewById<RecyclerView>(R.id.provider_list).layoutManager as LinearLayoutManager
@@ -162,13 +159,140 @@ class ProviderActivityTest {
 
     @Test
     @Config(qualifiers = "w360dp-h240dp")
-    fun `the list outside select mode starts at the top`() {
+    fun `the list in info mode starts at the top`() {
         userSettings.selectedShortURLProvider = Spoome.Emoji
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
                 val layoutManager = activity.findViewById<RecyclerView>(R.id.provider_list).layoutManager as LinearLayoutManager
                 layoutManager.findFirstVisibleItemPosition() shouldBe 0
+            }
+        }
+    }
+
+    @Test
+    fun `select mode titles the screen Select provider and marks only the current provider`() {
+        userSettings.selectedShortURLProvider = Spoome.Emoji
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                activity.screenTitle() shouldBe "Select provider"
+                activity.markedProviderTitles() shouldBe listOf(Spoome.Emoji.name)
+            }
+        }
+    }
+
+    @Test
+    fun `info mode titles the screen Provider info and marks no provider`() {
+        userSettings.selectedShortURLProvider = Spoome.Emoji
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                activity.screenTitle() shouldBe "Provider info"
+                activity.markedProviderTitles() shouldBe emptyList()
+            }
+        }
+    }
+
+    @Test
+    @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "de")
+    fun `the screen title is localized in German per mode`() {
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            scenario.onActivity { activity -> activity.screenTitle() shouldBe "Anbieter auswählen" }
+        }
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
+            scenario.onActivity { activity -> activity.screenTitle() shouldBe "Anbieter-Info" }
+        }
+    }
+
+    @Test
+    fun `a recreation keeps the mode title and mark`() {
+        userSettings.selectedShortURLProvider = Dagd
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            idleMainLooper()
+            scenario.recreate()
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                activity.screenTitle() shouldBe "Select provider"
+                activity.markedProviderTitles() shouldBe listOf("da.gd")
+            }
+        }
+    }
+
+    @Test
+    fun `an intent without a mode finishes the activity`() {
+        ActivityScenario.launch<ProviderActivity>(Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java)).use {
+            it.state shouldBe Lifecycle.State.DESTROYED
+        }
+    }
+
+    @Test
+    fun `an intent with an unknown mode finishes the activity`() {
+        val intent =
+            Intent(ApplicationProvider.getApplicationContext(), ProviderActivity::class.java).putExtra(ProviderActivity.KEY_MODE, "Browse")
+        ActivityScenario.launch<ProviderActivity>(intent).use {
+            it.state shouldBe Lifecycle.State.DESTROYED
+        }
+    }
+
+    @Test
+    fun `a parceled launch intent keeps the mode`() {
+        val parcel = Parcel.obtain()
+        val restored =
+            try {
+                ProviderActivity.intent(ApplicationProvider.getApplicationContext(), ProviderScreenMode.Select).writeToParcel(parcel, 0)
+                parcel.setDataPosition(0)
+                Intent.CREATOR.createFromParcel(parcel)
+            } finally {
+                parcel.recycle()
+            }
+        ActivityScenario.launch<ProviderActivity>(restored).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.screenTitle() shouldBe "Select provider" }
+        }
+    }
+
+    @Test
+    fun `the selected provider row describes itself for accessibility`() {
+        userSettings.selectedShortURLProvider = Dagd
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val row = activity.rowTitled("da.gd").itemRow()
+                ViewCompat.getStateDescription(row) shouldBe "Selected"
+                activity.rowTitled("da.gd").contentDescription shouldBe null
+            }
+        }
+    }
+
+    @Test
+    @Config(application = HiltTestApplication::class, sdk = [36], qualifiers = "de")
+    fun `the selected provider row state description is localized in German`() {
+        userSettings.selectedShortURLProvider = Dagd
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                ViewCompat.getStateDescription(activity.rowTitled("da.gd").itemRow()) shouldBe "Ausgewählt"
+            }
+        }
+    }
+
+    @Test
+    fun `a row that loses its selection drops the check and the state description`() {
+        userSettings.selectedShortURLProvider = Dagd
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val adapter = activity.findViewById<RecyclerView>(R.id.provider_list).adapter as ProviderActivity.ProviderAdapter
+                val unmarked = adapter.currentList.map { it.copy(marked = false) }
+                adapter.submitList(unmarked)
+                awaitCurrentList(adapter, unmarked)
+                idleMainLooper()
+
+                val title = activity.rowTitled("da.gd")
+                title.compoundDrawablesRelative[2] shouldBe null
+                ViewCompat.getStateDescription(title.itemRow()) shouldBe null
+                activity.markedProviderTitles() shouldBe emptyList()
             }
         }
     }
@@ -186,7 +310,7 @@ class ProviderActivityTest {
 
     @Test
     fun `submitting the list without is gd removes its row and changes no other row`() {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             scenario.onActivity { activity ->
                 idleMainLooper()
                 val recycler = activity.findViewById<RecyclerView>(R.id.provider_list)
@@ -210,7 +334,7 @@ class ProviderActivityTest {
                         }
                     },
                 )
-                val updated = listOf(Dagd, VgdIsgd.Vgd, Zwsim, Spoome.Default, Spoome.Emoji)
+                val updated = listOf(Dagd, VgdIsgd.Vgd, Zwsim, Spoome.Default, Spoome.Emoji).map { ProviderItem(it, marked = false) }
 
                 adapter.submitList(updated)
                 awaitCurrentList(adapter, updated)
@@ -228,15 +352,36 @@ class ProviderActivityTest {
         }
     }
 
+    private fun ProviderActivity.rowTitled(title: String): TextView {
+        val recycler = findViewById<RecyclerView>(R.id.provider_list)
+        return (0 until recycler.childCount)
+            .map { recycler.getChildAt(it).findViewById<TextView>(R.id.providerTitle) }
+            .first { it.text.toString() == title }
+    }
+
+    private fun TextView.itemRow(): View = parent.parent as View
+
+    private fun ProviderActivity.screenTitle(): String =
+        (findViewById<ViewGroup>(android.R.id.content).getChildAt(0) as ToolbarLayout).expandedTitle.toString()
+
+    private fun ProviderActivity.markedProviderTitles(): List<String> {
+        val recycler = findViewById<RecyclerView>(R.id.provider_list)
+        return (0 until recycler.childCount)
+            .map { recycler.getChildAt(it) }
+            .map { it.findViewById<TextView>(R.id.providerTitle) }
+            .filter { it.compoundDrawablesRelative[2] != null }
+            .map { it.text.toString() }
+    }
+
     private fun awaitCurrentList(
         adapter: ProviderActivity.ProviderAdapter,
-        expected: List<ShortURLProvider>,
+        expected: List<ProviderItem>,
     ) {
         awaitMainLooperUntil { adapter.currentList == expected }
     }
 
     private fun assertFirstRowInfoDescription(expected: String) {
-        ActivityScenario.launch(ProviderActivity::class.java).use { scenario ->
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
             scenario.onActivity { activity ->
                 idleMainLooper()
                 val row =
