@@ -9,7 +9,7 @@ targetSdk = "37"
 jvmTarget = "21"
 
 aboutlibraries = "15.3.0"
-agp = "9.5.0"
+agp = "9.5.1"
 androidx-collection = "1.7.0"
 androidx-constraintlayout = "2.2.2"
 apache-httpcore = "4.4.16"
