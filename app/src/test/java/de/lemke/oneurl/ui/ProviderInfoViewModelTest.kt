@@ -79,6 +79,27 @@ class ProviderInfoViewModelTest : ShouldSpec(
             viewModel.tlyKeySaveFailed.value shouldBe false
         }
 
+        should("report repeated failed writes once until a write succeeds") {
+            val store = FakeTlyKeyStore()
+            store.failing = true
+            val viewModel = ProviderInfoViewModel(store)
+
+            viewModel.onTlyKeyChanged("a")
+            viewModel.tlyKeySaveFailed.value shouldBe true
+            viewModel.onTlyKeySaveFailedHandled()
+            viewModel.onTlyKeyChanged("ab")
+            viewModel.onTlyKeyChanged("abc")
+
+            viewModel.tlyKeySaveFailed.value shouldBe false
+
+            store.failing = false
+            viewModel.onTlyKeyChanged("abcd")
+            store.failing = true
+            viewModel.onTlyKeyChanged("abcde")
+
+            viewModel.tlyKeySaveFailed.value shouldBe true
+        }
+
         should("show an empty text when the store cannot be read") {
             val store = FakeTlyKeyStore(TlyApiKey.ofOrNull("abc123"))
             store.failing = true

@@ -43,6 +43,7 @@ class ProviderInfoViewModel @Inject constructor(
         field = MutableStateFlow(false)
 
     private val writeLock = Mutex()
+    private var lastWrite: TlyKeyWrite = TlyKeyWrite.Saved
 
     init {
         viewModelScope.launch {
@@ -58,9 +59,10 @@ class ProviderInfoViewModel @Inject constructor(
         if (text == tlyKey.value) return
         tlyKey.value = text
         viewModelScope.launch {
-            when (writeLock.withLock { tlyKeys.set(TlyApiKey.ofOrNull(text)) }) {
-                TlyKeyWrite.Saved -> Unit
-                TlyKeyWrite.Failed -> tlyKeySaveFailed.value = true
+            writeLock.withLock {
+                val write = tlyKeys.set(TlyApiKey.ofOrNull(text))
+                if (write == TlyKeyWrite.Failed && lastWrite != TlyKeyWrite.Failed) tlyKeySaveFailed.value = true
+                lastWrite = write
             }
         }
     }
