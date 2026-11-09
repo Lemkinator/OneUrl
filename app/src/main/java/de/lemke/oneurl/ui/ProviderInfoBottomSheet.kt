@@ -32,6 +32,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle.State.RESUMED
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -115,7 +116,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
         binding.providerBottomSheetTlyKeyLink.onSingleLaunchClick { openURL(provider.keySettingsURL) }
         binding.providerBottomSheetTlyKeyInput.filters += WhitespaceFilter
         binding.providerBottomSheetTlyKeyInput.addTextChangedListener { viewModel.onTlyKeyChanged(it.toString()) }
-        collectState(viewModel.tlyKeySaveFailed) { failed ->
+        collectState(viewModel.tlyKeySaveFailed, minActiveState = RESUMED) { failed ->
             if (failed) {
                 requireContext().toast(commonutilsR.string.commonutils_error)
                 viewModel.onTlyKeySaveFailedHandled()
