@@ -18,11 +18,8 @@ package de.lemke.oneurl.data
 
 import android.util.Log
 import de.lemke.oneurl.domain.model.TlyApiKey
-import eu.anifantakis.lib.ksafe.KSafe
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
 
 /** What a [TlyKeyStore] knows about the key the user entered. */
 sealed interface StoredTlyKey {
@@ -61,19 +58,6 @@ interface SecretStore {
     )
 
     suspend fun delete(key: String)
-}
-
-class KSafeSecretStore @Inject constructor(
-    private val ksafe: KSafe,
-) : SecretStore {
-    override suspend fun get(key: String): String? = ksafe.get(key, null, String.serializer().nullable)
-
-    override suspend fun put(
-        key: String,
-        value: String,
-    ) = ksafe.put(key, value, String.serializer())
-
-    override suspend fun delete(key: String) = ksafe.delete(key)
 }
 
 /** A failing [SecretStore], such as a broken Android Keystore, reads as [StoredTlyKey.Unavailable] and drops writes. */
