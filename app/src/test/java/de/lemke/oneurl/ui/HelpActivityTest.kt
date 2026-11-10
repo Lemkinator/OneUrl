@@ -22,6 +22,7 @@ import androidx.test.core.app.ActivityScenario
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.HiltTestRule
+import de.lemke.commonutils.shouldBeContainerTransformTo
 import de.lemke.oneurl.R
 import io.kotest.matchers.shouldBe
 import org.junit.Before
@@ -52,7 +53,7 @@ class HelpActivityTest {
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.component?.className shouldBe ProviderActivity::class.java.name
             startedIntent.getStringExtra(ProviderActivity.KEY_MODE) shouldBe "Info"
-            startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
+            startedIntent.shouldBeContainerTransformTo("ProviderTransformation")
         }
     }
 

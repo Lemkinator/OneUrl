@@ -31,6 +31,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.idleMainLooper
+import de.lemke.commonutils.shouldBeContainerTransformTo
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeNetworkMonitor
 import de.lemke.oneurl.data.FakePageTitleFetcher
@@ -239,7 +240,7 @@ class AddURLActivityTest {
             val startedIntent = shadowOf(activity).nextStartedActivity
             startedIntent.component?.className shouldBe ProviderActivity::class.java.name
             startedIntent.getStringExtra(KEY_MODE) shouldBe "Select"
-            startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
+            startedIntent.shouldBeContainerTransformTo("ProviderTransformation")
         }
     }
 

@@ -40,6 +40,8 @@ import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.idleMainLooper
 import de.lemke.commonutils.returnFromLaunchedScreen
+import de.lemke.commonutils.shouldBeContainerTransformTo
+import de.lemke.commonutils.shouldHaveNoContainerTransform
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
@@ -74,7 +76,6 @@ import org.robolectric.shadows.ShadowActivity.IntentForResult
 import androidx.appcompat.R as appcompatR
 import dev.oneuiproject.oneui.design.R as designR
 
-private const val TRANSITION_NAME_KEY = "commonUtilsTransitionNameKey"
 private const val ANIM_TYPE_KEY = "android:activity.animType"
 private const val ANIM_SCENE_TRANSITION = 5
 
@@ -462,7 +463,7 @@ class MainActivityTest {
                 val startedIntent = shadowOf(activity).nextStartedActivity
                 startedIntent.component?.className shouldBe ProviderActivity::class.java.name
                 startedIntent.getStringExtra(ProviderActivity.KEY_MODE) shouldBe "Info"
-                startedIntent.getStringExtra("commonUtilsTransitionNameKey") shouldBe "ProviderTransformation"
+                startedIntent.shouldBeContainerTransformTo("ProviderTransformation")
             }
         }
     }
@@ -507,7 +508,7 @@ class MainActivityTest {
     private fun IntentForResult.shouldBePopOver(className: String) {
         intent.component?.className shouldBe className
         (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe Intent.FLAG_ACTIVITY_SINGLE_TOP
-        intent.hasExtra(TRANSITION_NAME_KEY) shouldBe false
+        intent.shouldHaveNoContainerTransform()
         options.shouldNotBeNull().getInt(ANIM_TYPE_KEY) shouldNotBe ANIM_SCENE_TRANSITION
     }
 
@@ -517,7 +518,7 @@ class MainActivityTest {
     ) {
         intent.component?.className shouldBe className
         (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe 0
-        intent.getStringExtra(TRANSITION_NAME_KEY) shouldBe transitionName
+        intent.shouldBeContainerTransformTo(transitionName)
         options.shouldNotBeNull().getInt(ANIM_TYPE_KEY) shouldBe ANIM_SCENE_TRANSITION
     }
 
