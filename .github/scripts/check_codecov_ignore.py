@@ -3,42 +3,28 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    import yaml
+except ImportError:
+    sys.exit("check_codecov_ignore.py needs PyYAML: install python3-yaml")
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-IGNORE_KEY = re.compile(r"^ignore:")
-IGNORE_BLOCK_KEY = re.compile(r"^ignore:\s*(#.*)?$")
-IGNORE_FLOW = re.compile(r"^ignore:\s*\[(.*)\]\s*(#.*)?$")
-IGNORE_ENTRY = re.compile(r"^\s+-\s+[\"']?([^\"'#]+?)[\"']?\s*(#.*)?$")
 GLOB_CHARS = frozenset("*?[")
 
 
-def unquote(entry):
-    entry = entry.strip()
-    if len(entry) >= 2 and entry[0] == entry[-1] and entry[0] in "\"'":
-        return entry[1:-1]
-    return entry
-
-
 def ignored_paths(text):
-    paths = []
-    has_key = False
-    in_block = False
-    for line in text.splitlines():
-        if IGNORE_BLOCK_KEY.match(line):
-            has_key = in_block = True
-        elif flow := IGNORE_FLOW.match(line):
-            has_key = True
-            in_block = False
-            paths.extend(unquote(item) for item in flow.group(1).split(",") if item.strip())
-        elif IGNORE_KEY.match(line):
-            has_key = True
-            in_block = False
-        elif in_block and (match := IGNORE_ENTRY.match(line)):
-            paths.append(match.group(1))
-        elif in_block and line.strip() and not line.lstrip().startswith("#"):
-            in_block = False
-    if has_key and not paths:
+    try:
+        config = yaml.safe_load(text)
+    except yaml.YAMLError as error:
+        raise ValueError(f"codecov.yml is not valid YAML: {error}") from error
+    if not isinstance(config, dict) or "ignore" not in config:
+        return []
+    entries = config["ignore"]
+    if not isinstance(entries, list) or not entries:
         raise ValueError("codecov.yml has an ignore key but no entry could be parsed")
-    return paths
+    if not all(isinstance(entry, str) and entry.strip() for entry in entries):
+        raise ValueError("codecov.yml ignore entries must be non-empty strings")
+    return [entry.strip() for entry in entries]
 
 
 def glob_regex(pattern):

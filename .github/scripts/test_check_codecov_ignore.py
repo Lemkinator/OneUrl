@@ -34,15 +34,34 @@ class IgnoredPathsTest(unittest.TestCase):
     def test_reads_flow_list(self):
         self.assertEqual(["a/B.kt", "c/D.kt"], guard.ignored_paths("ignore: [\"a/B.kt\", 'c/D.kt']\n"))
 
+    def test_reads_indentless_block_list(self):
+        self.assertEqual(["a/B.kt", "c/D.kt"], guard.ignored_paths("ignore:\n- a/B.kt\n- 'c/D.kt'\n"))
+
+    def test_reads_quoted_ignore_key(self):
+        self.assertEqual(["a/B.kt"], guard.ignored_paths('"ignore": ["a/B.kt"]\n'))
+        self.assertEqual(["a/B.kt"], guard.ignored_paths("'ignore':\n  - a/B.kt\n"))
+
+    def test_ignores_comments_and_trailing_whitespace(self):
+        self.assertEqual(["a/B.kt"], guard.ignored_paths("ignore:  # skipped\n  - a/B.kt  # device only\n"))
+
     def test_ignore_key_without_parsable_entry_fails(self):
         for text in ("ignore:\n", "ignore: []\n", "ignore: a/B.kt\n", "ignore:\n  key: a/B.kt\n"):
-            with self.subTest(text=text), self.assertRaises(ValueError):
+            with self.subTest(text=text), self.assertRaisesRegex(ValueError, "no entry could be parsed"):
                 guard.ignored_paths(text)
+
+    def test_non_string_entry_fails(self):
+        for text in ("ignore:\n  - 5\n", "ignore:\n  - a/B.kt\n  - [c]\n", "ignore:\n  - ''\n"):
+            with self.subTest(text=text), self.assertRaisesRegex(ValueError, "non-empty strings"):
+                guard.ignored_paths(text)
+
+    def test_invalid_yaml_fails(self):
+        with self.assertRaisesRegex(ValueError, "not valid YAML"):
+            guard.ignored_paths("ignore: [a/B.kt\n")
 
 
 class MissingPathsTest(unittest.TestCase):
     def missing(self, *entries):
-        text = "ignore:\n" + "".join(f"  - {entry}\n" for entry in entries)
+        text = "ignore:\n" + "".join(f'  - "{entry}"\n' for entry in entries)
         return guard.missing_paths(text, TRACKED)
 
     def test_tracked_file_is_found(self):
@@ -76,7 +95,7 @@ class MissingPathsTest(unittest.TestCase):
 
 class MainTest(unittest.TestCase):
     def test_passes_when_every_entry_is_tracked(self):
-        self.assertEqual((0, ""), run_main("ignore:\n  - app/**/Foo.kt\n", TRACKED))
+        self.assertEqual((0, ""), run_main('ignore:\n  - "app/**/Foo.kt"\n', TRACKED))
 
     def test_fails_and_names_an_untracked_entry(self):
         code, stderr = run_main("ignore:\n  - app/src/Untracked.kt\n", TRACKED)
