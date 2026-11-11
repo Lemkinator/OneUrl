@@ -1,10 +1,12 @@
 import io
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import count_junit_tests
 
 OBJECT = "Ljava/lang/Object;"
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def dex_class(descriptor, flags="0x0001", superclass=OBJECT, tests=(), test_suffix=""):
@@ -68,6 +70,10 @@ class CountJunitTestsTest(unittest.TestCase):
 
     def test_interface_counts_zero(self):
         self.assertEqual(0, count(dex(dex_class("Lx/I;", "0x0601", tests=["a"]))))
+
+    def test_dexdump_of_abstract_contract_and_concrete_subclass_counts_inherited_tests(self):
+        text = (FIXTURES / "dexdump_abstract_contract.txt").read_text(encoding="utf-8")
+        self.assertEqual(9, count(text))
 
     def test_missing_superclass_stops_chain(self):
         text = dex(dex_class("Lx/T;", superclass="Landroid/Missing;", tests=["a"]))
