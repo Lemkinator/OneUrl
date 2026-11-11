@@ -106,7 +106,7 @@ and `BackupModule` (includes the common-utils `CommonUtilsBackupModule`; binds `
 `TestPersistenceModule`, `TestSettingsModule`, `TestDispatchersModule`, `TestInAppReviewModule` (a singleton `FakeInAppReview`), `TestSecretsModule` (a singleton `FakeTlyKeyStore`, because the Android Keystore is missing under Robolectric) and `TestNetworkModule`. `TestNetworkModule` binds the singleton
 fakes `FakeNetworkMonitor`, `FakeUrlhausClient`, `FakePageTitleFetcher` and `FakeShortURLClient`, so no Hilt test reaches the network;
 a test injects a fake to set its answers. ViewModel and use-case tests run real use cases over fakes such as `FakeURLRepository`,
-`FakeQRCodeRenderer` and `FakeVolleyQueue`. `TlyKeyStoreContract` (testFixtures) runs against `DefaultTlyKeyStore` over a `FakeSecretStore` and, on a device, over `KSafeSecretStore`. Only a device runs `KSafeSecretStore`, so `codecov.yml` ignores its file; `.github/scripts/check_codecov_ignore.py` fails CI when an ignored path no longer exists. `URLRepositoryContract` runs against both `DefaultURLRepository` and `FakeURLRepository`.
+`FakeQRCodeRenderer` and `FakeVolleyQueue`. `TlyKeyStoreContract` (testFixtures) runs against `DefaultTlyKeyStore` over a `FakeSecretStore` and, on a device, over `KSafeSecretStore`. Only a device runs `KSafeSecretStore`, so `codecov.yml` ignores its file; `.github/scripts/check_codecov_ignore.py` fails CI when an ignored path or glob matches no tracked file. `URLRepositoryContract` runs against both `DefaultURLRepository` and `FakeURLRepository`.
 MockK stays only for framework values (`Bitmap`, `Uri`, `ClipData`) and `Log` in plain JVM Kotest specs, which cannot build them,
 and for the `mockkStatic(DeviceInfo::class)` One UI check.
 
