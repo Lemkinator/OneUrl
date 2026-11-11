@@ -201,6 +201,7 @@ dependencies {
     debugImplementation(libs.leakcanary)
 
     testImplementation(testFixtures(libs.common.utils))
+    testImplementation(testFixtures(libs.common.utils.transitions))
 
     testFixturesImplementation(libs.room.runtime)
     testFixturesImplementation(libs.hilt.android.testing)
