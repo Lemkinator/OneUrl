@@ -1,0 +1,48 @@
+Processing 'classes.dex'...
+Opened 'classes.dex', DEX version '039'
+Class #909 annotations:
+Annotations on method #4850 'aBrokenEntryIsSkippedAndCounted'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4862 'everyClashCaseKeepsTheExpectedEntry'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4863 'everySymmetricClashCaseKeepsTheSameEntryWithSidesSwapped'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4864 'everyVersionFromMinReadableToCurrentHasAFixtureThatImports'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4865 'exportThenReplaceRestoresTheSameEntries'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4869 'mergeKeepsLocalOnlyEntries'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4870 'mergeTwiceChangesNothingTheSecondTime'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4873 'replaceRemovesLocalOnlyEntries'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+Annotations on method #4874 'replaceTwiceGivesTheSameEntries'
+  VISIBILITY_RUNTIME Lorg/junit/Test;
+
+Class #909            -
+  Class descriptor  : 'Lde/lemke/commonutils/backup/BackupSectionContract;'
+  Access flags      : 0x0401 (PUBLIC ABSTRACT)
+  Superclass        : 'Ljava/lang/Object;'
+
+Processing 'classes2.dex'...
+Opened 'classes2.dex', DEX version '039'
+Class #0 annotations:
+
+Class #0            -
+  Class descriptor  : 'Lde/lemke/oneurl/data/backup/UrlBackupSectionContract;'
+  Access flags      : 0x0401 (PUBLIC ABSTRACT)
+  Superclass        : 'Lde/lemke/commonutils/backup/BackupSectionContract;'
+Class #0 annotations:
+Annotations on class
+  VISIBILITY_RUNTIME Landroidx/test/filters/LargeTest;
+  VISIBILITY_RUNTIME Lorg/junit/runner/RunWith; value=Landroidx/test/ext/junit/runners/AndroidJUnit4;
+Annotations on method #8 'closeDatabaseAndRestoreZone'
+  VISIBILITY_RUNTIME Lorg/junit/After;
+Annotations on method #11 'useBerlinZone'
+  VISIBILITY_RUNTIME Lorg/junit/Before;
+
+Class #0            -
+  Class descriptor  : 'Lde/lemke/oneurl/data/backup/UrlBackupSectionInstrumentedTest;'
+  Access flags      : 0x0011 (PUBLIC FINAL)
+  Superclass        : 'Lde/lemke/oneurl/data/backup/UrlBackupSectionContract;'

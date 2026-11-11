@@ -145,8 +145,9 @@ class URLActivityScreenshotTest {
         refresh.width shouldBeGreaterThan 0
         refresh.contentDescription.toString() shouldBe expectedRefreshDescription
         val label = activity.findViewById<TextView>(R.id.url_visits_label)
-        val baselineDiff = (count.top + count.baseline) - (label.top + label.baseline)
-        baselineDiff shouldBe 0
+        val countBaseline = count.top + count.baseline
+        val labelBaseline = label.top + label.baseline
+        countBaseline shouldBe labelBaseline
     }
 
     private fun launchAndCapture(
