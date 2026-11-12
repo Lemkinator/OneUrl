@@ -134,7 +134,7 @@ Three tools run as part of `./gradlew build`:
   common-utils testFixtures: it bans raw activity launches and result registration by name, and a `show`/`showNow` call whose
   receiver is not `Snackbar`, `Toast`, `PopupMenu`, `TipPopup` or `AddFab`. Launch through `singleLaunchActivity`,
   `transformToActivity`, `popOverOrTransformToActivity` or `registerForSingleLaunchResult`; wrap taps in the input helpers (`onSingleLaunchClick`,
-  `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunch`); show dialogs with `showOnce(tag)`. A drawer destination opens through `popOverOrTransformToActivity` (a pop-over when the device runs One UI and the launching activity's smallest width is at least 600dp, a container transform otherwise).
+  `singleLaunchMenuItem`, `onSingleLaunchItemSelected`, `singleLaunch`); show dialogs with `showOnce(tag)`. The help, about-app, about-me and settings drawer destinations open through `popOverOrTransformToActivity` (a pop-over when the device runs One UI and the launching activity's smallest width is at least 600dp, a container transform otherwise); `qr_code_dest` and `provider_dest` always use `transformToActivity` and `transformToProviderActivity`.
   The Konsist rules come from the common-utils testFixtures: `ArchitectureTest.kt` calls `assertArchitecture`, and
   `CodingConventionsTest.kt` also calls `assertClassBodyOrder`, `assertNoCommonUtilsTypeExtensions` and
   `assertHiltTestRuleConventions`. The last requires every `@HiltAndroidTest` to declare exactly one
