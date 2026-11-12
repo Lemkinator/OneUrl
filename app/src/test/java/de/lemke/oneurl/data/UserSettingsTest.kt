@@ -31,7 +31,10 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,7 +48,7 @@ import org.robolectric.annotation.Config
 class UserSettingsTest {
     private lateinit var prefs: SharedPreferences
     private lateinit var settings: UserSettings
-    private val testScope = CoroutineScope(UnconfinedTestDispatcher())
+    private val testScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
 
     private fun reload() = UserSettings(prefs, testScope)
 
@@ -53,6 +56,11 @@ class UserSettingsTest {
     fun setUp() {
         prefs = freshTestPreferences()
         settings = UserSettings(prefs, testScope)
+    }
+
+    @After
+    fun tearDown() {
+        testScope.cancel()
     }
 
     @Test

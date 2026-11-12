@@ -28,6 +28,7 @@ build/
 /captures
 .externalNativeBuild
 .cxx
+__pycache__/
 
 local.properties
 secrets.properties

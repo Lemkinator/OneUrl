@@ -159,7 +159,7 @@ android {
                     "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
                 )
                 if (System.getenv("CI") != null) {
-                    test.testLogging { events("started", "failed", "standard_out") }
+                    test.testLogging { events("started", "failed", "standard_out", "standard_error") }
                     test.systemProperty("robolectric.logging.enabled", "true")
                 }
                 test.systemProperty("robolectric.graphicsMode", "NATIVE")

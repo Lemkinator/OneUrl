@@ -47,8 +47,11 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -72,6 +75,7 @@ class URLAdapterTest {
     lateinit var settings: SettingsRepository
 
     private val dispatcher = UnconfinedTestDispatcher()
+    private val adapterScope = CoroutineScope(Job() + dispatcher)
     private val renderer = FakeQRCodeRenderer(freshBitmap(), placeholder = freshBitmap())
     private val generateQRCode = GenerateQRCodeUseCase(renderer)
 
@@ -79,6 +83,11 @@ class URLAdapterTest {
     fun setup() {
         hiltRule.inject()
         settings.bypassOobe()
+    }
+
+    @After
+    fun tearDown() {
+        adapterScope.cancel()
     }
 
     private fun freshBitmap() = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
@@ -94,7 +103,7 @@ class URLAdapterTest {
                         context = activity,
                         qrCodeCache = qrCodeCache,
                         generateQRCode = generateQRCode,
-                        scope = CoroutineScope(dispatcher),
+                        scope = adapterScope,
                         defaultDispatcher = defaultDispatcher,
                         onAllSelectorStateChanged = {},
                         onBlockActionMode = {},
@@ -363,7 +372,7 @@ class URLAdapterTest {
                         context = activity,
                         qrCodeCache = qrCodeCache,
                         generateQRCode = generateQRCode,
-                        scope = CoroutineScope(dispatcher),
+                        scope = adapterScope,
                         defaultDispatcher = dispatcher,
                         onAllSelectorStateChanged = {},
                         onBlockActionMode = {},

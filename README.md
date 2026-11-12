@@ -25,7 +25,7 @@ A URL-Shortener with OneUI-Design.
 
 <img loading="lazy" src="app/src/test/screenshots/main_default_dark.png" height="350" alt="Main screen with saved URLs"/>
 <img loading="lazy" src="app/src/test/screenshots/add_url_default_dark.png" height="350" alt="Add URL screen"/>
-<img loading="lazy" src="app/src/test/screenshots/provider_default_dark.png" height="350" alt="Provider selection screen"/>
+<img loading="lazy" src="app/src/test/screenshots/provider_select_dark.png" height="350" alt="Provider selection screen"/>
 <img loading="lazy" src="app/src/test/screenshots/url_default_dark.png" height="350" alt="URL details screen"/>
 <img loading="lazy" src="app/src/test/screenshots/generate_qr_code_default_dark.png" height="350" alt="Generate QR code screen"/>
 <img loading="lazy" src="app/src/test/screenshots/settings_default_dark.png" height="350" alt="Help screen"/>
