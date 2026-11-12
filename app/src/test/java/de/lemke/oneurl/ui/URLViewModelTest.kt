@@ -56,6 +56,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
@@ -67,6 +69,7 @@ class URLViewModelTest : ShouldSpec(
         lateinit var repository: FakeURLRepository
         lateinit var shortURLClient: FakeShortURLClient
         lateinit var renderer: FakeQRCodeRenderer
+        lateinit var settingsScope: CoroutineScope
         lateinit var userSettings: UserSettings
         lateinit var exporter: FakeBitmapExporter
 
@@ -88,8 +91,13 @@ class URLViewModelTest : ShouldSpec(
             repository = FakeURLRepository(listOf(url))
             shortURLClient = FakeShortURLClient().apply { visitCounts[url.shortURL] = 42 }
             renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
-            userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
+            userSettings = UserSettings(FakeSharedPreferences(), settingsScope)
             exporter = FakeBitmapExporter()
+        }
+
+        afterEach {
+            settingsScope.cancel()
         }
 
         should("init loads the URL, stops loading, and refreshes the visit count") {

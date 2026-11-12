@@ -44,12 +44,15 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddURLViewModelTest : ShouldSpec(
     {
         val provider = ShortURLProviderCompanion.default
+        lateinit var settingsScope: CoroutineScope
         lateinit var userSettings: UserSettings
         lateinit var repository: FakeURLRepository
         lateinit var networkMonitor: FakeNetworkMonitor
@@ -68,12 +71,17 @@ class AddURLViewModelTest : ShouldSpec(
             )
 
         beforeEach {
-            userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
+            userSettings = UserSettings(FakeSharedPreferences(), settingsScope)
             repository = FakeURLRepository()
             networkMonitor = FakeNetworkMonitor()
             urlhausClient = FakeUrlhausClient()
             pageTitleFetcher = FakePageTitleFetcher().apply { titles["https://example.com"] = "title" }
             shortURLClient = FakeShortURLClient().apply { results[provider] = GenerateURLResult.Success("https://short.url/abc") }
+        }
+
+        afterEach {
+            settingsScope.cancel()
         }
 
         should("init state reflects userSettings when there is no intent URL") {

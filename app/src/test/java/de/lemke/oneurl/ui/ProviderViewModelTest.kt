@@ -28,11 +28,14 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProviderViewModelTest : ShouldSpec(
     {
+        lateinit var settingsScope: CoroutineScope
         lateinit var userSettings: UserSettings
 
         fun handleOf(mode: ProviderScreenMode) = SavedStateHandle(mapOf(ProviderActivity.KEY_MODE to mode.name))
@@ -43,7 +46,12 @@ class ProviderViewModelTest : ShouldSpec(
         ) = ProviderViewModel(savedStateHandle, userSettings, providers)
 
         beforeEach {
-            userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
+            userSettings = UserSettings(FakeSharedPreferences(), settingsScope)
+        }
+
+        afterEach {
+            settingsScope.cancel()
         }
 
         should("init reads the mode from saved state") {

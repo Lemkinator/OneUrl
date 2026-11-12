@@ -41,6 +41,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
@@ -49,6 +51,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
     {
         val qrCode = mockk<Bitmap> { every { byteCount } returns 1024 }
         val shortURL = "https://short.url/x"
+        lateinit var settingsScope: CoroutineScope
         lateinit var userSettings: UserSettings
         lateinit var renderer: FakeQRCodeRenderer
         lateinit var exporter: FakeBitmapExporter
@@ -64,9 +67,14 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         )
 
         beforeEach {
-            userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
+            userSettings = UserSettings(FakeSharedPreferences(), settingsScope)
             renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
             exporter = FakeBitmapExporter()
+        }
+
+        afterEach {
+            settingsScope.cancel()
         }
 
         should("init takes the short URL from the saved state and loads its QR code") {

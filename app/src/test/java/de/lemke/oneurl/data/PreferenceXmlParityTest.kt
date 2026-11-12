@@ -21,7 +21,10 @@ import de.lemke.commonutils.data.assertPreferenceXmlBoundToSettings
 import de.lemke.oneurl.settingsPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -35,11 +38,18 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class PreferenceXmlParityTest {
+    private val settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
+
+    @After
+    fun tearDown() {
+        settingsScope.cancel()
+    }
+
     @Test
     fun `preferences xml is bound to UserSettings`() {
         assertPreferenceXmlBoundToSettings(
             *settingsPreferences.toIntArray(),
-            factory = { UserSettings(it, CoroutineScope(UnconfinedTestDispatcher())) },
+            factory = { UserSettings(it, settingsScope) },
         )
     }
 }

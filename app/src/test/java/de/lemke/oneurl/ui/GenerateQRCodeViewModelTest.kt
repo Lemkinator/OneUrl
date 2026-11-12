@@ -41,6 +41,8 @@ import io.mockk.mockk
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
@@ -48,6 +50,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 class GenerateQRCodeViewModelTest : ShouldSpec(
     {
         val qrCode = mockk<Bitmap>()
+        lateinit var settingsScope: CoroutineScope
         lateinit var userSettings: UserSettings
         lateinit var mainScheduler: TestCoroutineScheduler
         lateinit var renderer: FakeQRCodeRenderer
@@ -68,7 +71,8 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
 
         beforeEach {
             mainScheduler = UnconfinedTestDispatcher().scheduler
-            userSettings = UserSettings(FakeSharedPreferences(), CoroutineScope(UnconfinedTestDispatcher()))
+            settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
+            userSettings = UserSettings(FakeSharedPreferences(), settingsScope)
             userSettings.qrURL = "https://seeded.example.com"
             userSettings.qrSize = 512
             userSettings.qrRecentForegroundColors = listOf(0x111111)
@@ -79,6 +83,10 @@ class GenerateQRCodeViewModelTest : ShouldSpec(
             userSettings.qrFrame = true
             renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
             exporter = FakeBitmapExporter()
+        }
+
+        afterEach {
+            settingsScope.cancel()
         }
 
         should("init state is seeded from userSettings and a QR code is generated") {
