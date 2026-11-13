@@ -16,27 +16,14 @@
 
 package de.lemke.oneurl.data
 
+import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
-import eu.anifantakis.lib.ksafe.KSafe
-import java.io.File
-import org.junit.After
 import org.junit.runner.RunWith
 
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class DefaultTlyKeyStoreInstrumentedTest : TlyKeyStoreContract() {
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val directory = File(context.cacheDir, "tly-key-store-test")
-
-    override fun createStore(): TlyKeyStore {
-        directory.deleteRecursively()
-        return DefaultTlyKeyStore(KSafeSecretStore(KSafe(context, fileName = "tlykeytest${System.nanoTime()}", baseDir = directory)))
-    }
-
-    @After
-    fun deleteStore() {
-        directory.deleteRecursively()
-    }
+class DefaultTlyKeyStoreInstrumentedTest : KSafeTlyKeyStoreContract() {
+    override val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
 }

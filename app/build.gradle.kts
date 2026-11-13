@@ -223,6 +223,7 @@ dependencies {
     testFixturesImplementation(libs.common.utils)
     testFixturesImplementation(libs.common.utils.transitions)
     testFixturesImplementation(libs.hilt.android.testing)
+    testFixturesImplementation(libs.ksafe)
     testFixturesImplementation(libs.junit4)
     testFixturesImplementation(libs.kotest.assertions.core)
     testFixturesImplementation(libs.coroutines.test)
