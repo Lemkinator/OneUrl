@@ -55,7 +55,7 @@ class FakeAndroidKeyStoreRule : ExternalResource() {
 }
 
 private class FakeAndroidKeyStoreProvider : Provider("AndroidKeyStore", 1.0, "In-memory AndroidKeyStore for JVM tests") {
-    private val secrets = ConcurrentHashMap<String, SecretKey>()
+    private val secrets = ConcurrentHashMap<String, KeyEntry>()
 
     init {
         putService(SpiService(this, "KeyStore", "AndroidKeyStore") { InMemoryKeyStoreSpi(secrets) })
@@ -72,13 +72,18 @@ private class FakeAndroidKeyStoreProvider : Provider("AndroidKeyStore", 1.0, "In
     }
 }
 
+private class KeyEntry(
+    val key: SecretKey,
+    val created: Date = Date(),
+)
+
 private class InMemoryKeyStoreSpi(
-    private val keys: MutableMap<String, SecretKey>,
+    private val keys: MutableMap<String, KeyEntry>,
 ) : KeyStoreSpi() {
     override fun engineGetKey(
         alias: String,
         password: CharArray?,
-    ): Key? = keys[alias]
+    ): Key? = keys[alias]?.key
 
     override fun engineContainsAlias(alias: String): Boolean = alias in keys
 
@@ -92,7 +97,7 @@ private class InMemoryKeyStoreSpi(
 
     override fun engineSize(): Int = keys.size
 
-    override fun engineGetCreationDate(alias: String): Date? = if (alias in keys) Date() else null
+    override fun engineGetCreationDate(alias: String): Date? = keys[alias]?.created
 
     override fun engineGetCertificateChain(alias: String): Array<Certificate>? = null
 
@@ -108,7 +113,7 @@ private class InMemoryKeyStoreSpi(
         password: CharArray?,
         chain: Array<Certificate>?,
     ) {
-        keys[alias] = SecretKeySpec(key.encoded, key.algorithm)
+        keys[alias] = KeyEntry(SecretKeySpec(key.encoded, key.algorithm))
     }
 
     override fun engineSetKeyEntry(
@@ -134,7 +139,7 @@ private class InMemoryKeyStoreSpi(
 }
 
 private class AesKeyGeneratorSpi(
-    private val keys: MutableMap<String, SecretKey>,
+    private val keys: MutableMap<String, KeyEntry>,
 ) : KeyGeneratorSpi() {
     private var spec: KeyGenParameterSpec? = null
 
@@ -155,6 +160,6 @@ private class AesKeyGeneratorSpi(
     override fun engineGenerateKey(): SecretKey {
         val spec = checkNotNull(spec) { "KeyGenerator is not initialized" }
         val bytes = ByteArray(spec.keySize / Byte.SIZE_BITS).also { SecureRandom().nextBytes(it) }
-        return SecretKeySpec(bytes, "AES").also { keys[spec.keystoreAlias] = it }
+        return SecretKeySpec(bytes, "AES").also { keys[spec.keystoreAlias] = KeyEntry(it) }
     }
 }
