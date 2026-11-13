@@ -40,7 +40,9 @@ import org.junit.rules.ExternalResource
  */
 class FakeAndroidKeyStoreRule : ExternalResource() {
     override fun before() {
-        Security.addProvider(FakeAndroidKeyStoreProvider())
+        check(Security.addProvider(FakeAndroidKeyStoreProvider()) != -1) {
+            "A provider named $PROVIDER_NAME is already installed; the fake Keystore only runs on the JVM"
+        }
     }
 
     override fun after() {
