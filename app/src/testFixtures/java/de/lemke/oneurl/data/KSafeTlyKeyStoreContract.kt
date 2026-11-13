@@ -17,7 +17,12 @@
 package de.lemke.oneurl.data
 
 import android.content.Context
+import de.lemke.oneurl.domain.model.TlyApiKey
+import eu.anifantakis.lib.ksafe.KSafeProtection
+import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Test
 
 abstract class KSafeTlyKeyStoreContract : TlyKeyStoreContract() {
     protected abstract val context: Context
@@ -27,4 +32,17 @@ abstract class KSafeTlyKeyStoreContract : TlyKeyStoreContract() {
 
     @After
     fun closeStores() = ksafes.close()
+
+    @Test
+    fun storedKeyIsEncryptedAndReadableByANewInstance() =
+        runTest {
+            val writer = ksafes.openEmpty()
+            DefaultTlyKeyStore(KSafeSecretStore(writer)).set(TlyApiKey.ofOrNull("abc123")) shouldBe TlyKeyWrite.Saved
+            writer.close()
+
+            val reader = ksafes.open()
+
+            DefaultTlyKeyStore(KSafeSecretStore(reader)).get() shouldBe keyOf("abc123")
+            reader.getKeyInfo("tlyApiKey")?.protection shouldBe KSafeProtection.DEFAULT
+        }
 }
