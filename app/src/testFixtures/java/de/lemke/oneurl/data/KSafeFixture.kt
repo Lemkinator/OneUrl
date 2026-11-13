@@ -19,12 +19,13 @@ package de.lemke.oneurl.data
 import android.content.Context
 import eu.anifantakis.lib.ksafe.KSafe
 import java.io.File
+import java.util.UUID
 
 /** Opens [KSafe] instances over one file name and directory, so a later [open] reads what an earlier instance wrote. */
 class KSafeFixture(
     private val context: () -> Context,
 ) {
-    private val fileName = "secretstoretest${System.nanoTime()}"
+    private val fileName = "secretstoretest${UUID.randomUUID().toString().replace("-", "")}"
     private val directory by lazy { File(context().cacheDir, fileName) }
     private val opened = mutableListOf<KSafe>()
 

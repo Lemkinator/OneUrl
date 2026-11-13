@@ -40,6 +40,7 @@ import org.junit.rules.ExternalResource
  */
 class FakeAndroidKeyStoreRule : ExternalResource() {
     override fun before() {
+        storedKeys.clear()
         check(Security.addProvider(FakeAndroidKeyStoreProvider()) != -1) {
             "A provider named $PROVIDER_NAME is already installed; the fake Keystore only runs on the JVM"
         }
@@ -47,6 +48,7 @@ class FakeAndroidKeyStoreRule : ExternalResource() {
 
     override fun after() {
         Security.removeProvider(PROVIDER_NAME)
+        storedKeys.clear()
     }
 
     private companion object {
@@ -54,12 +56,13 @@ class FakeAndroidKeyStoreRule : ExternalResource() {
     }
 }
 
-private class FakeAndroidKeyStoreProvider : Provider("AndroidKeyStore", 1.0, "In-memory AndroidKeyStore for JVM tests") {
-    private val secrets = ConcurrentHashMap<String, KeyEntry>()
+// KSafe keeps the KeyStore it first loaded for the life of the sandbox, so every provider must hand out the same map.
+private val storedKeys = ConcurrentHashMap<String, KeyEntry>()
 
+private class FakeAndroidKeyStoreProvider : Provider("AndroidKeyStore", 1.0, "In-memory AndroidKeyStore for JVM tests") {
     init {
-        putService(SpiService(this, "KeyStore", "AndroidKeyStore") { InMemoryKeyStoreSpi(secrets) })
-        putService(SpiService(this, "KeyGenerator", "AES") { AesKeyGeneratorSpi(secrets) })
+        putService(SpiService(this, "KeyStore", "AndroidKeyStore") { InMemoryKeyStoreSpi(storedKeys) })
+        putService(SpiService(this, "KeyGenerator", "AES") { AesKeyGeneratorSpi(storedKeys) })
     }
 
     private class SpiService(
