@@ -20,12 +20,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Install PyYAML
-        run: sudo apt-get install -y --no-install-recommends python3-yaml
       - name: Test CI scripts
         run: python3 -m unittest discover -s .github/scripts
-      - name: Check Codecov ignore paths
-        run: python3 .github/scripts/check_codecov_ignore.py
       - name: Copy CI gradle.properties
         run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
       - name: Set up JDK

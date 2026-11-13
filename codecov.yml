@@ -1,2 +1,0 @@
-ignore:
-  - "app/src/main/java/de/lemke/oneurl/data/KSafeSecretStore.kt"
