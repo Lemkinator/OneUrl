@@ -17,26 +17,14 @@
 package de.lemke.oneurl.data
 
 import android.content.Context
-import eu.anifantakis.lib.ksafe.KSafe
-import java.io.File
 import org.junit.After
 
-/** [TlyKeyStoreContract] over [KSafeSecretStore] on a [KSafe] file that each test starts empty. */
 abstract class KSafeTlyKeyStoreContract : TlyKeyStoreContract() {
     protected abstract val context: Context
-    private val directory by lazy { File(context.cacheDir, "tly-key-store-test") }
-    private val openStores = mutableListOf<KSafe>()
+    private val ksafes = KSafeFixture { context }
 
-    override fun createStore(): TlyKeyStore {
-        directory.deleteRecursively()
-        val ksafe = KSafe(context, fileName = "tlykeytest${System.nanoTime()}", baseDir = directory)
-        openStores += ksafe
-        return DefaultTlyKeyStore(KSafeSecretStore(ksafe))
-    }
+    override fun createStore(): TlyKeyStore = DefaultTlyKeyStore(KSafeSecretStore(ksafes.openEmpty()))
 
     @After
-    fun deleteStore() {
-        openStores.forEach(KSafe::close)
-        directory.deleteRecursively()
-    }
+    fun closeStores() = ksafes.close()
 }
