@@ -17,6 +17,7 @@
 package de.lemke.oneurl.data
 
 import android.content.Context
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 
 abstract class KSafeSecretStoreContract : SecretStoreContract() {
@@ -26,5 +27,5 @@ abstract class KSafeSecretStoreContract : SecretStoreContract() {
     override fun createStore(): SecretStore = KSafeSecretStore(ksafes.openEmpty())
 
     @After
-    fun closeStores() = ksafes.close()
+    fun closeStores() = runTest { ksafes.close() }
 }

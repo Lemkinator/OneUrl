@@ -19,13 +19,14 @@ package de.lemke.oneurl.data
 import android.content.Context
 import eu.anifantakis.lib.ksafe.KSafe
 import java.io.File
+import java.security.KeyStore
 import java.util.UUID
 
 /** Opens [KSafe] instances over one file name and directory, so a later [open] reads what an earlier instance wrote. */
 class KSafeFixture(
     private val context: () -> Context,
 ) {
-    private val fileName = "secretstoretest${UUID.randomUUID().toString().replace("-", "")}"
+    val fileName = "secretstoretest${UUID.randomUUID().toString().replace("-", "")}"
     private val directory by lazy { File(context().cacheDir, fileName) }
     private val opened = mutableListOf<KSafe>()
 
@@ -36,7 +37,21 @@ class KSafeFixture(
         return open()
     }
 
-    fun close() {
+    /** The Keystore aliases that belong to this fixture's store. */
+    fun aliases(): List<String> =
+        KeyStore
+            .getInstance("AndroidKeyStore")
+            .apply { load(null) }
+            .aliases()
+            .toList()
+            .filter { fileName in it }
+
+    /**
+     * Deletes the store's Keystore keys and files, then closes every instance this fixture opened.
+     * The keys go through a fresh instance: `clearAll` on a closed [KSafe] never returns, and a test may have closed its own.
+     */
+    suspend fun close() {
+        open().clearAll()
         opened.forEach(KSafe::close)
         directory.deleteRecursively()
     }

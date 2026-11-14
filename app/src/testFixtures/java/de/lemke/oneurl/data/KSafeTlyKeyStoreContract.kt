@@ -31,7 +31,7 @@ abstract class KSafeTlyKeyStoreContract : TlyKeyStoreContract() {
     override fun createStore(): TlyKeyStore = DefaultTlyKeyStore(KSafeSecretStore(ksafes.openEmpty()))
 
     @After
-    fun closeStores() = ksafes.close()
+    fun closeStores() = runTest { ksafes.close() }
 
     @Test
     fun storedKeyIsEncryptedAndReadableByANewInstance() =
