@@ -19,7 +19,13 @@ package de.lemke.oneurl.data
 import android.content.Context
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.builtins.serializer
 import org.junit.After
 import org.junit.Test
@@ -31,10 +37,20 @@ abstract class KSafeFixtureContract {
     @After
     fun closeFixture() = runTest { fixture.close() }
 
+    // KSafe creates the locked master key on its write scope after init and nothing joins it, so a put does not wait for it.
+    // The poll runs on a real dispatcher: a delay inside runTest skips virtual time and lets no background work progress.
+    private suspend fun awaitAliases(count: Int) =
+        withContext(Dispatchers.Default) {
+            withTimeout(POLL_TIMEOUT) {
+                while (fixture.aliases().size < count) delay(POLL_INTERVAL)
+            }
+        }
+
     @Test
     fun closeDeletesTheKeystoreKeysOfTheStore() =
         runTest {
             fixture.openEmpty().put("key", "value", String.serializer())
+            awaitAliases(2)
             fixture.aliases() shouldContainExactlyInAnyOrder
                 listOf(
                     "eu.anifantakis.ksafe.${fixture.fileName}.__ksafe_master__",
@@ -57,4 +73,9 @@ abstract class KSafeFixtureContract {
 
             fixture.aliases() shouldBe emptyList()
         }
+
+    private companion object {
+        val POLL_TIMEOUT = 10.seconds
+        val POLL_INTERVAL = 20.milliseconds
+    }
 }
