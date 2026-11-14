@@ -17,6 +17,10 @@
 @file:OptIn(ExperimentalRoborazziApi::class)
 
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import org.gradle.api.file.Directory
+import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.process.CommandLineArgumentProvider
 
 plugins {
     alias(libs.plugins.android.application)
@@ -37,6 +41,23 @@ plugins {
 fun String.toEnvVarStyle(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
 
 fun getProperty(key: String): String? = rootProject.findProperty(key)?.toString() ?: System.getenv(key.toEnvVarStyle())
+
+// One configuration per jar: the jars share a module, so a single configuration would keep only the newest.
+val robolectricAndroidAllJars =
+    libs.bundles.robolectric.android.all
+        .get()
+        .map { jar -> configurations.detachedConfiguration(dependencies.create(jar)).apply { isTransitive = false } }
+val syncRobolectricJars =
+    tasks.register<Sync>("syncRobolectricJars") {
+        from(robolectricAndroidAllJars)
+        into(layout.buildDirectory.dir("robolectric-jars"))
+    }
+
+class RobolectricDependencyDir(
+    @get:InputDirectory @get:PathSensitive(PathSensitivity.NAME_ONLY) val dir: Provider<Directory>,
+) : CommandLineArgumentProvider {
+    override fun asArguments() = listOf("-Drobolectric.dependency.dir=${dir.get().asFile}")
+}
 
 fun com.android.build.api.dsl.ApplicationBuildType.addConstant(
     name: String,
@@ -158,10 +179,8 @@ android {
                     "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
                     "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
                 )
-                if (System.getenv("CI") != null) {
-                    test.testLogging { events("started", "failed", "standard_out", "standard_error") }
-                    test.systemProperty("robolectric.logging.enabled", "true")
-                }
+                test.testLogging.exceptionFormat = TestExceptionFormat.FULL
+                test.jvmArgumentProviders += RobolectricDependencyDir(layout.dir(syncRobolectricJars.map { it.destinationDir }))
                 test.systemProperty("robolectric.graphicsMode", "NATIVE")
                 test.systemProperty("roborazzi.test.record", project.findProperty("roborazzi.record") ?: "false")
                 test.systemProperty("roborazzi.test.verify", project.findProperty("roborazzi.verify") ?: "true")

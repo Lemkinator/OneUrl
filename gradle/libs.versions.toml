@@ -98,6 +98,10 @@ oneui-design = { module = "io.github.tribalfs:oneui-design", version.ref = "oneu
 oneui-icons = { module = "io.github.oneuiproject:icons", version.ref = "oneui-icons" }
 profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+# Why pinned: the android-all jars Robolectric loads per SDK level; its DefaultSdkProvider names them, not the Maven latest.
+robolectric-android-all-26 = { module = "org.robolectric:android-all-instrumented", version = "8.0.0_r4-robolectric-r1-i7" }
+robolectric-android-all-29 = { module = "org.robolectric:android-all-instrumented", version = "10-robolectric-5803371-i7" }
+robolectric-android-all-36 = { module = "org.robolectric:android-all-instrumented", version = "16-robolectric-13921718-i7" }
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
 roborazzi-core = { module = "io.github.takahirom.roborazzi:roborazzi-core", version.ref = "roborazzi" }
 room-common = { module = "androidx.room:room-common", version.ref = "room" }
@@ -110,6 +114,7 @@ volley = { module = "com.android.volley:volley", version.ref = "volley" }
 
 [bundles]
 android-test = ["androidx-test-core", "androidx-test-runner", "androidx-test-ext-junit"]
+robolectric-android-all = ["robolectric-android-all-26", "robolectric-android-all-29", "robolectric-android-all-36"]
 robolectric-test = ["robolectric", "roborazzi", "androidx-test-core", "androidx-test-espresso-core"]
 unit-test = ["kotest-runner-junit5", "kotest-assertions-core", "mockk", "turbine", "coroutines-test"]
 
