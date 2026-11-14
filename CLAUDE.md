@@ -150,10 +150,10 @@ test with `Path is not a file` naming the missing jar. The `local-tests` step ha
 uploads still run (a job-level cancel skips them).
 
 **Dependency analysis** — `./gradlew buildHealth` runs in the `check-formatting` CI job. It fails on unused
-dependencies, incorrect configurations and unused annotation processors; other advice warns. The `dependencyAnalysis {}`
-block in the root `build.gradle.kts` holds the facade bundles and the narrow guava exclude. Each bundle names its primary and only the transitive
-internals the report lists, so it never masks a declared artifact. Report:
-`build/reports/dependency-analysis/build-health-report.txt`.
+dependencies, incorrect configurations and unused annotation processors; other advice warns, except "used transitive
+dependencies" (ignored: a version-less declaration of a transitive artifact protects nothing). The `dependencyAnalysis {}`
+block in the root `build.gradle.kts` holds one bundle, `leakcanary`: it names the primary and the two transitive
+internals the report lists, and it silences the "debugRuntimeOnly" advice for the `debugImplementation` leakcanary line. Report: `build/reports/dependency-analysis/build-health-report.txt`.
 
 **Pre-commit hook** — blocks commits with formatting violations. Opt in once per clone:
 
