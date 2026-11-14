@@ -95,7 +95,9 @@ jobs:
           java-version: '25.0.4+101.0.LTS'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+      # A step timeout fails the step so the failure() uploads below still run; a job-level cancel skips them.
       - name: Run local tests
+        timeout-minutes: 12
         run: chmod +x ./gradlew && ./gradlew testDebugUnitTest verifyRoborazziDebug koverXmlReportDebug koverHtmlReportDebug koverVerifyDebug --stacktrace
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
@@ -125,7 +127,6 @@ jobs:
         with:
           name: roborazzi-diff
           path: app/build/reports/roborazzi/
-      # Gradle's console prints only "<exceptionClass> at <frame>"; the message is in these.
       - name: Upload unit test report on failure
         if: failure()
         uses: actions/upload-artifact@v7
