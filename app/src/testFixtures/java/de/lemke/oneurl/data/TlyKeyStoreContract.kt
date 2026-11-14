@@ -25,7 +25,7 @@ import org.junit.Test
 abstract class TlyKeyStoreContract {
     protected abstract fun createStore(): TlyKeyStore
 
-    private fun keyOf(text: String) = StoredTlyKey.Key(requireNotNull(TlyApiKey.ofOrNull(text)))
+    protected fun keyOf(text: String) = StoredTlyKey.Key(requireNotNull(TlyApiKey.ofOrNull(text)))
 
     @Test
     fun getReturnsNullBeforeAKeyWasStored() =
