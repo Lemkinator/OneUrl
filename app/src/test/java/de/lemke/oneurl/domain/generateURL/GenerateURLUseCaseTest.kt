@@ -28,8 +28,10 @@ import de.lemke.oneurl.domain.model.GenerateURLResult
 import de.lemke.oneurl.domain.model.UrlhausResult
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GenerateURLUseCaseTest : ShouldSpec(
     {
         lateinit var networkMonitor: FakeNetworkMonitor
@@ -41,7 +43,8 @@ class GenerateURLUseCaseTest : ShouldSpec(
             networkMonitor = FakeNetworkMonitor()
             urlhausClient = FakeUrlhausClient()
             shortURLClient = FakeShortURLClient()
-            generateURL = GenerateURLUseCase(networkMonitor, CheckURLSafetyUseCase(urlhausClient), shortURLClient, Dispatchers.Unconfined)
+            generateURL =
+                GenerateURLUseCase(networkMonitor, CheckURLSafetyUseCase(urlhausClient), shortURLClient, UnconfinedTestDispatcher())
         }
 
         should("fail with NoInternet without validated internet and check nothing else") {

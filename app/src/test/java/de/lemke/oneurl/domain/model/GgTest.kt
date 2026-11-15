@@ -164,7 +164,7 @@ class GgTest {
         var enqueueCount = 0
         queue.onAdd = {
             enqueueCount++
-            if (enqueueCount == 1) throw IllegalStateException("boom")
+            if (enqueueCount == 1) error("boom")
         }
         val req = Gg.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
 
@@ -180,7 +180,7 @@ class GgTest {
         var enqueueCount = 0
         queue.onAdd = {
             enqueueCount++
-            if (enqueueCount == 1) throw IllegalStateException("boom")
+            if (enqueueCount == 1) error("boom")
         }
         val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
@@ -193,7 +193,7 @@ class GgTest {
     @Test
     fun `create response success callback that throws is caught and reported as unexpected response`() {
         var error: GenerateURLError? = null
-        val req = Gg.getCreateRequest(queue, longURL, "", { throw IllegalStateException("boom") }, { error = it })
+        val req = Gg.getCreateRequest(queue, longURL, "", { error("boom") }, { error = it })
         req.deliverResponse("ok")
 
         queue.added.single().deliverResponse("https://gg.gg/random")
@@ -208,7 +208,7 @@ class GgTest {
         val req =
             Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
         req.deliverResponse("ok")
 

@@ -24,11 +24,11 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetURLUseCaseTest : ShouldSpec(
@@ -46,7 +46,7 @@ class GetURLUseCaseTest : ShouldSpec(
             var result: URL? = null
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { result = getURL("https://da.gd/older") }
+                launch(UnconfinedTestDispatcher(dispatcher.scheduler)) { result = getURL("https://da.gd/older") }
                 result shouldBe null
 
                 dispatcher.scheduler.advanceUntilIdle()
@@ -56,7 +56,7 @@ class GetURLUseCaseTest : ShouldSpec(
         }
 
         should("invoke(shortURL) returns null for an unknown short url") {
-            val getURL = GetURLUseCase(repository, Dispatchers.Unconfined)
+            val getURL = GetURLUseCase(repository, UnconfinedTestDispatcher())
 
             getURL("https://da.gd/missing") shouldBe null
         }
@@ -67,7 +67,7 @@ class GetURLUseCaseTest : ShouldSpec(
             var result: List<URL>? = null
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { result = getURL(Dagd, "https://example.com") }
+                launch(UnconfinedTestDispatcher(dispatcher.scheduler)) { result = getURL(Dagd, "https://example.com") }
                 result shouldBe null
 
                 dispatcher.scheduler.advanceUntilIdle()

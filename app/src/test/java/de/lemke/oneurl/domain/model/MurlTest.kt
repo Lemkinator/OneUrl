@@ -203,7 +203,7 @@ class MurlTest {
         val req =
             Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
 
         req.deliverError(NoConnectionError())
@@ -252,7 +252,7 @@ class MurlTest {
 
         Murl.getURLClickCount(queue, url) {
             callbackCount++
-            if (callbackCount == 1) throw IllegalStateException("boom") else clicks = it
+            if (callbackCount == 1) error("boom") else clicks = it
         }
         queue.added.single().deliverResponse("""<span class="mu-mc count-480357" title="Views">7</span>""")
 

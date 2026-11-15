@@ -196,7 +196,7 @@ class L4fTest {
     @Test
     fun `response success callback that throws is caught and reported as unknown`() {
         var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(queue, longURL, "", { throw IllegalStateException("boom") }, { error = it })
+        val req = L4f.getCreateRequest(queue, longURL, "", { error("boom") }, { error = it })
 
         req.deliverResponse(
             JSONObject("""{"error":false,"message":"Link has been shortened","data":{"id":7498,"shorturl":"https://l4f.com/xyz"}}"""),
@@ -212,7 +212,7 @@ class L4fTest {
         val req =
             L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
 
         req.deliverError(NoConnectionError())

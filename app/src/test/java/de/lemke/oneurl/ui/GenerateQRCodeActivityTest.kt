@@ -26,7 +26,6 @@ import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
-import android.os.Looper
 import android.view.Menu
 import android.view.View
 import android.view.inputmethod.EditorInfo

@@ -25,9 +25,9 @@ import dev.oneuiproject.oneui.layout.ToolbarLayout.AllSelectorState
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest : ShouldSpec(
@@ -37,11 +37,11 @@ class MainViewModelTest : ShouldSpec(
         val url3 = testUrl(shortURL = "https://short.url/3")
         lateinit var repository: FakeURLRepository
 
-        fun newViewModel(observeDispatcher: CoroutineDispatcher = Dispatchers.Unconfined) =
+        fun newViewModel(observeDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()) =
             MainViewModel(
                 ObserveURLsUseCase(repository, observeDispatcher),
-                DeleteURLUseCase(repository, Dispatchers.Unconfined),
-                UpdateURLUseCase(repository, Dispatchers.Unconfined),
+                DeleteURLUseCase(repository, UnconfinedTestDispatcher()),
+                UpdateURLUseCase(repository, UnconfinedTestDispatcher()),
             )
 
         beforeEach {

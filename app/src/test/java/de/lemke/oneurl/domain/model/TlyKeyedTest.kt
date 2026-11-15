@@ -20,7 +20,6 @@ import android.app.Application
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
-import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.data.deliverResponse
 import io.kotest.matchers.shouldBe
 import org.json.JSONObject

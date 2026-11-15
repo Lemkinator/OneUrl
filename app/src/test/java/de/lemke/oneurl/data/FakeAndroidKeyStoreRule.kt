@@ -28,6 +28,7 @@ import java.security.cert.Certificate
 import java.security.spec.AlgorithmParameterSpec
 import java.util.Collections
 import java.util.Date
+import java.util.Enumeration
 import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.KeyGeneratorSpi
 import javax.crypto.SecretKey
@@ -96,7 +97,7 @@ private class InMemoryKeyStoreSpi(
         keys.remove(alias)
     }
 
-    override fun engineAliases() = Collections.enumeration(keys.keys.toList())
+    override fun engineAliases(): Enumeration<String> = Collections.enumeration(keys.keys.toList())
 
     override fun engineSize(): Int = keys.size
 

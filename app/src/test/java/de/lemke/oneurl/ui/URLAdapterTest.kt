@@ -18,7 +18,6 @@ package de.lemke.oneurl.ui
 
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
-import android.os.Looper
 import android.text.Spanned
 import android.text.style.TextAppearanceSpan
 import android.view.View
@@ -32,7 +31,6 @@ import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.awaitMainLooperUntil
 import de.lemke.commonutils.bypassOobe
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
@@ -57,7 +55,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)

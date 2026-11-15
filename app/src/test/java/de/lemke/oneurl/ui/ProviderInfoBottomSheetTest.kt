@@ -19,7 +19,6 @@ package de.lemke.oneurl.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Looper
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.UnderlineSpan

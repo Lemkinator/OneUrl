@@ -247,7 +247,7 @@ class TnyimTest {
 
         Tnyim.getURLClickCount(queue, url) {
             callbackCount++
-            if (callbackCount == 1) throw IllegalStateException("boom") else clicks = it
+            if (callbackCount == 1) error("boom") else clicks = it
         }
         queue.added.single().deliverResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
 
@@ -261,7 +261,7 @@ class TnyimTest {
         val req =
             Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))

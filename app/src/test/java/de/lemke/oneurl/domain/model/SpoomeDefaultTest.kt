@@ -366,8 +366,8 @@ class SpoomeDefaultTest {
             val request = localQueue.added.single()
             request.method shouldBe Request.Method.GET
             request.url.substringBefore("?") shouldBe "https://spoo.me/api/v1/public/stats/abc"
-            val start = Instant.parse(request.query()["start_date"]!!)
-            val end = Instant.parse(request.query()["end_date"]!!)
+            val start = Instant.parse(request.query().getValue("start_date"))
+            val end = Instant.parse(request.query().getValue("end_date"))
             Duration.between(start, end) shouldBe Duration.ofDays(90)
             end.isBefore(before.truncatedTo(ChronoUnit.MILLIS)) shouldBe false
             end.isAfter(after) shouldBe false

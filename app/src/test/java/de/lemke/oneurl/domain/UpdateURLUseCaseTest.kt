@@ -19,11 +19,11 @@ package de.lemke.oneurl.domain
 import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class UpdateURLUseCaseTest : ShouldSpec(
@@ -38,7 +38,7 @@ class UpdateURLUseCaseTest : ShouldSpec(
             val favorite = a.copy(favorite = true)
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { updateURL(favorite) }
+                launch(UnconfinedTestDispatcher(dispatcher.scheduler)) { updateURL(favorite) }
                 repository.urls shouldBe listOf(a, b)
 
                 dispatcher.scheduler.advanceUntilIdle()
@@ -54,7 +54,7 @@ class UpdateURLUseCaseTest : ShouldSpec(
             val renamed = listOf(a.copy(title = "a"), b.copy(title = "b"))
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { updateURL(renamed) }
+                launch(UnconfinedTestDispatcher(dispatcher.scheduler)) { updateURL(renamed) }
                 repository.urls shouldBe listOf(a, b)
 
                 dispatcher.scheduler.advanceUntilIdle()

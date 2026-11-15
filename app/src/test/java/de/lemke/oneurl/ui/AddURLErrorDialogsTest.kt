@@ -23,7 +23,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Bundle
-import android.os.Looper
 import android.provider.Settings
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog

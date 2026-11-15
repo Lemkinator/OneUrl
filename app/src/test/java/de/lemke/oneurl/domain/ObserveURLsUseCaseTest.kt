@@ -22,10 +22,12 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ObserveURLsUseCaseTest : ShouldSpec(
     {
         val favoriteUrl =
@@ -48,7 +50,7 @@ class ObserveURLsUseCaseTest : ShouldSpec(
 
         beforeEach {
             urlRepository = FakeURLRepository(allUrls)
-            observeURLs = ObserveURLsUseCase(urlRepository, Dispatchers.Unconfined)
+            observeURLs = ObserveURLsUseCase(urlRepository, UnconfinedTestDispatcher())
         }
 
         should("emits emptyList when searchQuery is non-null and blank, regardless of repository contents") {

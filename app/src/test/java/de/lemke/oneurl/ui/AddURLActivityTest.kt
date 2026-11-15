@@ -18,7 +18,6 @@ package de.lemke.oneurl.ui
 
 import android.content.ClipboardManager
 import android.content.DialogInterface
-import android.os.Looper
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.EditText

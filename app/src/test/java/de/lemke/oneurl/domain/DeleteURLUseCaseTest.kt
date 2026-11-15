@@ -19,11 +19,11 @@ package de.lemke.oneurl.domain
 import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeleteURLUseCaseTest : ShouldSpec(
@@ -38,7 +38,7 @@ class DeleteURLUseCaseTest : ShouldSpec(
             val deleteURL = DeleteURLUseCase(repository, dispatcher)
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { deleteURL(a) }
+                launch(UnconfinedTestDispatcher(dispatcher.scheduler)) { deleteURL(a) }
                 repository.urls shouldBe listOf(a, b)
 
                 dispatcher.scheduler.advanceUntilIdle()
@@ -53,7 +53,7 @@ class DeleteURLUseCaseTest : ShouldSpec(
             val deleteURL = DeleteURLUseCase(repository, dispatcher)
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { deleteURL(listOf(a, c)) }
+                launch(UnconfinedTestDispatcher(dispatcher.scheduler)) { deleteURL(listOf(a, c)) }
                 repository.urls shouldBe listOf(a, b, c)
 
                 dispatcher.scheduler.advanceUntilIdle()

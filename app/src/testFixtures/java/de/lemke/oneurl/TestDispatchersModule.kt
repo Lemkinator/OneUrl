@@ -29,18 +29,21 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 // Unconfined so URLAdapter's async QR-load coroutines (dispatched via @DefaultDispatcher) run to
 // completion synchronously in Robolectric tests instead of racing a real background thread pool
 // that shadowOf(Looper).idle() cannot wait for. @IoDispatcher work queues on the main looper for
 // the same reason, so shadowOf(Looper).idle() runs it to completion.
+@OptIn(ExperimentalCoroutinesApi::class)
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [DispatchersModule::class])
 object TestDispatchersModule {
     @Provides
     @DefaultDispatcher
-    fun provideDefault(): CoroutineDispatcher = Dispatchers.Unconfined
+    fun provideDefault(): CoroutineDispatcher = UnconfinedTestDispatcher()
 
     @Provides
     @IoDispatcher
