@@ -16,6 +16,7 @@
 
 package de.lemke.oneurl.ui
 
+import android.content.ClipData
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
@@ -98,10 +99,11 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             renderer.renders shouldBe emptyList()
         }
 
-        should("onSave, onShare and onQuickShare export nothing without a QR code") {
+        should("onSave, onCopy, onShare and onQuickShare export nothing without a QR code") {
             val viewModel = newViewModel(SavedStateHandle())
 
             viewModel.onSave()
+            viewModel.onCopy()
             viewModel.onShare()
             viewModel.onQuickShare()
 
@@ -116,6 +118,17 @@ class QRBottomSheetViewModelTest : ShouldSpec(
 
             exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, shortURL))
             viewModel.export.value shouldBe BitmapExport.OpenPicker(shortURL)
+        }
+
+        should("onCopy holds the clip of the QR code") {
+            val clip = mockk<ClipData>()
+            exporter.clip = clip
+            val viewModel = newViewModel()
+
+            viewModel.onCopy()
+
+            exporter.calls shouldBe listOf(Call.CreateClip(qrCode))
+            viewModel.export.value shouldBe BitmapExport.Copy(clip)
         }
 
         should("onShare holds the share file of the QR code for the share sheet") {

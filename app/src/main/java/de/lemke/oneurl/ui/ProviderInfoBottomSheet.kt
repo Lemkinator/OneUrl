@@ -70,7 +70,7 @@ class ProviderInfoBottomSheet : SemBottomSheetDialogFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        val provider = ShortURLProviderCompanion.fromString(requireArguments().getString(KEY_PROVIDER)!!)
+        val provider = ShortURLProviderCompanion.fromString(requireArguments().getString(KEY_PROVIDER))
         binding.providerBottomSheetTitle.text = provider.name
         if (provider.name != provider.group) {
             binding.providerBottomSheetInfoGroup.isVisible = true

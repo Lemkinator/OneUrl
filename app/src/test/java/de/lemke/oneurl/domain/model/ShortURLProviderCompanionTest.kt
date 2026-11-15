@@ -104,6 +104,10 @@ class ShortURLProviderCompanionTest : ShouldSpec(
             result.enabled.shouldBeFalse()
         }
 
+        should("fromString returns an Unknown provider for a missing name") {
+            ShortURLProviderCompanion.fromString(null).shouldBeInstanceOf<Unknown>()
+        }
+
         should("fromStringOrDefault returns the matching provider by name") {
             val provider = ShortURLProviderCompanion.default
 

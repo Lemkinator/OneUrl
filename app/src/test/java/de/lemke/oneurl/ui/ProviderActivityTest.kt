@@ -44,14 +44,12 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @HiltAndroidTest
@@ -97,6 +95,25 @@ class ProviderActivityTest {
                     .performClick()
                 idleMainLooper()
                 activity.supportFragmentManager.findFragmentByTag(ProviderInfoBottomSheet::class.java.simpleName) shouldNotBe null
+            }
+        }
+    }
+
+    @Test
+    fun `long-clicking a provider item in select mode shows the provider info bottom sheet and keeps the screen open`() {
+        launchProviderActivity(ProviderScreenMode.Select).use { scenario ->
+            scenario.onActivity { activity ->
+                idleMainLooper()
+                val handled =
+                    activity
+                        .findViewById<RecyclerView>(R.id.provider_list)
+                        .findViewHolderForAdapterPosition(0)!!
+                        .itemView
+                        .performLongClick()
+                idleMainLooper()
+                handled.shouldBeTrue()
+                activity.supportFragmentManager.findFragmentByTag(ProviderInfoBottomSheet::class.java.simpleName) shouldNotBe null
+                activity.isFinishing shouldBe false
             }
         }
     }

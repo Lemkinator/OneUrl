@@ -16,7 +16,6 @@
 
 package de.lemke.oneurl.ui
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -70,11 +69,14 @@ class URLActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
+    private val qrViewModel: QRBottomSheetViewModel by viewModels()
     private lateinit var searchHighlighter: SearchHighlighter
     private var lastBoundShortURL: String? = null
     private var lastBoundQrCode: Bitmap? = null
+    private val qrCode: Bitmap?
+        get() = if (viewModel.state.value.url == null) null else qrViewModel.state.value.qrCode
     private val exportQRCodeResultLauncher: SingleLaunchResultLauncher<Intent> =
-        registerForSingleLaunchResult(StartActivityForResult()) { viewModel.onDocumentPicked(it.toDocumentPick()) }
+        registerForSingleLaunchResult(StartActivityForResult()) { qrViewModel.onDocumentPicked(it.toDocumentPick()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prepareActivityTransformationTo()
@@ -85,12 +87,16 @@ class URLActivity : AppCompatActivity() {
         searchHighlighter = SearchHighlighter(this)
         initQrControls()
         collectState()
-        collectState(viewModel.export) { renderQrControls() }
-        collectState(viewModel.export, minActiveState = RESUMED) { onExport(it) }
+        collectState(qrViewModel.state) { bindQrCode() }
+        collectState(qrViewModel.export) { renderQrControls() }
+        collectState(qrViewModel.export, minActiveState = RESUMED) { onExport(it) }
         collectState(viewModel.exit, minActiveState = RESUMED) { if (it is UrlDetailExit.Reason) onExit(it) }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.url_toolbar, menu).let { true }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.url_toolbar, menu)
+        return true
+    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val longURL =
@@ -140,7 +146,7 @@ class URLActivity : AppCompatActivity() {
                 bindURL(url)
             }
             updateFavoriteAndVisitViews(state, url)
-            bindQrCode(state.qrCode)
+            bindQrCode()
         }
 
     private fun bindURL(url: URL) {
@@ -179,11 +185,11 @@ class URLActivity : AppCompatActivity() {
     private fun initQrControls() {
         binding.urlQrImageview.onSingleLaunchClick { showQRBottomSheet() }
         binding.urlQrImageview.setOnLongClickListener { copyQRCode() }
-        binding.urlQrSaveButton.onSingleLaunchClick { viewModel.onSaveQRCode() }
-        binding.urlQrShareButton.onSingleLaunchClick { viewModel.onShareQRCode() }
+        binding.urlQrSaveButton.onSingleLaunchClick { qrViewModel.onSave() }
+        binding.urlQrShareButton.onSingleLaunchClick { qrViewModel.onShare() }
     }
 
-    private fun bindQrCode(qrCode: Bitmap?) {
+    private fun bindQrCode() {
         if (qrCode === lastBoundQrCode) return
         lastBoundQrCode = qrCode
         binding.urlQrImageview.setImageBitmap(qrCode)
@@ -191,8 +197,8 @@ class URLActivity : AppCompatActivity() {
     }
 
     private fun renderQrControls() {
-        val hasQrCode = viewModel.state.value.qrCode != null
-        val exportIdle = viewModel.export.value != BitmapExport.Running
+        val hasQrCode = qrCode != null
+        val exportIdle = qrViewModel.export.value != BitmapExport.Running
         binding.urlQrImageview.isEnabled = hasQrCode
         binding.urlQrImageview.isLongClickable = exportIdle
         binding.urlQrSaveButton.isEnabled = hasQrCode && exportIdle
@@ -205,13 +211,13 @@ class URLActivity : AppCompatActivity() {
     }
 
     private fun copyQRCode(): Boolean {
-        if (viewModel.state.value.qrCode == null) return false
-        singleLaunch { viewModel.onCopyQRCode() }
+        if (qrCode == null) return false
+        singleLaunch { qrViewModel.onCopy() }
         return true
     }
 
     private fun onExport(export: BitmapExport) {
-        if (export is BitmapExport.Result && launchBitmapExport(export, exportQRCodeResultLauncher)) viewModel.onExportHandled(export)
+        if (export is BitmapExport.Result && launchBitmapExport(export, exportQRCodeResultLauncher)) qrViewModel.onExportHandled(export)
     }
 
     private fun handleBnvItemSelected(
@@ -229,11 +235,13 @@ class URLActivity : AppCompatActivity() {
             }
 
             R.id.url_bnv_add_to_fav -> {
-                viewModel.toggleFavorite().let { true }
+                viewModel.toggleFavorite()
+                true
             }
 
             R.id.url_bnv_remove_from_fav -> {
-                viewModel.toggleFavorite().let { true }
+                viewModel.toggleFavorite()
+                true
             }
 
             R.id.url_bnv_delete -> {

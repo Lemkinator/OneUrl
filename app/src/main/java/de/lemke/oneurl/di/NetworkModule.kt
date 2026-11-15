@@ -33,19 +33,19 @@ import de.lemke.oneurl.data.VolleyQueue
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class NetworkModule {
+interface NetworkModule {
     @Binds
-    abstract fun bindVolleyQueue(queue: DefaultVolleyQueue): VolleyQueue
+    fun bindVolleyQueue(queue: DefaultVolleyQueue): VolleyQueue
 
     @Binds
-    abstract fun bindNetworkMonitor(monitor: DefaultNetworkMonitor): NetworkMonitor
+    fun bindNetworkMonitor(monitor: DefaultNetworkMonitor): NetworkMonitor
 
     @Binds
-    abstract fun bindUrlhausClient(client: DefaultUrlhausClient): UrlhausClient
+    fun bindUrlhausClient(client: DefaultUrlhausClient): UrlhausClient
 
     @Binds
-    abstract fun bindPageTitleFetcher(fetcher: DefaultPageTitleFetcher): PageTitleFetcher
+    fun bindPageTitleFetcher(fetcher: DefaultPageTitleFetcher): PageTitleFetcher
 
     @Binds
-    abstract fun bindShortURLClient(client: DefaultShortURLClient): ShortURLClient
+    fun bindShortURLClient(client: DefaultShortURLClient): ShortURLClient
 }

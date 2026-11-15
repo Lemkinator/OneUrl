@@ -16,29 +16,11 @@
 
 package de.lemke.oneurl.ui
 
-import android.content.ClipData
-import android.graphics.Bitmap
-import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
-import de.lemke.commonutils.data.FakeSharedPreferences
-import de.lemke.commonutils.data.SaveLocation
-import de.lemke.commonutils.ui.utils.BitmapExport
-import de.lemke.commonutils.ui.utils.BitmapSaveResult
-import de.lemke.commonutils.ui.utils.BitmapShareFile
-import de.lemke.commonutils.ui.utils.DocumentPick
-import de.lemke.commonutils.ui.utils.FakeBitmapExporter
-import de.lemke.commonutils.ui.utils.FakeBitmapExporter.Call
-import de.lemke.commonutils.ui.utils.ShareTarget
-import de.lemke.oneurl.data.FakeQRCodeRenderer
-import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.FakeShortURLClient
 import de.lemke.oneurl.data.FakeURLRepository
-import de.lemke.oneurl.data.QRCodeCache
-import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.DeleteURLUseCase
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
-import de.lemke.oneurl.domain.GetQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetVisitCountUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
@@ -48,56 +30,31 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class URLViewModelTest : ShouldSpec(
     {
         val url = testUrl(shortURL = "https://short.url/x")
-        val qrCode = mockk<Bitmap> { every { byteCount } returns 1024 }
         lateinit var repository: FakeURLRepository
         lateinit var shortURLClient: FakeShortURLClient
-        lateinit var renderer: FakeQRCodeRenderer
-        lateinit var settingsScope: CoroutineScope
-        lateinit var userSettings: UserSettings
-        lateinit var exporter: FakeBitmapExporter
 
-        fun newViewModel(
-            shortURL: String? = url.shortURL,
-            qrCodeDispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
-        ) = URLViewModel(
-            if (shortURL == null) SavedStateHandle() else SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to shortURL)),
-            GetURLUseCase(repository, Dispatchers.Unconfined),
-            UpdateURLUseCase(repository, Dispatchers.Unconfined),
-            DeleteURLUseCase(repository, Dispatchers.Unconfined),
-            GetVisitCountUseCase(shortURLClient),
-            GetQRCodeUseCase(QRCodeCache(), GenerateQRCodeUseCase(renderer), qrCodeDispatcher),
-            userSettings,
-            exporter,
-        )
+        fun newViewModel(shortURL: String? = url.shortURL) =
+            URLViewModel(
+                if (shortURL == null) SavedStateHandle() else SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to shortURL)),
+                GetURLUseCase(repository, UnconfinedTestDispatcher()),
+                UpdateURLUseCase(repository, UnconfinedTestDispatcher()),
+                DeleteURLUseCase(repository, UnconfinedTestDispatcher()),
+                GetVisitCountUseCase(shortURLClient),
+            )
 
         beforeEach {
             repository = FakeURLRepository(listOf(url))
             shortURLClient = FakeShortURLClient().apply { visitCounts[url.shortURL] = 42 }
-            renderer = FakeQRCodeRenderer(qrCode, placeholder = mockk())
-            settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
-            userSettings = UserSettings(FakeSharedPreferences(), settingsScope)
-            exporter = FakeBitmapExporter()
-        }
-
-        afterEach {
-            settingsScope.cancel()
         }
 
         should("init loads the URL, stops loading, and refreshes the visit count") {
@@ -225,109 +182,6 @@ class URLViewModelTest : ShouldSpec(
 
             repository.urls shouldBe listOf(url)
             viewModel.exit.value shouldBe UrlDetailExit.NotFound
-        }
-
-        should("init loads the QR code for the short URL once the URL is loaded") {
-            val qrCodeDispatcher = StandardTestDispatcher()
-            val viewModel = newViewModel(qrCodeDispatcher = qrCodeDispatcher)
-
-            viewModel.state.value.url shouldBe url
-            viewModel.state.value.qrCode shouldBe null
-            qrCodeDispatcher.scheduler.advanceUntilIdle()
-
-            viewModel.state.value.qrCode shouldBe qrCode
-            renderer.renders shouldBe listOf(Render(url.shortURL, null))
-        }
-
-        should("init leaves the QR code null and never renders it when the URL does not exist") {
-            val viewModel = newViewModel(shortURL = "https://short.url/missing")
-
-            viewModel.state.value.qrCode shouldBe null
-            renderer.renders shouldBe emptyList()
-        }
-
-        should("onSaveQRCode, onCopyQRCode and onShareQRCode export nothing before the QR code exists") {
-            val viewModel = newViewModel(qrCodeDispatcher = StandardTestDispatcher())
-
-            viewModel.onSaveQRCode()
-            viewModel.onCopyQRCode()
-            viewModel.onShareQRCode()
-
-            exporter.calls shouldBe emptyList()
-            viewModel.export.value shouldBe BitmapExport.Idle
-        }
-
-        should("onSaveQRCode exports nothing when the URL does not exist") {
-            val viewModel = newViewModel(shortURL = "https://short.url/missing")
-
-            viewModel.onSaveQRCode()
-
-            exporter.calls shouldBe emptyList()
-            viewModel.export.value shouldBe BitmapExport.Idle
-        }
-
-        should("onSaveQRCode writes the QR code under the short URL to the image save location and holds OpenPicker") {
-            val viewModel = newViewModel()
-
-            viewModel.onSaveQRCode()
-
-            exporter.calls shouldBe listOf(Call.SaveToDirectory(SaveLocation.CUSTOM, qrCode, "https://short.url/x"))
-            viewModel.export.value shouldBe BitmapExport.OpenPicker("https://short.url/x")
-        }
-
-        should("onCopyQRCode holds the clip of the QR code") {
-            val clip = mockk<ClipData>()
-            exporter.clip = clip
-            val viewModel = newViewModel()
-
-            viewModel.onCopyQRCode()
-
-            exporter.calls shouldBe listOf(Call.CreateClip(qrCode))
-            viewModel.export.value shouldBe BitmapExport.Copy(clip)
-        }
-
-        should("onShareQRCode holds the share file of the QR code for the share sheet") {
-            val file = BitmapShareFile.Written(mockk<Uri>())
-            exporter.shareFile = file
-            val viewModel = newViewModel()
-
-            viewModel.onShareQRCode()
-
-            exporter.calls shouldBe listOf(Call.CreateShareFile(qrCode))
-            viewModel.export.value shouldBe BitmapExport.Share(file, ShareTarget.SHARE_SHEET)
-        }
-
-        should("onDocumentPicked writes the QR code into the created document") {
-            val uri = mockk<Uri>()
-            val viewModel = newViewModel()
-
-            viewModel.onDocumentPicked(DocumentPick.Created(uri))
-
-            exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, qrCode))
-            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.Saved(SaveLocation.CUSTOM))
-        }
-
-        should("onDocumentPicked during the QR code load deletes the created document and holds WriteFailed") {
-            val qrCodeDispatcher = StandardTestDispatcher()
-            val uri = mockk<Uri>()
-            val viewModel = newViewModel(qrCodeDispatcher = qrCodeDispatcher)
-
-            viewModel.onDocumentPicked(DocumentPick.Created(uri))
-            qrCodeDispatcher.scheduler.advanceUntilIdle()
-
-            exporter.calls shouldBe listOf(Call.SaveToCreatedDocument(uri, null))
-            exporter.deletedDocuments shouldBe listOf(uri)
-            viewModel.export.value shouldBe BitmapExport.SaveFinished(BitmapSaveResult.WriteFailed)
-        }
-
-        should("onExportHandled returns the export to Idle") {
-            exporter.shareFile = BitmapShareFile.Failed
-            val viewModel = newViewModel()
-            viewModel.onShareQRCode()
-
-            viewModel.onExportHandled(BitmapExport.ShareFailed)
-
-            viewModel.export.value shouldBe BitmapExport.Idle
         }
     },
 )

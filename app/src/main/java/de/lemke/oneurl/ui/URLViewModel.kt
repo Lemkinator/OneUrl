@@ -16,20 +16,12 @@
 
 package de.lemke.oneurl.ui
 
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import de.lemke.commonutils.ui.utils.BitmapExport
-import de.lemke.commonutils.ui.utils.BitmapExportStateHolder
-import de.lemke.commonutils.ui.utils.BitmapExporter
-import de.lemke.commonutils.ui.utils.DocumentPick
-import de.lemke.commonutils.ui.utils.ShareTarget
-import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.DeleteURLUseCase
-import de.lemke.oneurl.domain.GetQRCodeUseCase
 import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetVisitCountUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
@@ -49,20 +41,15 @@ class URLViewModel @Inject constructor(
     private val updateURL: UpdateURLUseCase,
     private val deleteURL: DeleteURLUseCase,
     private val getVisitCount: GetVisitCountUseCase,
-    private val getQRCode: GetQRCodeUseCase,
-    private val userSettings: UserSettings,
-    exporter: BitmapExporter,
 ) : ViewModel() {
-    private val qrCodeExport = BitmapExportStateHolder(viewModelScope, exporter)
     val state: StateFlow<UrlDetailUiState>
         field = MutableStateFlow(UrlDetailUiState())
-    val export: StateFlow<BitmapExport> = qrCodeExport.state
 
     val exit: StateFlow<UrlDetailExit>
         field = MutableStateFlow<UrlDetailExit>(UrlDetailExit.None)
 
     init {
-        val shortURL = savedStateHandle.get<String>(KEY_SHORTURL) ?: ""
+        val shortURL = savedStateHandle.get<String>(KEY_SHORTURL).orEmpty()
         viewModelScope.launch {
             val url = getURL(shortURL)
             if (url == null) {
@@ -71,8 +58,6 @@ class URLViewModel @Inject constructor(
             }
             state.update { it.copy(url = url, isLoading = false) }
             refreshVisitCount()
-            val qrCode = getQRCode(url.shortURL)
-            state.update { it.copy(qrCode = qrCode) }
         }
     }
 
@@ -109,31 +94,6 @@ class URLViewModel @Inject constructor(
         }
     }
 
-    fun onSaveQRCode() {
-        val current = state.value
-        val url = current.url ?: return
-        val qrCode = current.qrCode ?: return
-        qrCodeExport.save(qrCode, url.shortURL, userSettings.imageSaveLocation)
-    }
-
-    fun onDocumentPicked(pick: DocumentPick) {
-        qrCodeExport.onDocumentPicked(pick, state.value.qrCode)
-    }
-
-    fun onCopyQRCode() {
-        val qrCode = state.value.qrCode ?: return
-        qrCodeExport.copy(qrCode)
-    }
-
-    fun onShareQRCode() {
-        val qrCode = state.value.qrCode ?: return
-        qrCodeExport.share(qrCode, ShareTarget.SHARE_SHEET)
-    }
-
-    fun onExportHandled(result: BitmapExport.Result) {
-        qrCodeExport.onHandled(result)
-    }
-
     fun onExitHandled(reason: UrlDetailExit.Reason) {
         exit.compareAndSet(reason, UrlDetailExit.None)
     }
@@ -148,7 +108,6 @@ data class UrlDetailUiState(
     val isLoading: Boolean = true,
     val visitCount: Int? = null,
     val isRefreshingVisits: Boolean = false,
-    val qrCode: Bitmap? = null,
 )
 
 /** Why the URL screen closes. The activity acts on a [Reason] and then reports it handled. */

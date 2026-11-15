@@ -125,7 +125,7 @@ private fun AlertDialog.Builder.configureProviderError(
         },
     )
     setProviderErrorMessage(
-        providerText?.let { it.trim().takeIf(String::isShortPlainText) } ?: this.context.getString(statusMessageRes(statusCode)),
+        providerText.orEmpty().trim().takeIf(String::isShortPlainText) ?: this.context.getString(statusMessageRes(statusCode)),
     )
 }
 

@@ -95,7 +95,8 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
     }
 
     companion object {
-        const val KEY_SHORT_URL = "key_short_url"
+        // URLActivity builds its QRBottomSheetViewModel from its intent extras, so the key is the activity's.
+        const val KEY_SHORT_URL = URLActivity.KEY_SHORTURL
 
         fun createQRBottomSheet(shortURL: String): QRBottomSheet =
             QRBottomSheet().apply {

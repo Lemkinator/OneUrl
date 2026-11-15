@@ -72,6 +72,11 @@ class QRBottomSheetViewModel @Inject constructor(
         qrCodeExport.onDocumentPicked(pick, state.value.qrCode)
     }
 
+    fun onCopy() {
+        val qrCode = state.value.qrCode ?: return
+        qrCodeExport.copy(qrCode)
+    }
+
     fun onShare() {
         val qrCode = state.value.qrCode ?: return
         qrCodeExport.share(qrCode, ShareTarget.SHARE_SHEET)

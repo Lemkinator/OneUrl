@@ -153,12 +153,12 @@ class AddURLActivity : AppCompatActivity() {
         }
         val alias =
             binding.editTextAlias.text
-                ?.toString()
-                ?.trim() ?: ""
+                .toString()
+                .trim()
         val provider = viewModel.state.value.selectedProvider
         val aliasConfig = provider.aliasConfig
         if (alias.isNotBlank() && aliasConfig != null && !isAliasValid(alias, aliasConfig)) return
-        viewModel.submit(longURLRaw, alias, binding.editTextDescription.text?.toString() ?: "")
+        viewModel.submit(longURLRaw, alias, binding.editTextDescription.text.toString())
     }
 
     private fun isAliasValid(

@@ -25,7 +25,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import android.os.Looper
 import android.view.Menu
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
@@ -43,7 +42,6 @@ import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.PausableDispatcher
 import de.lemke.commonutils.RecordingDocumentsProvider
 import de.lemke.commonutils.ShadowFileProvider
-import de.lemke.commonutils.cacheFileOf
 import de.lemke.commonutils.cacheWriteUriPattern
 import de.lemke.commonutils.hasPngSignature
 import de.lemke.commonutils.idleMainLooper
@@ -356,7 +354,7 @@ class URLActivityTest {
         withUrlScenario { scenario ->
             scenario.onActivity { activity ->
                 activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
-                ViewModelProvider(activity)[URLViewModel::class.java].onSaveQRCode()
+                ViewModelProvider(activity)[QRBottomSheetViewModel::class.java].onSave()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -921,5 +919,5 @@ class URLActivityTest {
 
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
 
-    private fun URLActivity.exportState(): BitmapExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
+    private fun URLActivity.exportState(): BitmapExport = ViewModelProvider(this)[QRBottomSheetViewModel::class.java].export.value
 }

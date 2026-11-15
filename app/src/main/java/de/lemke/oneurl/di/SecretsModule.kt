@@ -33,12 +33,12 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class SecretsModule {
+interface SecretsModule {
     @Binds
-    abstract fun bindSecretStore(store: KSafeSecretStore): SecretStore
+    fun bindSecretStore(store: KSafeSecretStore): SecretStore
 
     @Binds
-    abstract fun bindTlyKeyStore(store: DefaultTlyKeyStore): TlyKeyStore
+    fun bindTlyKeyStore(store: DefaultTlyKeyStore): TlyKeyStore
 
     companion object {
         @Provides

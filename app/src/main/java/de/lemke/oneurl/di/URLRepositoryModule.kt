@@ -25,7 +25,7 @@ import de.lemke.oneurl.data.URLRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class URLRepositoryModule {
+interface URLRepositoryModule {
     @Binds
-    abstract fun bindURLRepository(repository: DefaultURLRepository): URLRepository
+    fun bindURLRepository(repository: DefaultURLRepository): URLRepository
 }

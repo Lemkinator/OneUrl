@@ -16,8 +16,8 @@
 
 package de.lemke.oneurl.domain.model
 
-sealed class UrlhausResult {
-    data object Ok : UrlhausResult()
+sealed interface UrlhausResult {
+    data object Ok : UrlhausResult
 
-    data class Blacklisted(val message: String, val urlhausLink: String?, val virustotalLink: String?) : UrlhausResult()
+    data class Blacklisted(val message: String, val urlhausLink: String?, val virustotalLink: String?) : UrlhausResult
 }

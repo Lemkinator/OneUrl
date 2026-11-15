@@ -40,11 +40,7 @@ interface VolleyQueue {
 class DefaultVolleyQueue @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) : VolleyQueue {
-    private val lazyQueue =
-        lazy {
-            val cacheDirectory = lazy { File(context.cacheDir, CACHE_DIRECTORY) }
-            RequestQueue(DiskBasedCache { cacheDirectory.value }, BasicNetwork(HurlStack())).apply { start() }
-        }
+    private val lazyQueue = lazy(::createQueue)
     private val queue: RequestQueue by lazyQueue
 
     override fun add(request: Request<*>) {
@@ -53,6 +49,11 @@ class DefaultVolleyQueue @Inject constructor(
 
     override fun removeCacheEntry(url: String) {
         queue.cache.remove(url)
+    }
+
+    private fun createQueue(): RequestQueue {
+        val cacheDirectory = lazy { File(context.cacheDir, CACHE_DIRECTORY) }
+        return RequestQueue(DiskBasedCache { cacheDirectory.value }, BasicNetwork(HurlStack())).apply { start() }
     }
 
     /** Stops the queue's cache and network dispatcher threads. */

@@ -43,7 +43,7 @@ object SettingsProvideModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class SettingsBindModule {
+interface SettingsBindModule {
     @Binds
-    abstract fun bindSettingsRepository(u: UserSettings): SettingsRepository
+    fun bindSettingsRepository(u: UserSettings): SettingsRepository
 }

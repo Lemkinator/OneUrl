@@ -113,7 +113,7 @@ object ShortURLProviderCompanion {
 
     private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
 
-    fun fromString(name: String): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
+    fun fromString(name: String?): ShortURLProvider = fromStringOrNull(name) ?: Unknown()
 
     fun fromStringOrDefault(name: String?): ShortURLProvider = getIfEnabledOrDefault(fromStringOrNull(name))
 }

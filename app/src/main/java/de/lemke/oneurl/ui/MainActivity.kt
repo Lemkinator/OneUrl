@@ -153,7 +153,10 @@ class MainActivity :
         if (intent.action == ACTION_SEARCH) binding.drawerLayout.setSearchQueryFromIntent(intent)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.main, menu).let { true }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main, menu)
+        return true
+    }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         menu?.findItem(R.id.menu_item_show_all)?.isVisible = viewModel.filterFavorite.value
@@ -164,7 +167,8 @@ class MainActivity :
     override fun onOptionsItemSelected(item: MenuItem): Boolean =
         when (item.itemId) {
             R.id.menu_item_search -> {
-                startSearch().let { true }
+                startSearch()
+                true
             }
 
             R.id.menu_item_show_all -> {
