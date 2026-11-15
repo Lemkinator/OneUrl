@@ -80,10 +80,10 @@ through `CheckURLSafetyUseCase` over `UrlhausClient`, and creates through `Short
 URLViewModel, GenerateQRCodeViewModel, QRBottomSheetViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
 than calling use cases directly.
 
-**QR code export** — `GenerateQRCodeViewModel`, `URLViewModel` and `QRBottomSheetViewModel` each compose a common-utils
+**QR code export** — `GenerateQRCodeViewModel` and `QRBottomSheetViewModel` each compose a common-utils
 `BitmapExportStateHolder`, which runs save, copy, share and the document-picker write through the common-utils `BitmapExporter` and
 exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` is the one screen-side reaction to a result.
-`GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss.
+`GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss. `URLActivity` takes its QR code and export from a second, activity-scoped `QRBottomSheetViewModel`, which reads the short URL from the activity's intent extra.
 
 **Backup** — `data/backup/` holds `UrlBackupSection`, the one `urls` section of a common-utils backup, over `UrlBackupEntry` (a serializable DTO,
 never `URLDb`). Merge keys by short URL and keeps the phone's entry, favorite when either side is; the `added` stamp travels as ISO-8601 text with
@@ -126,7 +126,14 @@ Three tools run as part of `./gradlew build`:
 
 - **Spotless** — enforces formatting via ktlint (sole ktlint driver; Detekt has no ktlint wrapper). Fix violations with
   `./gradlew spotlessApply`.
-- **Detekt** — static analysis; config at `config/detekt/detekt.yml`. `autoCorrect = false` — fixes are manual.
+- **Detekt** — static analysis; config at `config/detekt/detekt.yml`. `autoCorrect = false` — fixes are manual. Run
+  `./gradlew detektMain detektTest`: together they analyze every source set once with type resolution. `detekt { ignoredBuildTypes }`
+  drops the variants that only repeat `release`, and the `release` tasks skip the source sets `debug` already analyzes.
+  `app/build.gradle.kts` adds each component's javac output to its task classpath, so generated view binding, `BuildConfig` and
+  Hilt classes resolve. Each report's `number of kt files` line counts the analyzed files. `check` depends on, and CI runs,
+  `detektMain` and `detektTest`, not the plain `detekt` task, which has no type resolution, so rules that need it stay silent.
+  The pre-commit hook runs plain `detekt` only, so type-aware rules run in `check`/CI. The hook does not replace
+  `./gradlew detektMain detektTest`; run it before you push.
 - **Konsist** — architecture rules in `app/src/test/java/de/lemke/oneurl/ArchitectureTest.kt`. Enforces `data/domain/ui` layering
   (`data` may depend on `domain.model`'s shared value types, never on use cases). ViewModel files expose state only, without
   `Channel` or `SharedFlow`. Runs as part of `./gradlew test`.
@@ -162,14 +169,15 @@ git config core.autocrlf input           # Windows: prevents CRLF violations
 git config core.hooksPath .githooks
 ```
 
-The hook runs `spotlessCheck` and exits 1 with a `./gradlew spotlessApply` reminder on failure. It also fails fast with a targeted
+The hook runs `spotlessCheck detekt` (plain detekt, no type resolution, for a fast commit) and exits 1 with a
+`./gradlew spotlessApply` reminder on failure. It also fails fast with a targeted
 message if `core.autocrlf=true` is detected. The hook does not run `lintDebug` (too slow for every commit) — always run it manually
 after touching `libs.versions.toml` or a dependency block.
 
 **After any change** — run the full local CI suite before declaring work done:
 
 ```bash
-./gradlew spotlessCheck detekt buildHealth lintDebug testDebugUnitTest koverVerifyDebug koverHtmlReportDebug verifyRoborazziDebug pixel9Api35DebugAndroidTest assembleRelease
+./gradlew spotlessCheck detektMain detektTest buildHealth lintDebug testDebugUnitTest koverVerifyDebug koverHtmlReportDebug verifyRoborazziDebug pixel9Api35DebugAndroidTest assembleRelease
 ```
 
 If `spotlessCheck` fails, fix with `./gradlew spotlessApply` then re-run. If a screenshot golden mismatch is expected
