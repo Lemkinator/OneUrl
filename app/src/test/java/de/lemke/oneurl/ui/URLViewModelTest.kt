@@ -45,7 +45,7 @@ class URLViewModelTest : ShouldSpec(
 
         fun newViewModel(shortURL: String? = url.shortURL) =
             URLViewModel(
-                if (shortURL == null) SavedStateHandle() else SavedStateHandle(mapOf(URLActivity.KEY_SHORTURL to shortURL)),
+                if (shortURL == null) SavedStateHandle() else SavedStateHandle(mapOf(ShortURLQRCodeViewModel.KEY_SHORT_URL to shortURL)),
                 GetURLUseCase(repository, UnconfinedTestDispatcher()),
                 UpdateURLUseCase(repository, UnconfinedTestDispatcher()),
                 DeleteURLUseCase(repository, UnconfinedTestDispatcher()),

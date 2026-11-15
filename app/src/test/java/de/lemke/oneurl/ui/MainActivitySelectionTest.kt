@@ -34,7 +34,7 @@ import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.idleMainLooper
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import dev.oneuiproject.oneui.layout.NavDrawerLayout
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -79,7 +79,7 @@ class MainActivitySelectionTest {
             scenario.onActivity { activity ->
                 val started = shadowOf(activity).nextStartedActivity
                 started.component?.className shouldBe URLActivity::class.java.name
-                started.getStringExtra(KEY_SHORTURL) shouldBe url.shortURL
+                started.getStringExtra(KEY_SHORT_URL) shouldBe url.shortURL
             }
         }
     }

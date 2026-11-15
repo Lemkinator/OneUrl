@@ -42,7 +42,7 @@ import de.lemke.oneurl.domain.model.GenerateURLError
 import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import dev.oneuiproject.oneui.ktx.hideSoftInput
 import de.lemke.commonutils.R as commonutilsR
 
@@ -195,7 +195,7 @@ class AddURLActivity : AppCompatActivity() {
             .setNeutralButton(commonutilsR.string.commonutils_ok, null)
             .setPositiveButton(R.string.to_url) { _, _ ->
                 binding.urlInputLayout.transformToActivity(
-                    Intent(this, URLActivity::class.java).putExtra(KEY_SHORTURL, shortURL),
+                    Intent(this, URLActivity::class.java).putExtra(KEY_SHORT_URL, shortURL),
                     transitionName = "alreadyShortenedUrlTransition",
                 )
             }.showOnce(ALREADY_SHORTENED_DIALOG_TAG)

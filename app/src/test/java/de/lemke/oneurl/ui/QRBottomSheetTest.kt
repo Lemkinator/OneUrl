@@ -111,7 +111,7 @@ class QRBottomSheetTest {
 
     private fun MainActivity.qrBottomSheet(): QRBottomSheet = supportFragmentManager.findFragmentByTag("qr") as QRBottomSheet
 
-    private fun QRBottomSheet.exportState(): BitmapExport = ViewModelProvider(this)[QRBottomSheetViewModel::class.java].export.value
+    private fun QRBottomSheet.exportState(): BitmapExport = ViewModelProvider(this)[ShortURLQRCodeViewModel::class.java].export.value
 
     private fun withQrBottomSheetScenario(
         shortURL: String = "https://short.url/qr",
@@ -263,7 +263,7 @@ class QRBottomSheetTest {
         withQrBottomSheetScenario { scenario ->
             scenario.onActivity { activity ->
                 activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
-                ViewModelProvider(activity.qrBottomSheet())[QRBottomSheetViewModel::class.java].onSave()
+                ViewModelProvider(activity.qrBottomSheet())[ShortURLQRCodeViewModel::class.java].onSave()
             }
             idleMainLooper()
             scenario.onActivity { activity ->

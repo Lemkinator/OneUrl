@@ -26,7 +26,7 @@ import de.lemke.oneurl.domain.GetURLUseCase
 import de.lemke.oneurl.domain.GetVisitCountUseCase
 import de.lemke.oneurl.domain.UpdateURLUseCase
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +49,7 @@ class URLViewModel @Inject constructor(
         field = MutableStateFlow<UrlDetailExit>(UrlDetailExit.None)
 
     init {
-        val shortURL = savedStateHandle.get<String>(KEY_SHORTURL).orEmpty()
+        val shortURL = savedStateHandle.get<String>(KEY_SHORT_URL).orEmpty()
         viewModelScope.launch {
             val url = getURL(shortURL)
             if (url == null) {

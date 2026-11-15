@@ -77,13 +77,13 @@ checks URL against URLhaus → delegates to the selected provider's `getCreateRe
 through `CheckURLSafetyUseCase` over `UrlhausClient`, and creates through `ShortURLClient`. Every HTTP call goes through `VolleyQueue`.
 
 **`ui/`** — Activities, adapters, and ViewModels. Activities interact with use cases through ViewModels (MainViewModel, AddURLViewModel,
-URLViewModel, GenerateQRCodeViewModel, QRBottomSheetViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
+URLViewModel, GenerateQRCodeViewModel, ShortURLQRCodeViewModel, ProviderViewModel), observing their state via coroutines and StateFlow rather
 than calling use cases directly.
 
-**QR code export** — `GenerateQRCodeViewModel` and `QRBottomSheetViewModel` each compose a common-utils
+**QR code export** — `GenerateQRCodeViewModel` and `ShortURLQRCodeViewModel` each compose a common-utils
 `BitmapExportStateHolder`, which runs save, copy, share and the document-picker write through the common-utils `BitmapExporter` and
 exposes them as `export: StateFlow<BitmapExport>`. `Context.launchBitmapExport` is the one screen-side reaction to a result.
-`GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss. `URLActivity` takes its QR code and export from a second, activity-scoped `QRBottomSheetViewModel`, which reads the short URL from the activity's intent extra.
+`GetQRCodeUseCase` serves the full-size QR code of a short URL from `QRCodeCache` and generates it on a miss. `URLActivity` takes its QR code and export from a second, activity-scoped `ShortURLQRCodeViewModel`, which reads the short URL under `ShortURLQRCodeViewModel.KEY_SHORT_URL` (the activity's intent extra and the `QRBottomSheet` argument share it). Both hosts call `load()`: the bottom sheet when its view is created, `URLActivity` once `URLViewModel` has found the URL, so a missing URL never renders a QR code.
 
 **Backup** — `data/backup/` holds `UrlBackupSection`, the one `urls` section of a common-utils backup, over `UrlBackupEntry` (a serializable DTO,
 never `URLDb`). Merge keys by short URL and keeps the phone's entry, favorite when either side is; the `added` stamp travels as ISO-8601 text with

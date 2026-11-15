@@ -27,7 +27,7 @@ import de.lemke.commonutils.HiltTestRule
 import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -75,7 +75,7 @@ class URLActivityTest {
         ActivityScenario
             .launch<URLActivity>(
                 Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                    .putExtra(KEY_SHORTURL, seededUrl.shortURL),
+                    .putExtra(KEY_SHORT_URL, seededUrl.shortURL),
             ).use { scenario ->
                 scenario.state.isAtLeast(Lifecycle.State.CREATED) shouldBe true
             }

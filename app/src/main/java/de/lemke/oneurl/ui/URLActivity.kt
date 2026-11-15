@@ -69,12 +69,12 @@ class URLActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUrlBinding
     private val viewModel: URLViewModel by viewModels()
-    private val qrViewModel: QRBottomSheetViewModel by viewModels()
+    private val qrViewModel: ShortURLQRCodeViewModel by viewModels()
     private lateinit var searchHighlighter: SearchHighlighter
     private var lastBoundShortURL: String? = null
     private var lastBoundQrCode: Bitmap? = null
     private val qrCode: Bitmap?
-        get() = if (viewModel.state.value.url == null) null else qrViewModel.state.value.qrCode
+        get() = qrViewModel.state.value.qrCode
     private val exportQRCodeResultLauncher: SingleLaunchResultLauncher<Intent> =
         registerForSingleLaunchResult(StartActivityForResult()) { qrViewModel.onDocumentPicked(it.toDocumentPick()) }
 
@@ -144,6 +144,7 @@ class URLActivity : AppCompatActivity() {
             if (url.shortURL != lastBoundShortURL) {
                 lastBoundShortURL = url.shortURL
                 bindURL(url)
+                qrViewModel.load()
             }
             updateFavoriteAndVisitViews(state, url)
             bindQrCode()
@@ -309,7 +310,6 @@ class URLActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val KEY_SHORTURL = "key_shorturl"
         const val KEY_HIGHLIGHT_TEXT = "key_highlight_text"
         private const val QR_BOTTOM_SHEET_TAG = "qrBottomSheet"
         private const val DELETE_DIALOG_TAG = "deleteDialog"

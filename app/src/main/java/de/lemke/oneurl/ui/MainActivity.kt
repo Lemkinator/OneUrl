@@ -67,8 +67,8 @@ import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.openLeakCanary
 import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.dpToPx
@@ -313,7 +313,7 @@ class MainActivity :
                 viewHolder.itemView.transformToActivity(
                     Intent(this@MainActivity, URLActivity::class.java)
                         .putExtra(KEY_HIGHLIGHT_TEXT, viewModel.search.value)
-                        .putExtra(KEY_SHORTURL, url.shortURL),
+                        .putExtra(KEY_SHORT_URL, url.shortURL),
                 )
             }
         }

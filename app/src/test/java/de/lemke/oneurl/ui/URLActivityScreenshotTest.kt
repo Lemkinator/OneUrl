@@ -36,7 +36,7 @@ import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
@@ -155,7 +155,7 @@ class URLActivityScreenshotTest {
     ) {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                .putExtra(KEY_SHORTURL, url.shortURL)
+                .putExtra(KEY_SHORT_URL, url.shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
             idleMainLooper()
             assertQrLoaded(scenario)

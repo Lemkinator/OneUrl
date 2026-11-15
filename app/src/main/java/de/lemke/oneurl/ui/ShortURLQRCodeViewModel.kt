@@ -28,38 +28,41 @@ import de.lemke.commonutils.ui.utils.DocumentPick
 import de.lemke.commonutils.ui.utils.ShareTarget
 import de.lemke.oneurl.data.UserSettings
 import de.lemke.oneurl.domain.GetQRCodeUseCase
-import de.lemke.oneurl.ui.QRBottomSheet.Companion.KEY_SHORT_URL
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class QRBottomSheetUiState(
+data class ShortURLQRCodeUiState(
     val shortURL: String = "",
     val qrCode: Bitmap? = null,
 )
 
 @HiltViewModel
-class QRBottomSheetViewModel @Inject constructor(
+class ShortURLQRCodeViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    getQRCode: GetQRCodeUseCase,
+    private val getQRCode: GetQRCodeUseCase,
     private val userSettings: UserSettings,
     exporter: BitmapExporter,
 ) : ViewModel() {
     private val qrCodeExport = BitmapExportStateHolder(viewModelScope, exporter)
-    val state: StateFlow<QRBottomSheetUiState>
-        field = MutableStateFlow(QRBottomSheetUiState(shortURL = savedStateHandle.get<String>(KEY_SHORT_URL).orEmpty()))
+    val state: StateFlow<ShortURLQRCodeUiState>
+        field = MutableStateFlow(ShortURLQRCodeUiState(shortURL = savedStateHandle.get<String>(KEY_SHORT_URL).orEmpty()))
     val export: StateFlow<BitmapExport> = qrCodeExport.state
 
-    init {
+    private var loadJob: Job? = null
+
+    /** Renders the QR code of the short URL in the saved state, once. A host calls it when the short URL is known to exist. */
+    fun load() {
         val shortURL = state.value.shortURL
-        if (shortURL.isNotEmpty()) {
+        if (shortURL.isEmpty() || loadJob != null) return
+        loadJob =
             viewModelScope.launch {
                 val qrCode = getQRCode(shortURL)
                 state.update { it.copy(qrCode = qrCode) }
             }
-        }
     }
 
     fun onSave() {
@@ -89,5 +92,9 @@ class QRBottomSheetViewModel @Inject constructor(
 
     fun onExportHandled(result: BitmapExport.Result) {
         qrCodeExport.onHandled(result)
+    }
+
+    companion object {
+        const val KEY_SHORT_URL = "key_short_url"
     }
 }
