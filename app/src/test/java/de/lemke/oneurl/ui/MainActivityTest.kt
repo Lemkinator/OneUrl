@@ -41,7 +41,7 @@ import de.lemke.commonutils.data.SettingsRepository
 import de.lemke.commonutils.idleMainLooper
 import de.lemke.commonutils.returnFromLaunchedScreen
 import de.lemke.commonutils.shouldBeContainerTransformTo
-import de.lemke.commonutils.shouldHaveNoContainerTransform
+import de.lemke.commonutils.shouldBePopOverTo
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
@@ -54,9 +54,7 @@ import dev.oneuiproject.oneui.navigation.widget.DrawerNavigationView
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -75,9 +73,6 @@ import org.robolectric.fakes.RoboMenu
 import org.robolectric.shadows.ShadowActivity.IntentForResult
 import androidx.appcompat.R as appcompatR
 import dev.oneuiproject.oneui.design.R as designR
-
-private const val ANIM_TYPE_KEY = "android:activity.animType"
-private const val ANIM_SCENE_TRANSITION = 5
 
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -505,51 +500,41 @@ class MainActivityTest {
         return started
     }
 
-    private fun IntentForResult.shouldBePopOver(className: String) {
-        intent.component?.className shouldBe className
-        (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe Intent.FLAG_ACTIVITY_SINGLE_TOP
-        intent.shouldHaveNoContainerTransform()
-        options.shouldNotBeNull().getInt(ANIM_TYPE_KEY) shouldNotBe ANIM_SCENE_TRANSITION
-    }
+    private fun IntentForResult.shouldBePopOver(cls: Class<*>) = intent.shouldBePopOverTo(cls, options)
 
-    private fun IntentForResult.shouldBeContainerTransform(
-        className: String,
-        transitionName: String = "commonUtilsActivityTransitionName",
-    ) {
-        intent.component?.className shouldBe className
+    private fun IntentForResult.shouldBeContainerTransform(cls: Class<*>) {
+        intent.shouldBeContainerTransformTo(cls, options)
         (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe 0
-        intent.shouldBeContainerTransformTo(transitionName)
-        options.shouldNotBeNull().getInt(ANIM_TYPE_KEY) shouldBe ANIM_SCENE_TRANSITION
     }
 
     @Test
     @Config(qualifiers = "sw600dp")
     fun `help_dest on a One UI tablet opens as a pop-over`() {
-        navigateFromDrawer(R.id.help_dest, isOneUi = true).single().shouldBePopOver(HelpActivity::class.java.name)
+        navigateFromDrawer(R.id.help_dest, isOneUi = true).single().shouldBePopOver(HelpActivity::class.java)
     }
 
     @Test
     @Config(qualifiers = "sw600dp")
     fun `about_app_dest on a One UI tablet opens as a pop-over`() {
-        navigateFromDrawer(R.id.about_app_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsAboutActivity::class.java.name)
+        navigateFromDrawer(R.id.about_app_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsAboutActivity::class.java)
     }
 
     @Test
     @Config(qualifiers = "sw600dp")
     fun `about_me_dest on a One UI tablet opens as a pop-over`() {
-        navigateFromDrawer(R.id.about_me_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsAboutMeActivity::class.java.name)
+        navigateFromDrawer(R.id.about_me_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsAboutMeActivity::class.java)
     }
 
     @Test
     @Config(qualifiers = "sw600dp")
     fun `settings_dest on a One UI tablet opens as a pop-over`() {
-        navigateFromDrawer(R.id.settings_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsSettingsActivity::class.java.name)
+        navigateFromDrawer(R.id.settings_dest, isOneUi = true).single().shouldBePopOver(CommonUtilsSettingsActivity::class.java)
     }
 
     @Test
     @Config(qualifiers = "sw599dp")
     fun `help_dest on a One UI phone keeps the container transform`() {
-        navigateFromDrawer(R.id.help_dest, isOneUi = true).single().shouldBeContainerTransform(HelpActivity::class.java.name)
+        navigateFromDrawer(R.id.help_dest, isOneUi = true).single().shouldBeContainerTransform(HelpActivity::class.java)
     }
 
     @Test
@@ -557,7 +542,7 @@ class MainActivityTest {
     fun `about_app_dest on a One UI phone keeps the container transform`() {
         navigateFromDrawer(R.id.about_app_dest, isOneUi = true)
             .single()
-            .shouldBeContainerTransform(CommonUtilsAboutActivity::class.java.name)
+            .shouldBeContainerTransform(CommonUtilsAboutActivity::class.java)
     }
 
     @Test
@@ -565,7 +550,7 @@ class MainActivityTest {
     fun `about_me_dest on a One UI phone keeps the container transform`() {
         navigateFromDrawer(R.id.about_me_dest, isOneUi = true)
             .single()
-            .shouldBeContainerTransform(CommonUtilsAboutMeActivity::class.java.name)
+            .shouldBeContainerTransform(CommonUtilsAboutMeActivity::class.java)
     }
 
     @Test
@@ -573,13 +558,13 @@ class MainActivityTest {
     fun `settings_dest on a One UI phone keeps the container transform`() {
         navigateFromDrawer(R.id.settings_dest, isOneUi = true)
             .single()
-            .shouldBeContainerTransform(CommonUtilsSettingsActivity::class.java.name)
+            .shouldBeContainerTransform(CommonUtilsSettingsActivity::class.java)
     }
 
     @Test
     @Config(qualifiers = "sw600dp")
     fun `help_dest on a non-One UI tablet keeps the container transform`() {
-        navigateFromDrawer(R.id.help_dest, isOneUi = false).single().shouldBeContainerTransform(HelpActivity::class.java.name)
+        navigateFromDrawer(R.id.help_dest, isOneUi = false).single().shouldBeContainerTransform(HelpActivity::class.java)
     }
 
     @Test
@@ -587,7 +572,7 @@ class MainActivityTest {
     fun `about_app_dest on a non-One UI tablet keeps the container transform`() {
         navigateFromDrawer(R.id.about_app_dest, isOneUi = false)
             .single()
-            .shouldBeContainerTransform(CommonUtilsAboutActivity::class.java.name)
+            .shouldBeContainerTransform(CommonUtilsAboutActivity::class.java)
     }
 
     @Test
@@ -595,7 +580,7 @@ class MainActivityTest {
     fun `about_me_dest on a non-One UI tablet keeps the container transform`() {
         navigateFromDrawer(R.id.about_me_dest, isOneUi = false)
             .single()
-            .shouldBeContainerTransform(CommonUtilsAboutMeActivity::class.java.name)
+            .shouldBeContainerTransform(CommonUtilsAboutMeActivity::class.java)
     }
 
     @Test
@@ -603,13 +588,13 @@ class MainActivityTest {
     fun `settings_dest on a non-One UI tablet keeps the container transform`() {
         navigateFromDrawer(R.id.settings_dest, isOneUi = false)
             .single()
-            .shouldBeContainerTransform(CommonUtilsSettingsActivity::class.java.name)
+            .shouldBeContainerTransform(CommonUtilsSettingsActivity::class.java)
     }
 
     @Test
     @Config(qualifiers = "sw600dp")
     fun `qr_code_dest on a One UI tablet is not a pop-over`() {
-        navigateFromDrawer(R.id.qr_code_dest, isOneUi = true).single().shouldBeContainerTransform(GenerateQRCodeActivity::class.java.name)
+        navigateFromDrawer(R.id.qr_code_dest, isOneUi = true).single().shouldBeContainerTransform(GenerateQRCodeActivity::class.java)
     }
 
     @Test
@@ -617,7 +602,10 @@ class MainActivityTest {
     fun `provider_dest on a One UI tablet is not a pop-over`() {
         navigateFromDrawer(R.id.provider_dest, isOneUi = true)
             .single()
-            .shouldBeContainerTransform(ProviderActivity::class.java.name, transitionName = "ProviderTransformation")
+            .run {
+                intent.shouldBeContainerTransformTo(ProviderActivity::class.java, options, transitionName = "ProviderTransformation")
+                (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe 0
+            }
     }
 
     @Test
@@ -625,7 +613,7 @@ class MainActivityTest {
     fun `double tap on settings_dest on a One UI tablet pops over once`() {
         navigateFromDrawer(R.id.settings_dest, isOneUi = true, taps = 2)
             .single()
-            .shouldBePopOver(CommonUtilsSettingsActivity::class.java.name)
+            .shouldBePopOver(CommonUtilsSettingsActivity::class.java)
     }
 
     @Test
@@ -697,7 +685,7 @@ class MainActivityTest {
             scenario.onActivity { activity ->
                 val started = generateSequence { shadowOf(activity).nextStartedActivityForResult }.toList()
                 started.size shouldBe 2
-                started.forEach { it.shouldBePopOver(CommonUtilsSettingsActivity::class.java.name) }
+                started.forEach { it.shouldBePopOver(CommonUtilsSettingsActivity::class.java) }
             }
         }
     }
