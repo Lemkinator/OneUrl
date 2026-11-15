@@ -47,12 +47,20 @@ style:
   ForbiddenComment:
     active: true
     comments: [ 'TODO:', 'FIXME:' ]
+  RedundantExplicitType:
+    active: true
+  UnnecessaryLet:
+    active: true
   UnnecessaryParentheses:
     active: true
     allowForUnclearPrecedence: true
+  UnusedImport:
+    active: true
   UnusedPrivateFunction:
     active: true
   UnusedPrivateProperty:
+    active: true
+  UseIfEmptyOrIfBlank:
     active: true
 
 naming:
