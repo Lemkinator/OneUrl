@@ -38,8 +38,11 @@ abstract class KSafeFixtureContract {
 
     @After
     fun closeFixture() {
-        runTest { fixture.close() }
-        pollDispatcher.close()
+        try {
+            runTest { fixture.close() }
+        } finally {
+            pollDispatcher.close()
+        }
     }
 
     // KSafe creates the locked master key on its write scope after init and nothing joins it, so a put does not wait for it.
