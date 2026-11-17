@@ -114,14 +114,16 @@ class URLAdapter(
             LayoutInflater.from(parent.context).inflate(R.layout.listview_item, parent, false),
         ).apply {
             itemView.onSingleLaunchClick {
-                bindingAdapterPosition.let { onClickItem?.invoke(it, currentList[it], this@apply) }
+                val position = bindingAdapterPosition
+                onClickItem?.invoke(position, currentList[position], this@apply)
             }
             itemView.setOnLongClickListener {
                 onLongClickItem?.invoke()
                 true
             }
             listItemFav.setOnClickListener {
-                bindingAdapterPosition.let { onClickItemFavorite?.invoke(it, currentList[it]) }
+                val position = bindingAdapterPosition
+                onClickItemFavorite?.invoke(position, currentList[position])
             }
         }
 

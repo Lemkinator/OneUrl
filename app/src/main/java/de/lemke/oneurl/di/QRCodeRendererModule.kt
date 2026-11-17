@@ -25,7 +25,7 @@ import de.lemke.oneurl.data.QRCodeRenderer
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class QRCodeRendererModule {
+interface QRCodeRendererModule {
     @Binds
-    abstract fun bindQRCodeRenderer(renderer: DefaultQRCodeRenderer): QRCodeRenderer
+    fun bindQRCodeRenderer(renderer: DefaultQRCodeRenderer): QRCodeRenderer
 }

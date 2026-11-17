@@ -16,40 +16,40 @@
 
 package de.lemke.oneurl.domain.model
 
-sealed class GenerateURLError {
-    data class Unknown(val statusCode: Int? = null) : GenerateURLError()
+sealed interface GenerateURLError {
+    data class Unknown(val statusCode: Int? = null) : GenerateURLError
 
-    data class Custom(val statusCode: Int, val customMessage: String) : GenerateURLError()
+    data class Custom(val statusCode: Int, val customMessage: String) : GenerateURLError
 
-    data class ServiceTemporarilyUnavailable(val providerBaseURL: String) : GenerateURLError()
+    data class ServiceTemporarilyUnavailable(val providerBaseURL: String) : GenerateURLError
 
     data class BlacklistedURL(
         val message: String? = null,
         val urlhausLink: String? = null,
         val virustotalLink: String? = null,
-    ) : GenerateURLError()
+    ) : GenerateURLError
 
-    data object NoInternet : GenerateURLError()
+    data object NoInternet : GenerateURLError
 
-    data object RateLimitExceeded : GenerateURLError()
+    data object RateLimitExceeded : GenerateURLError
 
-    data object DomainNotAllowed : GenerateURLError()
+    data object DomainNotAllowed : GenerateURLError
 
-    data object AliasAlreadyExists : GenerateURLError()
+    data object AliasAlreadyExists : GenerateURLError
 
-    data object URLExistsWithDifferentAlias : GenerateURLError()
+    data object URLExistsWithDifferentAlias : GenerateURLError
 
-    data object InvalidURL : GenerateURLError()
+    data object InvalidURL : GenerateURLError
 
-    data object InvalidAlias : GenerateURLError()
+    data object InvalidAlias : GenerateURLError
 
-    data object InvalidURLOrAlias : GenerateURLError()
+    data object InvalidURLOrAlias : GenerateURLError
 
-    data object InternalServerError : GenerateURLError()
+    data object InternalServerError : GenerateURLError
 
-    data object ServiceOffline : GenerateURLError()
+    data object ServiceOffline : GenerateURLError
 
-    data object TlyKeyRejected : GenerateURLError()
+    data object TlyKeyRejected : GenerateURLError
 }
 
 /** HTTP status codes returned by URL-shortener provider APIs, used to map responses to a [GenerateURLError]. */

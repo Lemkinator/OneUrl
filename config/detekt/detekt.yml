@@ -13,6 +13,9 @@ coroutines:
   active: true
   GlobalCoroutineUsage:
     active: true
+  InjectDispatcher:
+    active: true
+    excludes: ['**/di/**']
   RedundantSuspendModifier:
     active: true
   SleepInsteadOfDelay:
@@ -37,6 +40,8 @@ complexity:
 
 style:
   active: true
+  AbstractClassCanBeConcreteClass:
+    active: false
   MagicNumber:
     active: true
     ignoreNumbers: [ '-1', '0', '1', '2' ]
@@ -47,13 +52,24 @@ style:
   ForbiddenComment:
     active: true
     comments: [ 'TODO:', 'FIXME:' ]
+  RedundantExplicitType:
+    active: true
+  UnnecessaryLet:
+    active: true
   UnnecessaryParentheses:
     active: true
     allowForUnclearPrecedence: true
+  UnusedImport:
+    active: true
   UnusedPrivateFunction:
     active: true
   UnusedPrivateProperty:
     active: true
+  UseIfEmptyOrIfBlank:
+    active: true
+  VarCouldBeVal:
+    active: true
+    ignoreLateinitVar: true
 
 naming:
   FunctionNaming:

@@ -43,7 +43,7 @@ import dev.oneuiproject.oneui.app.SemBottomSheetDialogFragment
 @AndroidEntryPoint
 class QRBottomSheet : SemBottomSheetDialogFragment() {
     private lateinit var binding: ViewQrBottomsheetBinding
-    private val viewModel: QRBottomSheetViewModel by viewModels()
+    private val viewModel: ShortURLQRCodeViewModel by viewModels()
     private val exportQRCodeResultLauncher: SingleLaunchResultLauncher<Intent> =
         registerForSingleLaunchResult(StartActivityForResult()) { viewModel.onDocumentPicked(it.toDocumentPick()) }
 
@@ -70,12 +70,13 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
         binding.quickShareButton.onSingleLaunchClick { viewModel.onQuickShare() }
         binding.shareButton.onSingleLaunchClick { viewModel.onShare() }
         binding.saveButton.onSingleLaunchClick { viewModel.onSave() }
+        viewModel.load()
         collectState(viewModel.state) { render(it) }
         collectState(viewModel.export) { renderExportControls() }
         collectState(viewModel.export, minActiveState = RESUMED) { onExport(it) }
     }
 
-    private fun render(state: QRBottomSheetUiState) {
+    private fun render(state: ShortURLQRCodeUiState) {
         binding.title.text = state.shortURL
         binding.qrCode.setImageBitmap(state.qrCode)
         renderExportControls()
@@ -95,12 +96,10 @@ class QRBottomSheet : SemBottomSheetDialogFragment() {
     }
 
     companion object {
-        const val KEY_SHORT_URL = "key_short_url"
-
         fun createQRBottomSheet(shortURL: String): QRBottomSheet =
             QRBottomSheet().apply {
                 arguments =
-                    Bundle().apply { putString(KEY_SHORT_URL, shortURL) }
+                    Bundle().apply { putString(ShortURLQRCodeViewModel.KEY_SHORT_URL, shortURL) }
             }
     }
 }

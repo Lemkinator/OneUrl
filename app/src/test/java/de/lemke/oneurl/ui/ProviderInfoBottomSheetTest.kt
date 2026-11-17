@@ -19,7 +19,7 @@ package de.lemke.oneurl.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Looper
+import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.UnderlineSpan
@@ -46,6 +46,7 @@ import de.lemke.oneurl.domain.model.Tly
 import de.lemke.oneurl.domain.model.TlyApiKey
 import de.lemke.oneurl.domain.model.VgdIsgd
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -158,6 +159,23 @@ class ProviderInfoBottomSheetTest {
             val shadowActivity = shadowOf(activity)
             shadowActivity.nextStartedActivity.data.toString() shouldBe VgdIsgd.Vgd.getInfoButtons(activity)[0].linkOrDescription
             shadowActivity.nextStartedActivity shouldBe null
+        }
+    }
+
+    @Test
+    fun `a bottom sheet built without the provider argument fails with a missing-argument error`() {
+        launchProviderActivity(ProviderScreenMode.Info).use { scenario ->
+            scenario.onActivity { activity ->
+                val sheet = ProviderInfoBottomSheet().apply { arguments = Bundle() }
+
+                val failure = shouldThrow<IllegalStateException> { sheet.showNow(activity.supportFragmentManager, "noProvider") }
+
+                failure.message shouldBe "ProviderInfoBottomSheet needs the key_provider argument"
+                activity.supportFragmentManager
+                    .beginTransaction()
+                    .remove(sheet)
+                    .commitNowAllowingStateLoss()
+            }
         }
     }
 

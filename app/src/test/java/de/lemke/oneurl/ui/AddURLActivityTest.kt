@@ -18,7 +18,6 @@ package de.lemke.oneurl.ui
 
 import android.content.ClipboardManager
 import android.content.DialogInterface
-import android.os.Looper
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.EditText
@@ -47,7 +46,7 @@ import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.VgdIsgd
 import de.lemke.oneurl.domain.testUrl
 import de.lemke.oneurl.ui.ProviderActivity.Companion.KEY_MODE
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
@@ -347,7 +346,7 @@ class AddURLActivityTest {
             idleMainLooper()
 
             val startedIntent = shadowOf(activity).nextStartedActivity
-            startedIntent.getStringExtra(KEY_SHORTURL) shouldBe existing.shortURL
+            startedIntent.getStringExtra(KEY_SHORT_URL) shouldBe existing.shortURL
         }
     }
 

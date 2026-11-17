@@ -170,7 +170,7 @@ class KurzelinksdeTest {
         val req =
             Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))

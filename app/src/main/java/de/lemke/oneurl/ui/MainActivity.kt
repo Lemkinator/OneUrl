@@ -67,8 +67,8 @@ import de.lemke.oneurl.databinding.ActivityMainBinding
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
 import de.lemke.oneurl.openLeakCanary
 import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import de.lemke.oneurl.ui.URLActivity.Companion.KEY_HIGHLIGHT_TEXT
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
 import dev.oneuiproject.oneui.delegates.AppBarAwareYTranslator
 import dev.oneuiproject.oneui.delegates.ViewYTranslator
 import dev.oneuiproject.oneui.ktx.dpToPx
@@ -153,7 +153,10 @@ class MainActivity :
         if (intent.action == ACTION_SEARCH) binding.drawerLayout.setSearchQueryFromIntent(intent)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean = menuInflater.inflate(R.menu.main, menu).let { true }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main, menu)
+        return true
+    }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         menu?.findItem(R.id.menu_item_show_all)?.isVisible = viewModel.filterFavorite.value
@@ -164,7 +167,8 @@ class MainActivity :
     override fun onOptionsItemSelected(item: MenuItem): Boolean =
         when (item.itemId) {
             R.id.menu_item_search -> {
-                startSearch().let { true }
+                startSearch()
+                true
             }
 
             R.id.menu_item_show_all -> {
@@ -309,7 +313,7 @@ class MainActivity :
                 viewHolder.itemView.transformToActivity(
                     Intent(this@MainActivity, URLActivity::class.java)
                         .putExtra(KEY_HIGHLIGHT_TEXT, viewModel.search.value)
-                        .putExtra(KEY_SHORTURL, url.shortURL),
+                        .putExtra(KEY_SHORT_URL, url.shortURL),
                 )
             }
         }

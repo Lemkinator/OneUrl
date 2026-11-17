@@ -138,7 +138,10 @@ class ProviderActivity : AppCompatActivity() {
             holder.row.bind(provider) { viewModel.onProviderInfoClick(provider) }
             holder.markSelected(marked)
             holder.itemView.onSingleLaunchClick { viewModel.onProviderClick(provider) }
-            holder.itemView.setOnLongClickListener { viewModel.onProviderInfoClick(provider).let { true } }
+            holder.itemView.setOnLongClickListener {
+                viewModel.onProviderInfoClick(provider)
+                true
+            }
         }
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

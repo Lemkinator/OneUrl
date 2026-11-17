@@ -24,18 +24,16 @@ import java.time.ZonedDateTime
 
 internal fun testUrl(
     shortURL: String,
-    longURL: String = "https://example.com",
     provider: ShortURLProvider = Dagd,
     favorite: Boolean = false,
     title: String = "title",
-    description: String = "description",
     added: ZonedDateTime = ZonedDateTime.of(2024, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC),
 ) = URL(
     shortURL = shortURL,
-    longURL = longURL,
+    longURL = "https://example.com",
     shortURLProvider = provider,
     favorite = favorite,
     title = title,
-    description = description,
+    description = "description",
     added = added,
 )

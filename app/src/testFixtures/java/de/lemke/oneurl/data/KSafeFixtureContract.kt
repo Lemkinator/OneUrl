@@ -19,9 +19,10 @@ package de.lemke.oneurl.data
 import android.content.Context
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
@@ -33,14 +34,21 @@ import org.junit.Test
 abstract class KSafeFixtureContract {
     protected abstract val context: Context
     private val fixture = KSafeFixture { context }
+    private val pollDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     @After
-    fun closeFixture() = runTest { fixture.close() }
+    fun closeFixture() {
+        try {
+            runTest { fixture.close() }
+        } finally {
+            pollDispatcher.close()
+        }
+    }
 
     // KSafe creates the locked master key on its write scope after init and nothing joins it, so a put does not wait for it.
     // The poll runs on a real dispatcher: a delay inside runTest skips virtual time and lets no background work progress.
     private suspend fun awaitAliases(count: Int) =
-        withContext(Dispatchers.Default) {
+        withContext(pollDispatcher) {
             withTimeout(POLL_TIMEOUT) {
                 while (fixture.aliases().size < count) delay(POLL_INTERVAL)
             }

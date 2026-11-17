@@ -19,11 +19,11 @@ package de.lemke.oneurl.domain
 import de.lemke.oneurl.data.FakeURLRepository
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddURLUseCaseTest : ShouldSpec(
@@ -35,7 +35,7 @@ class AddURLUseCaseTest : ShouldSpec(
             val url = testUrl(shortURL = "https://short.url/abc")
 
             coroutineScope {
-                launch(Dispatchers.Unconfined) { addURL(url) }
+                launch(UnconfinedTestDispatcher(dispatcher.scheduler)) { addURL(url) }
                 repository.urls shouldBe emptyList()
 
                 dispatcher.scheduler.advanceUntilIdle()

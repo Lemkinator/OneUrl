@@ -146,7 +146,7 @@ class DagdTest {
         val req =
             Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))
@@ -211,7 +211,7 @@ class DagdTest {
         val req =
             Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))

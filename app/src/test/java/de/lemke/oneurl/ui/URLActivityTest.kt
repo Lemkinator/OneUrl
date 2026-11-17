@@ -25,7 +25,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import android.os.Looper
 import android.view.Menu
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
@@ -43,7 +42,6 @@ import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.PausableDispatcher
 import de.lemke.commonutils.RecordingDocumentsProvider
 import de.lemke.commonutils.ShadowFileProvider
-import de.lemke.commonutils.cacheFileOf
 import de.lemke.commonutils.cacheWriteUriPattern
 import de.lemke.commonutils.hasPngSignature
 import de.lemke.commonutils.idleMainLooper
@@ -63,7 +61,7 @@ import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Gg
 import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.longs.shouldBeGreaterThan
@@ -356,7 +354,7 @@ class URLActivityTest {
         withUrlScenario { scenario ->
             scenario.onActivity { activity ->
                 activity.singleLaunchActivity(Intent(activity, HelpActivity::class.java)).shouldBeTrue()
-                ViewModelProvider(activity)[URLViewModel::class.java].onSaveQRCode()
+                ViewModelProvider(activity)[ShortURLQRCodeViewModel::class.java].onSave()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -863,7 +861,7 @@ class URLActivityTest {
     fun `a deleted exit set while stopped survives a recreation and finishes only the recreated activity`() {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                .putExtra(KEY_SHORTURL, seededUrl.shortURL)
+                .putExtra(KEY_SHORT_URL, seededUrl.shortURL)
         val controller = Robolectric.buildActivity(URLActivity::class.java, intent).setup()
         try {
             idleMainLooper()
@@ -905,7 +903,7 @@ class URLActivityTest {
     ) {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                .putExtra(KEY_SHORTURL, shortURL)
+                .putExtra(KEY_SHORT_URL, shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
             idleMainLooper()
             block(scenario)
@@ -921,5 +919,5 @@ class URLActivityTest {
 
     private fun URLActivity.exitState(): UrlDetailExit = ViewModelProvider(this)[URLViewModel::class.java].exit.value
 
-    private fun URLActivity.exportState(): BitmapExport = ViewModelProvider(this)[URLViewModel::class.java].export.value
+    private fun URLActivity.exportState(): BitmapExport = ViewModelProvider(this)[ShortURLQRCodeViewModel::class.java].export.value
 }

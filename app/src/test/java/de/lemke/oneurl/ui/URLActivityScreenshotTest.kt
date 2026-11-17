@@ -18,7 +18,6 @@ package de.lemke.oneurl.ui
 
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
-import android.os.Looper
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -37,7 +36,7 @@ import de.lemke.oneurl.data.URLRepository
 import de.lemke.oneurl.domain.model.Dagd
 import de.lemke.oneurl.domain.model.Spoome
 import de.lemke.oneurl.domain.model.URL
-import de.lemke.oneurl.ui.URLActivity.Companion.KEY_SHORTURL
+import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
@@ -50,7 +49,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -157,7 +155,7 @@ class URLActivityScreenshotTest {
     ) {
         val intent =
             Intent(ApplicationProvider.getApplicationContext(), URLActivity::class.java)
-                .putExtra(KEY_SHORTURL, url.shortURL)
+                .putExtra(KEY_SHORT_URL, url.shortURL)
         ActivityScenario.launch<URLActivity>(intent).use { scenario ->
             idleMainLooper()
             assertQrLoaded(scenario)

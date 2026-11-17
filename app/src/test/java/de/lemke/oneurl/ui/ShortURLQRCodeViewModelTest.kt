@@ -16,6 +16,7 @@
 
 package de.lemke.oneurl.ui
 
+import android.content.ClipData
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
@@ -47,7 +48,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class QRBottomSheetViewModelTest : ShouldSpec(
+class ShortURLQRCodeViewModelTest : ShouldSpec(
     {
         val qrCode = mockk<Bitmap> { every { byteCount } returns 1024 }
         val shortURL = "https://short.url/x"
@@ -57,14 +58,19 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         lateinit var exporter: FakeBitmapExporter
 
         fun newViewModel(
-            savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf(QRBottomSheet.KEY_SHORT_URL to shortURL)),
+            savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf(ShortURLQRCodeViewModel.KEY_SHORT_URL to shortURL)),
             defaultDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher(),
-        ) = QRBottomSheetViewModel(
+        ) = ShortURLQRCodeViewModel(
             savedStateHandle,
             GetQRCodeUseCase(QRCodeCache(), GenerateQRCodeUseCase(renderer), defaultDispatcher),
             userSettings,
             exporter,
         )
+
+        fun loadedViewModel(
+            savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf(ShortURLQRCodeViewModel.KEY_SHORT_URL to shortURL)),
+            defaultDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher(),
+        ) = newViewModel(savedStateHandle, defaultDispatcher).also { it.load() }
 
         beforeEach {
             settingsScope = CoroutineScope(Job() + UnconfinedTestDispatcher())
@@ -77,31 +83,74 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             settingsScope.cancel()
         }
 
-        should("init takes the short URL from the saved state and loads its QR code") {
+        should("init takes the short URL from the saved state and renders no QR code before load") {
             val viewModel = newViewModel()
 
-            viewModel.state.value shouldBe QRBottomSheetUiState(shortURL = shortURL, qrCode = qrCode)
+            viewModel.state.value shouldBe ShortURLQRCodeUiState(shortURL = shortURL, qrCode = null)
+            renderer.renders shouldBe emptyList()
+        }
+
+        should("load renders the QR code of the short URL from the saved state") {
+            val viewModel = newViewModel()
+
+            viewModel.load()
+
+            viewModel.state.value shouldBe ShortURLQRCodeUiState(shortURL = shortURL, qrCode = qrCode)
             renderer.renders shouldBe listOf(Render(shortURL, null))
         }
 
-        should("init loads no QR code when the saved-state key is missing") {
-            val viewModel = newViewModel(SavedStateHandle())
+        should("load called again renders the QR code once") {
+            val viewModel = newViewModel()
 
-            viewModel.state.value shouldBe QRBottomSheetUiState(shortURL = "", qrCode = null)
+            viewModel.load()
+            viewModel.load()
+
+            renderer.renders shouldBe listOf(Render(shortURL, null))
+        }
+
+        should("load called while the first load runs renders the QR code once") {
+            val qrCodeDispatcher = StandardTestDispatcher()
+            val viewModel = newViewModel(defaultDispatcher = qrCodeDispatcher)
+
+            viewModel.load()
+            viewModel.load()
+            qrCodeDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.state.value.qrCode shouldBe qrCode
+            renderer.renders shouldBe listOf(Render(shortURL, null))
+        }
+
+        should("load renders no QR code when the saved-state key is missing") {
+            val viewModel = loadedViewModel(SavedStateHandle())
+
+            viewModel.state.value shouldBe ShortURLQRCodeUiState(shortURL = "", qrCode = null)
             renderer.renders shouldBe emptyList()
         }
 
-        should("init loads no QR code for an empty short URL") {
-            val viewModel = newViewModel(SavedStateHandle(mapOf(QRBottomSheet.KEY_SHORT_URL to "")))
+        should("load renders no QR code for an empty short URL") {
+            val viewModel = loadedViewModel(SavedStateHandle(mapOf(ShortURLQRCodeViewModel.KEY_SHORT_URL to "")))
 
-            viewModel.state.value shouldBe QRBottomSheetUiState(shortURL = "", qrCode = null)
+            viewModel.state.value shouldBe ShortURLQRCodeUiState(shortURL = "", qrCode = null)
             renderer.renders shouldBe emptyList()
         }
 
-        should("onSave, onShare and onQuickShare export nothing without a QR code") {
-            val viewModel = newViewModel(SavedStateHandle())
+        should("onSave, onCopy, onShare and onQuickShare export nothing before load") {
+            val viewModel = newViewModel()
 
             viewModel.onSave()
+            viewModel.onCopy()
+            viewModel.onShare()
+            viewModel.onQuickShare()
+
+            exporter.calls shouldBe emptyList()
+            viewModel.export.value shouldBe BitmapExport.Idle
+        }
+
+        should("onSave, onCopy, onShare and onQuickShare export nothing without a QR code") {
+            val viewModel = loadedViewModel(SavedStateHandle())
+
+            viewModel.onSave()
+            viewModel.onCopy()
             viewModel.onShare()
             viewModel.onQuickShare()
 
@@ -110,7 +159,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         }
 
         should("onSave writes the QR code under the short URL to the image save location and holds OpenPicker") {
-            val viewModel = newViewModel()
+            val viewModel = loadedViewModel()
 
             viewModel.onSave()
 
@@ -118,10 +167,21 @@ class QRBottomSheetViewModelTest : ShouldSpec(
             viewModel.export.value shouldBe BitmapExport.OpenPicker(shortURL)
         }
 
+        should("onCopy holds the clip of the QR code") {
+            val clip = mockk<ClipData>()
+            exporter.clip = clip
+            val viewModel = loadedViewModel()
+
+            viewModel.onCopy()
+
+            exporter.calls shouldBe listOf(Call.CreateClip(qrCode))
+            viewModel.export.value shouldBe BitmapExport.Copy(clip)
+        }
+
         should("onShare holds the share file of the QR code for the share sheet") {
             val file = BitmapShareFile.Written(mockk<Uri>())
             exporter.shareFile = file
-            val viewModel = newViewModel()
+            val viewModel = loadedViewModel()
 
             viewModel.onShare()
 
@@ -132,7 +192,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         should("onQuickShare holds the share file of the QR code for Quick Share") {
             val file = BitmapShareFile.Written(mockk<Uri>())
             exporter.shareFile = file
-            val viewModel = newViewModel()
+            val viewModel = loadedViewModel()
 
             viewModel.onQuickShare()
 
@@ -142,7 +202,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
 
         should("onDocumentPicked writes the QR code into the created document") {
             val uri = mockk<Uri>()
-            val viewModel = newViewModel()
+            val viewModel = loadedViewModel()
 
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
 
@@ -153,7 +213,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         should("onDocumentPicked during the QR code load deletes the created document and holds WriteFailed") {
             val qrCodeDispatcher = StandardTestDispatcher()
             val uri = mockk<Uri>()
-            val viewModel = newViewModel(defaultDispatcher = qrCodeDispatcher)
+            val viewModel = loadedViewModel(defaultDispatcher = qrCodeDispatcher)
 
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
             qrCodeDispatcher.scheduler.advanceUntilIdle()
@@ -165,7 +225,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
 
         should("onDocumentPicked without a short URL deletes the created document and holds WriteFailed") {
             val uri = mockk<Uri>()
-            val viewModel = newViewModel(SavedStateHandle())
+            val viewModel = loadedViewModel(SavedStateHandle())
 
             viewModel.onDocumentPicked(DocumentPick.Created(uri))
 
@@ -175,7 +235,7 @@ class QRBottomSheetViewModelTest : ShouldSpec(
         }
 
         should("onExportHandled returns the export to Idle") {
-            val viewModel = newViewModel()
+            val viewModel = loadedViewModel()
             viewModel.onShare()
 
             viewModel.onExportHandled(BitmapExport.ShareFailed)

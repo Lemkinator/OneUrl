@@ -47,8 +47,8 @@ class ObserveURLsUseCase @Inject constructor(
                         }
                     }
                 } else {
-                    filterFavorite.flatMapLatest { filterFavorite ->
-                        if (filterFavorite) {
+                    filterFavorite.flatMapLatest { onlyFavorites ->
+                        if (onlyFavorites) {
                             urlRepository.observeURLs().map { urls ->
                                 urls.filter { url -> url.favorite }
                             }

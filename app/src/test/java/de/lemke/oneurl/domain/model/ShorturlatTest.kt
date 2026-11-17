@@ -195,7 +195,7 @@ class ShorturlatTest {
         val req =
             Shorturlat.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
                 errorCallbackCount++
-                if (errorCallbackCount == 1) throw IllegalStateException("boom") else error = it
+                if (errorCallbackCount == 1) error("boom") else error = it
             }
 
         req.deliverError(VolleyError("no network"))

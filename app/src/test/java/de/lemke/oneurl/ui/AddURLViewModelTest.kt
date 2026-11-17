@@ -42,7 +42,6 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -64,10 +63,10 @@ class AddURLViewModelTest : ShouldSpec(
             AddURLViewModel(
                 savedStateHandle,
                 userSettings,
-                GenerateURLUseCase(networkMonitor, CheckURLSafetyUseCase(urlhausClient), shortURLClient, Dispatchers.Unconfined),
+                GenerateURLUseCase(networkMonitor, CheckURLSafetyUseCase(urlhausClient), shortURLClient, UnconfinedTestDispatcher()),
                 GetURLTitleUseCase(pageTitleFetcher),
-                AddURLUseCase(repository, Dispatchers.Unconfined),
-                GetURLUseCase(repository, Dispatchers.Unconfined),
+                AddURLUseCase(repository, UnconfinedTestDispatcher()),
+                GetURLUseCase(repository, UnconfinedTestDispatcher()),
             )
 
         beforeEach {
