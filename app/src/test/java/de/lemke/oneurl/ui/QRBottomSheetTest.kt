@@ -227,7 +227,8 @@ class QRBottomSheetTest {
             val stream = shareIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)!!
             stream.toString() shouldMatch activity.cacheWriteUriPattern("qrCodes", "share", "QRCode.png")
             activity.cacheFileOf(stream).length() shouldBeGreaterThan 0L
-            (shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION) shouldBe FLAG_GRANT_READ_URI_PERMISSION
+            val grantedFlags = shareIntent.flags and FLAG_GRANT_READ_URI_PERMISSION
+            grantedFlags shouldBe FLAG_GRANT_READ_URI_PERMISSION
         }
     }
 
