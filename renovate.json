@@ -61,12 +61,6 @@
       ]
     },
     {
-      "matchPackageNames": [
-        "org.robolectric:android-all-instrumented"
-      ],
-      "enabled": false
-    },
-    {
       "groupName": "github-actions",
       "matchManagers": [
         "github-actions"

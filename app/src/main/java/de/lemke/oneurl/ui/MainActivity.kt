@@ -44,7 +44,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView.NO_POSITION
 import dagger.hilt.android.AndroidEntryPoint
 import de.lemke.commonutils.data.SettingsRepository
-import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
@@ -62,9 +61,8 @@ import de.lemke.commonutils.ui.utils.toast
 import de.lemke.commonutils.ui.utils.transformToActivity
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
-import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.databinding.ActivityMainBinding
-import de.lemke.oneurl.domain.GenerateQRCodeUseCase
+import de.lemke.oneurl.domain.GetQRCodeThumbnailUseCase
 import de.lemke.oneurl.openLeakCanary
 import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
 import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
@@ -85,7 +83,6 @@ import dev.oneuiproject.oneui.utils.ItemDecorRule.ALL
 import dev.oneuiproject.oneui.utils.ItemDecorRule.NONE
 import dev.oneuiproject.oneui.utils.SemItemDecoration
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineDispatcher
 import de.lemke.commonutils.R as commonutilsR
 import dev.oneuiproject.oneui.R as iconsR
 import dev.oneuiproject.oneui.design.R as designR
@@ -98,24 +95,15 @@ class MainActivity :
     lateinit var settings: SettingsRepository
 
     @Inject
-    lateinit var qrCodeCache: QRCodeCache
-
-    @Inject
-    lateinit var generateQRCode: GenerateQRCodeUseCase
-
-    @DefaultDispatcher
-    @Inject
-    lateinit var defaultDispatcher: CoroutineDispatcher
+    lateinit var getQRCodeThumbnail: GetQRCodeThumbnailUseCase
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val urlAdapter: URLAdapter by lazy {
         URLAdapter(
             this,
-            qrCodeCache,
-            generateQRCode,
+            getQRCodeThumbnail,
             lifecycleScope,
-            defaultDispatcher,
             onAllSelectorStateChanged = { viewModel.setAllSelectorState(it) },
             onBlockActionMode = ::launchActionMode,
         )

@@ -504,7 +504,8 @@ class MainActivityTest {
 
     private fun IntentForResult.shouldBeContainerTransform(cls: Class<*>) {
         intent.shouldBeContainerTransformTo(cls, options)
-        (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe 0
+        val singleTopFlag = intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP
+        singleTopFlag shouldBe 0
     }
 
     @Test
@@ -604,7 +605,8 @@ class MainActivityTest {
             .single()
             .run {
                 intent.shouldBeContainerTransformTo(ProviderActivity::class.java, options, transitionName = "ProviderTransformation")
-                (intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP) shouldBe 0
+                val singleTopFlag = intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP
+                singleTopFlag shouldBe 0
             }
     }
 

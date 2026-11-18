@@ -149,12 +149,9 @@ Three tools run as part of `./gradlew build`:
   and no raw `HiltAndroidRule`. `HiltTestRule` runs `HiltAndroidRule`, exposes `inject()`, and closes every resource
   registered with `closeAfterTest`, such as each in-memory `AppDatabase` the test built.
 
-**Robolectric jars** — Gradle resolves the `android-all-instrumented` jars (catalog entries `robolectric-android-all-<api>`,
-one per SDK level the tests use) into `app/build/robolectric-jars` through `syncRobolectricJars`, and the unit-test tasks pass
-that directory as `robolectric.dependency.dir`. Unit tests run without network access. After a Robolectric bump or a new
-`@Config(sdk)`, update the catalog coordinates to the jar names Robolectric's `DefaultSdkProvider` lists; a stale entry fails the
-test with `Path is not a file` naming the missing jar. The `local-tests` step has a 12-minute timeout, so a hang fails the step and the failure
-uploads still run (a job-level cancel skips them).
+**Hung unit tests in CI** — the `local-tests` step "Run local tests" has a 12-minute step timeout. Robolectric
+downloads the Android framework jars it needs into `~/.m2` on the first run on a machine, and on every CI run because CI has no
+`~/.m2` cache. If a download stalls, the step fails at 12 minutes and a rerun retries it. The failure uploads still run; a job-level cancel skips them.
 
 **Dependency analysis** — `./gradlew buildHealth` runs in the `check-formatting` CI job. It fails on unused
 dependencies, incorrect configurations and unused annotation processors; other advice warns, except "used transitive

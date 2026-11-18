@@ -1,107 +1,29 @@
-config:
-  validation: true
-  warningsAsErrors: false
-
-processors:
-  active: true
-  exclude: [ ]
-
-console-reports:
-  active: true
-
 coroutines:
-  active: true
   GlobalCoroutineUsage:
-    active: true
-  InjectDispatcher:
-    active: true
-    excludes: ['**/di/**']
-  RedundantSuspendModifier:
-    active: true
-  SleepInsteadOfDelay:
-    active: true
-  SuspendFunWithFlowReturnType:
     active: true
 
 complexity:
-  active: true
-  LongParameterList:
-    active: true
-    allowedFunctionParameters: 6
-    allowedConstructorParameters: 7
   TooManyFunctions:
     active: false
-  ComplexCondition:
-    allowedConditions: 4
   CyclomaticComplexMethod:
     ignoreSimpleWhenEntries: true
   LargeClass:
     excludes: ['**/test/**', '**/androidTest/**', '**/testFixtures/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
 
 style:
-  active: true
-  AbstractClassCanBeConcreteClass:
-    active: false
   MagicNumber:
-    active: true
-    ignoreNumbers: [ '-1', '0', '1', '2' ]
     ignorePropertyDeclaration: false
-    ignoreCompanionObjectPropertyDeclaration: true
   MaxLineLength:
     maxLineLength: 140
-  ForbiddenComment:
-    active: true
-    comments: [ 'TODO:', 'FIXME:' ]
   RedundantExplicitType:
     active: true
   UnnecessaryLet:
     active: true
   UnnecessaryParentheses:
     active: true
-    allowForUnclearPrecedence: true
   UnusedImport:
-    active: true
-  UnusedPrivateFunction:
-    active: true
-  UnusedPrivateProperty:
     active: true
   UseIfEmptyOrIfBlank:
     active: true
   VarCouldBeVal:
-    active: true
-    ignoreLateinitVar: true
-
-naming:
-  FunctionNaming:
-    functionPattern: '[a-z][A-Za-z0-9]*'
-  TopLevelPropertyNaming:
-    constantPattern: '[A-Z][_A-Z0-9]*'
-
-empty-blocks:
-  EmptyFunctionBlock:
-    active: true
-    ignoreOverridden: false
-
-exceptions:
-  active: true
-  TooGenericExceptionThrown:
-    active: true
-    exceptionNames:
-      - Error
-      - Exception
-      - RuntimeException
-      - Throwable
-  SwallowedException:
-    active: true
-    ignoredExceptionTypes:
-      - InterruptedException
-      - MalformedURLException
-      - NumberFormatException
-      - ParseException
-
-potential-bugs:
-  active: true
-  ImplicitDefaultLocale:
-    active: true
-  UnsafeCallOnNullableType:
-    active: true
+    ignoreAnnotated: ['org.robolectric.annotation.RealObject']

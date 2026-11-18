@@ -14,8 +14,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!--Override commonutils-->
-    <integer name="commonutils_tos_version">1</integer>
+    <integer name="commonutils_tos_version" tools:ignore="UnusedResources">1</integer>
 
 </resources>
