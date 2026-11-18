@@ -15,6 +15,8 @@
     limitations under the License.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="UnusedResources"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="24"
