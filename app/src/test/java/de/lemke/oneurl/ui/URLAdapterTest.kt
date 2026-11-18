@@ -36,11 +36,13 @@ import de.lemke.oneurl.data.FakeQRCodeRenderer
 import de.lemke.oneurl.data.FakeQRCodeRenderer.Render
 import de.lemke.oneurl.data.QRCodeCache
 import de.lemke.oneurl.domain.GenerateQRCodeUseCase
+import de.lemke.oneurl.domain.GetQRCodeThumbnailUseCase
 import de.lemke.oneurl.domain.model.URL
 import de.lemke.oneurl.domain.testUrl
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -98,10 +100,8 @@ class URLAdapterTest {
                 val adapter =
                     URLAdapter(
                         context = activity,
-                        qrCodeCache = qrCodeCache,
-                        generateQRCode = generateQRCode,
+                        getQRCodeThumbnail = GetQRCodeThumbnailUseCase(qrCodeCache, generateQRCode, defaultDispatcher),
                         scope = adapterScope,
-                        defaultDispatcher = defaultDispatcher,
                         onAllSelectorStateChanged = {},
                         onBlockActionMode = {},
                     )
@@ -162,7 +162,7 @@ class URLAdapterTest {
     }
 
     @Test
-    fun `bind on cache miss generates and caches a thumbnail for a still-bound holder`() {
+    fun `bind on cache miss shows the generated thumbnail for a still-bound holder`() {
         withAdapter { adapter, holder ->
             val url = testUrl("https://short.url/miss")
             adapter.submitList(listOf(url))
@@ -172,8 +172,11 @@ class URLAdapterTest {
             val qrSizePx =
                 holder.itemView.context.resources
                     .getDimensionPixelSize(R.dimen.list_item_qr_size)
-            qrCodeCache[url.shortURL, qrSizePx] shouldNotBe null
-            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldNotBe null
+            val bitmap = (holder.listItemImg.drawable as BitmapDrawable).bitmap
+            bitmap.width shouldBe qrSizePx
+            bitmap.height shouldBe qrSizePx
+            qrCodeCache[url.shortURL, qrSizePx] shouldBeSameInstanceAs bitmap
+            renderer.renders shouldBe listOf(Render(url.shortURL, null))
         }
     }
 
@@ -367,10 +370,8 @@ class URLAdapterTest {
                 val adapter =
                     URLAdapter(
                         context = activity,
-                        qrCodeCache = qrCodeCache,
-                        generateQRCode = generateQRCode,
+                        getQRCodeThumbnail = GetQRCodeThumbnailUseCase(qrCodeCache, generateQRCode, dispatcher),
                         scope = adapterScope,
-                        defaultDispatcher = dispatcher,
                         onAllSelectorStateChanged = {},
                         onBlockActionMode = {},
                     )
