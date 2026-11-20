@@ -22,14 +22,13 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
-import de.lemke.commonutils.ui.utils.withoutHttps
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.answerThroughQueue
 import de.lemke.oneurl.data.deliverResponse
-import de.lemke.oneurl.data.params
-import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
+import java.net.URLEncoder
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -81,8 +80,7 @@ class KurzelinksdeTest {
         var error: GenerateURLError? = null
         val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
-        req.deliverResponse(parsed.result as String)
+        req.answerThroughQueue(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://kurzelinks.de")
     }
@@ -189,15 +187,9 @@ class KurzelinksdeTest {
                 { fail("unexpected error: $it") },
             )
 
-        req.params() shouldBe
-            mapOf(
-                "key" to BuildConfig.KURZELINKS_API_KEY,
-                "json" to "1",
-                "apiversion" to "22",
-                "url" to longURL,
-                "servicedomain" to Kurzelinks.Kurzelinksde.baseURL.withoutHttps(),
-                "requesturl" to "abc",
-            )
+        req.body.decodeToString() shouldBe
+            "key=" + URLEncoder.encode(BuildConfig.KURZELINKS_API_KEY, "UTF-8") +
+            "&json=1&apiversion=22&url=https%3A%2F%2Fexample.com&servicedomain=kurzelinks.de&requesturl=abc&"
     }
 
     @Test

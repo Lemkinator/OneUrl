@@ -18,7 +18,6 @@ package de.lemke.oneurl.ui
 
 import android.R.anim.fade_in
 import android.R.anim.fade_out
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.Intent.ACTION_PROCESS_TEXT
 import android.content.Intent.ACTION_SEARCH
@@ -34,6 +33,8 @@ import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.viewModels
+import androidx.annotation.VisibleForTesting
+import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.isVisible
@@ -246,25 +247,26 @@ class MainActivity :
             onBackBehavior = DISMISS,
         )
 
-    @SuppressLint("RestrictedApi")
     private fun initDrawer() {
-        binding.navigationView.findMenuItem(R.id.leaks_dest)?.isVisible = BuildConfig.DEBUG
-        binding.navigationView.onSingleLaunchItemSelected { item ->
-            when (item.itemId) {
-                R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
-                R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToProviderActivity(ProviderScreenMode.Info)
-                R.id.help_dest -> popOverOrTransformToActivity<HelpActivity>(R.id.help_dest)
-                R.id.about_app_dest -> popOverOrTransformToActivity<CommonUtilsAboutActivity>(R.id.about_app_dest)
-                R.id.about_me_dest -> popOverOrTransformToActivity<CommonUtilsAboutMeActivity>(R.id.about_me_dest)
-                R.id.leaks_dest -> openLeakCanary()
-                R.id.settings_dest -> popOverOrTransformToActivity<CommonUtilsSettingsActivity>(R.id.settings_dest)
-                else -> return@onSingleLaunchItemSelected false
-            }
-            true
-        }
+        binding.navigationView.onSingleLaunchItemSelected(::onNavigationItemSelected)
         binding.drawerLayout.setTitle(BuildConfig.APP_NAME)
         binding.drawerLayout.setupHeaderAndNavRail(getString(R.string.about_app))
         binding.noEntryView.translateYWithAppBar(binding.drawerLayout.appBarLayout, this)
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    internal fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.qr_code_dest -> findViewById<View>(R.id.qr_code_dest).transformToActivity(GenerateQRCodeActivity::class.java)
+            R.id.provider_dest -> findViewById<View>(R.id.provider_dest).transformToProviderActivity(ProviderScreenMode.Info)
+            R.id.help_dest -> popOverOrTransformToActivity<HelpActivity>(R.id.help_dest)
+            R.id.about_app_dest -> popOverOrTransformToActivity<CommonUtilsAboutActivity>(R.id.about_app_dest)
+            R.id.about_me_dest -> popOverOrTransformToActivity<CommonUtilsAboutMeActivity>(R.id.about_me_dest)
+            R.id.leaks_dest -> openLeakCanary()
+            R.id.settings_dest -> popOverOrTransformToActivity<CommonUtilsSettingsActivity>(R.id.settings_dest)
+            else -> return false
+        }
+        return true
     }
 
     private fun initRecycler() {

@@ -30,7 +30,6 @@ interface PageTitleFetcher {
 class DefaultPageTitleFetcher @Inject constructor(
     private val queue: VolleyQueue,
 ) : PageTitleFetcher {
-    @Suppress("TooGenericExceptionCaught")
     override suspend fun title(url: String): String? =
         suspendCancellableCoroutine { cont ->
             val req =
@@ -38,18 +37,12 @@ class DefaultPageTitleFetcher @Inject constructor(
                     url,
                     { response ->
                         if (!cont.isActive) return@StringRequest
-                        // An exception escaping a Volley callback on the main thread crashes the app.
-                        try {
-                            val title =
-                                Regex("<title[^>]*>(.*?)</title>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
-                                    .find(response)
-                                    ?.let { it.groupValues[1].trim() }
-                            Log.d("DefaultPageTitleFetcher", "title: $title")
-                            cont.resume(title)
-                        } catch (e: Exception) {
-                            Log.e("DefaultPageTitleFetcher", "error parsing title from response", e)
-                            cont.resume(null)
-                        }
+                        val title =
+                            Regex("<title[^>]*>(.*?)</title>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+                                .find(response)
+                                ?.let { it.groupValues[1].trim() }
+                        Log.d("DefaultPageTitleFetcher", "title: $title")
+                        cont.resume(title)
                     },
                     { error ->
                         if (!cont.isActive) return@StringRequest

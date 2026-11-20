@@ -43,7 +43,6 @@ import de.lemke.oneurl.domain.model.ShortURLProvider
 import de.lemke.oneurl.ui.ProviderActivity.Companion.transformToProviderActivity
 import de.lemke.oneurl.ui.ProviderInfoBottomSheet.Companion.showProviderInfoBottomSheet
 import de.lemke.oneurl.ui.ShortURLQRCodeViewModel.Companion.KEY_SHORT_URL
-import dev.oneuiproject.oneui.ktx.hideSoftInput
 import de.lemke.commonutils.R as commonutilsR
 
 @AndroidEntryPoint
@@ -59,10 +58,6 @@ class AddURLActivity : AppCompatActivity() {
         binding = ActivityAddUrlBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setCustomBackAnimation(binding.root)
-        binding.root.setNavigationButtonOnClickListener {
-            hideSoftInput()
-            finishAfterTransition()
-        }
         initFooterButton()
         collectState()
         collectState(viewModel.outcome, minActiveState = RESUMED) { if (it is AddUrlOutcome.Result) onOutcome(it) }

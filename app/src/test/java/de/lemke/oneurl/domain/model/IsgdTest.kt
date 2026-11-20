@@ -21,8 +21,8 @@ import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
 import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.answerThroughQueue
 import de.lemke.oneurl.data.deliverResponse
-import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
 import org.json.JSONObject
 import org.junit.Assert.fail
@@ -142,11 +142,7 @@ class IsgdTest {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        val parsed =
-            req.parseResponse(
-                NetworkResponse(200, "Error, database insert failed".toByteArray(), false, 0L, emptyList()),
-            )
-        req.deliverError(parsed.error)
+        req.answerThroughQueue(NetworkResponse(200, "Error, database insert failed".toByteArray(), false, 0L, emptyList()))
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://is.gd")
     }
@@ -156,8 +152,7 @@ class IsgdTest {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        val parsed = req.parseResponse(NetworkResponse(200, "[]".toByteArray(), false, 0L, emptyList()))
-        req.deliverError(parsed.error)
+        req.answerThroughQueue(NetworkResponse(200, "[]".toByteArray(), false, 0L, emptyList()))
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://is.gd")
     }

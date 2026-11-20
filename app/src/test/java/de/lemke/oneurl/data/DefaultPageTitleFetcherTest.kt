@@ -79,17 +79,6 @@ class DefaultPageTitleFetcherTest {
         }
 
     @Test
-    fun `returns null and logs when parsing the response throws`() =
-        runTest {
-            // The compiled listener null-checks its parameter, so a null response reaches the parse failure branch.
-            queue.onAdd = {
-                it.deliverResponse(null)
-            }
-
-            pageTitleFetcher.title("https://example.com") shouldBe null
-        }
-
-    @Test
     fun `ignores a response delivered after the continuation already resumed`() =
         runTest {
             queue.onAdd = { request ->

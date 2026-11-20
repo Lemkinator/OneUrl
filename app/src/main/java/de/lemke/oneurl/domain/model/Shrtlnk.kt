@@ -81,9 +81,9 @@ object Shrtlnk : ShortURLProvider {
 
             // An exception escaping a Volley callback on the main thread crashes the app.
             @Suppress("TooGenericExceptionCaught")
-            override fun parseNetworkResponse(response: NetworkResponse?): Response<String> =
+            override fun parseNetworkResponse(response: NetworkResponse): Response<String> =
                 try {
-                    val headers = response?.headers
+                    val headers = response.headers
                     Log.d(tag, "response headers: $headers")
                     val redirect = headers?.get("X-Remix-Redirect")
                     val key = redirect?.substringAfter("key=")
@@ -103,13 +103,13 @@ object Shrtlnk : ShortURLProvider {
                     Response.error(VolleyError(e))
                 }
 
-            override fun parseNetworkError(volleyError: VolleyError?): VolleyError {
+            override fun parseNetworkError(volleyError: VolleyError): VolleyError {
                 if (volleyError is NoConnectionError) {
                     errorCallback(GenerateURLError.ServiceOffline)
                 } else {
                     errorCallback(GenerateURLError.Unknown())
                 }
-                return volleyError ?: VolleyError("unknown error")
+                return volleyError
             }
         }
     }

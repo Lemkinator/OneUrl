@@ -25,9 +25,8 @@ import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
-import de.lemke.oneurl.data.params
-import de.lemke.oneurl.data.parseError
-import de.lemke.oneurl.data.parseResponse
+import de.lemke.oneurl.data.answerThroughQueue
+import de.lemke.oneurl.data.failThroughQueue
 import io.kotest.matchers.shouldBe
 import org.junit.Assert.fail
 import org.junit.Test
@@ -43,97 +42,74 @@ class ShrtlnkTest {
     private val queue = FakeVolleyQueue()
     private val realContext = ApplicationProvider.getApplicationContext<Context>()
     private val longURL = "https://example.com"
+    private val redirectResponse =
+        NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
 
     @Test
     fun `parseNetworkResponse succeeds when the redirect header contains a key`() {
         var result: String? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
-        val networkResponse =
-            NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
 
-        val response = req.parseResponse(networkResponse)
+        req.answerThroughQueue(redirectResponse)
 
         result shouldBe "https://www.shrtlnk.dev/h1aja4"
-        response.isSuccess shouldBe true
-        response.result shouldBe "https://www.shrtlnk.dev/h1aja4"
-    }
-
-    @Test
-    fun `parseNetworkResponse fails with Unknown when the network response is null`() {
-        var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
-
-        val response = req.parseResponse(null)
-
-        error shouldBe GenerateURLError.Unknown()
-        response.isSuccess shouldBe false
     }
 
     @Test
     fun `parseNetworkResponse fails with Unknown when the redirect header is missing`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
-        val networkResponse = NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("Server", "Vercel")))
 
-        val response = req.parseResponse(networkResponse)
+        req.answerThroughQueue(NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("Server", "Vercel"))))
 
         error shouldBe GenerateURLError.Unknown()
-        response.isSuccess shouldBe false
+    }
+
+    @Test
+    fun `parseNetworkResponse fails with Unknown when the response has no headers`() {
+        var error: GenerateURLError? = null
+        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.answerThroughQueue(NetworkResponse(204, ByteArray(0), false, 0L, null as List<Header>?))
+
+        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test
     fun `parseNetworkError maps NoConnectionError to ServiceOffline`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
-        val volleyError = NoConnectionError()
 
-        val returned = req.parseError(volleyError)
+        req.failThroughQueue(NoConnectionError())
 
         error shouldBe GenerateURLError.ServiceOffline
-        returned shouldBe volleyError
     }
 
     @Test
     fun `parseNetworkError maps any other error to Unknown`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
-        val volleyError = VolleyError("no network")
 
-        val returned = req.parseError(volleyError)
+        req.failThroughQueue(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
-        returned shouldBe volleyError
     }
 
     @Test
-    fun `parseNetworkError maps a null error to Unknown and returns a fallback error`() {
-        var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
-
-        val returned = req.parseError(null)
-
-        error shouldBe GenerateURLError.Unknown()
-        returned.message shouldBe "unknown error"
-    }
-
-    @Test
-    fun `getParams returns the long url param`() {
+    fun `getParams sends the long url as the request body`() {
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.params() shouldBe mapOf("url" to longURL)
+        req.body.decodeToString() shouldBe "url=https%3A%2F%2Fexample.com&"
     }
 
     @Test
     fun `parseNetworkResponse fails with Unknown when the success callback throws`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { error("boom") }, { error = it })
-        val networkResponse =
-            NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
 
-        val response = req.parseResponse(networkResponse)
+        req.answerThroughQueue(redirectResponse)
 
         error shouldBe GenerateURLError.Unknown()
-        response.isSuccess shouldBe false
     }
 
     @Test

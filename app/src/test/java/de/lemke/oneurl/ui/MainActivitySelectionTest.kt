@@ -16,15 +16,19 @@
 
 package de.lemke.oneurl.ui
 
+import android.os.Looper
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.IdRes
 import androidx.core.view.descendants
 import androidx.core.view.isVisible
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.swipeLeft
+import androidx.test.espresso.action.ViewActions.swipeRight
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -39,6 +43,7 @@ import dev.oneuiproject.oneui.layout.NavDrawerLayout
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
+import java.time.Duration
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -137,8 +142,8 @@ class MainActivitySelectionTest {
         val url = urlRepository.seedUrl("https://da.gd/swipestart1", favorite = false)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
-            scenario.onActivity { activity -> activity.swipeFirstItem(ItemTouchHelper.START) }
-            idleMainLooper()
+            onView(withText("https://da.gd/swipestart1")).perform(swipeLeft())
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(2))
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe true
         }
     }
@@ -148,8 +153,8 @@ class MainActivitySelectionTest {
         val url = urlRepository.seedUrl("https://da.gd/swipeend1", favorite = true)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
-            scenario.onActivity { activity -> activity.swipeFirstItem(ItemTouchHelper.END) }
-            idleMainLooper()
+            onView(withText("https://da.gd/swipeend1")).perform(swipeRight())
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(2))
             runBlocking { urlRepository.getURL(url.shortURL)?.favorite } shouldBe false
         }
     }
@@ -231,11 +236,7 @@ class MainActivitySelectionTest {
             scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
             idleMainLooper()
             scenario.onActivity { activity ->
-                val menu =
-                    activity
-                        .findViewById<NavDrawerLayout>(R.id.drawerLayout)
-                        .bottomActionModeBar()
-                        .menu
+                val menu = activity.bottomActionModeBar().menu
                 menu.add(Menu.NONE, UNMAPPED_ACTION_ITEM_ID, Menu.NONE, "unmapped")
                 menu.performIdentifierAction(UNMAPPED_ACTION_ITEM_ID, 0)
             }
@@ -264,22 +265,8 @@ class MainActivitySelectionTest {
         }
     }
 
-    // The bottom action-mode menu (a plain, unnamed BottomNavigationView added programmatically to
-    // the footer) is a private field on ToolbarLayout, a superclass of NavDrawerLayout - walk up the
-    // hierarchy since Java reflection's getDeclaredField only searches the exact class it's called on.
-    private fun NavDrawerLayout.bottomActionModeBar(): BottomNavigationView {
-        var cls: Class<*> = javaClass
-        while (true) {
-            try {
-                return cls
-                    .getDeclaredField("bottomActionModeBar")
-                    .apply { isAccessible = true }
-                    .get(this) as BottomNavigationView
-            } catch (e: NoSuchFieldException) {
-                cls = cls.superclass ?: throw e
-            }
-        }
-    }
+    private fun MainActivity.bottomActionModeBar(): BottomNavigationView =
+        findViewById<ViewGroup>(designR.id.tbl_footer_parent).descendants.filterIsInstance<BottomNavigationView>().single()
 
     // SelectableLinearLayout overrides View.setSelected to drive its own checkbox/highlight
     // instead of the base isSelected flag (setSelectedAnimate never calls super.setSelected), so
@@ -315,37 +302,6 @@ class MainActivitySelectionTest {
             (window.decorView as ViewGroup).descendants.firstOrNull { it.id == itemId }
                 ?: error("Action mode menu item $itemId not found - ensure at least one item is selected first")
         bottomBarItem.performClick()
-    }
-
-    private fun MainActivity.swipeFirstItem(direction: Int) {
-        val recycler = findViewById<RecyclerView>(R.id.urlList)
-        val viewHolder = recycler.findViewHolderForAdapterPosition(0)!!
-        val callback = recycler.itemTouchCallback()
-        callback.getMovementFlags(recycler, viewHolder)
-        callback.onSelectedChanged(viewHolder, ItemTouchHelper.ACTION_STATE_SWIPE)
-        callback.onSwiped(viewHolder, direction)
-    }
-
-    // SESL's ItemTouchHelper.attachToRecyclerView registers a private anonymous
-    // OnItemTouchListener field (not `this`), so RecyclerView.mOnItemTouchListeners never holds an
-    // ItemTouchHelper instance directly - reach the owning helper through the listener's synthetic
-    // outer-class reference instead.
-    private fun RecyclerView.itemTouchCallback(): ItemTouchHelper.Callback {
-        val listeners =
-            RecyclerView::class.java
-                .getDeclaredField("mOnItemTouchListeners")
-                .apply { isAccessible = true }
-                .get(this) as List<*>
-        val listener = checkNotNull(listeners.firstOrNull())
-        val helper =
-            listener.javaClass
-                .getDeclaredField("this\$0")
-                .apply { isAccessible = true }
-                .get(listener) as ItemTouchHelper
-        return ItemTouchHelper::class.java
-            .getDeclaredField("mCallback")
-            .apply { isAccessible = true }
-            .get(helper) as ItemTouchHelper.Callback
     }
 
     private companion object {

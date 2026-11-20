@@ -16,10 +16,18 @@
 
 package de.lemke.oneurl.data
 
+import com.android.volley.ExecutorDelivery
+import com.android.volley.Network
 import com.android.volley.NetworkResponse
 import com.android.volley.Request
+import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.VolleyError
+import com.android.volley.toolbox.NoCache
+import io.kotest.matchers.shouldBe
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /** Records every added request and passes it to [onAdd], which can answer it; records every removed cache entry. */
 internal class FakeVolleyQueue : VolleyQueue {
@@ -37,28 +45,38 @@ internal class FakeVolleyQueue : VolleyQueue {
     }
 }
 
-// Volley's RequestQueue is the only caller of these protected Request methods, so a test standing
-// in for the queue reaches them through reflection.
-private fun Request<*>.invokeProtected(
-    name: String,
-    vararg parameters: Pair<Class<*>, Any?>,
-): Any? =
-    Request::class.java
-        .getDeclaredMethod(name, *parameters.map { it.first }.toTypedArray())
-        .apply { isAccessible = true }
-        .invoke(this, *parameters.map { it.second }.toTypedArray())
-
 /** Delivers [response] to the request's listener as the queue would after a successful parse. */
 internal fun Request<*>.deliverResponse(response: Any?) {
-    invokeProtected("deliverResponse", Any::class.java to response)
+    ExecutorDelivery(Runnable::run).postResponse(this, Response.success(response, null))
 }
 
-internal fun Request<*>.parseResponse(response: NetworkResponse?): Response<*> =
-    invokeProtected("parseNetworkResponse", NetworkResponse::class.java to response) as Response<*>
+/** Runs the request through a real [RequestQueue] whose network answers with [response]. */
+internal fun Request<*>.answerThroughQueue(response: NetworkResponse) = runThroughQueue(Network { response })
 
-internal fun Request<*>.parseError(error: VolleyError?): VolleyError =
-    invokeProtected("parseNetworkError", VolleyError::class.java to error) as VolleyError
+/** Runs the request through a real [RequestQueue] whose network fails with [error]. */
+internal fun Request<*>.failThroughQueue(error: VolleyError) = runThroughQueue(Network { throw error })
 
-internal fun Request<*>.params(): Map<*, *>? = invokeProtected("getParams") as Map<*, *>?
-
-internal fun Request<*>.headers(): Map<*, *> = invokeProtected("getHeaders") as Map<*, *>
+private fun Request<*>.runThroughQueue(network: Network) {
+    val finished = CountDownLatch(1)
+    val thrown = AtomicReference<Throwable?>(null)
+    val delivery =
+        ExecutorDelivery { delivered ->
+            try {
+                delivered.run()
+            } catch (t: Throwable) {
+                thrown.compareAndSet(null, t)
+                finished.countDown()
+            }
+        }
+    val queue = RequestQueue(NoCache(), network, 1, delivery)
+    queue.addRequestEventListener { _, event -> if (event == RequestQueue.RequestEvent.REQUEST_FINISHED) finished.countDown() }
+    queue.start()
+    try {
+        queue.add(this)
+        val completed = finished.await(5, TimeUnit.SECONDS)
+        thrown.get()?.let { throw it }
+        completed shouldBe true
+    } finally {
+        queue.stop()
+    }
+}
