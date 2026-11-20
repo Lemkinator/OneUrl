@@ -22,7 +22,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
-import de.lemke.commonutils.ui.utils.withoutHttps
 import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
