@@ -231,11 +231,7 @@ class MainActivitySelectionTest {
             scenario.onActivity { activity -> activity.selectFirstItemInActionMode() }
             idleMainLooper()
             scenario.onActivity { activity ->
-                val menu =
-                    activity
-                        .findViewById<NavDrawerLayout>(R.id.drawerLayout)
-                        .bottomActionModeBar()
-                        .menu
+                val menu = activity.bottomActionModeBar().menu
                 menu.add(Menu.NONE, UNMAPPED_ACTION_ITEM_ID, Menu.NONE, "unmapped")
                 menu.performIdentifierAction(UNMAPPED_ACTION_ITEM_ID, 0)
             }
@@ -264,22 +260,8 @@ class MainActivitySelectionTest {
         }
     }
 
-    // The bottom action-mode menu (a plain, unnamed BottomNavigationView added programmatically to
-    // the footer) is a private field on ToolbarLayout, a superclass of NavDrawerLayout - walk up the
-    // hierarchy since Java reflection's getDeclaredField only searches the exact class it's called on.
-    private fun NavDrawerLayout.bottomActionModeBar(): BottomNavigationView {
-        var cls: Class<*> = javaClass
-        while (true) {
-            try {
-                return cls
-                    .getDeclaredField("bottomActionModeBar")
-                    .apply { isAccessible = true }
-                    .get(this) as BottomNavigationView
-            } catch (e: NoSuchFieldException) {
-                cls = cls.superclass ?: throw e
-            }
-        }
-    }
+    private fun MainActivity.bottomActionModeBar(): BottomNavigationView =
+        findViewById<ViewGroup>(designR.id.tbl_footer_parent).descendants.filterIsInstance<BottomNavigationView>().single()
 
     // SelectableLinearLayout overrides View.setSelected to drive its own checkbox/highlight
     // instead of the base isSelected flag (setSelectedAnimate never calls super.setSelected), so
