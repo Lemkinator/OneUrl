@@ -63,7 +63,7 @@
         android:id="@+id/leaks_dest"
         android:icon="@drawable/ic_oui_tool_outline"
         android:title="@string/memory_leaks"
-        android:visible="false"
+        android:visible="@bool/leaks_menu_visible"
         app:showAsAction="always" />
 
 </menu>

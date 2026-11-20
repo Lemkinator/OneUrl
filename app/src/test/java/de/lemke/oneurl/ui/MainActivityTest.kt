@@ -26,7 +26,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.View
 import androidx.annotation.IdRes
-import androidx.appcompat.view.menu.MenuBuilder
+import androidx.appcompat.view.menu.MenuItemImpl
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
@@ -46,14 +46,12 @@ import de.lemke.commonutils.ui.activity.CommonUtilsAboutActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsAboutMeActivity
 import de.lemke.commonutils.ui.activity.CommonUtilsSettingsActivity
 import de.lemke.commonutils.ui.utils.COMMONUTILS_KEY_IS_SEARCH_MODE
-import de.lemke.oneurl.BuildConfig
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.URLRepository
 import dev.oneuiproject.oneui.layout.NavDrawerLayout
 import dev.oneuiproject.oneui.navigation.widget.DrawerNavigationView
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -410,34 +408,10 @@ class MainActivityTest {
     }
 
     @Test
-    fun `initDrawer leaks menu item visibility matches debug build config`() {
+    fun `leaks menu item is visible in the debug build`() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                activity
-                    .findViewById<DrawerNavigationView>(R.id.navigationView)
-                    .findMenuItem(R.id.leaks_dest)
-                    ?.isVisible shouldBe BuildConfig.DEBUG
-            }
-        }
-    }
-
-    @Test
-    fun `initDrawer skips setting leaks item visibility when the item is not present in the navigation menu`() {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            idleMainLooper()
-            scenario.onActivity { activity ->
-                val navigationView = activity.findViewById<DrawerNavigationView>(R.id.navigationView)
-                navigationView.drawerMenu().removeItem(R.id.leaks_dest)
-                activity.callInitDrawer()
-                navigationView.findMenuItem(R.id.leaks_dest).shouldBeNull()
-            }
-            idleMainLooper()
-            scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.qr_code_dest, 0)
-            }
-            idleMainLooper()
-            scenario.onActivity { activity ->
-                shadowOf(activity).nextStartedActivity?.component?.className shouldBe GenerateQRCodeActivity::class.java.name
+                activity.findViewById<DrawerNavigationView>(R.id.navigationView).findMenuItem(R.id.leaks_dest)!!.isVisible shouldBe true
             }
         }
     }
@@ -451,7 +425,7 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.provider_dest, 0)
+                drawerItem(activity, R.id.provider_dest).invoke()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -489,8 +463,8 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                val menu = activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu()
-                repeat(taps) { menu.performIdentifierAction(navItemId, 0) }
+                val item = drawerItem(activity, navItemId)
+                repeat(taps) { item.invoke() }
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -623,7 +597,7 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.leaks_dest, 0)
+                drawerItem(activity, R.id.leaks_dest).invoke()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -642,9 +616,7 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                val menu = activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu()
-                menu.add(Menu.NONE, UNMAPPED_NAV_ITEM_ID, Menu.NONE, "unmapped")
-                menu.performIdentifierAction(UNMAPPED_NAV_ITEM_ID, 0)
+                activity.onNavigationItemSelected(menuItem(UNMAPPED_NAV_ITEM_ID)) shouldBe false
             }
             idleMainLooper()
             scenario.onActivity { activity -> shadowOf(activity).nextStartedActivity shouldBe null }
@@ -656,9 +628,9 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                val menu = activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu()
-                menu.performIdentifierAction(R.id.help_dest, 0)
-                menu.performIdentifierAction(R.id.help_dest, 0)
+                val item = drawerItem(activity, R.id.help_dest)
+                item.invoke()
+                item.invoke()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -677,11 +649,11 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.settings_dest, 0)
+                drawerItem(activity, R.id.settings_dest).invoke()
             }
             scenario.returnFromLaunchedScreen()
             scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.settings_dest, 0)
+                drawerItem(activity, R.id.settings_dest).invoke()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -697,11 +669,11 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.help_dest, 0)
+                drawerItem(activity, R.id.help_dest).invoke()
             }
             scenario.returnFromLaunchedScreen()
             scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(R.id.help_dest, 0)
+                drawerItem(activity, R.id.help_dest).invoke()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -737,7 +709,7 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
             scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).drawerMenu().performIdentifierAction(navItemId, 0)
+                drawerItem(activity, navItemId).invoke()
             }
             idleMainLooper()
             scenario.onActivity { activity ->
@@ -746,25 +718,15 @@ class MainActivityTest {
         }
     }
 
-    private fun MainActivity.callInitDrawer() {
-        MainActivity::class.java
-            .getDeclaredMethod("initDrawer")
-            .apply { isAccessible = true }
-            .invoke(this)
-    }
-
     // NavDrawerLayout wires setSupportActionBar to its own internal Toolbar rather than the
     // window's native action bar, so shadowOf(activity).optionsMenu (which shadows the framework
     // panel-menu path) never populates - read the real Toolbar's own Menu instead.
     private fun MainActivity.mainToolbarMenu(): Menu = findViewById<Toolbar>(designR.id.toolbarlayout_main_toolbar).menu
 
-    // DrawerNavigationView only exposes lookups (findMenuItem) and setNavigationItemSelectedListener,
-    // not the backing Menu itself - reflection is the only seam to drive item selection by id.
-    private fun DrawerNavigationView.drawerMenu(): MenuBuilder =
-        DrawerNavigationView::class.java
-            .getDeclaredField("navDrawerMenu")
-            .apply { isAccessible = true }
-            .get(this) as MenuBuilder
+    private fun drawerItem(
+        activity: MainActivity,
+        @IdRes itemId: Int,
+    ) = activity.findViewById<DrawerNavigationView>(R.id.navigationView).findMenuItem(itemId) as MenuItemImpl
 
     private companion object {
         const val UNMAPPED_NAV_ITEM_ID = 987654321
