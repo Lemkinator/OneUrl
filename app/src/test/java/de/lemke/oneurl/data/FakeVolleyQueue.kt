@@ -27,6 +27,7 @@ import com.android.volley.toolbox.NoCache
 import io.kotest.matchers.shouldBe
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /** Records every added request and passes it to [onAdd], which can answer it; records every removed cache entry. */
 internal class FakeVolleyQueue : VolleyQueue {
@@ -57,12 +58,24 @@ internal fun Request<*>.failThroughQueue(error: VolleyError) = runThroughQueue(N
 
 private fun Request<*>.runThroughQueue(network: Network) {
     val finished = CountDownLatch(1)
-    val queue = RequestQueue(NoCache(), network, 1, ExecutorDelivery(Runnable::run))
+    val thrown = AtomicReference<Throwable?>(null)
+    val delivery =
+        ExecutorDelivery { delivered ->
+            try {
+                delivered.run()
+            } catch (t: Throwable) {
+                thrown.compareAndSet(null, t)
+                finished.countDown()
+            }
+        }
+    val queue = RequestQueue(NoCache(), network, 1, delivery)
     queue.addRequestEventListener { _, event -> if (event == RequestQueue.RequestEvent.REQUEST_FINISHED) finished.countDown() }
     queue.start()
     try {
         queue.add(this)
-        finished.await(5, TimeUnit.SECONDS) shouldBe true
+        val completed = finished.await(5, TimeUnit.SECONDS)
+        thrown.get()?.let { throw it }
+        completed shouldBe true
     } finally {
         queue.stop()
     }
