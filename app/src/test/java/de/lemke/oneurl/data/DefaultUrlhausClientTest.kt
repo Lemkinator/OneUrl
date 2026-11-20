@@ -308,8 +308,11 @@ class DefaultUrlhausClientTest {
 
             urlhausClient.check("example.com")
 
-            queue.added.single().params() shouldBe mapOf("url" to "example.com")
-            queue.added.single().headers() shouldBe mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
+            queue.added
+                .single()
+                .body
+                .decodeToString() shouldBe "url=example.com&"
+            queue.added.single().headers shouldBe mapOf("Auth-Key" to BuildConfig.URL_HAUS_AUTH_KEY)
         }
 
     @Test

@@ -167,7 +167,7 @@ class DefaultShortURLClientTest {
             client.create(Tly.Ibitly, "https://example.com", "") shouldBe GenerateURLResult.Success("https://t.ly/abc")
 
             queue.added.single().url shouldBe "https://api.t.ly/api/v1/link/shorten"
-            queue.added.single().headers()["authorization"] shouldBe "Bearer secret"
+            queue.added.single().headers["authorization"] shouldBe "Bearer secret"
         }
 
     @Test
@@ -191,7 +191,7 @@ class DefaultShortURLClientTest {
 
             queue.added
                 .single()
-                .headers()
+                .headers
                 .keys
                 .contains("authorization") shouldBe false
         }

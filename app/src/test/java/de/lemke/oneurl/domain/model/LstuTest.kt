@@ -25,9 +25,8 @@ import com.android.volley.NoConnectionError
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.answerThroughQueue
 import de.lemke.oneurl.data.deliverResponse
-import de.lemke.oneurl.data.params
-import de.lemke.oneurl.data.parseResponse
 import de.lemke.oneurl.domain.testUrl
 import io.kotest.matchers.shouldBe
 import org.junit.Assert.fail
@@ -107,8 +106,7 @@ class LstuTest {
         var error: GenerateURLError? = null
         val req = Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
-        req.deliverResponse(parsed.result as String)
+        req.answerThroughQueue(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://lstu.fr")
     }
@@ -238,7 +236,7 @@ class LstuTest {
     fun `getParams returns the lsturl, alias, and format params`() {
         val req = Lstu.getCreateRequest(queue, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.params() shouldBe mapOf("lsturl" to longURL, "lsturl-custom" to "test", "format" to "json")
+        req.body.decodeToString() shouldBe "lsturl=https%3A%2F%2Fexample.com&lsturl-custom=test&format=json&"
     }
 
     @Test

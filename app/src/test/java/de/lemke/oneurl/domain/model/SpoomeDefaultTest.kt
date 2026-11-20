@@ -22,8 +22,8 @@ import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import de.lemke.oneurl.data.FakeVolleyQueue
+import de.lemke.oneurl.data.answerThroughQueue
 import de.lemke.oneurl.data.deliverResponse
-import de.lemke.oneurl.data.parseResponse
 import io.kotest.matchers.shouldBe
 import java.net.URLDecoder
 import java.time.Duration
@@ -123,8 +123,7 @@ class SpoomeDefaultTest {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        val parsed = req.parseResponse(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
-        req.deliverError(parsed.error)
+        req.answerThroughQueue(NetworkResponse(200, "<html>maintenance</html>".toByteArray(), false, 0L, emptyList()))
 
         error shouldBe GenerateURLError.ServiceTemporarilyUnavailable("https://spoo.me")
     }

@@ -25,7 +25,6 @@ import com.android.volley.VolleyError
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.data.deliverResponse
-import de.lemke.oneurl.data.params
 import io.kotest.matchers.shouldBe
 import org.junit.Assert.fail
 import org.junit.Test
@@ -264,7 +263,7 @@ class GgTest {
     fun `check request getParams returns the long url and custom path params`() {
         val req = Gg.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.params() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
+        req.body.decodeToString() shouldBe "long_url=https%3A%2F%2Fexample.com&custom_path=abc&"
     }
 
     @Test
@@ -273,6 +272,9 @@ class GgTest {
 
         req.deliverResponse("ok")
 
-        queue.added.single().params() shouldBe mapOf("long_url" to longURL, "custom_path" to "abc")
+        queue.added
+            .single()
+            .body
+            .decodeToString() shouldBe "long_url=https%3A%2F%2Fexample.com&custom_path=abc&"
     }
 }

@@ -25,7 +25,6 @@ import com.android.volley.VolleyError
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
 import de.lemke.oneurl.data.deliverResponse
-import de.lemke.oneurl.data.params
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
@@ -194,6 +193,6 @@ class OnesisTest {
     fun `getParams returns the original url and custom short url params`() {
         val req = Onesis.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
-        req.params() shouldBe mapOf("original_url" to longURL, "custom_short_url" to "abc")
+        req.body.decodeToString() shouldBe "original_url=https%3A%2F%2Fexample.com&custom_short_url=abc&"
     }
 }
