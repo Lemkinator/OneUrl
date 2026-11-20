@@ -20,7 +20,9 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import de.lemke.oneurl.data.FakeAndroidKeyStoreRule
 import de.lemke.oneurl.data.KSafeSecretStore
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
@@ -37,11 +39,15 @@ class SecretsModuleTest {
     @Test
     fun provideKSafe_storesASecretThatTheStoreReadsBack() {
         runBlocking {
-            val store = KSafeSecretStore(SecretsModule.provideKSafe(ApplicationProvider.getApplicationContext<Application>()))
+            val context = ApplicationProvider.getApplicationContext<Application>()
+            val store = KSafeSecretStore(SecretsModule.provideKSafe(context))
 
             store.put("tly", "secret")
 
             store.get("tly") shouldBe "secret"
+            val storeDir = File(context.noBackupFilesDir, "ksafe")
+            storeDir.isDirectory shouldBe true
+            storeDir.walkTopDown().count { it.isFile } shouldBeGreaterThan 0
         }
     }
 }
