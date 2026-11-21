@@ -16,11 +16,30 @@ fi
 gradle=${PRECOMMIT_GRADLE:-./gradlew}
 
 echo "Running static analysis..."
-$gradle spotlessCheck detekt --quiet || {
-    echo ""
-    echo "ERROR: Static analysis failed."
-    echo "Fix formatting with: $gradle spotlessApply"
-    echo "Check Detekt report:  $gradle detekt"
-    echo ""
-    exit 1
-}
+status=0
+$gradle spotlessCheck detekt --quiet || status=$?
+case $status in
+    0) ;;
+    75)
+        echo ""
+        echo "ERROR: The build queue did not start the static analysis (exit $status). Nothing was checked."
+        echo "Retry the commit."
+        echo ""
+        exit "$status"
+        ;;
+    76)
+        echo ""
+        echo "ERROR: The build queue reported an error (exit $status). Nothing was checked."
+        echo "The [build-queue] line above names the cause."
+        echo ""
+        exit "$status"
+        ;;
+    *)
+        echo ""
+        echo "ERROR: Static analysis failed."
+        echo "Fix formatting with: $gradle spotlessApply"
+        echo "Check Detekt report:  $gradle detekt"
+        echo ""
+        exit 1
+        ;;
+esac
