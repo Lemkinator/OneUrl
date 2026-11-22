@@ -143,7 +143,6 @@ android {
         // Explicit: pins intent against future AGP default changes.
         checkReleaseBuilds = true
         abortOnError = true
-        baseline = file("lint-baseline.xml")
     }
     testOptions {
         unitTests {
