@@ -57,7 +57,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import dev.oneuiproject.oneui.R as oneuiR
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltAndroidTest
@@ -180,21 +182,21 @@ class URLAdapterTest {
         }
     }
 
-    // AppCompatResources returns a fresh, non-cached instance for vector drawables, so constantState never matches.
     @Test
     fun `bind swaps the favorite icon between favorite and non-favorite states`() {
         withAdapter { adapter, holder ->
             adapter.submitList(listOf(testUrl("https://short.url/fav-on", favorite = true)))
             adapter.onBindViewHolder(holder, 0)
-            val favoriteIcon = holder.listItemFav.compoundDrawablesRelative[2]?.constantState
+            val favoriteIcon = holder.listItemFav.compoundDrawablesRelative[2]
 
-            adapter.submitList(listOf(testUrl("https://short.url/fav-on", favorite = false)))
+            var committed = false
+            adapter.submitList(listOf(testUrl("https://short.url/fav-on", favorite = false))) { committed = true }
+            awaitMainLooperUntil { committed }
             adapter.onBindViewHolder(holder, 0)
-            val nonFavoriteIcon = holder.listItemFav.compoundDrawablesRelative[2]?.constantState
+            val nonFavoriteIcon = holder.listItemFav.compoundDrawablesRelative[2]
 
-            favoriteIcon shouldNotBe null
-            nonFavoriteIcon shouldNotBe null
-            favoriteIcon shouldNotBe nonFavoriteIcon
+            shadowOf(favoriteIcon).createdFromResId shouldBe oneuiR.drawable.ic_oui_favorite_on
+            shadowOf(nonFavoriteIcon).createdFromResId shouldBe oneuiR.drawable.ic_oui_favorite_off
         }
     }
 
