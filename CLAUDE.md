@@ -149,6 +149,8 @@ Three tools run as part of `./gradlew build`:
   and no raw `HiltAndroidRule`. `HiltTestRule` runs `HiltAndroidRule`, exposes `inject()`, and closes every resource
   registered with `closeAfterTest`, such as each in-memory `AppDatabase` the test built.
 
+`app/lint.xml` lists the approved Overdraw files, one `<ignore path>` line each.
+
 **Hung unit tests in CI** — the `local-tests` step "Run local tests" has a 12-minute step timeout. Robolectric
 downloads the Android framework jars it needs into `~/.m2` on the first run on a machine, and on every CI run because CI has no
 `~/.m2` cache. If a download stalls, the step fails at 12 minutes and a rerun retries it. The failure uploads still run; a job-level cancel skips them.

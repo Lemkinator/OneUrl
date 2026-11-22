@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <issue id="Overdraw">
+        <ignore path="src/main/res/layout/activity_add_url.xml" />
+        <ignore path="src/main/res/layout/activity_generate_qr_code.xml" />
+        <ignore path="src/main/res/layout-land/activity_generate_qr_code.xml" />
+        <ignore path="src/main/res/layout/activity_help.xml" />
+        <ignore path="src/main/res/layout/activity_provider.xml" />
+        <ignore path="src/main/res/layout/activity_url.xml" />
+    </issue>
+</lint>
