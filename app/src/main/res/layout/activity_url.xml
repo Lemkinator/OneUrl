@@ -159,33 +159,46 @@
                 android:background="?android:colorBackground"
                 android:orientation="vertical">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/url_title_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:paddingVertical="18dp"
                     android:visibility="gone">
 
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/url_title_label_limit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.5" />
+
                     <TextView
+                        android:id="@+id/url_title_label"
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
                         android:text="@string/title_"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constrainedWidth="true"
+                        app:layout_constraintEnd_toStartOf="@id/url_title_label_limit"
+                        app:layout_constraintHorizontal_bias="0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
                         android:id="@+id/url_title_textview"
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
-                        android:layout_weight="1"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constraintBaseline_toBaselineOf="@id/url_title_label"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/url_title_label" />
 
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <View
                     android:id="@+id/url_title_divider"
@@ -196,33 +209,46 @@
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/url_description_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:paddingVertical="18dp"
                     android:visibility="gone">
 
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/url_description_label_limit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.5" />
+
                     <TextView
+                        android:id="@+id/url_description_label"
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
                         android:text="@string/description_"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constrainedWidth="true"
+                        app:layout_constraintEnd_toStartOf="@id/url_description_label_limit"
+                        app:layout_constraintHorizontal_bias="0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
                         android:id="@+id/url_description_textview"
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
-                        android:layout_weight="1"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constraintBaseline_toBaselineOf="@id/url_description_label"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/url_description_label" />
 
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <View
                     android:id="@+id/url_description_divider"
@@ -233,31 +259,44 @@
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:paddingVertical="18dp">
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/url_added_label_limit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.5" />
 
                     <TextView
+                        android:id="@+id/url_added_label"
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginStart="18dp"
                         android:text="@string/created_"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constrainedWidth="true"
+                        app:layout_constraintEnd_toStartOf="@id/url_added_label_limit"
+                        app:layout_constraintHorizontal_bias="0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
                         android:id="@+id/url_added_textview"
                         style="?android:attr/textAppearanceLarge"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
                         android:layout_marginEnd="18dp"
-                        android:layout_weight="1"
-                        android:textSize="18sp" />
+                        android:textSize="18sp"
+                        app:layout_constraintBaseline_toBaselineOf="@id/url_added_label"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/url_added_label" />
 
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <View
                     android:id="@+id/url_visits_divider"

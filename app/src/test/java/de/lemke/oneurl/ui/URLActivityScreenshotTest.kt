@@ -123,11 +123,88 @@ class URLActivityScreenshotTest {
         }
     }
 
-    private fun seedVisitsUrl(): URL {
+    @Test
+    fun url_visits_max_count() {
+        val url = seedVisitsUrl(Int.MAX_VALUE)
+        launchAndCapture("src/test/screenshots/url_visits_max_count.png", url) { activity ->
+            assertVisitsRow(activity, "2,147,483,647", "Refresh")
+            activity.findViewById<TextView>(R.id.url_visits_textview).lineCount shouldBe 1
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "de-w320dp-h1400dp")
+    fun url_info_rows_large_font_de() {
+        RuntimeEnvironment.setFontScale(2f)
+        val url = seedLongTextUrl()
+        launchAndCapture("src/test/screenshots/url_info_rows_large_font_de.png", url) { activity ->
+            assertInfoRow(activity, R.id.url_title_label, R.id.url_title_textview, "Titel: ", LONG_TITLE)
+            assertInfoRow(
+                activity,
+                R.id.url_description_label,
+                R.id.url_description_textview,
+                "Beschreibung: ",
+                LONG_DESCRIPTION,
+            )
+            assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Erstellt: ", null)
+            activity.findViewById<TextView>(R.id.url_description_label).lineCount shouldBeGreaterThan 1
+        }
+    }
+
+    @Test
+    fun url_info_rows_default() {
+        val url = seedLongTextUrl()
+        launchAndCapture("src/test/screenshots/url_info_rows_default.png", url) { activity ->
+            assertInfoRow(activity, R.id.url_title_label, R.id.url_title_textview, "Title: ", LONG_TITLE)
+            assertInfoRow(
+                activity,
+                R.id.url_description_label,
+                R.id.url_description_textview,
+                "Description: ",
+                LONG_DESCRIPTION,
+            )
+            assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Created: ", null)
+        }
+    }
+
+    private fun seedVisitsUrl(visits: Int = 1234): URL {
         val url = seededUrl.copy(shortURL = "https://spoo.me/seeded2", shortURLProvider = Spoome.Default)
         runBlocking { urlRepository.addURL(url) }
-        shortURLClient.visitCounts[url.shortURL] = 1234
+        shortURLClient.visitCounts[url.shortURL] = visits
         return url
+    }
+
+    private fun seedLongTextUrl(): URL {
+        val url =
+            seededUrl.copy(
+                shortURL = "https://da.gd/seeded3",
+                title = LONG_TITLE,
+                description = LONG_DESCRIPTION,
+            )
+        runBlocking { urlRepository.addURL(url) }
+        return url
+    }
+
+    private fun assertInfoRow(
+        activity: URLActivity,
+        labelId: Int,
+        valueId: Int,
+        expectedLabel: String,
+        expectedValue: String?,
+    ) {
+        val label = activity.findViewById<TextView>(labelId)
+        val value = activity.findViewById<TextView>(valueId)
+        val row = value.parent as View
+        label.text.toString() shouldBe expectedLabel
+        if (expectedValue != null) value.text.toString() shouldBe expectedValue
+        value.left shouldBeGreaterThan label.right - 1
+        value.right shouldBeLessThan row.width + 1
+        value.bottom shouldBeLessThan row.height + 1
+        value.height shouldBeGreaterThan value.lineHeight * value.lineCount - 1
+        value.width shouldBeGreaterThan value.paint.measureText("MMMM").toInt()
+        val valueBaseline = value.top + value.baseline
+        val labelBaseline = label.top + label.baseline
+        valueBaseline shouldBe labelBaseline
     }
 
     private fun assertVisitsRow(
@@ -176,5 +253,7 @@ class URLActivityScreenshotTest {
 
     private companion object {
         const val VISITS_GAP_TOLERANCE_DP = 8f
+        const val LONG_TITLE = "A very long page title that keeps going across several lines to prove the value wraps inside its row"
+        const val LONG_DESCRIPTION = "A long description over several lines"
     }
 }
