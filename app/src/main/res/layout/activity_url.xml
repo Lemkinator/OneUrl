@@ -175,12 +175,11 @@
 
                     <TextView
                         android:id="@+id/url_title_label"
-                        style="?android:attr/textAppearanceLarge"
+                        style="@style/InfoRowText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="18dp"
                         android:text="@string/title_"
-                        android:textSize="18sp"
                         app:layout_constrainedWidth="true"
                         app:layout_constraintEnd_toStartOf="@id/url_title_label_limit"
                         app:layout_constraintHorizontal_bias="0"
@@ -189,11 +188,10 @@
 
                     <TextView
                         android:id="@+id/url_title_textview"
-                        style="?android:attr/textAppearanceLarge"
+                        style="@style/InfoRowText"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="18dp"
-                        android:textSize="18sp"
                         app:layout_constraintBaseline_toBaselineOf="@id/url_title_label"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/url_title_label" />
@@ -225,12 +223,11 @@
 
                     <TextView
                         android:id="@+id/url_description_label"
-                        style="?android:attr/textAppearanceLarge"
+                        style="@style/InfoRowText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="18dp"
                         android:text="@string/description_"
-                        android:textSize="18sp"
                         app:layout_constrainedWidth="true"
                         app:layout_constraintEnd_toStartOf="@id/url_description_label_limit"
                         app:layout_constraintHorizontal_bias="0"
@@ -239,11 +236,10 @@
 
                     <TextView
                         android:id="@+id/url_description_textview"
-                        style="?android:attr/textAppearanceLarge"
+                        style="@style/InfoRowText"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="18dp"
-                        android:textSize="18sp"
                         app:layout_constraintBaseline_toBaselineOf="@id/url_description_label"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/url_description_label" />
@@ -273,12 +269,11 @@
 
                     <TextView
                         android:id="@+id/url_added_label"
-                        style="?android:attr/textAppearanceLarge"
+                        style="@style/InfoRowText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="18dp"
                         android:text="@string/created_"
-                        android:textSize="18sp"
                         app:layout_constrainedWidth="true"
                         app:layout_constraintEnd_toStartOf="@id/url_added_label_limit"
                         app:layout_constraintHorizontal_bias="0"
@@ -287,11 +282,10 @@
 
                     <TextView
                         android:id="@+id/url_added_textview"
-                        style="?android:attr/textAppearanceLarge"
+                        style="@style/InfoRowText"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="18dp"
-                        android:textSize="18sp"
                         app:layout_constraintBaseline_toBaselineOf="@id/url_added_label"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/url_added_label" />
