@@ -129,6 +129,7 @@ class URLActivityScreenshotTest {
         launchAndCapture("src/test/screenshots/url_visits_max_count.png", url) { activity ->
             assertVisitsRow(activity, "2,147,483,647", "Refresh")
             activity.findViewById<TextView>(R.id.url_visits_textview).lineCount shouldBe 1
+            activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBe 2
         }
     }
 
@@ -148,6 +149,12 @@ class URLActivityScreenshotTest {
             )
             assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Erstellt: ", null)
             activity.findViewById<TextView>(R.id.url_description_label).lineCount shouldBeGreaterThan 1
+            activity.findViewById<TextView>(R.id.url_title_textview).lineCount shouldBeGreaterThan 1
+            INFO_ROWS.forEach { (_, valueId) ->
+                val value = activity.findViewById<TextView>(valueId)
+                val minWidth = (value.parent as View).width / 2 - INFO_ROW_MARGIN_DP * activity.resources.displayMetrics.density
+                value.width shouldBeGreaterThan minWidth.toInt() - 1
+            }
         }
     }
 
@@ -164,6 +171,16 @@ class URLActivityScreenshotTest {
                 LONG_DESCRIPTION,
             )
             assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Created: ", null)
+            activity.findViewById<TextView>(R.id.url_title_textview).lineCount shouldBeGreaterThan 1
+            INFO_ROWS.forEach { (labelId, valueId) ->
+                val gap =
+                    activity.findViewById<TextView>(valueId).left - activity.findViewById<TextView>(labelId).right
+                gap shouldBeGreaterThan -1
+                gap shouldBeLessThan
+                    activity.resources.displayMetrics.density
+                        .times(VISITS_GAP_TOLERANCE_DP)
+                        .toInt()
+            }
         }
     }
 
@@ -201,7 +218,6 @@ class URLActivityScreenshotTest {
         value.right shouldBeLessThan row.width + 1
         value.bottom shouldBeLessThan row.height + 1
         value.height shouldBeGreaterThan value.lineHeight * value.lineCount - 1
-        value.width shouldBeGreaterThan value.paint.measureText("MMMM").toInt()
         val valueBaseline = value.top + value.baseline
         val labelBaseline = label.top + label.baseline
         valueBaseline shouldBe labelBaseline
@@ -253,6 +269,13 @@ class URLActivityScreenshotTest {
 
     private companion object {
         const val VISITS_GAP_TOLERANCE_DP = 8f
+        const val INFO_ROW_MARGIN_DP = 18
+        val INFO_ROWS =
+            listOf(
+                R.id.url_title_label to R.id.url_title_textview,
+                R.id.url_description_label to R.id.url_description_textview,
+                R.id.url_added_label to R.id.url_added_textview,
+            )
         const val LONG_TITLE = "A very long page title that keeps going across several lines to prove the value wraps inside its row"
         const val LONG_DESCRIPTION = "A long description over several lines"
     }
