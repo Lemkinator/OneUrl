@@ -211,6 +211,8 @@ class URLActivityScreenshotTest {
         block.right shouldBeLessThan refresh.left + 1
         val endMargin = REFRESH_END_MARGIN_DP * activity.resources.displayMetrics.density
         abs(row.width - refresh.right - endMargin) shouldBeLessThanFloat 1f
+        val minTarget = (MIN_TOUCH_TARGET_DP * activity.resources.displayMetrics.density).toInt()
+        refresh.height shouldBeGreaterThan minTarget - 1
         abs(refresh.top + refresh.bottom - (block.top + block.bottom)) shouldBeLessThan 2
     }
 
@@ -259,6 +261,7 @@ class URLActivityScreenshotTest {
     private companion object {
         const val ROW_PADDING_DP = 18
         const val REFRESH_END_MARGIN_DP = 18
+        const val MIN_TOUCH_TARGET_DP = 48
         val INFO_ROWS =
             listOf(
                 R.id.url_title_label to R.id.url_title_textview,
