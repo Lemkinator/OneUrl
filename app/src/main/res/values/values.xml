@@ -18,4 +18,5 @@
     <!--Override commonutils-->
     <integer name="commonutils_tos_version" tools:ignore="UnusedResources">1</integer>
 
+    <bool name="leaks_menu_visible">false</bool>
 </resources>
