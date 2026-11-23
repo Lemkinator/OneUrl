@@ -19,7 +19,7 @@ package de.lemke.oneurl.domain.model
 import androidx.annotation.StringRes
 import de.lemke.oneurl.R
 
-/** The span of time a provider's click count covers; [labelRes] names the span next to the count. */
+/** The span of time a provider's click count covers; [labelRes] names the span above the count. */
 enum class ClickCountPeriod(
     @StringRes val labelRes: Int,
 ) {

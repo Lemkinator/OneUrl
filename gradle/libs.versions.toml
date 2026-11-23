@@ -11,7 +11,6 @@ jvmTarget = "21"
 aboutlibraries = "15.3.0"
 agp = "9.5.1"
 androidx-collection = "1.7.0"
-androidx-constraintlayout = "2.2.2"
 androidx-core-splashscreen = "1.2.0"
 apache-httpcore = "4.4.16"
 androidx-test-core = "1.7.0"
@@ -54,7 +53,6 @@ volley = "1.2.1"
 
 [libraries]
 androidx-collection = { module = "androidx.collection:collection", version.ref = "androidx-collection" }
-androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidx-constraintlayout" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidx-core-splashscreen" }
 apache-httpcore = { module = "org.apache.httpcomponents:httpcore", version.ref = "apache-httpcore" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }

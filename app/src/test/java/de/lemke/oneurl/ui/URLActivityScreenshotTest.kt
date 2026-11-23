@@ -42,6 +42,7 @@ import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime
 import javax.inject.Inject
+import kotlin.math.abs
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -51,6 +52,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import io.kotest.matchers.floats.shouldBeLessThan as shouldBeLessThanFloat
 
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -99,16 +101,8 @@ class URLActivityScreenshotTest {
     fun url_visits_default() {
         val url = seedVisitsUrl()
         launchAndCapture("src/test/screenshots/url_visits_default.png", url) { activity ->
-            val label = activity.findViewById<TextView>(R.id.url_visits_label)
-            val count = activity.findViewById<TextView>(R.id.url_visits_textview)
-            assertVisitsRow(activity, "1,234", "Refresh")
-            label.lineCount shouldBe 1
-            val gap = count.left - label.right
-            gap shouldBeGreaterThan -1
-            gap shouldBeLessThan
-                activity.resources.displayMetrics.density
-                    .times(VISITS_GAP_TOLERANCE_DP)
-                    .toInt()
+            assertVisitsRow(activity, "Visits", "1,234", "Refresh")
+            activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBe 1
         }
     }
 
@@ -116,9 +110,9 @@ class URLActivityScreenshotTest {
     @Config(qualifiers = "de-w320dp-h1400dp")
     fun url_visits_large_font_de() {
         RuntimeEnvironment.setFontScale(2f)
-        val url = seedVisitsUrl()
+        val url = seedVisitsUrl(spooMe = true)
         launchAndCapture("src/test/screenshots/url_visits_large_font_de.png", url) { activity ->
-            assertVisitsRow(activity, "1.234", "Aktualisieren")
+            assertVisitsRow(activity, "Klicks (letzte 3 Monate)", "1.234", "Aktualisieren")
             activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBeGreaterThan 1
         }
     }
@@ -127,9 +121,8 @@ class URLActivityScreenshotTest {
     fun url_visits_max_count() {
         val url = seedVisitsUrl(Int.MAX_VALUE)
         launchAndCapture("src/test/screenshots/url_visits_max_count.png", url) { activity ->
-            assertVisitsRow(activity, "2,147,483,647", "Refresh")
+            assertVisitsRow(activity, "Visits", "2,147,483,647", "Refresh")
             activity.findViewById<TextView>(R.id.url_visits_textview).lineCount shouldBe 1
-            activity.findViewById<TextView>(R.id.url_visits_label).lineCount shouldBe 2
         }
     }
 
@@ -139,22 +132,11 @@ class URLActivityScreenshotTest {
         RuntimeEnvironment.setFontScale(2f)
         val url = seedLongTextUrl()
         launchAndCapture("src/test/screenshots/url_info_rows_large_font_de.png", url) { activity ->
-            assertInfoRow(activity, R.id.url_title_label, R.id.url_title_textview, "Titel: ", LONG_TITLE)
-            assertInfoRow(
-                activity,
-                R.id.url_description_label,
-                R.id.url_description_textview,
-                "Beschreibung: ",
-                LONG_DESCRIPTION,
-            )
-            assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Erstellt: ", null)
-            activity.findViewById<TextView>(R.id.url_description_label).lineCount shouldBeGreaterThan 1
+            assertInfoRow(activity, R.id.url_title_label, R.id.url_title_textview, "Titel", LONG_TITLE)
+            assertInfoRow(activity, R.id.url_description_label, R.id.url_description_textview, "Beschreibung", LONG_DESCRIPTION)
+            assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Erstellt", null)
             activity.findViewById<TextView>(R.id.url_title_textview).lineCount shouldBeGreaterThan 1
-            INFO_ROWS.forEach { (_, valueId) ->
-                val value = activity.findViewById<TextView>(valueId)
-                val minWidth = (value.parent as View).width / 2 - INFO_ROW_MARGIN_DP * activity.resources.displayMetrics.density
-                value.width shouldBeGreaterThan minWidth.toInt() - 1
-            }
+            INFO_ROWS.forEach { (labelId, _) -> activity.findViewById<TextView>(labelId).lineCount shouldBe 1 }
         }
     }
 
@@ -162,30 +144,23 @@ class URLActivityScreenshotTest {
     fun url_info_rows_default() {
         val url = seedLongTextUrl()
         launchAndCapture("src/test/screenshots/url_info_rows_default.png", url) { activity ->
-            assertInfoRow(activity, R.id.url_title_label, R.id.url_title_textview, "Title: ", LONG_TITLE)
-            assertInfoRow(
-                activity,
-                R.id.url_description_label,
-                R.id.url_description_textview,
-                "Description: ",
-                LONG_DESCRIPTION,
-            )
-            assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Created: ", null)
+            assertInfoRow(activity, R.id.url_title_label, R.id.url_title_textview, "Title", LONG_TITLE)
+            assertInfoRow(activity, R.id.url_description_label, R.id.url_description_textview, "Description", LONG_DESCRIPTION)
+            assertInfoRow(activity, R.id.url_added_label, R.id.url_added_textview, "Created", null)
             activity.findViewById<TextView>(R.id.url_title_textview).lineCount shouldBeGreaterThan 1
-            INFO_ROWS.forEach { (labelId, valueId) ->
-                val gap =
-                    activity.findViewById<TextView>(valueId).left - activity.findViewById<TextView>(labelId).right
-                gap shouldBeGreaterThan -1
-                gap shouldBeLessThan
-                    activity.resources.displayMetrics.density
-                        .times(VISITS_GAP_TOLERANCE_DP)
-                        .toInt()
-            }
         }
     }
 
-    private fun seedVisitsUrl(visits: Int = 1234): URL {
-        val url = seededUrl.copy(shortURL = "https://spoo.me/seeded2", shortURLProvider = Spoome.Default)
+    private fun seedVisitsUrl(
+        visits: Int = 1234,
+        spooMe: Boolean = false,
+    ): URL {
+        val url =
+            if (spooMe) {
+                seededUrl.copy(shortURL = "https://spoo.me/seeded2", shortURLProvider = Spoome.Default)
+            } else {
+                seededUrl.copy(shortURL = "https://da.gd/seeded2")
+            }
         runBlocking { urlRepository.addURL(url) }
         shortURLClient.visitCounts[url.shortURL] = visits
         return url
@@ -214,31 +189,47 @@ class URLActivityScreenshotTest {
         val row = value.parent as View
         label.text.toString() shouldBe expectedLabel
         if (expectedValue != null) value.text.toString() shouldBe expectedValue
-        value.left shouldBeGreaterThan label.right - 1
-        value.right shouldBeLessThan row.width + 1
-        value.bottom shouldBeLessThan row.height + 1
+        assertStacked(activity, label, value, row.width)
         value.height shouldBeGreaterThan value.lineHeight * value.lineCount - 1
-        val valueBaseline = value.top + value.baseline
-        val labelBaseline = label.top + label.baseline
-        valueBaseline shouldBe labelBaseline
     }
 
     private fun assertVisitsRow(
         activity: URLActivity,
+        expectedLabel: String,
         expectedCount: String,
         expectedRefreshDescription: String,
     ) {
+        val label = activity.findViewById<TextView>(R.id.url_visits_label)
         val count = activity.findViewById<TextView>(R.id.url_visits_textview)
         val refresh = activity.findViewById<View>(R.id.url_visits_refresh_button)
+        val block = count.parent as View
+        val row = block.parent as View
+        label.text.toString() shouldBe expectedLabel
         count.text.toString() shouldBe expectedCount
-        count.width shouldBeGreaterThan count.paint.measureText(expectedCount).toInt() - 1
-        count.right shouldBeLessThan refresh.left + 1
-        refresh.width shouldBeGreaterThan 0
         refresh.contentDescription.toString() shouldBe expectedRefreshDescription
-        val label = activity.findViewById<TextView>(R.id.url_visits_label)
-        val countBaseline = count.top + count.baseline
-        val labelBaseline = label.top + label.baseline
-        countBaseline shouldBe labelBaseline
+        assertStacked(activity, label, count, block.width)
+        block.right shouldBeLessThan refresh.left + 1
+        val endMargin = REFRESH_END_MARGIN_DP * activity.resources.displayMetrics.density
+        abs(row.width - refresh.right - endMargin) shouldBeLessThanFloat 1f
+        val minTarget = (MIN_TOUCH_TARGET_DP * activity.resources.displayMetrics.density).toInt()
+        refresh.height shouldBeGreaterThan minTarget - 1
+        abs(refresh.top + refresh.bottom - (block.top + block.bottom)) shouldBeLessThan 2
+    }
+
+    private fun assertStacked(
+        activity: URLActivity,
+        label: TextView,
+        value: TextView,
+        blockWidth: Int,
+    ) {
+        val density = activity.resources.displayMetrics.density
+        val padding = (ROW_PADDING_DP * density).toInt()
+        value.top shouldBeGreaterThan label.bottom - 1
+        value.left shouldBe label.left
+        label.left shouldBe padding
+        value.left shouldBe padding
+        value.width shouldBe blockWidth - 2 * padding
+        label.width shouldBe value.width
     }
 
     private fun launchAndCapture(
@@ -268,8 +259,9 @@ class URLActivityScreenshotTest {
     }
 
     private companion object {
-        const val VISITS_GAP_TOLERANCE_DP = 8f
-        const val INFO_ROW_MARGIN_DP = 18
+        const val ROW_PADDING_DP = 18
+        const val REFRESH_END_MARGIN_DP = 18
+        const val MIN_TOUCH_TARGET_DP = 48
         val INFO_ROWS =
             listOf(
                 R.id.url_title_label to R.id.url_title_textview,

@@ -679,7 +679,7 @@ class URLActivityTest {
 
         withUrlActivity { activity ->
             idleMainLooper()
-            activity.findViewById<android.widget.TextView>(R.id.url_visits_label).text.toString() shouldBe "Visits: "
+            activity.findViewById<android.widget.TextView>(R.id.url_visits_label).text.toString() shouldBe "Visits"
         }
     }
 
@@ -691,7 +691,7 @@ class URLActivityTest {
 
         withUrlActivity(shortURL = url.shortURL) { activity ->
             idleMainLooper()
-            activity.findViewById<android.widget.TextView>(R.id.url_visits_label).text.toString() shouldBe "Visits (last 3 months): "
+            activity.findViewById<android.widget.TextView>(R.id.url_visits_label).text.toString() shouldBe "Visits (last 3 months)"
         }
     }
 

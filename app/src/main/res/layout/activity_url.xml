@@ -159,44 +159,21 @@
                 android:background="?android:colorBackground"
                 android:orientation="vertical">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <LinearLayout
                     android:id="@+id/url_title_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingVertical="18dp"
+                    style="@style/InfoRow"
                     android:visibility="gone">
-
-                    <androidx.constraintlayout.widget.Guideline
-                        android:id="@+id/url_title_label_limit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        app:layout_constraintGuide_percent="0.5" />
 
                     <TextView
                         android:id="@+id/url_title_label"
-                        style="@style/InfoRowText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="18dp"
-                        android:text="@string/title_"
-                        app:layout_constrainedWidth="true"
-                        app:layout_constraintEnd_toStartOf="@id/url_title_label_limit"
-                        app:layout_constraintHorizontal_bias="0"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        style="@style/InfoRowLabel"
+                        android:text="@string/title_" />
 
                     <TextView
                         android:id="@+id/url_title_textview"
-                        style="@style/InfoRowText"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="18dp"
-                        app:layout_constraintBaseline_toBaselineOf="@id/url_title_label"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/url_title_label" />
+                        style="@style/InfoRowValue" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
 
                 <View
                     android:id="@+id/url_title_divider"
@@ -207,44 +184,21 @@
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <LinearLayout
                     android:id="@+id/url_description_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingVertical="18dp"
+                    style="@style/InfoRow"
                     android:visibility="gone">
-
-                    <androidx.constraintlayout.widget.Guideline
-                        android:id="@+id/url_description_label_limit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        app:layout_constraintGuide_percent="0.5" />
 
                     <TextView
                         android:id="@+id/url_description_label"
-                        style="@style/InfoRowText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="18dp"
-                        android:text="@string/description_"
-                        app:layout_constrainedWidth="true"
-                        app:layout_constraintEnd_toStartOf="@id/url_description_label_limit"
-                        app:layout_constraintHorizontal_bias="0"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        style="@style/InfoRowLabel"
+                        android:text="@string/description_" />
 
                     <TextView
                         android:id="@+id/url_description_textview"
-                        style="@style/InfoRowText"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="18dp"
-                        app:layout_constraintBaseline_toBaselineOf="@id/url_description_label"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/url_description_label" />
+                        style="@style/InfoRowValue" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
 
                 <View
                     android:id="@+id/url_description_divider"
@@ -255,42 +209,19 @@
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingVertical="18dp">
-
-                    <androidx.constraintlayout.widget.Guideline
-                        android:id="@+id/url_added_label_limit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        app:layout_constraintGuide_percent="0.5" />
+                <LinearLayout
+                    style="@style/InfoRow">
 
                     <TextView
                         android:id="@+id/url_added_label"
-                        style="@style/InfoRowText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="18dp"
-                        android:text="@string/created_"
-                        app:layout_constrainedWidth="true"
-                        app:layout_constraintEnd_toStartOf="@id/url_added_label_limit"
-                        app:layout_constraintHorizontal_bias="0"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        style="@style/InfoRowLabel"
+                        android:text="@string/created_" />
 
                     <TextView
                         android:id="@+id/url_added_textview"
-                        style="@style/InfoRowText"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="18dp"
-                        app:layout_constraintBaseline_toBaselineOf="@id/url_added_label"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/url_added_label" />
+                        style="@style/InfoRowValue" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
 
                 <View
                     android:id="@+id/url_visits_divider"
@@ -301,55 +232,41 @@
                     android:visibility="gone"
                     tools:ignore="PrivateResource" />
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <LinearLayout
                     android:id="@+id/url_visits_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:visibility="gone">
 
-                    <TextView
-                        android:id="@+id/url_visits_label"
-                        style="?android:attr/textAppearanceLarge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginVertical="18dp"
-                        android:layout_marginStart="18dp"
-                        android:textSize="18sp"
-                        app:layout_constrainedWidth="true"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/url_visits_textview"
-                        app:layout_constraintHorizontal_bias="0"
-                        app:layout_constraintHorizontal_chainStyle="packed"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    <LinearLayout
+                        style="@style/InfoRow"
+                        android:layout_width="0dp"
+                        android:layout_weight="1">
 
-                    <TextView
-                        android:id="@+id/url_visits_textview"
-                        style="?android:attr/textAppearanceLarge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="18dp"
-                        android:textSize="18sp"
-                        app:layout_constrainedWidth="true"
-                        app:layout_constraintBaseline_toBaselineOf="@id/url_visits_label"
-                        app:layout_constraintEnd_toStartOf="@id/url_visits_refresh_button"
-                        app:layout_constraintStart_toEndOf="@id/url_visits_label" />
+                        <TextView
+                            android:id="@+id/url_visits_label"
+                            style="@style/InfoRowLabel" />
+
+                        <TextView
+                            android:id="@+id/url_visits_textview"
+                            style="@style/InfoRowValue" />
+
+                    </LinearLayout>
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/url_visits_refresh_button"
                         style="@style/ButtonStyle.Transparent"
                         android:layout_width="wrap_content"
-                        android:layout_height="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center_vertical"
                         android:layout_marginEnd="18dp"
                         android:contentDescription="@string/refresh"
                         android:drawableEnd="@drawable/ic_oui_refresh"
-                        android:minWidth="24dp"
-                        android:minHeight="24dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        android:minWidth="48dp"
+                        android:minHeight="48dp" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
 
             </dev.oneuiproject.oneui.widget.RoundedLinearLayout>
 
