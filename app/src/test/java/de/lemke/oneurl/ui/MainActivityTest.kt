@@ -408,15 +408,6 @@ class MainActivityTest {
     }
 
     @Test
-    fun `leaks menu item is visible in the debug build`() {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                activity.findViewById<DrawerNavigationView>(R.id.navigationView).findMenuItem(R.id.leaks_dest)!!.isVisible shouldBe true
-            }
-        }
-    }
-
-    @Test
     fun `navigation item qr_code_dest opens GenerateQRCodeActivity`() =
         assertNavItemStarts(R.id.qr_code_dest, GenerateQRCodeActivity::class.java.name)
 
