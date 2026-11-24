@@ -135,22 +135,23 @@ class DefaultVolleyQueueTest {
     }
 
     @Test
-    fun `an error callback that keeps throwing is dropped and the queue keeps delivering`() {
+    fun `an error callback that keeps throwing cancels and finishes its request and the queue keeps delivering`() {
         cacheResponse("cached body")
         val calls = AtomicInteger()
-        val secondCall = CountDownLatch(2)
-
-        queue.add(
+        val finished = CountDownLatch(1)
+        requestQueue.addRequestEventListener { _, event -> if (event == RequestQueue.RequestEvent.REQUEST_FINISHED) finished.countDown() }
+        val request =
             StringRequest(Request.Method.GET, MALFORMED_URL, { error("unexpected response") }) {
                 calls.incrementAndGet()
-                secondCall.countDown()
                 error("error boom")
-            },
-        )
+            }
 
-        secondCall.await(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe true
-        deliverCachedResponse() shouldBe "cached body"
+        queue.add(request)
+
+        finished.await(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe true
         calls.get() shouldBe 2
+        request.isCanceled shouldBe true
+        deliverCachedResponse() shouldBe "cached body"
     }
 
     @Test

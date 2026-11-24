@@ -53,7 +53,7 @@ class DefaultVolleyQueue @Inject constructor(
 /**
  * Delivers on the main thread like Volley's own delivery. An exception from a request's response or error callback
  * becomes an error result for that request, so a failing provider callback shows the error dialog instead of crashing the app.
- * If the error callback fails as well, the failure is logged and dropped.
+ * If the error callback fails as well, the failure is logged and the request is canceled and finished.
  */
 internal class GuardedDelivery(
     private val handler: Handler,
@@ -86,7 +86,9 @@ internal class GuardedDelivery(
                         delivery.run()
                     } catch (e: Exception) {
                         Log.e(TAG, "callback of ${request.url} threw", e)
-                        if (retryAsError) deliveryFor(request, retryAsError = false).postError(request, VolleyError(e))
+                        // Request.finish is package-private; delivering to a canceled request finishes it without calling a listener.
+                        if (!retryAsError) request.cancel()
+                        deliveryFor(request, retryAsError = false).postError(request, VolleyError(e))
                     }
                 }
             },
