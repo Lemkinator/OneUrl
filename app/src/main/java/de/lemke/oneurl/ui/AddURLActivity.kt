@@ -65,7 +65,7 @@ class AddURLActivity : AppCompatActivity() {
 
     private fun collectState() =
         collectState(viewModel.state) { state ->
-            if (!isInitialized && !state.isLoading) {
+            if (!isInitialized) {
                 isInitialized = true
                 initViews(state)
             }
@@ -124,7 +124,7 @@ class AddURLActivity : AppCompatActivity() {
 
     private fun renderLoadingState(state: AddUrlUiState) {
         val loading = state.isLoading
-        binding.addUrlFooterProgressText.text = if (loading && state.loadingMessageRes != 0) getString(state.loadingMessageRes) else ""
+        binding.addUrlFooterProgressText.text = if (loading) getString(state.loadingMessageRes) else ""
         binding.addUrlFooterProgress.isVisible = loading
         binding.addUrlFooterButton.isVisible = !loading
         binding.providerSelection.isEnabled = !loading

@@ -63,7 +63,6 @@ class AddURLViewModel @Inject constructor(
                 initialURL = intentUrl ?: userSettings.lastURL,
                 initialAlias = userSettings.lastAlias,
                 initialDescription = userSettings.lastDescription,
-                isLoading = false,
             )
         }
         if (intentUrl != null) userSettings.lastURL = intentUrl
@@ -158,7 +157,7 @@ data class AddUrlUiState(
     val initialURL: String = "",
     val initialAlias: String = "",
     val initialDescription: String = "",
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val loadingMessageRes: Int = 0,
 )
 

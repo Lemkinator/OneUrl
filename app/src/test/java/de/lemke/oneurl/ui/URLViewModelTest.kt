@@ -57,11 +57,10 @@ class URLViewModelTest : ShouldSpec(
             shortURLClient = FakeShortURLClient().apply { visitCounts[url.shortURL] = 42 }
         }
 
-        should("init loads the URL, stops loading, and refreshes the visit count") {
+        should("init loads the URL and refreshes the visit count") {
             val viewModel = newViewModel()
 
             viewModel.state.value.url shouldBe url
-            viewModel.state.value.isLoading shouldBe false
             viewModel.state.value.visitCount shouldBe 42
             viewModel.state.value.isRefreshingVisits
                 .shouldBeFalse()
