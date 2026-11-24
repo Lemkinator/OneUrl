@@ -22,15 +22,19 @@ import com.android.volley.Cache
 import com.android.volley.CacheDispatcher
 import com.android.volley.NetworkDispatcher
 import com.android.volley.Request
+import com.android.volley.RequestQueue
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.StringRequest
+import de.lemke.oneurl.di.NetworkModule
 import io.kotest.matchers.shouldBe
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import javax.inject.Provider
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -43,7 +47,12 @@ import org.robolectric.annotation.LooperMode
 class DefaultVolleyQueueTest {
     private val context = ApplicationProvider.getApplicationContext<Application>()
     private val url = "https://example.com/cached"
-    private val queue = DefaultVolleyQueue(context)
+    private val createdQueues = mutableListOf<RequestQueue>()
+    private val requestQueue by lazy { NetworkModule.provideRequestQueue(context).also(createdQueues::add) }
+    private val queue = DefaultVolleyQueue(Provider { requestQueue })
+
+    @After
+    fun stopRequestQueues() = createdQueues.forEach(RequestQueue::stop)
 
     private fun volleyCache() = DiskBasedCache(File(context.cacheDir, "volley")).apply { initialize() }
 
@@ -61,7 +70,7 @@ class DefaultVolleyQueueTest {
     private fun dispatcherThreads() =
         Thread.getAllStackTraces().keys.filterTo(HashSet()) { it is CacheDispatcher || it is NetworkDispatcher }
 
-    private fun deliverCachedResponse(): String? {
+    private fun deliverCachedResponse(queue: VolleyQueue = this.queue): String? {
         var delivered: String? = null
         val deliveredLatch = CountDownLatch(1)
 
@@ -87,9 +96,10 @@ class DefaultVolleyQueueTest {
     fun `the dispatcher threads start with the first add`() {
         cacheResponse("cached body")
         val dispatchersBefore = dispatcherThreads()
+        val freshQueue = DefaultVolleyQueue(Provider { requestQueue })
 
         (dispatcherThreads() - dispatchersBefore).size shouldBe 0
-        deliverCachedResponse() shouldBe "cached body"
+        deliverCachedResponse(freshQueue) shouldBe "cached body"
         (dispatcherThreads() - dispatchersBefore).size shouldBe 5
     }
 

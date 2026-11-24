@@ -16,9 +16,7 @@
 
 package de.lemke.oneurl.data
 
-import android.content.Context
 import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import com.android.volley.ExecutorDelivery
 import com.android.volley.Request
@@ -26,13 +24,9 @@ import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.ResponseDelivery
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.BasicNetwork
-import com.android.volley.toolbox.DiskBasedCache
-import com.android.volley.toolbox.HurlStack
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
 import java.util.concurrent.Executor
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /** Sends Volley requests; each request delivers its own response or error. */
@@ -45,31 +39,14 @@ interface VolleyQueue {
 
 @Singleton
 class DefaultVolleyQueue @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    private val requestQueue: Provider<RequestQueue>,
 ) : VolleyQueue {
-    private val queue: RequestQueue by lazy(::createQueue)
-
     override fun add(request: Request<*>) {
-        queue.add(request)
+        requestQueue.get().add(request)
     }
 
     override fun removeCacheEntry(url: String) {
-        queue.cache.remove(url)
-    }
-
-    private fun createQueue(): RequestQueue {
-        val cacheDirectory = lazy { File(context.cacheDir, CACHE_DIRECTORY) }
-        return RequestQueue(
-            DiskBasedCache { cacheDirectory.value },
-            BasicNetwork(HurlStack()),
-            NETWORK_THREADS,
-            GuardedDelivery(Handler(Looper.getMainLooper())),
-        ).apply { start() }
-    }
-
-    private companion object {
-        const val CACHE_DIRECTORY = "volley"
-        const val NETWORK_THREADS = 4
+        requestQueue.get().cache.remove(url)
     }
 }
 
@@ -78,7 +55,7 @@ class DefaultVolleyQueue @Inject constructor(
  * becomes an error result for that request, so a failing provider callback shows the error dialog instead of crashing the app.
  * If the error callback fails as well, the failure is logged and dropped.
  */
-private class GuardedDelivery(
+internal class GuardedDelivery(
     private val handler: Handler,
 ) : ResponseDelivery {
     override fun postResponse(
