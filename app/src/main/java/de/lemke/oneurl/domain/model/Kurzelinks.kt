@@ -80,7 +80,6 @@ sealed class Kurzelinks : ShortURLProvider {
             context.getString(R.string.privacy_text),
         )
 
-    @Suppress("TooGenericExceptionCaught")
     fun getKurzelinksCreateRequest(
         longURL: String,
         alias: String,
