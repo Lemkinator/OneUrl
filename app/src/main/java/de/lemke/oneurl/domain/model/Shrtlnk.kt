@@ -74,8 +74,11 @@ object Shrtlnk : ShortURLProvider {
         return object : StringRequest(
             Method.POST,
             apiURL,
-            null, // get shortURL from response headers
-            null,
+            { shortURL -> successCallback(shortURL) },
+            { error ->
+                Log.e(tag, "error: $error")
+                errorCallback(if (error is NoConnectionError) GenerateURLError.ServiceOffline else GenerateURLError.Unknown())
+            },
         ) {
             override fun getParams() = mutableMapOf("url" to longURL)
 
@@ -87,22 +90,11 @@ object Shrtlnk : ShortURLProvider {
                 return if (key != null) {
                     val shortURL = "$baseURL/$key"
                     Log.d(tag, "shortURL: $shortURL")
-                    successCallback(shortURL)
                     Response.success(shortURL, null)
                 } else {
                     Log.e(tag, "error: redirect key not found")
-                    errorCallback(GenerateURLError.Unknown())
                     Response.error(VolleyError("redirect key not found"))
                 }
-            }
-
-            override fun parseNetworkError(volleyError: VolleyError): VolleyError {
-                if (volleyError is NoConnectionError) {
-                    errorCallback(GenerateURLError.ServiceOffline)
-                } else {
-                    errorCallback(GenerateURLError.Unknown())
-                }
-                return volleyError
             }
         }
     }

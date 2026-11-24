@@ -22,6 +22,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.volley.Header
 import com.android.volley.NetworkResponse
 import com.android.volley.NoConnectionError
+import com.android.volley.ServerError
+import com.android.volley.TimeoutError
 import com.android.volley.VolleyError
 import de.lemke.oneurl.R
 import de.lemke.oneurl.data.FakeVolleyQueue
@@ -46,7 +48,7 @@ class ShrtlnkTest {
         NetworkResponse(204, ByteArray(0), false, 0L, listOf(Header("X-Remix-Redirect", "/new-link-added?key=h1aja4")))
 
     @Test
-    fun `parseNetworkResponse succeeds when the redirect header contains a key`() {
+    fun `a redirect header with a key delivers the short url`() {
         var result: String? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
@@ -56,7 +58,7 @@ class ShrtlnkTest {
     }
 
     @Test
-    fun `parseNetworkResponse fails with Unknown when the redirect header is missing`() {
+    fun `a response without the redirect header fails with Unknown`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
@@ -66,7 +68,7 @@ class ShrtlnkTest {
     }
 
     @Test
-    fun `parseNetworkResponse fails with Unknown when the response has no headers`() {
+    fun `a response without headers fails with Unknown`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
@@ -76,7 +78,7 @@ class ShrtlnkTest {
     }
 
     @Test
-    fun `parseNetworkError maps NoConnectionError to ServiceOffline`() {
+    fun `a missing connection fails with ServiceOffline`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
@@ -86,13 +88,25 @@ class ShrtlnkTest {
     }
 
     @Test
-    fun `parseNetworkError maps any other error to Unknown`() {
+    fun `any other network error fails with Unknown`() {
         var error: GenerateURLError? = null
         val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
         req.failThroughQueue(VolleyError("no network"))
 
         error shouldBe GenerateURLError.Unknown()
+    }
+
+    @Test
+    fun `a server error and a timeout fail with Unknown`() {
+        listOf(ServerError(), TimeoutError()).forEach { networkError ->
+            var error: GenerateURLError? = null
+            val req = Shrtlnk.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+            req.failThroughQueue(networkError)
+
+            error shouldBe GenerateURLError.Unknown()
+        }
     }
 
     @Test
