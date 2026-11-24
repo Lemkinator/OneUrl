@@ -31,7 +31,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -45,11 +44,6 @@ class DefaultVolleyQueueTest {
     private val context = ApplicationProvider.getApplicationContext<Application>()
     private val url = "https://example.com/cached"
     private val queue = DefaultVolleyQueue(context)
-
-    @After
-    fun stopQueue() {
-        queue.stop()
-    }
 
     private fun volleyCache() = DiskBasedCache(File(context.cacheDir, "volley")).apply { initialize() }
 
@@ -90,11 +84,9 @@ class DefaultVolleyQueueTest {
     }
 
     @Test
-    fun `stop on an unused queue starts no dispatcher threads and a later add still delivers`() {
+    fun `the dispatcher threads start with the first add`() {
         cacheResponse("cached body")
         val dispatchersBefore = dispatcherThreads()
-
-        queue.stop()
 
         (dispatcherThreads() - dispatchersBefore).size shouldBe 0
         deliverCachedResponse() shouldBe "cached body"

@@ -20,7 +20,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.annotation.VisibleForTesting
 import com.android.volley.ExecutorDelivery
 import com.android.volley.Request
 import com.android.volley.RequestQueue
@@ -48,8 +47,7 @@ interface VolleyQueue {
 class DefaultVolleyQueue @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) : VolleyQueue {
-    private val lazyQueue = lazy(::createQueue)
-    private val queue: RequestQueue by lazyQueue
+    private val queue: RequestQueue by lazy(::createQueue)
 
     override fun add(request: Request<*>) {
         queue.add(request)
@@ -67,12 +65,6 @@ class DefaultVolleyQueue @Inject constructor(
             NETWORK_THREADS,
             GuardedDelivery(Handler(Looper.getMainLooper())),
         ).apply { start() }
-    }
-
-    /** Stops the queue's cache and network dispatcher threads. */
-    @VisibleForTesting
-    internal fun stop() {
-        if (lazyQueue.isInitialized()) queue.stop()
     }
 
     private companion object {
