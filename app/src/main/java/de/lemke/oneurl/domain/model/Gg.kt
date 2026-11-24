@@ -96,7 +96,7 @@ object Gg : ShortURLProvider {
                 Log.e(tag, "error: $error")
                 val networkResponse = error.networkResponse
                 val statusCode = networkResponse?.statusCode
-                val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
                 Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                 queue.add(
                     requestCreateGg(longURL, alias, successCallback, errorCallback),
@@ -138,7 +138,7 @@ object Gg : ShortURLProvider {
                 Log.e(tag, "error: $error")
                 val networkResponse = error.networkResponse
                 val statusCode = networkResponse?.statusCode
-                val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
                 Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                 when {
                     error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)

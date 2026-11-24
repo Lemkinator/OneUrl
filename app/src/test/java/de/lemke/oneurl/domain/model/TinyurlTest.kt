@@ -107,7 +107,7 @@ class TinyurlTest {
         var error: GenerateURLError? = null
         val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(503, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(503, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(503)
     }

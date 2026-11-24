@@ -145,7 +145,7 @@ class TinubeTest {
         var error: GenerateURLError? = null
         val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(404)
     }

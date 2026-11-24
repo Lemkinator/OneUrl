@@ -106,7 +106,7 @@ object Shareaholic : ShortURLProvider {
         val message = error.message
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
         Log.e(tag, "$statusCode: message: $message data: $data")
         val response = data?.let { runCatching { JSONObject(it) }.getOrNull() }
         when {

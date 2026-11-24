@@ -175,7 +175,7 @@ sealed class Tly : ShortURLProvider {
         Log.e(tag, "error: $error")
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
         val message = data?.takeIf { it.isNotBlank() }?.let { runCatching { JSONObject(it).optStringOrNull("message") }.getOrNull() }
         Log.e(tag, "$statusCode: message: ${error.message} data: $data")
         Log.e(tag, "response message: $message")

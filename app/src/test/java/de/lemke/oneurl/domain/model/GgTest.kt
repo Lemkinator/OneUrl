@@ -152,7 +152,7 @@ class GgTest {
         val req = Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
         req.deliverResponse("ok")
 
-        queue.added.single().deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        queue.added.single().deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
@@ -194,7 +194,7 @@ class GgTest {
         var result: String? = null
         val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
 
-        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
         queue.added.single().deliverResponse("https://gg.gg/random")
 
         result shouldBe "https://gg.gg/random"
