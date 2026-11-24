@@ -429,6 +429,44 @@ class AddURLActivityTest {
         }
     }
 
+    @Test
+    fun `recreating the activity during a submit keeps the typed texts and the loading screen and sends one request`() {
+        val pending = CompletableDeferred<Unit>()
+        shortURLClient.gate = pending
+        shortURLClient.results[VgdIsgd.Vgd] = GenerateURLResult.Failure(GenerateURLError.RateLimitExceeded)
+
+        ActivityScenario.launch(AddURLActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.findViewById<EditText>(R.id.editTextURL).setText("https://example.com")
+                activity.findViewById<EditText>(R.id.editTextAlias).setText("typed_alias")
+                activity.findViewById<View>(R.id.addUrlFooterButton).performClick()
+            }
+            idleMainLooper()
+
+            scenario.recreate()
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                activity.findViewById<EditText>(R.id.editTextURL).text.toString() shouldBe "https://example.com"
+                activity.findViewById<EditText>(R.id.editTextAlias).text.toString() shouldBe "typed_alias"
+                activity.findViewById<View>(R.id.addUrlFooterProgress).isVisible.shouldBeTrue()
+                activity.findViewById<View>(R.id.addUrlFooterButton).isVisible.shouldBeFalse()
+                activity.findViewById<TextView>(R.id.addUrlFooterProgressText).text.toString() shouldBe "Generating URL…"
+            }
+
+            pending.complete(Unit)
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                activity.findViewById<EditText>(R.id.editTextURL).text.toString() shouldBe "https://example.com"
+                activity.findViewById<EditText>(R.id.editTextAlias).text.toString() shouldBe "typed_alias"
+                activity.findViewById<View>(R.id.addUrlFooterButton).isVisible.shouldBeTrue()
+            }
+            shortURLClient.created shouldBe listOf(FakeShortURLClient.Create(VgdIsgd.Vgd, "https://example.com", "typed_alias"))
+            ShadowDialog.getShownDialogs().size shouldBe 1
+        }
+    }
+
     private fun withAddURLActivity(
         block: (activity: AddURLActivity, urlField: EditText, aliasField: EditText, submit: () -> Unit) -> Unit,
     ) {
