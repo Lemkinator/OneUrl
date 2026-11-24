@@ -117,7 +117,7 @@ object Dagd : ShortURLProvider {
                 val message = error.message
                 val networkResponse = error.networkResponse
                 val statusCode = networkResponse?.statusCode
-                val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
+                val data = error.responseBody
                 Log.e(tag, "$statusCode: message: $message data: $data")
                 when {
                     error is NoConnectionError -> {
@@ -174,12 +174,12 @@ object Dagd : ShortURLProvider {
                 Log.e(tag, "error: $error")
                 val networkResponse = error.networkResponse
                 val statusCode = networkResponse?.statusCode
-                val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
+                val data = error.responseBody
                 Log.e(tag, "$statusCode: message: ${error.message} data: $data")
                 when {
                     error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
                     statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                    data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                    data.isBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
                     data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
                     data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)
                     data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)

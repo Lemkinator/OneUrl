@@ -226,13 +226,13 @@ object Ulvis : ShortURLProvider {
         Log.e(tag, "error: $error")
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
+        val data = error.responseBody
         Log.e(tag, "$statusCode: message: ${error.message} data: $data")
         when {
             error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
             statusCode == null -> errorCallback(GenerateURLError.Unknown())
             statusCode == HttpStatusCode.FORBIDDEN -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-            data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+            data.isBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
             else -> errorCallback(GenerateURLError.Custom(statusCode, data))
         }
     }

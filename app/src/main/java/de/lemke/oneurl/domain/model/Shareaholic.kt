@@ -106,9 +106,9 @@ object Shareaholic : ShortURLProvider {
         val message = error.message
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
+        val data = error.responseBody
         Log.e(tag, "$statusCode: message: $message data: $data")
-        val response = data?.let { runCatching { JSONObject(it) }.getOrNull() }
+        val response = runCatching { JSONObject(data) }.getOrNull()
         when {
             error is NoConnectionError -> {
                 errorCallback(GenerateURLError.ServiceOffline)
@@ -122,7 +122,7 @@ object Shareaholic : ShortURLProvider {
                 errorCallback(GenerateURLError.Unknown())
             }
 
-            data.isNullOrBlank() -> {
+            data.isBlank() -> {
                 errorCallback(GenerateURLError.Unknown(statusCode))
             }
 

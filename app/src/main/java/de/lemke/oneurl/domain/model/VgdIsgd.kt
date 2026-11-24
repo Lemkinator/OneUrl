@@ -140,7 +140,7 @@ sealed class VgdIsgd : ShortURLProvider {
         Log.e(tag, "error: $error")
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
+        val data = error.responseBody
         Log.e(tag, "$statusCode: message: ${error.message} data: $data")
         when {
             error is NoConnectionError -> {
@@ -155,7 +155,7 @@ sealed class VgdIsgd : ShortURLProvider {
                 errorCallback(GenerateURLError.Unknown())
             }
 
-            data.isNullOrBlank() -> {
+            data.isBlank() -> {
                 errorCallback(GenerateURLError.Unknown(statusCode))
             }
 

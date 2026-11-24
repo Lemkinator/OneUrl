@@ -180,8 +180,8 @@ sealed class Spoome : ShortURLProvider {
         Log.e(tag, "error: $error")
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
-        val response = data?.let { runCatching { JSONObject(it) }.getOrNull() }
+        val data = error.responseBody
+        val response = runCatching { JSONObject(data) }.getOrNull()
         Log.e(tag, "$statusCode: message: ${error.message} data: $data")
         when {
             error is NoConnectionError -> {
@@ -212,7 +212,7 @@ sealed class Spoome : ShortURLProvider {
                 errorCallback(GenerateURLError.InvalidAlias)
             }
 
-            data.isNullOrBlank() || response == null -> {
+            data.isBlank() || response == null -> {
                 errorCallback(GenerateURLError.Unknown(statusCode))
             }
 

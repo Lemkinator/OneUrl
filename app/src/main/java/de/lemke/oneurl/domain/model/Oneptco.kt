@@ -158,13 +158,13 @@ object Oneptco : ShortURLProvider {
         Log.e(tag, "error: $error")
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.let { it.data.toString(Charsets.UTF_8) }
+        val data = error.responseBody
         Log.e(tag, "$statusCode: message: ${error.message} data: $data")
         when {
             error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
             error is ParseError -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
             statusCode == null -> errorCallback(GenerateURLError.Unknown())
-            data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+            data.isBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
             statusCode == HttpStatusCode.NOT_FOUND -> errorCallback(GenerateURLError.Unknown(statusCode))
             statusCode == HttpStatusCode.INTERNAL_SERVER_ERROR -> errorCallback(GenerateURLError.InternalServerError)
             statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
