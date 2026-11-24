@@ -100,6 +100,26 @@ class TinubeTest {
     }
 
     @Test
+    fun `a response whose status marker has no value maps to Unknown with status 200`() {
+        var error: GenerateURLError? = null
+        val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("1:abc,def")
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `a response whose status is not a number maps to Unknown with status 200`() {
+        var error: GenerateURLError? = null
+        val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("""1:{"status":"ok"}""")
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
     fun `offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
         val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })

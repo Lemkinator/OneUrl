@@ -190,6 +190,55 @@ class MainActivitySelectionTest {
     }
 
     @Test
+    fun `ending action mode while search mode is active keeps the fab hidden`() {
+        urlRepository.seedUrl("https://da.gd/actionduringsearch1")
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.onOptionsItemSelected(menuItem(R.id.menu_item_search)) }
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.searchView().setQuery("da.gd", false) }
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.longClickFirstItem() }
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val drawerLayout = activity.findViewById<NavDrawerLayout>(R.id.drawerLayout)
+                "search=${drawerLayout.isSearchMode} action=${drawerLayout.isActionMode}" shouldBe "search=true action=true"
+                drawerLayout.endActionMode()
+            }
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val drawerLayout = activity.findViewById<NavDrawerLayout>(R.id.drawerLayout)
+                "search=${drawerLayout.isSearchMode} action=${drawerLayout.isActionMode}" shouldBe "search=true action=false"
+                activity.findViewById<View>(R.id.addFab).isVisible.shouldBeFalse()
+            }
+        }
+    }
+
+    @Test
+    fun `ending search mode while action mode is active keeps the fab hidden`() {
+        urlRepository.seedUrl("https://da.gd/searchduringaction1")
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.onOptionsItemSelected(menuItem(R.id.menu_item_search)) }
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.searchView().setQuery("da.gd", false) }
+            idleMainLooper()
+            scenario.onActivity { activity -> activity.longClickFirstItem() }
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val drawerLayout = activity.findViewById<NavDrawerLayout>(R.id.drawerLayout)
+                drawerLayout.endSearchMode()
+            }
+            idleMainLooper()
+            scenario.onActivity { activity ->
+                val drawerLayout = activity.findViewById<NavDrawerLayout>(R.id.drawerLayout)
+                "search=${drawerLayout.isSearchMode} action=${drawerLayout.isActionMode}" shouldBe "search=false action=true"
+                activity.findViewById<View>(R.id.addFab).isVisible.shouldBeFalse()
+            }
+        }
+    }
+
+    @Test
     fun `launchActionMode onSelectMenuItem delete removes the selected urls`() {
         val url = urlRepository.seedUrl("https://da.gd/delete1")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
