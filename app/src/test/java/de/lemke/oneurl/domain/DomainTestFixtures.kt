@@ -27,7 +27,6 @@ internal fun testUrl(
     provider: ShortURLProvider = Dagd,
     favorite: Boolean = false,
     title: String = "title",
-    description: String = "description",
     added: ZonedDateTime = ZonedDateTime.of(2024, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC),
 ) = URL(
     shortURL = shortURL,
@@ -35,6 +34,6 @@ internal fun testUrl(
     shortURLProvider = provider,
     favorite = favorite,
     title = title,
-    description = description,
+    description = "description",
     added = added,
 )

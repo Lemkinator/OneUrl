@@ -206,9 +206,9 @@ class URLAdapterTest {
     @Test
     fun `bind shows the description, else the title, else the added date as the second subtitle`() {
         withAdapter { adapter, holder ->
-            val described = testUrl("https://short.url/described", title = "a title", description = "a description")
-            val titled = testUrl("https://short.url/titled", title = "a title", description = " ")
-            val bare = testUrl("https://short.url/bare", title = "", description = "")
+            val described = testUrl("https://short.url/described", title = "a title").copy(description = "a description")
+            val titled = testUrl("https://short.url/titled", title = "a title").copy(description = " ")
+            val bare = testUrl("https://short.url/bare", title = "").copy(description = "")
             adapter.submitList(listOf(described, titled, bare))
             awaitMainLooperUntil { adapter.isCurrentList(listOf(described, titled, bare)) }
 
@@ -224,9 +224,9 @@ class URLAdapterTest {
     @Test
     fun `a HIGHLIGHT payload shows the description, else the title, else the added date as the second subtitle`() {
         withAdapter { adapter, holder ->
-            val described = testUrl("https://short.url/described", title = "a title", description = "a description")
-            val titled = testUrl("https://short.url/titled", title = "a title", description = " ")
-            val bare = testUrl("https://short.url/bare", title = "", description = "")
+            val described = testUrl("https://short.url/described", title = "a title").copy(description = "a description")
+            val titled = testUrl("https://short.url/titled", title = "a title").copy(description = " ")
+            val bare = testUrl("https://short.url/bare", title = "").copy(description = "")
             adapter.submitList(listOf(described, titled, bare))
             awaitMainLooperUntil { adapter.isCurrentList(listOf(described, titled, bare)) }
             val highlight = mutableListOf<Any>(URLAdapter.Payload.HIGHLIGHT)
