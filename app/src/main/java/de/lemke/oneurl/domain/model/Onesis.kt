@@ -90,7 +90,7 @@ object Onesis : ShortURLProvider {
                     response
                         .split("<span id=\"shortlink-url\"")
                         .getOrNull(1)
-                        ?.let { it.substringBefore("</span>").split("https://1s.is/").getOrNull(1) }
+                        ?.run { substringBefore("</span>").split("https://1s.is/").getOrNull(1) }
                 if (responseAlias != null) {
                     val shortURL = "$baseURL/$responseAlias"
                     Log.d(tag, "shortURL: $shortURL")

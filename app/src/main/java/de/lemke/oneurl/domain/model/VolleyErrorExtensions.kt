@@ -20,4 +20,4 @@ import com.android.volley.VolleyError
 
 // Volley hands an error response at least an empty data array, never null; no response reads as an empty body.
 internal val VolleyError.responseBody: String
-    get() = networkResponse?.let { it.data.toString(Charsets.UTF_8) }.orEmpty()
+    get() = networkResponse?.run { data.toString(Charsets.UTF_8) }.orEmpty()

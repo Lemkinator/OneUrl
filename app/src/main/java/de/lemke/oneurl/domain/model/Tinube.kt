@@ -136,9 +136,8 @@ object Tinube : ShortURLProvider {
                 Log.d(tag, "response: $response")
                 val data = response.split("1:").getOrNull(1)
                 val status =
-                    data?.let {
-                        it
-                            .substringBefore(",")
+                    data?.run {
+                        substringBefore(",")
                             .split(":")
                             .getOrNull(1)
                             ?.toIntOrNull()

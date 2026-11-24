@@ -149,7 +149,7 @@ object Shorturlat : ShortURLProvider {
                         response
                             .split("<div class=\"squareboxtext\">")
                             .getOrNull(1)
-                            ?.let { it.substringBefore("</div>").toIntOrNull() }
+                            ?.run { substringBefore("</div>").toIntOrNull() }
                     Log.d(tag, "visitCount: $visitCount")
                     callback(visitCount)
                 },
