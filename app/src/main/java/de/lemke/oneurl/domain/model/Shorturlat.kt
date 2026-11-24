@@ -149,9 +149,7 @@ object Shorturlat : ShortURLProvider {
                         response
                             .split("<div class=\"squareboxtext\">")
                             .getOrNull(1)
-                            ?.split("</div>")
-                            ?.getOrNull(0)
-                            ?.toIntOrNull()
+                            ?.let { it.substringBefore("</div>").toIntOrNull() }
                     Log.d(tag, "visitCount: $visitCount")
                     callback(visitCount)
                 },
@@ -181,8 +179,7 @@ object Shorturlat : ShortURLProvider {
                     response
                         .split("shortenurl\" type=\"text\" value=\"")
                         .getOrNull(1)
-                        ?.split("\" onClick")
-                        ?.getOrNull(0)
+                        ?.substringBefore("\" onClick")
                 if (shortURL != null) {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)

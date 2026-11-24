@@ -71,11 +71,9 @@ class DefaultQRCodeRenderer @Inject constructor(
         setSize(style.size)
         roundedFrame(style.roundedFrame)
     }
-
-    private companion object {
-        val LAUNCHER_ICON = commonutilsR.drawable.ic_launcher_themed
-    }
 }
+
+private val LAUNCHER_ICON = commonutilsR.drawable.ic_launcher_themed
 
 /** Draws the "not supported" card: the localized notice below [icon] on a light rounded card, or the notice alone without [icon]. */
 internal fun drawQRCodePlaceholder(

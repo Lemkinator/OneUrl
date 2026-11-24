@@ -99,7 +99,7 @@ class AddURLActivity : AppCompatActivity() {
     private fun initViews(state: AddUrlUiState) {
         binding.editTextURL.setText(state.initialURL)
         binding.editTextURL.requestFocus()
-        binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
+        binding.editTextURL.selectAll()
         binding.editTextAlias.setText(state.initialAlias)
         binding.editTextDescription.setText(state.initialDescription)
         binding.editTextURL.addTextChangedListener { text -> viewModel.onLongURLChanged(text.toString()) }

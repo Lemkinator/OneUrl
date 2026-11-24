@@ -136,19 +136,19 @@ object Tinube : ShortURLProvider {
                 Log.d(tag, "response: $response")
                 val data = response.split("1:").getOrNull(1)
                 val status =
-                    data
-                        ?.split(",")
-                        ?.getOrNull(0)
-                        ?.split(":")
-                        ?.getOrNull(1)
-                        ?.toIntOrNull()
+                    data?.let {
+                        it
+                            .substringBefore(",")
+                            .split(":")
+                            .getOrNull(1)
+                            ?.toIntOrNull()
+                    }
                 val urlCode =
                     if (status == HttpStatusCode.OK) {
                         data
                             .split("urlCode\":\"")
                             .getOrNull(1)
-                            ?.split("\"")
-                            ?.getOrNull(0)
+                            ?.substringBefore("\"")
                     } else {
                         null
                     }
