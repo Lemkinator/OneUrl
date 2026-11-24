@@ -126,28 +126,21 @@ object Onesis : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleOnesisError(
         tag: String,
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            Log.e(tag, "error: $error")
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-            when {
-                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                else -> errorCallback(GenerateURLError.Unknown(statusCode))
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
+        Log.e(tag, "error: $error")
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+        when {
+            error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+            statusCode == null -> errorCallback(GenerateURLError.Unknown())
+            statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            else -> errorCallback(GenerateURLError.Unknown(statusCode))
         }
     }
 }

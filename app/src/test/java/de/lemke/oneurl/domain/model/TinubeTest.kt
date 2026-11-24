@@ -211,19 +211,4 @@ class TinubeTest {
         infoContents[1].title shouldBe realContext.getString(R.string.analytics)
         infoContents[1].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
     }
-
-    @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
-    }
 }

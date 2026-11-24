@@ -92,7 +92,6 @@ object Zwsim : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         queue: VolleyQueue,
         longURL: String,
@@ -108,46 +107,40 @@ object Zwsim : ShortURLProvider {
             JSONObject(mapOf("url" to longURL)),
             { response -> handleResponse(tag, response, successCallback, errorCallback) },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val message = error.message
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: $message data: $data")
-                    when {
-                        error is NoConnectionError -> {
-                            errorCallback(GenerateURLError.ServiceOffline)
-                        }
-
-                        error is ParseError -> {
-                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        }
-
-                        statusCode == null -> {
-                            errorCallback(GenerateURLError.Unknown())
-                        }
-
-                        data.isNullOrBlank() -> {
-                            errorCallback(GenerateURLError.Unknown(statusCode))
-                        }
-
-                        statusCode == HttpStatusCode.UNPROCESSABLE_ENTITY && data.contains("Invalid url") -> {
-                            errorCallback(GenerateURLError.InvalidURL)
-                        }
-
-                        statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> {
-                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        }
-
-                        else -> {
-                            errorCallback(GenerateURLError.Custom(statusCode, data))
-                        }
+                Log.e(tag, "error: $error")
+                val message = error.message
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                Log.e(tag, "$statusCode: message: $message data: $data")
+                when {
+                    error is NoConnectionError -> {
+                        errorCallback(GenerateURLError.ServiceOffline)
                     }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+
+                    error is ParseError -> {
+                        errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                    }
+
+                    statusCode == null -> {
+                        errorCallback(GenerateURLError.Unknown())
+                    }
+
+                    data.isNullOrBlank() -> {
+                        errorCallback(GenerateURLError.Unknown(statusCode))
+                    }
+
+                    statusCode == HttpStatusCode.UNPROCESSABLE_ENTITY && data.contains("Invalid url") -> {
+                        errorCallback(GenerateURLError.InvalidURL)
+                    }
+
+                    statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> {
+                        errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                    }
+
+                    else -> {
+                        errorCallback(GenerateURLError.Custom(statusCode, data))
+                    }
                 }
             },
         )

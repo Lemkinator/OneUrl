@@ -122,55 +122,48 @@ sealed class Kurzelinks : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleKurzelinksError(
         tag: String,
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            Log.e(tag, "error: $error")
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-            when {
-                error is NoConnectionError -> {
-                    errorCallback(GenerateURLError.ServiceOffline)
-                }
-
-                statusCode == null -> {
-                    errorCallback(GenerateURLError.Unknown())
-                }
-
-                data.isNullOrBlank() -> {
-                    errorCallback(GenerateURLError.Unknown(statusCode))
-                }
-
-                statusCode == HttpStatusCode.BAD_REQUEST || statusCode == HttpStatusCode.FORBIDDEN -> {
-                    errorCallback(GenerateURLError.Unknown(statusCode))
-                }
-
-                statusCode == HttpStatusCode.LOCKED -> {
-                    errorCallback(GenerateURLError.AliasAlreadyExists)
-                }
-
-                statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
-                    errorCallback(GenerateURLError.RateLimitExceeded)
-                }
-
-                statusCode == HttpStatusCode.NO_RESPONSE -> {
-                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                }
-
-                else -> {
-                    errorCallback(GenerateURLError.Custom(statusCode, data))
-                }
+        Log.e(tag, "error: $error")
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+        when {
+            error is NoConnectionError -> {
+                errorCallback(GenerateURLError.ServiceOffline)
             }
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
+
+            statusCode == null -> {
+                errorCallback(GenerateURLError.Unknown())
+            }
+
+            data.isNullOrBlank() -> {
+                errorCallback(GenerateURLError.Unknown(statusCode))
+            }
+
+            statusCode == HttpStatusCode.BAD_REQUEST || statusCode == HttpStatusCode.FORBIDDEN -> {
+                errorCallback(GenerateURLError.Unknown(statusCode))
+            }
+
+            statusCode == HttpStatusCode.LOCKED -> {
+                errorCallback(GenerateURLError.AliasAlreadyExists)
+            }
+
+            statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> {
+                errorCallback(GenerateURLError.RateLimitExceeded)
+            }
+
+            statusCode == HttpStatusCode.NO_RESPONSE -> {
+                errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            }
+
+            else -> {
+                errorCallback(GenerateURLError.Custom(statusCode, data))
+            }
         }
     }
 

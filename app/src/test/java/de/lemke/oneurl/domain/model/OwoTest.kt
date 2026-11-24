@@ -110,21 +110,6 @@ class OwoTest {
     }
 
     @Test
-    fun `create error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Owovc.Owo.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `getURLClickCount returns the visit count`() {
         var clicks: Int? = -1
 

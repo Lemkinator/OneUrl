@@ -103,16 +103,6 @@ class ShrtlnkTest {
     }
 
     @Test
-    fun `parseNetworkResponse fails with Unknown when the success callback throws`() {
-        var error: GenerateURLError? = null
-        val req = Shrtlnk.getCreateRequest(queue, longURL, "", { error("boom") }, { error = it })
-
-        req.answerThroughQueue(redirectResponse)
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `getInfoContents returns the redirect hint info`() {
         val infoContents = Shrtlnk.getInfoContents(realContext)
 

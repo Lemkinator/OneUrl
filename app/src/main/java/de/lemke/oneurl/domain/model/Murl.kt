@@ -68,7 +68,6 @@ object Murl : ShortURLProvider {
             ),
         )
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         queue: VolleyQueue,
         url: URL,
@@ -83,16 +82,10 @@ object Murl : ShortURLProvider {
                 Request.Method.GET,
                 requestURL,
                 { response ->
-                    // An exception escaping a Volley callback on the main thread crashes the app.
-                    try {
-                        val clicks = response.substringAfter("\" title=\"Views\">").substringBefore("</span>").toIntOrNull()
-                        Log.d(tag, response.substringAfter("entry-date").substringBefore("entry-links"))
-                        Log.d(tag, "clicks: $clicks")
-                        callback(clicks)
-                    } catch (e: Exception) {
-                        Log.e(tag, "error: ${e.message}", e)
-                        callback(null)
-                    }
+                    val clicks = response.substringAfter("\" title=\"Views\">").substringBefore("</span>").toIntOrNull()
+                    Log.d(tag, response.substringAfter("entry-date").substringBefore("entry-links"))
+                    Log.d(tag, "clicks: $clicks")
+                    callback(clicks)
                 },
                 { error ->
                     Log.e(tag, "error: $error")
@@ -149,35 +142,28 @@ object Murl : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleError(
         tag: String,
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            Log.e(tag, "error: $error")
-            val message = error.message
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            Log.e(tag, "$statusCode: message: $message data: $data")
-            when {
-                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> errorCallback(GenerateURLError.RateLimitExceeded)
-                statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
-                data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)
-                data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
-                data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                else -> errorCallback(GenerateURLError.Custom(statusCode, data))
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
+        Log.e(tag, "error: $error")
+        val message = error.message
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        Log.e(tag, "$statusCode: message: $message data: $data")
+        when {
+            error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+            statusCode == null -> errorCallback(GenerateURLError.Unknown())
+            statusCode == HttpStatusCode.TOO_MANY_REQUESTS -> errorCallback(GenerateURLError.RateLimitExceeded)
+            statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+            data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
+            data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)
+            data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
+            data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+            else -> errorCallback(GenerateURLError.Custom(statusCode, data))
         }
     }
 }

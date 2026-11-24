@@ -239,36 +239,6 @@ class TnyimTest {
     }
 
     @Test
-    fun `getURLClickCount callback that throws once is caught and resolves to null`() {
-        var callbackCount = 0
-        var clicks: Int? = -1
-        val url = URL("https://tny.im/abc12", longURL, Tnyim, false, "", "", ZonedDateTime.now())
-
-        Tnyim.getURLClickCount(queue, url) {
-            callbackCount++
-            if (callbackCount == 1) error("boom") else clicks = it
-        }
-        queue.added.single().deliverResponse(JSONObject().put("link", JSONObject().put("clicks", "3")))
-
-        clicks shouldBe null
-    }
-
-    @Test
-    fun `create error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `getRetryPolicy returns a policy with the request timeout and default retry settings`() {
         val req = Tnyim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { fail("unexpected error: $it") })
 

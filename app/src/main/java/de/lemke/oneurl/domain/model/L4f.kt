@@ -112,7 +112,6 @@ object L4f : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleResponse(
         tag: String,
         alias: String,
@@ -120,69 +119,56 @@ object L4f : ShortURLProvider {
         successCallback: (shortURL: String) -> Unit,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            Log.d(tag, "response: $response")
-            val error = response.optBoolean("error")
-            val message = response.optStringOrNull("message").orEmpty()
-            val shortURL = response.optJSONObject("data")?.optStringOrNull("shorturl")
-            Log.d(tag, "error: $error message: $message shortURL: $shortURL")
-            when {
-                !error && shortURL != null && (alias.isBlank() || shortURL == "$baseURL/$alias") -> {
-                    successCallback(shortURL)
-                }
-
-                !error && shortURL != null -> {
-                    errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
-                }
-
-                message.contains("alias is taken", true) -> {
-                    errorCallback(GenerateURLError.AliasAlreadyExists)
-                }
-
-                message.contains("Inappropriate alias", true) -> {
-                    errorCallback(GenerateURLError.InvalidAlias)
-                }
-
-                message.contains("Please enter a valid URL", true) -> {
-                    errorCallback(GenerateURLError.InvalidURL)
-                }
-
-                message.contains("Too Many Requests", true) -> {
-                    errorCallback(GenerateURLError.RateLimitExceeded)
-                }
-
-                else -> {
-                    errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, message))
-                }
+        Log.d(tag, "response: $response")
+        val error = response.optBoolean("error")
+        val message = response.optStringOrNull("message").orEmpty()
+        val shortURL = response.optJSONObject("data")?.optStringOrNull("shorturl")
+        Log.d(tag, "error: $error message: $message shortURL: $shortURL")
+        when {
+            !error && shortURL != null && (alias.isBlank() || shortURL == "$baseURL/$alias") -> {
+                successCallback(shortURL)
             }
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing response", e)
-            errorCallback(GenerateURLError.Unknown(HttpStatusCode.OK))
+
+            !error && shortURL != null -> {
+                errorCallback(GenerateURLError.URLExistsWithDifferentAlias)
+            }
+
+            message.contains("alias is taken", true) -> {
+                errorCallback(GenerateURLError.AliasAlreadyExists)
+            }
+
+            message.contains("Inappropriate alias", true) -> {
+                errorCallback(GenerateURLError.InvalidAlias)
+            }
+
+            message.contains("Please enter a valid URL", true) -> {
+                errorCallback(GenerateURLError.InvalidURL)
+            }
+
+            message.contains("Too Many Requests", true) -> {
+                errorCallback(GenerateURLError.RateLimitExceeded)
+            }
+
+            else -> {
+                errorCallback(GenerateURLError.Custom(HttpStatusCode.OK, message))
+            }
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleError(
         tag: String,
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            Log.e(tag, "error: $error")
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-            when {
-                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                else -> errorCallback(GenerateURLError.Unknown(statusCode))
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
+        Log.e(tag, "error: $error")
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+        when {
+            error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+            statusCode == null -> errorCallback(GenerateURLError.Unknown())
+            else -> errorCallback(GenerateURLError.Unknown(statusCode))
         }
     }
 }

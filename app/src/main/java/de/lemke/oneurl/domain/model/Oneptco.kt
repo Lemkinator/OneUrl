@@ -150,32 +150,25 @@ object Oneptco : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleError(
         tag: String,
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            Log.e(tag, "error: $error")
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-            when {
-                error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                error is ParseError -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                statusCode == HttpStatusCode.NOT_FOUND -> errorCallback(GenerateURLError.Unknown(statusCode))
-                statusCode == HttpStatusCode.INTERNAL_SERVER_ERROR -> errorCallback(GenerateURLError.InternalServerError)
-                statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                else -> errorCallback(GenerateURLError.Custom(statusCode, data))
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
+        Log.e(tag, "error: $error")
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = networkResponse?.data?.toString(Charsets.UTF_8)
+        Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+        when {
+            error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+            error is ParseError -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            statusCode == null -> errorCallback(GenerateURLError.Unknown())
+            data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+            statusCode == HttpStatusCode.NOT_FOUND -> errorCallback(GenerateURLError.Unknown(statusCode))
+            statusCode == HttpStatusCode.INTERNAL_SERVER_ERROR -> errorCallback(GenerateURLError.InternalServerError)
+            statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            else -> errorCallback(GenerateURLError.Custom(statusCode, data))
         }
     }
 }

@@ -168,21 +168,6 @@ class IsgdTest {
     }
 
     @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `isAliasValid accepts letters digits and underscore and rejects other characters`() {
         VgdIsgd.Isgd.aliasConfig.isAliasValid("abc_123") shouldBe true
         VgdIsgd.Isgd.aliasConfig.isAliasValid("abc-123") shouldBe false

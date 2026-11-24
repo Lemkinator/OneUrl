@@ -162,21 +162,6 @@ class KurzelinksdeTest {
     }
 
     @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `create request sends the expected params`() {
         val req =
             Kurzelinks.Kurzelinksde.getCreateRequest(

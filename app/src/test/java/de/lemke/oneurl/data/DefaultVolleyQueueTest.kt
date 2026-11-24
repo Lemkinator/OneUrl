@@ -22,12 +22,15 @@ import com.android.volley.Cache
 import com.android.volley.CacheDispatcher
 import com.android.volley.NetworkDispatcher
 import com.android.volley.Request
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.StringRequest
 import io.kotest.matchers.shouldBe
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -99,6 +102,56 @@ class DefaultVolleyQueueTest {
     }
 
     @Test
+    fun `a response callback that throws delivers the failure to the error callback`() {
+        cacheResponse("cached body")
+        val errors = LinkedBlockingQueue<VolleyError>()
+
+        queue.add(StringRequest(Request.Method.GET, url, { error("response boom") }, { errors.add(it) }))
+
+        errors.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)?.cause?.message shouldBe "response boom"
+        deliverCachedResponse() shouldBe "cached body"
+    }
+
+    @Test
+    fun `an error callback that throws is called once more with the failure`() {
+        cacheResponse("cached body")
+        val errors = LinkedBlockingQueue<String?>()
+
+        queue.add(
+            StringRequest(Request.Method.GET, MALFORMED_URL, { error("unexpected response") }) {
+                if (it.cause !is IllegalStateException) {
+                    errors.add("first")
+                    error("error boom")
+                }
+                errors.add(it.cause?.message)
+            },
+        )
+
+        errors.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe "first"
+        errors.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe "error boom"
+        deliverCachedResponse() shouldBe "cached body"
+    }
+
+    @Test
+    fun `an error callback that keeps throwing is dropped and the queue keeps delivering`() {
+        cacheResponse("cached body")
+        val calls = AtomicInteger()
+        val secondCall = CountDownLatch(2)
+
+        queue.add(
+            StringRequest(Request.Method.GET, MALFORMED_URL, { error("unexpected response") }) {
+                calls.incrementAndGet()
+                secondCall.countDown()
+                error("error boom")
+            },
+        )
+
+        secondCall.await(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe true
+        deliverCachedResponse() shouldBe "cached body"
+        calls.get() shouldBe 2
+    }
+
+    @Test
     fun `removeCacheEntry drops the cached response of the url`() {
         cacheResponse("cached body")
 
@@ -109,5 +162,6 @@ class DefaultVolleyQueueTest {
 
     private companion object {
         const val DELIVERY_TIMEOUT_SECONDS = 5L
+        const val MALFORMED_URL = "not a url"
     }
 }

@@ -163,7 +163,6 @@ object Shorturlat : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         queue: VolleyQueue,
         longURL: String,
@@ -193,21 +192,15 @@ object Shorturlat : ShortURLProvider {
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+                Log.e(tag, "error: $error")
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                when {
+                    error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                    statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                    else -> errorCallback(GenerateURLError.Unknown(statusCode))
                 }
             },
         ) {

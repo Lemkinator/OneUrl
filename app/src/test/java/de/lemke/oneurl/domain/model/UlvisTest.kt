@@ -265,19 +265,4 @@ class UlvisTest {
 
         clicks shouldBe null
     }
-
-    @Test
-    fun `create request error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Ulvis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
-    }
 }

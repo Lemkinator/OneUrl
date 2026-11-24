@@ -112,7 +112,6 @@ sealed class Owovc : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     fun getOwovcCreateRequest(
         generator: String,
         longURL: String,
@@ -143,41 +142,35 @@ sealed class Owovc : ShortURLProvider {
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> {
-                            errorCallback(GenerateURLError.ServiceOffline)
-                        }
-
-                        statusCode == null -> {
-                            errorCallback(GenerateURLError.Unknown())
-                        }
-
-                        statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> {
-                            errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                        }
-
-                        data.isNullOrBlank() -> {
-                            errorCallback(GenerateURLError.Unknown(statusCode))
-                        }
-
-                        statusCode == HttpStatusCode.BAD_REQUEST && data.contains("link must match pattern") -> {
-                            errorCallback(GenerateURLError.InvalidURL)
-                        }
-
-                        else -> {
-                            errorCallback(GenerateURLError.Custom(statusCode, data))
-                        }
+                Log.e(tag, "error: $error")
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                when {
+                    error is NoConnectionError -> {
+                        errorCallback(GenerateURLError.ServiceOffline)
                     }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+
+                    statusCode == null -> {
+                        errorCallback(GenerateURLError.Unknown())
+                    }
+
+                    statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> {
+                        errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+                    }
+
+                    data.isNullOrBlank() -> {
+                        errorCallback(GenerateURLError.Unknown(statusCode))
+                    }
+
+                    statusCode == HttpStatusCode.BAD_REQUEST && data.contains("link must match pattern") -> {
+                        errorCallback(GenerateURLError.InvalidURL)
+                    }
+
+                    else -> {
+                        errorCallback(GenerateURLError.Custom(statusCode, data))
+                    }
                 }
             },
         )

@@ -53,7 +53,6 @@ object Gg : ShortURLProvider {
         }
     private const val GG_ERROR_REDIRECT_TO_ROOT = 2001
     private const val GG_ERROR_ALIAS_MISMATCH = 2002
-    private const val GG_ERROR_UNEXPECTED_RESPONSE = 2009
 
     override fun getInfoContents(context: Context): List<ProviderInfo> =
         listOf(
@@ -71,7 +70,6 @@ object Gg : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         queue: VolleyQueue,
         longURL: String,
@@ -85,47 +83,30 @@ object Gg : ShortURLProvider {
             Method.POST,
             apiURLCheck,
             { response ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.d(tag, "response: $response")
-                    if (response.contains("Link with this path already exist", true)) {
-                        errorCallback(GenerateURLError.AliasAlreadyExists)
-                    } else {
-                        queue.add(
-                            requestCreateGg(longURL, alias, successCallback, errorCallback),
-                        )
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error handling check response, creating anyway", e)
+                Log.d(tag, "response: $response")
+                if (response.contains("Link with this path already exist", true)) {
+                    errorCallback(GenerateURLError.AliasAlreadyExists)
+                } else {
                     queue.add(
                         requestCreateGg(longURL, alias, successCallback, errorCallback),
                     )
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    queue.add(
-                        requestCreateGg(longURL, alias, successCallback, errorCallback),
-                    )
-                } catch (e: Exception) {
-                    Log.e(tag, "error handling check error response, creating anyway", e)
-                    queue.add(
-                        requestCreateGg(longURL, alias, successCallback, errorCallback),
-                    )
-                }
+                Log.e(tag, "error: $error")
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                queue.add(
+                    requestCreateGg(longURL, alias, successCallback, errorCallback),
+                )
             },
         ) {
             override fun getParams() = mapOf("long_url" to longURL, "custom_path" to alias)
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun requestCreateGg(
         longURL: String,
         alias: String,
@@ -138,43 +119,31 @@ object Gg : ShortURLProvider {
             Method.POST,
             apiURL,
             { response ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.d(tag, "response: $response")
-                    when {
-                        response == "$baseURL/" -> {
-                            errorCallback(GenerateURLError.Unknown(GG_ERROR_REDIRECT_TO_ROOT))
-                        }
-
-                        alias.isNotBlank() && !response.endsWith("/$alias") -> {
-                            errorCallback(GenerateURLError.Unknown(GG_ERROR_ALIAS_MISMATCH))
-                        }
-
-                        else -> {
-                            successCallback(response)
-                        }
+                Log.d(tag, "response: $response")
+                when {
+                    response == "$baseURL/" -> {
+                        errorCallback(GenerateURLError.Unknown(GG_ERROR_REDIRECT_TO_ROOT))
                     }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing create response", e)
-                    errorCallback(GenerateURLError.Unknown(GG_ERROR_UNEXPECTED_RESPONSE))
+
+                    alias.isNotBlank() && !response.endsWith("/$alias") -> {
+                        errorCallback(GenerateURLError.Unknown(GG_ERROR_ALIAS_MISMATCH))
+                    }
+
+                    else -> {
+                        successCallback(response)
+                    }
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing create error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+                Log.e(tag, "error: $error")
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = networkResponse?.data?.toString(Charsets.UTF_8)
+                Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                when {
+                    error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                    statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                    else -> errorCallback(GenerateURLError.Unknown(statusCode))
                 }
             },
         ) {

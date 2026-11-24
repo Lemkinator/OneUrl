@@ -218,21 +218,6 @@ class LstuTest {
     }
 
     @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Lstu.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `getParams returns the lsturl, alias, and format params`() {
         val req = Lstu.getCreateRequest(queue, longURL, "test", { fail("unexpected success") }, { fail("unexpected error: $it") })
 

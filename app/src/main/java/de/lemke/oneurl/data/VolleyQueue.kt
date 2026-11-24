@@ -17,14 +17,22 @@
 package de.lemke.oneurl.data
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import androidx.annotation.VisibleForTesting
+import com.android.volley.ExecutorDelivery
 import com.android.volley.Request
 import com.android.volley.RequestQueue
+import com.android.volley.Response
+import com.android.volley.ResponseDelivery
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.HurlStack
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -53,7 +61,12 @@ class DefaultVolleyQueue @Inject constructor(
 
     private fun createQueue(): RequestQueue {
         val cacheDirectory = lazy { File(context.cacheDir, CACHE_DIRECTORY) }
-        return RequestQueue(DiskBasedCache { cacheDirectory.value }, BasicNetwork(HurlStack())).apply { start() }
+        return RequestQueue(
+            DiskBasedCache { cacheDirectory.value },
+            BasicNetwork(HurlStack()),
+            NETWORK_THREADS,
+            GuardedDelivery(Handler(Looper.getMainLooper())),
+        ).apply { start() }
     }
 
     /** Stops the queue's cache and network dispatcher threads. */
@@ -64,5 +77,53 @@ class DefaultVolleyQueue @Inject constructor(
 
     private companion object {
         const val CACHE_DIRECTORY = "volley"
+        const val NETWORK_THREADS = 4
+    }
+}
+
+/**
+ * Delivers on the main thread like Volley's own delivery. An exception from a request's response or error callback
+ * becomes an error result for that request, so a failing provider callback shows the error dialog instead of crashing the app.
+ * If the error callback fails as well, the failure is logged and dropped.
+ */
+private class GuardedDelivery(
+    private val handler: Handler,
+) : ResponseDelivery {
+    override fun postResponse(
+        request: Request<*>,
+        response: Response<*>,
+    ) = postResponse(request, response, null)
+
+    override fun postResponse(
+        request: Request<*>,
+        response: Response<*>,
+        runnable: Runnable?,
+    ) = deliveryFor(request, retryAsError = true).postResponse(request, response, runnable)
+
+    override fun postError(
+        request: Request<*>,
+        error: VolleyError,
+    ) = deliveryFor(request, retryAsError = true).postError(request, error)
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun deliveryFor(
+        request: Request<*>,
+        retryAsError: Boolean,
+    ): ResponseDelivery =
+        ExecutorDelivery(
+            Executor { delivery ->
+                handler.post {
+                    try {
+                        delivery.run()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "callback of ${request.url} threw", e)
+                        if (retryAsError) deliveryFor(request, retryAsError = false).postError(request, VolleyError(e))
+                    }
+                }
+            },
+        )
+
+    private companion object {
+        const val TAG = "VolleyQueue"
     }
 }

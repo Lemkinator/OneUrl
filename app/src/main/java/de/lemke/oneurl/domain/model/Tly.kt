@@ -158,20 +158,13 @@ sealed class Tly : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleTlyError(
         tag: String,
         error: VolleyError,
         keyed: Boolean,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            errorCallback(toGenerateURLError(tag, error, keyed))
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
-        }
+        errorCallback(toGenerateURLError(tag, error, keyed))
     }
 
     private fun toGenerateURLError(

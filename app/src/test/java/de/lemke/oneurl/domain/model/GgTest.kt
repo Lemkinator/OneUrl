@@ -158,65 +158,6 @@ class GgTest {
     }
 
     @Test
-    fun `check response handling that throws still falls back to creating the alias`() {
-        var result: String? = null
-        var enqueueCount = 0
-        queue.onAdd = {
-            enqueueCount++
-            if (enqueueCount == 1) error("boom")
-        }
-        val req = Gg.getCreateRequest(queue, longURL, "abc", { result = it }, { fail("unexpected error: $it") })
-
-        req.deliverResponse("ok")
-        queue.added.last().deliverResponse("https://gg.gg/abc")
-
-        result shouldBe "https://gg.gg/abc"
-    }
-
-    @Test
-    fun `check error handling that throws still falls back to creating the alias`() {
-        var result: String? = null
-        var enqueueCount = 0
-        queue.onAdd = {
-            enqueueCount++
-            if (enqueueCount == 1) error("boom")
-        }
-        val req = Gg.getCreateRequest(queue, longURL, "", { result = it }, { fail("unexpected error: $it") })
-
-        req.deliverError(VolleyError("no network"))
-        queue.added.last().deliverResponse("https://gg.gg/random")
-
-        result shouldBe "https://gg.gg/random"
-    }
-
-    @Test
-    fun `create response success callback that throws is caught and reported as unexpected response`() {
-        var error: GenerateURLError? = null
-        val req = Gg.getCreateRequest(queue, longURL, "", { error("boom") }, { error = it })
-        req.deliverResponse("ok")
-
-        queue.added.single().deliverResponse("https://gg.gg/random")
-
-        error shouldBe GenerateURLError.Unknown(2009)
-    }
-
-    @Test
-    fun `create error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Gg.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-        req.deliverResponse("ok")
-
-        queue.added.single().deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `getInfoContents returns the alias info`() {
         val infoContents = Gg.getInfoContents(realContext)
 

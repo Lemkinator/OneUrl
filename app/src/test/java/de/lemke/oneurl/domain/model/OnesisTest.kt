@@ -175,21 +175,6 @@ class OnesisTest {
     }
 
     @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Onesis.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `getParams returns the original url and custom short url params`() {
         val req = Onesis.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { fail("unexpected error: $it") })
 
