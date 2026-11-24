@@ -146,22 +146,25 @@ class URLAdapterTest {
     }
 
     @Test
-    fun `rebinding a holder mid-load shows only the thumbnail of the url bound last`() {
+    fun `rebinding a holder mid-load keeps the thumbnail of the url bound last when the first load finishes later`() {
         val pendingDispatcher = StandardTestDispatcher()
         withAdapter(defaultDispatcher = pendingDispatcher) { adapter, holder ->
             val first = testUrl("https://short.url/rebind-first")
             val second = testUrl("https://short.url/rebind-second")
             adapter.submitList(listOf(first, second))
             awaitMainLooperUntil { adapter.isCurrentList(listOf(first, second)) }
-
-            adapter.onBindViewHolder(holder, 0)
-            adapter.onBindViewHolder(holder, 1)
-            pendingDispatcher.scheduler.advanceUntilIdle()
-
             val qrSizePx =
                 holder.itemView.context.resources
                     .getDimensionPixelSize(R.dimen.list_item_qr_size)
-            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldBeSameInstanceAs qrCodeCache[second.shortURL, qrSizePx]
+            val secondBitmap = freshBitmap()
+            qrCodeCache[second.shortURL, qrSizePx] = secondBitmap
+
+            adapter.onBindViewHolder(holder, 0)
+            adapter.onBindViewHolder(holder, 1)
+            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldBeSameInstanceAs secondBitmap
+            pendingDispatcher.scheduler.advanceUntilIdle()
+
+            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldBeSameInstanceAs secondBitmap
             qrCodeCache[first.shortURL, qrSizePx] shouldNotBe null
         }
     }
