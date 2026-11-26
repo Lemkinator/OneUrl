@@ -19,6 +19,7 @@ package de.lemke.oneurl.data
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
+import com.android.volley.Cache
 import com.android.volley.CacheDispatcher
 import com.android.volley.Network
 import com.android.volley.NetworkDispatcher
@@ -31,9 +32,11 @@ import com.android.volley.toolbox.NoCache
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.di.NetworkModule
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Provider
 import org.junit.After
@@ -91,9 +94,10 @@ class DefaultVolleyQueueTest {
     fun `the request queue starts a cache dispatcher and four network dispatchers`() {
         val dispatchersBefore = dispatcherThreads()
 
-        NetworkModule.provideRequestQueue().also(createdQueues::add)
+        val moduleQueue = NetworkModule.provideRequestQueue().also(createdQueues::add)
 
         (dispatcherThreads() - dispatchersBefore).size shouldBe 5
+        moduleQueue.cache.shouldBeInstanceOf<NoCache>()
     }
 
     @Test
@@ -125,7 +129,12 @@ class DefaultVolleyQueueTest {
 
     @Test
     fun `a request for the url of a request whose response callback threw still gets its response`() {
-        val queue = queueAnsweringBody()
+        val cache = SoftExpiredCache(url, "body")
+        val answering =
+            RequestQueue(cache, { NetworkResponse("body".toByteArray()) }, 1, GuardedDelivery(Handler(Looper.getMainLooper())))
+                .apply { start() }
+                .also(createdQueues::add)
+        val queue = DefaultVolleyQueue(Provider { answering })
         val delivered = LinkedBlockingQueue<String>()
 
         queue.add(StringRequest(Request.Method.GET, url, { error("response boom") }, {}))
@@ -174,6 +183,45 @@ class DefaultVolleyQueueTest {
         calls.get() shouldBe 2
         request.isCanceled shouldBe true
         deliverResponse(queue) shouldBe "body"
+    }
+
+    /**
+     * Serves [body] for [url] once, as a hit that is soft-expired but not expired, so Volley delivers it and then refreshes it.
+     * Every later lookup is a miss, which Volley stages behind the registered key.
+     */
+    private class SoftExpiredCache(
+        private val url: String,
+        private val body: String,
+    ) : Cache {
+        private val served = AtomicBoolean()
+
+        override fun get(key: String): Cache.Entry? =
+            if (key != url || served.getAndSet(true)) {
+                null
+            } else {
+                Cache.Entry().apply {
+                    data = body.toByteArray()
+                    ttl = Long.MAX_VALUE
+                    softTtl = 0L
+                    responseHeaders = emptyMap()
+                }
+            }
+
+        override fun put(
+            key: String,
+            entry: Cache.Entry,
+        ) = Unit
+
+        override fun initialize() = Unit
+
+        override fun invalidate(
+            key: String,
+            fullExpire: Boolean,
+        ) = Unit
+
+        override fun remove(key: String) = Unit
+
+        override fun clear() = Unit
     }
 
     private companion object {
