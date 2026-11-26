@@ -33,7 +33,7 @@ kotest = "6.2.7"
 kotlin = "2.4.21"
 kotlinx-serialization = "1.13.0"
 kover = "0.9.11"
-ksafe = "3.3.0"
+ksafe = "3.3.2"
 ksp = "2.3.14"
 # Used via spotless { kotlin { ktlint(libs.versions.ktlint.get()) } } — version-only ref, no library/plugin alias
 #noinspection UnusedVersionCatalogEntry

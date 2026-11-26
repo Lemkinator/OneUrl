@@ -37,22 +37,18 @@ class KSafeFixture(
         return open()
     }
 
-    /** The Keystore aliases that belong to this fixture's store. */
-    fun aliases(): List<String> =
-        KeyStore
-            .getInstance("AndroidKeyStore")
-            .apply { load(null) }
+    /**
+     * Closes every instance this fixture opened, then deletes the store's Keystore keys and files.
+     * KSafe creates its master keys after startup and offers no hook to await them, so a key can still appear after the close.
+     */
+    fun close() {
+        opened.forEach(KSafe::close)
+        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        keyStore
             .aliases()
             .toList()
             .filter { fileName in it }
-
-    /**
-     * Deletes the store's Keystore keys and files, then closes every instance this fixture opened.
-     * The keys go through a fresh instance: `clearAll` on a closed [KSafe] never returns, and a test may have closed its own.
-     */
-    suspend fun close() {
-        open().clearAll()
-        opened.forEach(KSafe::close)
+            .forEach(keyStore::deleteEntry)
         directory.deleteRecursively()
     }
 }
