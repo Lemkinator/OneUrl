@@ -96,7 +96,7 @@ Backup category comes from `commonutilsR.xml.preferences_backup` in `settingsPre
 
 **DI** — `di/` holds the `SingletonComponent` Hilt modules: `PersistenceModule` (Room DB, `URLDao`), `SettingsModule.kt`
 (`UserSettings`, bound as `SettingsRepository`), `DispatchersModule` (includes the common-utils `CommonUtilsCoroutinesModule`: `@DefaultDispatcher`, `@IoDispatcher`, `@MainDispatcher`, `@ApplicationScope`),
-`ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (binds `VolleyQueue`,
+`ProviderModule` (`@EnabledProviders`), `URLRepositoryModule` (binds `DefaultURLRepository`), `NetworkModule` (provides the singleton guarded `RequestQueue`, binds `VolleyQueue`,
 `NetworkMonitor`, `UrlhausClient`, `PageTitleFetcher` and `ShortURLClient`), `QRCodeRendererModule` (binds `DefaultQRCodeRenderer`), `SecretsModule` (provides `KSafe`, binds `TlyKeyStore`),
 `BitmapExporterModule` (provides the common-utils `DefaultBitmapExporter`; screen tests uninstall it to bind an exporter on a pausable
 IO dispatcher), `InAppReviewModule` (includes the common-utils `CommonUtilsInAppReviewModule`, which binds `PlayInAppReview` as `InAppReview`)
