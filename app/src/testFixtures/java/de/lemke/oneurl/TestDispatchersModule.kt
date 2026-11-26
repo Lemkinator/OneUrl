@@ -20,6 +20,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import de.lemke.commonutils.HiltTestRule
 import de.lemke.commonutils.di.ApplicationScope
 import de.lemke.commonutils.di.DefaultDispatcher
 import de.lemke.commonutils.di.IoDispatcher
@@ -31,6 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 // Unconfined so URLAdapter's async QR-load coroutines (dispatched via @DefaultDispatcher) run to
@@ -59,5 +61,5 @@ object TestDispatchersModule {
     @ApplicationScope
     fun provideApplicationScope(
         @DefaultDispatcher dispatcher: CoroutineDispatcher,
-    ): CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher)
+    ): CoroutineScope = HiltTestRule.closeAfterTest(CoroutineScope(SupervisorJob() + dispatcher)) { it.cancel() }
 }
