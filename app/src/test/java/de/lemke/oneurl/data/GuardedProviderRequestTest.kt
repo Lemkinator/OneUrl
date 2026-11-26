@@ -69,14 +69,13 @@ class GuardedProviderRequestTest {
 
     private fun awaitError() = awaitResult(errors)
 
-    private fun <T : Any> awaitResult(results: LinkedBlockingQueue<T>): T? {
+    private fun <T : Any> awaitResult(results: LinkedBlockingQueue<T>): T {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(DELIVERY_TIMEOUT_SECONDS)
-        var result: T? = null
-        while (result == null && System.nanoTime() < deadline) {
+        while (System.nanoTime() < deadline) {
             idleMainLooper()
-            result = results.poll(POLL_MILLIS, TimeUnit.MILLISECONDS)
+            results.poll(POLL_MILLIS, TimeUnit.MILLISECONDS)?.let { return it }
         }
-        return result
+        error("no result within $DELIVERY_TIMEOUT_SECONDS seconds")
     }
 
     private fun dialogTexts(error: GenerateURLError): Pair<String?, String?> {
@@ -105,7 +104,7 @@ class GuardedProviderRequestTest {
 
         val error = awaitError()
         error shouldBe GenerateURLError.Unknown()
-        dialogTexts(error!!) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
+        dialogTexts(error) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
     }
 
     @Test
@@ -122,7 +121,7 @@ class GuardedProviderRequestTest {
 
         val error = awaitError()
         error shouldBe GenerateURLError.Unknown()
-        dialogTexts(error!!) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
+        dialogTexts(error) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
     }
 
     @Test
@@ -150,7 +149,7 @@ class GuardedProviderRequestTest {
 
         val error = awaitError()
         error shouldBe GenerateURLError.Unknown()
-        dialogTexts(error!!) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
+        dialogTexts(error) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
     }
 
     @Test
@@ -162,7 +161,7 @@ class GuardedProviderRequestTest {
 
         val error = awaitError()
         error shouldBe GenerateURLError.Unknown()
-        dialogTexts(error!!) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
+        dialogTexts(error) shouldBe ("Error" to "Unknown error\nIf this keeps happening, try another provider.")
     }
 
     @Test
@@ -173,7 +172,7 @@ class GuardedProviderRequestTest {
 
         val error = awaitError()
         error shouldBe GenerateURLError.ServiceOffline
-        dialogTexts(error!!) shouldBe ("Error" to "The service of this provider is offline. Please use another provider.")
+        dialogTexts(error) shouldBe ("Error" to "The service of this provider is offline. Please use another provider.")
     }
 
     @Test
