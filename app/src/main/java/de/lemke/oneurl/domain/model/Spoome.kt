@@ -232,6 +232,7 @@ sealed class Spoome : ShortURLProvider {
     }
 
     private companion object {
+        val MAX_STATS_RANGE: Duration = Duration.ofDays(90)
         const val MIN_ALIAS_LENGTH_DEFAULT = 3
         const val MAX_ALIAS_LENGTH_DEFAULT = 16
         const val MAX_ALIAS_LENGTH_EMOJI = 15
@@ -313,6 +314,3 @@ sealed class Spoome : ShortURLProvider {
             )
     }
 }
-
-private const val MAX_STATS_RANGE_DAYS = 90L
-private val MAX_STATS_RANGE: Duration = Duration.ofDays(MAX_STATS_RANGE_DAYS)
