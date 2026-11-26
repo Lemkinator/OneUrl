@@ -20,7 +20,9 @@ import android.app.Application
 import androidx.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.TestScope
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -29,11 +31,18 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [36])
 class SettingsProvideModuleTest {
+    private val scope = TestScope()
+
+    @After
+    fun cancelScope() {
+        scope.cancel()
+    }
+
     @Test
     fun provideUserSettings_writesToDefaultSharedPreferences() {
         val context = ApplicationProvider.getApplicationContext<Application>()
 
-        SettingsProvideModule.provideUserSettings(context, TestScope()).lastURL = "https://example.com"
+        SettingsProvideModule.provideUserSettings(context, scope).lastURL = "https://example.com"
 
         PreferenceManager.getDefaultSharedPreferences(context).getString("lastURL", null) shouldBe "https://example.com"
     }
