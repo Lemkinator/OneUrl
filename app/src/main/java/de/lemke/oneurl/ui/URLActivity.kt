@@ -139,8 +139,7 @@ class URLActivity : AppCompatActivity() {
 
     private fun collectState() =
         collectState(viewModel.state) { state ->
-            if (state.isLoading || state.url == null) return@collectState
-            val url = state.url
+            val url = state.url ?: return@collectState
             if (url.shortURL != lastBoundShortURL) {
                 lastBoundShortURL = url.shortURL
                 bindURL(url)

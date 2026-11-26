@@ -81,7 +81,6 @@ object Dagd : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.withHttps().urlEncodeAmpersand().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         queue: VolleyQueue,
         longURL: String,
@@ -114,36 +113,30 @@ object Dagd : ShortURLProvider {
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.w(tag, "error: $error")
-                    val message = error.message
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: $message data: $data")
-                    when {
-                        error is NoConnectionError -> {
-                            errorCallback(GenerateURLError.ServiceOffline)
-                        }
-
-                        statusCode == null -> {
-                            errorCallback(GenerateURLError.Unknown())
-                        }
-
-                        else -> {
-                            if (statusCode == HttpStatusCode.NOT_FOUND) {
-                                Log.d(tag, "shortURL does not exist yet, creating it")
-                            } else {
-                                Log.w(tag, "error, trying to create it anyway")
-                            }
-                            innerReq = requestCreateDAGD(longURL, alias, successCallback, errorCallback)
-                            queue.add(innerReq)
-                        }
+                Log.w(tag, "error: $error")
+                val message = error.message
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = error.responseBody
+                Log.e(tag, "$statusCode: message: $message data: $data")
+                when {
+                    error is NoConnectionError -> {
+                        errorCallback(GenerateURLError.ServiceOffline)
                     }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing coshorten error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+
+                    statusCode == null -> {
+                        errorCallback(GenerateURLError.Unknown())
+                    }
+
+                    else -> {
+                        if (statusCode == HttpStatusCode.NOT_FOUND) {
+                            Log.d(tag, "shortURL does not exist yet, creating it")
+                        } else {
+                            Log.w(tag, "error, trying to create it anyway")
+                        }
+                        innerReq = requestCreateDAGD(longURL, alias, successCallback, errorCallback)
+                        queue.add(innerReq)
+                    }
                 }
             },
         ) {
@@ -154,7 +147,6 @@ object Dagd : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun requestCreateDAGD(
         longURL: String,
         alias: String,
@@ -179,27 +171,21 @@ object Dagd : ShortURLProvider {
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
-                        data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)
-                        data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
-                        data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
-                        data.contains("Custom short URL contained invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing create error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+                Log.e(tag, "error: $error")
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = error.responseBody
+                Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                when {
+                    error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                    statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                    data.isBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                    data.contains("Long URL cannot be empty", true) -> errorCallback(GenerateURLError.InvalidURL)
+                    data.contains("Long URL must have http:// or https://", true) -> errorCallback(GenerateURLError.InvalidURL)
+                    data.contains("Long URL is not a valid URL", true) -> errorCallback(GenerateURLError.InvalidURL)
+                    data.contains("Short URL already taken", true) -> errorCallback(GenerateURLError.AliasAlreadyExists)
+                    data.contains("Custom short URL contained invalid", true) -> errorCallback(GenerateURLError.InvalidAlias)
+                    else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                 }
             },
         )

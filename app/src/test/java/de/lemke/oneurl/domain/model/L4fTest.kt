@@ -152,7 +152,7 @@ class L4fTest {
         var error: GenerateURLError? = null
         val req = L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
@@ -191,32 +191,5 @@ class L4fTest {
                 L4f.aliasConfig.maxAliasLength,
                 L4f.aliasConfig.allowedAliasCharacters,
             )
-    }
-
-    @Test
-    fun `response success callback that throws is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        val req = L4f.getCreateRequest(queue, longURL, "", { error("boom") }, { error = it })
-
-        req.deliverResponse(
-            JSONObject("""{"error":false,"message":"Link has been shortened","data":{"id":7498,"shorturl":"https://l4f.com/xyz"}}"""),
-        )
-
-        error shouldBe GenerateURLError.Unknown(HttpStatusCode.OK)
-    }
-
-    @Test
-    fun `network error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            L4f.getCreateRequest(queue, longURL, "asdf", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
     }
 }

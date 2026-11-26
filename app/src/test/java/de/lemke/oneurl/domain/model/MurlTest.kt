@@ -162,7 +162,7 @@ class MurlTest {
         var error: GenerateURLError? = null
         val req = Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(400, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(400)
     }
@@ -197,21 +197,6 @@ class MurlTest {
     }
 
     @Test
-    fun `create error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Murl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `getURLClickCount parses the view count out of the html response`() {
         var clicks: Int? = -1
         val url = testUrl(shortURL = "https://murl.com/abc123")
@@ -240,21 +225,6 @@ class MurlTest {
 
         Murl.getURLClickCount(queue, url) { clicks = it }
         queue.added.single().deliverError(VolleyError("no network"))
-
-        clicks shouldBe null
-    }
-
-    @Test
-    fun `getURLClickCount callback that throws once is caught and resolves to null`() {
-        var callbackCount = 0
-        var clicks: Int? = -1
-        val url = testUrl(shortURL = "https://murl.com/abc123")
-
-        Murl.getURLClickCount(queue, url) {
-            callbackCount++
-            if (callbackCount == 1) error("boom") else clicks = it
-        }
-        queue.added.single().deliverResponse("""<span class="mu-mc count-480357" title="Views">7</span>""")
 
         clicks shouldBe null
     }

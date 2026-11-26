@@ -132,43 +132,36 @@ sealed class VgdIsgd : ShortURLProvider {
         successCallback(shortURL)
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleError(
         tag: String,
         error: VolleyError,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            Log.e(tag, "error: $error")
-            val networkResponse = error.networkResponse
-            val statusCode = networkResponse?.statusCode
-            val data = networkResponse?.data?.toString(Charsets.UTF_8)
-            Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-            when {
-                error is NoConnectionError -> {
-                    errorCallback(GenerateURLError.ServiceOffline)
-                }
-
-                error is ParseError -> {
-                    errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
-                }
-
-                statusCode == null -> {
-                    errorCallback(GenerateURLError.Unknown())
-                }
-
-                data.isNullOrBlank() -> {
-                    errorCallback(GenerateURLError.Unknown(statusCode))
-                }
-
-                else -> {
-                    errorCallback(GenerateURLError.Custom(statusCode, data))
-                }
+        Log.e(tag, "error: $error")
+        val networkResponse = error.networkResponse
+        val statusCode = networkResponse?.statusCode
+        val data = error.responseBody
+        Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+        when {
+            error is NoConnectionError -> {
+                errorCallback(GenerateURLError.ServiceOffline)
             }
-        } catch (e: Exception) {
-            Log.e(tag, "error: $e", e)
-            errorCallback(GenerateURLError.Unknown())
+
+            error is ParseError -> {
+                errorCallback(GenerateURLError.ServiceTemporarilyUnavailable(baseURL))
+            }
+
+            statusCode == null -> {
+                errorCallback(GenerateURLError.Unknown())
+            }
+
+            data.isBlank() -> {
+                errorCallback(GenerateURLError.Unknown(statusCode))
+            }
+
+            else -> {
+                errorCallback(GenerateURLError.Custom(statusCode, data))
+            }
         }
     }
 

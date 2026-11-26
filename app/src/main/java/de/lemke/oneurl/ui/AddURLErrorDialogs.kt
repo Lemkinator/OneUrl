@@ -20,6 +20,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.provider.Settings
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import de.lemke.commonutils.ui.utils.openURL
 import de.lemke.commonutils.ui.utils.singleLaunchActivity
@@ -38,52 +39,37 @@ private val SERVER_ERROR_RANGE = HttpStatusCode.INTERNAL_SERVER_ERROR..MAX_HTTP_
 
 internal fun AlertDialog.Builder.configureFor(error: GenerateURLError) {
     when (error) {
-        GenerateURLError.NoInternet -> {
-            configureNoInternet()
-        }
-
-        is GenerateURLError.BlacklistedURL -> {
-            configureBlacklisted(error)
-        }
-
-        is GenerateURLError.ServiceTemporarilyUnavailable -> {
-            configureServiceUnavailable(error)
-        }
-
-        is GenerateURLError.Custom -> {
-            configureProviderError(error.statusCode, error.customMessage)
-        }
-
-        is GenerateURLError.Unknown -> {
-            configureProviderError(error.statusCode, providerText = null)
-        }
-
-        GenerateURLError.RateLimitExceeded, GenerateURLError.InternalServerError -> {
-            setTitle(commonutilsR.string.commonutils_error)
-            setProviderErrorMessage(this.context.getString(simpleErrorMessageRes(error)))
-        }
-
-        else -> {
-            setTitle(commonutilsR.string.commonutils_error)
-            setMessage(simpleErrorMessageRes(error))
-        }
+        GenerateURLError.NoInternet -> configureNoInternet()
+        is GenerateURLError.BlacklistedURL -> configureBlacklisted(error)
+        is GenerateURLError.ServiceTemporarilyUnavailable -> configureServiceUnavailable(error)
+        is GenerateURLError.Custom -> configureProviderError(error.statusCode, error.customMessage)
+        is GenerateURLError.Unknown -> configureProviderError(error.statusCode, providerText = null)
+        GenerateURLError.RateLimitExceeded -> configureSimpleProviderError(R.string.error_rate_limit_exceeded)
+        GenerateURLError.InternalServerError -> configureSimpleProviderError(R.string.error_internal_server_error)
+        GenerateURLError.AliasAlreadyExists -> configureSimpleError(R.string.error_alias_already_exists)
+        GenerateURLError.URLExistsWithDifferentAlias -> configureSimpleError(R.string.error_url_already_exists_with_different_alias)
+        GenerateURLError.InvalidURL -> configureSimpleError(R.string.error_invalid_url)
+        GenerateURLError.InvalidAlias -> configureSimpleError(R.string.error_invalid_alias)
+        GenerateURLError.InvalidURLOrAlias -> configureSimpleError(R.string.error_invalid_url_or_alias)
+        GenerateURLError.ServiceOffline -> configureSimpleError(R.string.error_service_offline)
+        GenerateURLError.DomainNotAllowed -> configureSimpleError(R.string.error_domain_not_allowed)
+        GenerateURLError.TlyKeyRejected -> configureSimpleError(R.string.error_tly_key_rejected)
     }
 }
 
-private fun simpleErrorMessageRes(error: GenerateURLError): Int =
-    when (error) {
-        GenerateURLError.AliasAlreadyExists -> R.string.error_alias_already_exists
-        GenerateURLError.URLExistsWithDifferentAlias -> R.string.error_url_already_exists_with_different_alias
-        GenerateURLError.InvalidURL -> R.string.error_invalid_url
-        GenerateURLError.InvalidAlias -> R.string.error_invalid_alias
-        GenerateURLError.InvalidURLOrAlias -> R.string.error_invalid_url_or_alias
-        GenerateURLError.InternalServerError -> R.string.error_internal_server_error
-        GenerateURLError.ServiceOffline -> R.string.error_service_offline
-        GenerateURLError.RateLimitExceeded -> R.string.error_rate_limit_exceeded
-        GenerateURLError.DomainNotAllowed -> R.string.error_domain_not_allowed
-        GenerateURLError.TlyKeyRejected -> R.string.error_tly_key_rejected
-        else -> commonutilsR.string.commonutils_error_unknown
-    }
+private fun AlertDialog.Builder.configureSimpleError(
+    @StringRes messageRes: Int,
+) {
+    setTitle(commonutilsR.string.commonutils_error)
+    setMessage(messageRes)
+}
+
+private fun AlertDialog.Builder.configureSimpleProviderError(
+    @StringRes messageRes: Int,
+) {
+    setTitle(commonutilsR.string.commonutils_error)
+    setProviderErrorMessage(this.context.getString(messageRes))
+}
 
 private fun AlertDialog.Builder.configureNoInternet() {
     setTitle(R.string.no_internet)

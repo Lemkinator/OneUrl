@@ -132,7 +132,7 @@ class IsgdTest {
         var error: GenerateURLError? = null
         val req = VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(404)
     }
@@ -165,21 +165,6 @@ class IsgdTest {
         req.deliverError(VolleyError(NetworkResponse(500, "server exploded".toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Custom(500, "server exploded")
-    }
-
-    @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            VgdIsgd.Isgd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

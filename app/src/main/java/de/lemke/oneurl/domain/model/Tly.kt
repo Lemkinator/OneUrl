@@ -158,20 +158,13 @@ sealed class Tly : ShortURLProvider {
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private fun handleTlyError(
         tag: String,
         error: VolleyError,
         keyed: Boolean,
         errorCallback: (error: GenerateURLError) -> Unit,
     ) {
-        // An exception escaping a Volley callback on the main thread crashes the app.
-        try {
-            errorCallback(toGenerateURLError(tag, error, keyed))
-        } catch (e: Exception) {
-            Log.e(tag, "error parsing error response", e)
-            errorCallback(GenerateURLError.Unknown())
-        }
+        errorCallback(toGenerateURLError(tag, error, keyed))
     }
 
     private fun toGenerateURLError(
@@ -182,8 +175,8 @@ sealed class Tly : ShortURLProvider {
         Log.e(tag, "error: $error")
         val networkResponse = error.networkResponse
         val statusCode = networkResponse?.statusCode
-        val data = networkResponse?.data?.toString(Charsets.UTF_8)
-        val message = data?.takeIf { it.isNotBlank() }?.let { runCatching { JSONObject(it).optStringOrNull("message") }.getOrNull() }
+        val data = error.responseBody
+        val message = data.takeIf { it.isNotBlank() }?.let { runCatching { JSONObject(it).optStringOrNull("message") }.getOrNull() }
         Log.e(tag, "$statusCode: message: ${error.message} data: $data")
         Log.e(tag, "response message: $message")
         return when {
@@ -192,7 +185,7 @@ sealed class Tly : ShortURLProvider {
             statusCode == null -> GenerateURLError.Unknown()
             keyed && statusCode == HttpStatusCode.UNAUTHORIZED -> GenerateURLError.TlyKeyRejected
             statusCode == HttpStatusCode.SERVICE_UNAVAILABLE -> GenerateURLError.ServiceTemporarilyUnavailable(baseURL)
-            data.isNullOrBlank() || message.isNullOrBlank() -> GenerateURLError.Unknown(statusCode)
+            data.isBlank() || message.isNullOrBlank() -> GenerateURLError.Unknown(statusCode)
             message.contains("long url field is required", true) -> GenerateURLError.InvalidURL
             !keyed && message.contains("T.LY account and API key", true) -> GenerateURLError.RateLimitExceeded
             else -> GenerateURLError.Custom(statusCode, message)

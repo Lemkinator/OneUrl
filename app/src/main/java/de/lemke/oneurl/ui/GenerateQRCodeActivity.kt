@@ -133,7 +133,7 @@ class GenerateQRCodeActivity : AppCompatActivity(), ViewYTranslator by AppBarAwa
     private fun initUrlField(initialState: QrUiState) {
         binding.editTextURL.setText(initialState.url)
         binding.editTextURL.requestFocus()
-        binding.editTextURL.text?.let { binding.editTextURL.setSelection(0, it.length) }
+        binding.editTextURL.selectAll()
         binding.editTextURL.addTextChangedListener { text -> viewModel.setUrl(text.toString()) }
     }
 

@@ -107,7 +107,7 @@ class TinyurlTest {
         var error: GenerateURLError? = null
         val req = Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(503, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(503, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(503)
     }
@@ -146,20 +146,5 @@ class TinyurlTest {
     fun `isAliasValid accepts alphanumerics and underscores, rejects other characters`() {
         Tinyurl.aliasConfig.isAliasValid("abc_123") shouldBe true
         Tinyurl.aliasConfig.isAliasValid("abc-123") shouldBe false
-    }
-
-    @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Tinyurl.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
     }
 }

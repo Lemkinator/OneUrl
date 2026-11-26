@@ -148,7 +148,7 @@ class ZwsimTest {
         var error: GenerateURLError? = null
         val req = Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
@@ -200,21 +200,6 @@ class ZwsimTest {
         req.deliverError(VolleyError(NetworkResponse(500, body.toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Custom(500, body)
-    }
-
-    @Test
-    fun `create error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Zwsim.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

@@ -74,42 +74,27 @@ object Shrtlnk : ShortURLProvider {
         return object : StringRequest(
             Method.POST,
             apiURL,
-            null, // get shortURL from response headers
-            null,
+            { shortURL -> successCallback(shortURL) },
+            { error ->
+                Log.e(tag, "error: $error")
+                errorCallback(if (error is NoConnectionError) GenerateURLError.ServiceOffline else GenerateURLError.Unknown())
+            },
         ) {
             override fun getParams() = mutableMapOf("url" to longURL)
 
-            // An exception escaping a Volley callback on the main thread crashes the app.
-            @Suppress("TooGenericExceptionCaught")
-            override fun parseNetworkResponse(response: NetworkResponse): Response<String> =
-                try {
-                    val headers = response.headers
-                    Log.d(tag, "response headers: $headers")
-                    val redirect = headers?.get("X-Remix-Redirect")
-                    val key = redirect?.substringAfter("key=")
-                    if (key != null) {
-                        val shortURL = "$baseURL/$key"
-                        Log.d(tag, "shortURL: $shortURL")
-                        successCallback(shortURL)
-                        Response.success(shortURL, null)
-                    } else {
-                        Log.e(tag, "error: redirect key not found")
-                        errorCallback(GenerateURLError.Unknown())
-                        Response.error(VolleyError("redirect key not found"))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing network response", e)
-                    errorCallback(GenerateURLError.Unknown())
-                    Response.error(VolleyError(e))
-                }
-
-            override fun parseNetworkError(volleyError: VolleyError): VolleyError {
-                if (volleyError is NoConnectionError) {
-                    errorCallback(GenerateURLError.ServiceOffline)
+            override fun parseNetworkResponse(response: NetworkResponse): Response<String> {
+                val headers = response.headers
+                Log.d(tag, "response headers: $headers")
+                val redirect = headers?.get("X-Remix-Redirect")
+                val key = redirect?.substringAfter("key=")
+                return if (key != null) {
+                    val shortURL = "$baseURL/$key"
+                    Log.d(tag, "shortURL: $shortURL")
+                    Response.success(shortURL, null)
                 } else {
-                    errorCallback(GenerateURLError.Unknown())
+                    Log.e(tag, "error: redirect key not found")
+                    Response.error(VolleyError("redirect key not found"))
                 }
-                return volleyError
             }
         }
     }

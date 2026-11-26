@@ -108,8 +108,7 @@ object ShortURLProviderCompanion {
 
     val default: ShortURLProvider = VgdIsgd.Isgd
 
-    fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider =
-        if (shortURLProvider in enabled) shortURLProvider ?: default else default
+    fun getIfEnabledOrDefault(shortURLProvider: ShortURLProvider?): ShortURLProvider = shortURLProvider?.takeIf { it in enabled } ?: default
 
     private fun fromStringOrNull(name: String?): ShortURLProvider? = provider.find { it.name == name }
 

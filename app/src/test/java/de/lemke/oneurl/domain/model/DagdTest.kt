@@ -140,21 +140,6 @@ class DagdTest {
     }
 
     @Test
-    fun `alias coshorten check callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Dagd.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
-    }
-
-    @Test
     fun `create request maps every known error message to its GenerateURLError`() {
         val cases =
             mapOf(
@@ -199,24 +184,9 @@ class DagdTest {
         var error: GenerateURLError? = null
         val req = Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
-    }
-
-    @Test
-    fun `create error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Dagd.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

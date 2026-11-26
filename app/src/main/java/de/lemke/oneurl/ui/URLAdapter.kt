@@ -171,7 +171,6 @@ class URLAdapter(
         var listItemImg: ImageView = itemView.findViewById(R.id.listItemImg)
         var listItemFav: AppCompatButton = itemView.findViewById(R.id.listItemFav)
         private var qrJob: Job? = null
-        private var boundShortURL: String? = null
 
         fun bind(url: URL) {
             listItemTitle.text = searchHighlighter(url.shortURL, highlightWord)
@@ -197,11 +196,10 @@ class URLAdapter(
         }
 
         // Cache hit sets the bitmap immediately - no coroutine, no flash. On miss the ImageView is
-        // blanked and the thumbnail is generated off-main; the result is only applied if this
-        // holder is still bound to the same shortURL (guards against fast rebind/recycle mid-load).
+        // blanked and the thumbnail is generated off-main. A rebind or recycle cancels the job, and
+        // withContext resumes a cancelled caller with CancellationException, so a stale thumbnail never lands.
         private fun bindQrCode(shortURL: String) {
             cancelQrLoad()
-            boundShortURL = shortURL
             val cached = getQRCodeThumbnail.cached(shortURL, qrSizePx)
             if (cached != null) {
                 listItemImg.setImageBitmap(cached)
@@ -211,7 +209,7 @@ class URLAdapter(
             qrJob =
                 scope.launch {
                     val thumbnail = getQRCodeThumbnail(shortURL, qrSizePx)
-                    if (boundShortURL == shortURL) listItemImg.setImageBitmap(thumbnail)
+                    listItemImg.setImageBitmap(thumbnail)
                 }
         }
 

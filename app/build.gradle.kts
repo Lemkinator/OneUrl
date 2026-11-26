@@ -137,9 +137,7 @@ android {
     }
     lint {
         warningsAsErrors = true
-        // checkDependencies = false: private AAR deps surface
-        // hundreds of unactionable warnings; flip to true once in-project surface is clean
-        checkDependencies = false
+        checkDependencies = true
         // Explicit: pins intent against future AGP default changes.
         checkReleaseBuilds = true
         abortOnError = true
@@ -366,7 +364,7 @@ kover {
             verify {
                 rule {
                     minBound(99, coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.INSTRUCTION)
-                    minBound(96, coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH)
+                    minBound(99, coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH)
                 }
             }
         }

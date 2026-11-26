@@ -100,6 +100,26 @@ class TinubeTest {
     }
 
     @Test
+    fun `a response whose status marker has no value maps to Unknown with status 200`() {
+        var error: GenerateURLError? = null
+        val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("1:abc,def")
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
+    fun `a response whose status is not a number maps to Unknown with status 200`() {
+        var error: GenerateURLError? = null
+        val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
+
+        req.deliverResponse("""1:{"status":"ok"}""")
+
+        error shouldBe GenerateURLError.Unknown(200)
+    }
+
+    @Test
     fun `offline error maps to ServiceOffline`() {
         var error: GenerateURLError? = null
         val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
@@ -145,7 +165,7 @@ class TinubeTest {
         var error: GenerateURLError? = null
         val req = Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(404, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(404, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(404)
     }
@@ -210,20 +230,5 @@ class TinubeTest {
             )
         infoContents[1].title shouldBe realContext.getString(R.string.analytics)
         infoContents[1].linkOrDescription shouldBe realContext.getString(R.string.analytics_text)
-    }
-
-    @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Tinube.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
     }
 }

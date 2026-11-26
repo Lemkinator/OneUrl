@@ -16,53 +16,81 @@
 
 package de.lemke.oneurl.data
 
-import android.content.Context
-import androidx.annotation.VisibleForTesting
+import android.os.Handler
+import android.util.Log
+import com.android.volley.ExecutorDelivery
 import com.android.volley.Request
 import com.android.volley.RequestQueue
-import com.android.volley.toolbox.BasicNetwork
-import com.android.volley.toolbox.DiskBasedCache
-import com.android.volley.toolbox.HurlStack
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
+import com.android.volley.Response
+import com.android.volley.ResponseDelivery
+import com.android.volley.VolleyError
+import java.util.concurrent.Executor
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /** Sends Volley requests; each request delivers its own response or error. */
 interface VolleyQueue {
     fun add(request: Request<*>)
-
-    /** Drops the cached response of [url], so the next request for it reaches the network. */
-    fun removeCacheEntry(url: String)
 }
 
 @Singleton
 class DefaultVolleyQueue @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    private val requestQueue: Provider<RequestQueue>,
 ) : VolleyQueue {
-    private val lazyQueue = lazy(::createQueue)
-    private val queue: RequestQueue by lazyQueue
-
     override fun add(request: Request<*>) {
-        queue.add(request)
+        // A cached request registers its URL key until it finishes. A throwing callback can leave the key registered,
+        // and later requests for that URL never finish.
+        request.setShouldCache(false)
+        requestQueue.get().add(request)
     }
+}
 
-    override fun removeCacheEntry(url: String) {
-        queue.cache.remove(url)
-    }
+/**
+ * Delivers on the main thread like Volley's own delivery. An exception from a request's response or error callback
+ * becomes an error result for that request, so a failing provider callback shows the error dialog instead of crashing the app.
+ * If the error callback fails as well, the failure is logged and the request is canceled and finished.
+ */
+internal class GuardedDelivery(
+    private val handler: Handler,
+) : ResponseDelivery {
+    override fun postResponse(
+        request: Request<*>,
+        response: Response<*>,
+    ) = postResponse(request, response, null)
 
-    private fun createQueue(): RequestQueue {
-        val cacheDirectory = lazy { File(context.cacheDir, CACHE_DIRECTORY) }
-        return RequestQueue(DiskBasedCache { cacheDirectory.value }, BasicNetwork(HurlStack())).apply { start() }
-    }
+    override fun postResponse(
+        request: Request<*>,
+        response: Response<*>,
+        runnable: Runnable?,
+    ) = deliveryFor(request, retryAsError = true).postResponse(request, response, runnable)
 
-    /** Stops the queue's cache and network dispatcher threads. */
-    @VisibleForTesting
-    internal fun stop() {
-        if (lazyQueue.isInitialized()) queue.stop()
-    }
+    override fun postError(
+        request: Request<*>,
+        error: VolleyError,
+    ) = deliveryFor(request, retryAsError = true).postError(request, error)
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun deliveryFor(
+        request: Request<*>,
+        retryAsError: Boolean,
+    ): ResponseDelivery =
+        ExecutorDelivery(
+            Executor { delivery ->
+                handler.post {
+                    try {
+                        delivery.run()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "callback of ${request.url} threw", e)
+                        // Request.finish is package-private; delivering to a canceled request finishes it without calling a listener.
+                        if (!retryAsError) request.cancel()
+                        deliveryFor(request, retryAsError = false).postError(request, VolleyError(e))
+                    }
+                }
+            },
+        )
 
     private companion object {
-        const val CACHE_DIRECTORY = "volley"
+        const val TAG = "VolleyQueue"
     }
 }

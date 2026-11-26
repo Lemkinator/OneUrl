@@ -84,7 +84,7 @@ class OwoTest {
                 VolleyError(NetworkResponse(503, ByteArray(0), false, 0L, emptyList())) to
                     GenerateURLError.ServiceTemporarilyUnavailable(Owovc.Owo.baseURL),
                 VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())) to GenerateURLError.Unknown(500),
-                VolleyError(NetworkResponse(500, null, false, 0L, emptyList())) to GenerateURLError.Unknown(500),
+                VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())) to GenerateURLError.Unknown(500),
                 VolleyError(
                     NetworkResponse(
                         400,
@@ -107,21 +107,6 @@ class OwoTest {
 
             error shouldBe expected
         }
-    }
-
-    @Test
-    fun `create error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Owovc.Owo.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

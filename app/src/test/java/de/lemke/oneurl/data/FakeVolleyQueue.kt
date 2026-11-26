@@ -29,19 +29,14 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-/** Records every added request and passes it to [onAdd], which can answer it; records every removed cache entry. */
+/** Records every added request and passes it to [onAdd], which can answer it. */
 internal class FakeVolleyQueue : VolleyQueue {
     val added = mutableListOf<Request<*>>()
-    val removedCacheEntries = mutableListOf<String>()
     var onAdd: (Request<*>) -> Unit = {}
 
     override fun add(request: Request<*>) {
         added += request
         onAdd(request)
-    }
-
-    override fun removeCacheEntry(url: String) {
-        removedCacheEntries += url
     }
 }
 

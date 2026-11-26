@@ -144,7 +144,7 @@ class TlyDefaultTest {
         var error: GenerateURLError? = null
         val req = Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
@@ -210,21 +210,6 @@ class TlyDefaultTest {
         req.deliverError(VolleyError(NetworkResponse(500, "not json".toByteArray(), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
-    }
-
-    @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Tly.Default.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(NoConnectionError())
-
-        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

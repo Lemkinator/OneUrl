@@ -16,8 +16,15 @@
 
 package de.lemke.oneurl.di
 
+import android.os.Handler
+import android.os.Looper
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.BasicNetwork
+import com.android.volley.toolbox.HurlStack
+import com.android.volley.toolbox.NoCache
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import de.lemke.oneurl.data.DefaultNetworkMonitor
@@ -25,11 +32,13 @@ import de.lemke.oneurl.data.DefaultPageTitleFetcher
 import de.lemke.oneurl.data.DefaultShortURLClient
 import de.lemke.oneurl.data.DefaultUrlhausClient
 import de.lemke.oneurl.data.DefaultVolleyQueue
+import de.lemke.oneurl.data.GuardedDelivery
 import de.lemke.oneurl.data.NetworkMonitor
 import de.lemke.oneurl.data.PageTitleFetcher
 import de.lemke.oneurl.data.ShortURLClient
 import de.lemke.oneurl.data.UrlhausClient
 import de.lemke.oneurl.data.VolleyQueue
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,4 +57,18 @@ interface NetworkModule {
 
     @Binds
     fun bindShortURLClient(client: DefaultShortURLClient): ShortURLClient
+
+    companion object {
+        private const val NETWORK_THREADS = 4
+
+        @Provides
+        @Singleton
+        fun provideRequestQueue(): RequestQueue =
+            RequestQueue(
+                NoCache(),
+                BasicNetwork(HurlStack()),
+                NETWORK_THREADS,
+                GuardedDelivery(Handler(Looper.getMainLooper())),
+            ).apply { start() }
+    }
 }

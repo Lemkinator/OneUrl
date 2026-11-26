@@ -230,24 +230,9 @@ class OneptcoTest {
         var error: GenerateURLError? = null
         val req = Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(400, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(400)
-    }
-
-    @Test
-    fun `create request error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Oneptco.getCreateRequest(queue, longURL, "", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

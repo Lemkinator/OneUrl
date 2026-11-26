@@ -120,7 +120,7 @@ class KurzelinksdeTest {
         var error: GenerateURLError? = null
         val req = Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(500, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(500, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(500)
     }
@@ -159,21 +159,6 @@ class KurzelinksdeTest {
     fun `alias validity follows the allowed character set`() {
         Kurzelinks.Kurzelinksde.aliasConfig.isAliasValid("abc-DEF_123") shouldBe true
         Kurzelinks.Kurzelinksde.aliasConfig.isAliasValid("abc def") shouldBe false
-    }
-
-    @Test
-    fun `error callback that throws once is caught and reported as unknown`() {
-        var error: GenerateURLError? = null
-        var errorCallbackCount = 0
-        val req =
-            Kurzelinks.Kurzelinksde.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }) {
-                errorCallbackCount++
-                if (errorCallbackCount == 1) error("boom") else error = it
-            }
-
-        req.deliverError(VolleyError("no network"))
-
-        error shouldBe GenerateURLError.Unknown()
     }
 
     @Test

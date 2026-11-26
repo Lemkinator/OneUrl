@@ -17,17 +17,28 @@
 package de.lemke.oneurl.data
 
 import android.app.Application
-import androidx.test.core.app.ApplicationProvider
+import android.os.Handler
+import android.os.Looper
 import com.android.volley.Cache
 import com.android.volley.CacheDispatcher
+import com.android.volley.Network
 import com.android.volley.NetworkDispatcher
+import com.android.volley.NetworkResponse
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
-import com.android.volley.toolbox.DiskBasedCache
+import com.android.volley.RequestQueue
+import com.android.volley.VolleyError
+import com.android.volley.toolbox.NoCache
 import com.android.volley.toolbox.StringRequest
+import de.lemke.oneurl.di.NetworkModule
 import io.kotest.matchers.shouldBe
-import java.io.File
+import io.kotest.matchers.types.shouldBeInstanceOf
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import javax.inject.Provider
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,75 +50,182 @@ import org.robolectric.annotation.LooperMode
 @Config(application = Application::class, sdk = [36])
 @LooperMode(LooperMode.Mode.INSTRUMENTATION_TEST)
 class DefaultVolleyQueueTest {
-    private val context = ApplicationProvider.getApplicationContext<Application>()
-    private val url = "https://example.com/cached"
-    private val queue = DefaultVolleyQueue(context)
+    private val url = "https://example.com/page"
+    private val createdQueues = mutableListOf<RequestQueue>()
 
     @After
-    fun stopQueue() {
-        queue.stop()
-    }
-
-    private fun volleyCache() = DiskBasedCache(File(context.cacheDir, "volley")).apply { initialize() }
-
-    private fun cacheResponse(body: String) {
-        val entry =
-            Cache.Entry().apply {
-                data = body.toByteArray()
-                ttl = Long.MAX_VALUE
-                softTtl = Long.MAX_VALUE
-                responseHeaders = emptyMap()
-            }
-        volleyCache().put(url, entry)
-    }
+    fun stopRequestQueues() = createdQueues.forEach(RequestQueue::stop)
 
     private fun dispatcherThreads() =
         Thread.getAllStackTraces().keys.filterTo(HashSet()) { it is CacheDispatcher || it is NetworkDispatcher }
 
-    private fun deliverCachedResponse(): String? {
-        var delivered: String? = null
-        val deliveredLatch = CountDownLatch(1)
+    private fun requestQueueAnswering(network: Network): RequestQueue =
+        RequestQueue(NoCache(), network, 1, GuardedDelivery(Handler(Looper.getMainLooper()))).apply { start() }.also(createdQueues::add)
 
-        queue.add(
-            StringRequest(Request.Method.GET, url, {
-                delivered = it
-                deliveredLatch.countDown()
-            }, {}),
-        )
+    private fun queueAnsweringBody(): VolleyQueue {
+        val answering =
+            requestQueueAnswering { if (it.url == MALFORMED_URL) throw NoConnectionError() else NetworkResponse("body".toByteArray()) }
+        return DefaultVolleyQueue(Provider { answering })
+    }
 
-        deliveredLatch.await(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe true
-        return delivered
+    private fun deliverResponse(queue: VolleyQueue): String? {
+        val delivered = LinkedBlockingQueue<String>()
+
+        queue.add(StringRequest(Request.Method.GET, url, delivered::add, {}))
+
+        return delivered.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     }
 
     @Test
-    fun `add delivers the response Volley serves for the request`() {
-        cacheResponse("cached body")
-
-        deliverCachedResponse() shouldBe "cached body"
+    fun `add delivers the network response`() {
+        deliverResponse(queueAnsweringBody()) shouldBe "body"
     }
 
     @Test
-    fun `stop on an unused queue starts no dispatcher threads and a later add still delivers`() {
-        cacheResponse("cached body")
+    fun `add turns the Volley cache off for the request`() {
+        val request = StringRequest(Request.Method.GET, url, {}, {})
+
+        queueAnsweringBody().add(request)
+
+        request.shouldCache() shouldBe false
+    }
+
+    @Test
+    fun `the request queue starts a cache dispatcher and four network dispatchers`() {
         val dispatchersBefore = dispatcherThreads()
 
-        queue.stop()
+        val moduleQueue = NetworkModule.provideRequestQueue().also(createdQueues::add)
 
-        (dispatcherThreads() - dispatchersBefore).size shouldBe 0
-        deliverCachedResponse() shouldBe "cached body"
         (dispatcherThreads() - dispatchersBefore).size shouldBe 5
+        moduleQueue.cache.shouldBeInstanceOf<NoCache>()
     }
 
     @Test
-    fun `removeCacheEntry drops the cached response of the url`() {
-        cacheResponse("cached body")
+    fun `the request queue is resolved with the first add`() {
+        val resolved = AtomicInteger()
+        val lazyQueue =
+            DefaultVolleyQueue(
+                Provider {
+                    resolved.incrementAndGet()
+                    requestQueueAnswering { NetworkResponse(ByteArray(0)) }
+                },
+            )
 
-        queue.removeCacheEntry(url)
+        resolved.get() shouldBe 0
+        lazyQueue.add(StringRequest(Request.Method.GET, url, {}, {}))
+        resolved.get() shouldBe 1
+    }
 
-        volleyCache().get(url) shouldBe null
+    @Test
+    fun `a response callback that throws delivers the failure to the error callback`() {
+        val queue = queueAnsweringBody()
+        val errors = LinkedBlockingQueue<VolleyError>()
+
+        queue.add(StringRequest(Request.Method.GET, url, { error("response boom") }, { errors.add(it) }))
+
+        errors.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)?.cause?.message shouldBe "response boom"
+        deliverResponse(queue) shouldBe "body"
+    }
+
+    @Test
+    fun `a request for the url of a request whose response callback threw still gets its response`() {
+        val cache = SoftExpiredCache(url, "body")
+        val answering =
+            RequestQueue(cache, { NetworkResponse("body".toByteArray()) }, 1, GuardedDelivery(Handler(Looper.getMainLooper())))
+                .apply { start() }
+                .also(createdQueues::add)
+        val queue = DefaultVolleyQueue(Provider { answering })
+        val delivered = LinkedBlockingQueue<String>()
+
+        queue.add(StringRequest(Request.Method.GET, url, { error("response boom") }, {}))
+        queue.add(StringRequest(Request.Method.GET, url, delivered::add, {}))
+
+        delivered.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe "body"
+    }
+
+    @Test
+    fun `an error callback that throws is called once more with the failure`() {
+        val queue = queueAnsweringBody()
+        val errors = LinkedBlockingQueue<String?>()
+
+        queue.add(
+            StringRequest(Request.Method.GET, MALFORMED_URL, { error("unexpected response") }) {
+                if (it.cause !is IllegalStateException) {
+                    errors.add("first")
+                    error("error boom")
+                }
+                errors.add(it.cause?.message)
+            },
+        )
+
+        errors.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe "first"
+        errors.poll(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe "error boom"
+        deliverResponse(queue) shouldBe "body"
+    }
+
+    @Test
+    fun `an error callback that keeps throwing cancels and finishes its request and the queue keeps delivering`() {
+        val queue = queueAnsweringBody()
+        val calls = AtomicInteger()
+        val finished = CountDownLatch(1)
+        createdQueues.last().addRequestEventListener { _, event ->
+            if (event == RequestQueue.RequestEvent.REQUEST_FINISHED) finished.countDown()
+        }
+        val request =
+            StringRequest(Request.Method.GET, MALFORMED_URL, { error("unexpected response") }) {
+                calls.incrementAndGet()
+                error("error boom")
+            }
+
+        queue.add(request)
+
+        finished.await(DELIVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS) shouldBe true
+        calls.get() shouldBe 2
+        request.isCanceled shouldBe true
+        deliverResponse(queue) shouldBe "body"
+    }
+
+    /**
+     * Serves [body] for [url] once, as a hit that is soft-expired but not expired, so Volley delivers it and then refreshes it.
+     * Every later lookup is a miss, which Volley stages behind the registered key.
+     */
+    private class SoftExpiredCache(
+        private val url: String,
+        private val body: String,
+    ) : Cache {
+        private val served = AtomicBoolean()
+
+        override fun get(key: String): Cache.Entry? =
+            if (key != url || served.getAndSet(true)) {
+                null
+            } else {
+                Cache.Entry().apply {
+                    data = body.toByteArray()
+                    ttl = Long.MAX_VALUE
+                    softTtl = 0L
+                    responseHeaders = emptyMap()
+                }
+            }
+
+        override fun put(
+            key: String,
+            entry: Cache.Entry,
+        ) = Unit
+
+        override fun initialize() = Unit
+
+        override fun invalidate(
+            key: String,
+            fullExpire: Boolean,
+        ) = Unit
+
+        override fun remove(key: String) = Unit
+
+        override fun clear() = Unit
     }
 
     private companion object {
         const val DELIVERY_TIMEOUT_SECONDS = 5L
+        const val MALFORMED_URL = "not a url"
     }
 }

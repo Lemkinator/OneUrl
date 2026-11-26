@@ -143,7 +143,7 @@ class SpoomeDefaultTest {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(400, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(400, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.Unknown(400)
     }
@@ -312,7 +312,7 @@ class SpoomeDefaultTest {
         var error: GenerateURLError? = null
         val req = Spoome.Default.getCreateRequest(queue, longURL, "abc", { fail("unexpected success") }, { error = it })
 
-        req.deliverError(VolleyError(NetworkResponse(429, null, false, 0L, emptyList())))
+        req.deliverError(VolleyError(NetworkResponse(429, ByteArray(0), false, 0L, emptyList())))
 
         error shouldBe GenerateURLError.RateLimitExceeded
     }

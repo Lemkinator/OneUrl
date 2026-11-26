@@ -56,7 +56,7 @@ class URLViewModel @Inject constructor(
                 exit.value = UrlDetailExit.NotFound
                 return@launch
             }
-            state.update { it.copy(url = url, isLoading = false) }
+            state.update { it.copy(url = url) }
             refreshVisitCount()
         }
     }
@@ -105,7 +105,6 @@ class URLViewModel @Inject constructor(
 
 data class UrlDetailUiState(
     val url: URL? = null,
-    val isLoading: Boolean = true,
     val visitCount: Int? = null,
     val isRefreshingVisits: Boolean = false,
 )

@@ -207,12 +207,12 @@ class MainActivity :
 
     private fun checkIntent() {
         val extraText = intent.getStringExtra(EXTRA_TEXT)
-        if (intent?.action == ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
+        if (intent.action == ACTION_SEND && "text/plain" == intent.type && !extraText.isNullOrBlank()) {
             Log.d("MainActivity", "extraText: $extraText")
             binding.addFab.transformToActivity(Intent(this, AddURLActivity::class.java).putExtra("url", extraText), "AddURLTransition")
         }
         val textFromSelectMenu = intent.getCharSequenceExtra(EXTRA_PROCESS_TEXT)
-        if (intent?.action == ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
+        if (intent.action == ACTION_PROCESS_TEXT && !textFromSelectMenu.isNullOrBlank()) {
             Log.d("MainActivity", "textFromSelectMenu: $textFromSelectMenu")
             binding.addFab.transformToActivity(
                 Intent(this, AddURLActivity::class.java).putExtra("url", textFromSelectMenu.toString()),

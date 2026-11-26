@@ -149,9 +149,7 @@ object Shorturlat : ShortURLProvider {
                         response
                             .split("<div class=\"squareboxtext\">")
                             .getOrNull(1)
-                            ?.split("</div>")
-                            ?.getOrNull(0)
-                            ?.toIntOrNull()
+                            ?.run { substringBefore("</div>").toIntOrNull() }
                     Log.d(tag, "visitCount: $visitCount")
                     callback(visitCount)
                 },
@@ -163,7 +161,6 @@ object Shorturlat : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         queue: VolleyQueue,
         longURL: String,
@@ -182,8 +179,7 @@ object Shorturlat : ShortURLProvider {
                     response
                         .split("shortenurl\" type=\"text\" value=\"")
                         .getOrNull(1)
-                        ?.split("\" onClick")
-                        ?.getOrNull(0)
+                        ?.substringBefore("\" onClick")
                 if (shortURL != null) {
                     Log.d(tag, "shortURL: $shortURL")
                     successCallback(shortURL)
@@ -193,21 +189,15 @@ object Shorturlat : ShortURLProvider {
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        else -> errorCallback(GenerateURLError.Unknown(statusCode))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+                Log.e(tag, "error: $error")
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = error.responseBody
+                Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                when {
+                    error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                    statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                    else -> errorCallback(GenerateURLError.Unknown(statusCode))
                 }
             },
         ) {

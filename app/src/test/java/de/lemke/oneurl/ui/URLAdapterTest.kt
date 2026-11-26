@@ -146,6 +146,30 @@ class URLAdapterTest {
     }
 
     @Test
+    fun `rebinding a holder mid-load keeps the thumbnail of the url bound last when the first load finishes later`() {
+        val pendingDispatcher = StandardTestDispatcher()
+        withAdapter(defaultDispatcher = pendingDispatcher) { adapter, holder ->
+            val first = testUrl("https://short.url/rebind-first")
+            val second = testUrl("https://short.url/rebind-second")
+            adapter.submitList(listOf(first, second))
+            awaitMainLooperUntil { adapter.isCurrentList(listOf(first, second)) }
+            val qrSizePx =
+                holder.itemView.context.resources
+                    .getDimensionPixelSize(R.dimen.list_item_qr_size)
+            val secondBitmap = freshBitmap()
+            qrCodeCache[second.shortURL, qrSizePx] = secondBitmap
+
+            adapter.onBindViewHolder(holder, 0)
+            adapter.onBindViewHolder(holder, 1)
+            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldBeSameInstanceAs secondBitmap
+            pendingDispatcher.scheduler.advanceUntilIdle()
+
+            (holder.listItemImg.drawable as BitmapDrawable).bitmap shouldBeSameInstanceAs secondBitmap
+            qrCodeCache[first.shortURL, qrSizePx] shouldNotBe null
+        }
+    }
+
+    @Test
     fun `bind uses a cached thumbnail without generating a new one`() {
         withAdapter { adapter, holder ->
             val url = testUrl("https://short.url/cached")
@@ -179,6 +203,43 @@ class URLAdapterTest {
             bitmap.height shouldBe qrSizePx
             qrCodeCache[url.shortURL, qrSizePx] shouldBeSameInstanceAs bitmap
             renderer.renders shouldBe listOf(Render(url.shortURL, null))
+        }
+    }
+
+    @Test
+    fun `bind shows the description, else the title, else the added date as the second subtitle`() {
+        withAdapter { adapter, holder ->
+            val described = testUrl("https://short.url/described", title = "a title").copy(description = "a description")
+            val titled = testUrl("https://short.url/titled", title = "a title").copy(description = " ")
+            val bare = testUrl("https://short.url/bare", title = "").copy(description = "")
+            adapter.submitList(listOf(described, titled, bare))
+            awaitMainLooperUntil { adapter.isCurrentList(listOf(described, titled, bare)) }
+
+            adapter.onBindViewHolder(holder, 0)
+            holder.listItemSubtitle2.text.toString() shouldBe "a description"
+            adapter.onBindViewHolder(holder, 1)
+            holder.listItemSubtitle2.text.toString() shouldBe "a title"
+            adapter.onBindViewHolder(holder, 2)
+            holder.listItemSubtitle2.text.toString() shouldBe bare.addedFormatMedium
+        }
+    }
+
+    @Test
+    fun `a HIGHLIGHT payload shows the description, else the title, else the added date as the second subtitle`() {
+        withAdapter { adapter, holder ->
+            val described = testUrl("https://short.url/described", title = "a title").copy(description = "a description")
+            val titled = testUrl("https://short.url/titled", title = "a title").copy(description = " ")
+            val bare = testUrl("https://short.url/bare", title = "").copy(description = "")
+            adapter.submitList(listOf(described, titled, bare))
+            awaitMainLooperUntil { adapter.isCurrentList(listOf(described, titled, bare)) }
+            val highlight = mutableListOf<Any>(URLAdapter.Payload.HIGHLIGHT)
+
+            adapter.onBindViewHolder(holder, 0, highlight)
+            holder.listItemSubtitle2.text.toString() shouldBe "a description"
+            adapter.onBindViewHolder(holder, 1, highlight)
+            holder.listItemSubtitle2.text.toString() shouldBe "a title"
+            adapter.onBindViewHolder(holder, 2, highlight)
+            holder.listItemSubtitle2.text.toString() shouldBe bare.addedFormatMedium
         }
     }
 

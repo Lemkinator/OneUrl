@@ -154,7 +154,6 @@ object Tnyim : ShortURLProvider {
 
     override fun sanitizeLongURL(url: String) = url.urlEncodeAmpersand().trim()
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getURLClickCount(
         queue: VolleyQueue,
         url: URL,
@@ -169,16 +168,10 @@ object Tnyim : ShortURLProvider {
                 requestURL,
                 null,
                 { response ->
-                    // An exception escaping a Volley callback on the main thread crashes the app.
-                    try {
-                        Log.d(tag, "response: $response")
-                        val visitCount = response.optJSONObject("link")?.optStringOrNull("clicks")?.toIntOrNull()
-                        Log.d(tag, "visitCount: $visitCount")
-                        callback(visitCount)
-                    } catch (e: Exception) {
-                        Log.e(tag, "error parsing click count response", e)
-                        callback(null)
-                    }
+                    Log.d(tag, "response: $response")
+                    val visitCount = response.optJSONObject("link")?.optStringOrNull("clicks")?.toIntOrNull()
+                    Log.d(tag, "visitCount: $visitCount")
+                    callback(visitCount)
                 },
                 { error ->
                     Log.e(tag, "error: $error")
@@ -188,7 +181,6 @@ object Tnyim : ShortURLProvider {
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun getCreateRequest(
         queue: VolleyQueue,
         longURL: String,
@@ -224,23 +216,17 @@ object Tnyim : ShortURLProvider {
                 }
             },
             { error ->
-                // An exception escaping a Volley callback on the main thread crashes the app.
-                try {
-                    Log.e(tag, "error: $error")
-                    val networkResponse = error.networkResponse
-                    val statusCode = networkResponse?.statusCode
-                    val data = networkResponse?.data?.toString(Charsets.UTF_8)
-                    Log.e(tag, "$statusCode: message: ${error.message} data: $data")
-                    when {
-                        error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
-                        statusCode == null -> errorCallback(GenerateURLError.Unknown())
-                        data.isNullOrBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        statusCode == HttpStatusCode.INTERNAL_SERVER_ERROR -> errorCallback(GenerateURLError.Unknown(statusCode))
-                        else -> errorCallback(GenerateURLError.Custom(statusCode, data))
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "error parsing error response", e)
-                    errorCallback(GenerateURLError.Unknown())
+                Log.e(tag, "error: $error")
+                val networkResponse = error.networkResponse
+                val statusCode = networkResponse?.statusCode
+                val data = error.responseBody
+                Log.e(tag, "$statusCode: message: ${error.message} data: $data")
+                when {
+                    error is NoConnectionError -> errorCallback(GenerateURLError.ServiceOffline)
+                    statusCode == null -> errorCallback(GenerateURLError.Unknown())
+                    data.isBlank() -> errorCallback(GenerateURLError.Unknown(statusCode))
+                    statusCode == HttpStatusCode.INTERNAL_SERVER_ERROR -> errorCallback(GenerateURLError.Unknown(statusCode))
+                    else -> errorCallback(GenerateURLError.Custom(statusCode, data))
                 }
             },
         ) {
