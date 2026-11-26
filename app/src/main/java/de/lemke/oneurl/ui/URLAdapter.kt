@@ -127,7 +127,7 @@ class URLAdapter(
         if (payloads.isEmpty()) {
             onBindViewHolder(holder, position)
         } else {
-            for (payload in payloads.filterIsInstance<Payload>().toSet()) {
+            for (payload in payloads.toSet()) {
                 when (payload) {
                     Payload.SELECTION_MODE -> holder.bindActionModeAnimate(getItemId(position))
                     Payload.HIGHLIGHT -> holder.bindHighlight(currentList[position])
