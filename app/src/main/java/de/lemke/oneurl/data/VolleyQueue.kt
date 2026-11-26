@@ -42,6 +42,9 @@ class DefaultVolleyQueue @Inject constructor(
     private val requestQueue: Provider<RequestQueue>,
 ) : VolleyQueue {
     override fun add(request: Request<*>) {
+        // A cached request registers its URL key until it finishes. A throwing callback can leave the key registered,
+        // and later requests for that URL never finish.
+        request.setShouldCache(false)
         requestQueue.get().add(request)
     }
 
