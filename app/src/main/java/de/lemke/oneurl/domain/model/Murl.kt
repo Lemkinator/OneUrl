@@ -76,7 +76,6 @@ object Murl : ShortURLProvider {
         val tag = "GetURLVisitCount_$name"
         val requestURL = "$baseURL/${url.alias}"
         Log.d(tag, "start request: $requestURL")
-        queue.removeCacheEntry(requestURL) // this provider is weird
         queue.add(
             StringRequest(
                 Request.Method.GET,

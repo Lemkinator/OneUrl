@@ -19,8 +19,6 @@ package de.lemke.oneurl.data
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
-import androidx.test.core.app.ApplicationProvider
-import com.android.volley.Cache
 import com.android.volley.CacheDispatcher
 import com.android.volley.Network
 import com.android.volley.NetworkDispatcher
@@ -29,12 +27,10 @@ import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.VolleyError
-import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.NoCache
 import com.android.volley.toolbox.StringRequest
 import de.lemke.oneurl.di.NetworkModule
 import io.kotest.matchers.shouldBe
-import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -51,27 +47,11 @@ import org.robolectric.annotation.LooperMode
 @Config(application = Application::class, sdk = [36])
 @LooperMode(LooperMode.Mode.INSTRUMENTATION_TEST)
 class DefaultVolleyQueueTest {
-    private val context = ApplicationProvider.getApplicationContext<Application>()
-    private val url = "https://example.com/cached"
+    private val url = "https://example.com/page"
     private val createdQueues = mutableListOf<RequestQueue>()
-    private val requestQueue by lazy { NetworkModule.provideRequestQueue(context).also(createdQueues::add) }
-    private val queue = DefaultVolleyQueue(Provider { requestQueue })
 
     @After
     fun stopRequestQueues() = createdQueues.forEach(RequestQueue::stop)
-
-    private fun volleyCache() = DiskBasedCache(File(context.cacheDir, "volley")).apply { initialize() }
-
-    private fun cacheResponse(body: String) {
-        val entry =
-            Cache.Entry().apply {
-                data = body.toByteArray()
-                ttl = Long.MAX_VALUE
-                softTtl = Long.MAX_VALUE
-                responseHeaders = emptyMap()
-            }
-        volleyCache().put(url, entry)
-    }
 
     private fun dispatcherThreads() =
         Thread.getAllStackTraces().keys.filterTo(HashSet()) { it is CacheDispatcher || it is NetworkDispatcher }
@@ -111,7 +91,7 @@ class DefaultVolleyQueueTest {
     fun `the request queue starts a cache dispatcher and four network dispatchers`() {
         val dispatchersBefore = dispatcherThreads()
 
-        NetworkModule.provideRequestQueue(context).also(createdQueues::add)
+        NetworkModule.provideRequestQueue().also(createdQueues::add)
 
         (dispatcherThreads() - dispatchersBefore).size shouldBe 5
     }
@@ -194,15 +174,6 @@ class DefaultVolleyQueueTest {
         calls.get() shouldBe 2
         request.isCanceled shouldBe true
         deliverResponse(queue) shouldBe "body"
-    }
-
-    @Test
-    fun `removeCacheEntry drops the cached response of the url`() {
-        cacheResponse("cached body")
-
-        queue.removeCacheEntry(url)
-
-        volleyCache().get(url) shouldBe null
     }
 
     private companion object {

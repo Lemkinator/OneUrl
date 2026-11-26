@@ -32,9 +32,6 @@ import javax.inject.Singleton
 /** Sends Volley requests; each request delivers its own response or error. */
 interface VolleyQueue {
     fun add(request: Request<*>)
-
-    /** Drops the cached response of [url], so the next request for it reaches the network. */
-    fun removeCacheEntry(url: String)
 }
 
 @Singleton
@@ -46,10 +43,6 @@ class DefaultVolleyQueue @Inject constructor(
         // and later requests for that URL never finish.
         request.setShouldCache(false)
         requestQueue.get().add(request)
-    }
-
-    override fun removeCacheEntry(url: String) {
-        requestQueue.get().cache.remove(url)
     }
 }
 
